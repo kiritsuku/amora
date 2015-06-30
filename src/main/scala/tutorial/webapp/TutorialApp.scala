@@ -20,11 +20,8 @@ object TutorialApp extends JSApp {
     $("#click-me-button").click(addClickedMessage _)
     $("body").append("<p>Hello World</p>")
     val params = EditorConfig.mode("clike").lineNumbers(true)
-    println(s">>>>> params: $params")
     val elem = dom.document.getElementById("scala").asInstanceOf[HTMLTextAreaElement]
-    println(s">>>>> elem: $elem")
     val e = CodeMirror.fromTextArea(elem, params)
-    println(s">>>>> e: $e")
     e.getDoc().setValue("""println("Hello Scala")""")
   }
 
