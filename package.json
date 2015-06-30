@@ -20,5 +20,10 @@
     "position": "center",
     "toolbar": false,
     "frame": true
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sschaef/scalajs-test"
+  },
+  "license": "MIT"
 }
