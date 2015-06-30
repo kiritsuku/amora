@@ -7,9 +7,6 @@ import com.typesafe.sbteclipse.core.EclipsePlugin._
 
 object Build extends sbt.Build {
 
-  // First install all npm modules with "npm update"
-  // Then run the app with "npm start"
-
   lazy val root = project in file(".") enablePlugins(ScalaJSPlugin, SbtWeb) settings (
     name := "Scala.js Tutorial",
     scalaVersion := "2.11.6",
@@ -17,13 +14,6 @@ object Build extends sbt.Build {
 
     EclipseKeys.withSource := true,
 
-    /* The following installs were required:
-     * - In pacman:
-     *   - nodejs
-     *   - phantomjs
-     * - Manual:
-     *   - https://github.com/nwjs/nw.js
-     */
     resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
 
     libraryDependencies ++= deps.sjs.value ++ deps.sjsTest.value ++ deps.common.value,
