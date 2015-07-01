@@ -17,7 +17,7 @@
     "min_height": 400,
     "min_width": 400,
     "position": "center",
-    "toolbar": false,
+    "toolbar": true,
     "frame": true
   },
   "repository": {
