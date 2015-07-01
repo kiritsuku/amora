@@ -20,6 +20,7 @@ object Build extends sbt.Build {
 
     skip in packageJSDependencies := false,
     jsDependencies += RuntimeDOM,
+    jsDependencies ++= deps.webjars.value,
     testFrameworks += new TestFramework("utest.runner.Framework"),
 
     persistLauncher in Compile := true,
@@ -35,6 +36,10 @@ object Build extends sbt.Build {
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       // https://github.com/antonkulaga/codemirror-facade
       "org.denigma" %%% "codemirror-facade" % "5.3-0.5"
+    ))
+
+    lazy val webjars = Def.setting(Seq(
+      "org.webjars" % "codemirror" % "5.3" / "codemirror.js"
     ))
 
     lazy val common = Def.setting(Seq(
