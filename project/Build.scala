@@ -9,7 +9,7 @@ object Build extends sbt.Build {
 
   lazy val root = project in file(".") enablePlugins(ScalaJSPlugin, SbtWeb) settings (
     name := "Scala.js Tutorial",
-    scalaVersion := "2.11.6",
+    scalaVersion := "2.11.7",
     scalaJSStage in Global := FastOptStage,
 
     EclipseKeys.withSource := true,
