@@ -8,6 +8,7 @@ import org.scalajs.jquery.jQuery
 import org.denigma.codemirror.extensions.EditorConfig
 import org.denigma.codemirror.CodeMirror
 import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.denigma.codemirror.Editor
 
 object TutorialApp extends JSApp {
   val $ = jQuery
@@ -17,12 +18,37 @@ object TutorialApp extends JSApp {
   }
 
   def setupUI(): Unit = {
+    val parent = "parent"
+    val editorLeft = "editor_left"
+    val editorRight = "editor_right"
+
+    $("body").prepend(s"""<div id="$parent"></div>""")
+    $(s"#$parent").append(s"""
+      <div id="left">
+        <textarea id="$editorLeft"></textarea>
+      </div>
+    """)
+    $(s"#$parent").append(s"""
+      <div id="right">
+        <textarea id="$editorRight"></textarea>
+      </div>
+    """)
+    val e = setupEditor(editorLeft)
+    e.get.getDoc().setValue("""object O { val x = 0 }""")
+    val e2 = setupEditor(editorRight)
+    e2.get.getDoc().setValue("""var x = 0""")
     $("#click-me-button").click(addClickedMessage _)
-    $("body").append("<p>Hello World</p>")
-    val params = EditorConfig.mode("clike").lineNumbers(true)
-    val elem = dom.document.getElementById("scala").asInstanceOf[HTMLTextAreaElement]
-    val e = CodeMirror.fromTextArea(elem, params)
-    e.getDoc().setValue("""println("Hello Scala")""")
+  }
+
+  def setupEditor(id: String): Option[Editor] = {
+    dom.document.getElementById(id) match {
+      case elem: HTMLTextAreaElement ⇒
+        val params = EditorConfig.mode("text/x-scala").lineNumbers(true).theme("solarized")
+        Some(CodeMirror.fromTextArea(elem, params))
+      case elem ⇒
+        Console.err.println(s"unexpected element: $elem")
+        None
+    }
   }
 
   def addClickedMessage(): Unit = {
