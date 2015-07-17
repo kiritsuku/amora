@@ -1,49 +1,78 @@
 package tutorial.webapp
 
+import scala.scalajs.js
 import scala.scalajs.js.JSApp
-import org.scalajs.dom
-import dom.document
-import scala.scalajs.js.annotation.JSExport
-import org.scalajs.jquery.jQuery
-import org.denigma.codemirror.extensions.EditorConfig
+
 import org.denigma.codemirror.CodeMirror
-import org.scalajs.dom.raw.HTMLTextAreaElement
 import org.denigma.codemirror.Editor
+import org.denigma.codemirror.extensions.EditorConfig
+import org.scalajs.dom
+import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.jquery.jQuery
 
 object TutorialApp extends JSApp {
-  val $ = jQuery
+  private val $ = jQuery
+  private val jsc = js.Dynamic.global
+
+  private object divs {
+    val parent = "parent"
+    val editorLeft = "editor_left"
+    val editorRight = "editor_right"
+    val render = "render"
+    val right = "right"
+    val left = "left"
+  }
 
   override def main(): Unit = {
     $(setupUI _)
   }
 
-  def setupUI(): Unit = {
-    val parent = "parent"
-    val editorLeft = "editor_left"
-    val editorRight = "editor_right"
+  def setupDivs() = {
+    import scalatags.JsDom.all._
+    val par = div(id := divs.parent).render
+    par.appendChild(div(
+      id := divs.left,
+      textarea(
+        id := divs.editorLeft
+      )
+    ).render)
+    par.appendChild(div(
+      id := divs.right,
+      textarea(id := divs.editorRight)
+    ).render)
+    par.appendChild(div(
+      id := divs.render
+    ).render)
 
-    $("body").prepend(s"""<div id="$parent"></div>""")
-    $(s"#$parent").append(s"""
-      <div id="left">
-        <textarea id="$editorLeft"></textarea>
-      </div>
-    """)
-    $(s"#$parent").append(s"""
-      <div id="right">
-        <textarea id="$editorRight"></textarea>
-      </div>
-    """)
-    val e = setupEditor(editorLeft)
-    e.get.getDoc().setValue("""object O { val x = 0 }""")
-    val e2 = setupEditor(editorRight)
-    e2.get.getDoc().setValue("""var x = 0""")
-    $("#click-me-button").click(addClickedMessage _)
+    dom.document.body.appendChild(par)
   }
 
-  def setupEditor(id: String): Option[Editor] = {
+  def setupUI(): Unit = {
+    setupDivs()
+
+    val eLeft = setupEditor(divs.editorLeft, "text/x-scala").get
+    eLeft.getDoc().setValue("""object O { val x = 0 }""")
+    val eRight = setupEditor(divs.editorRight, "text/x-markdown").get
+    eRight.getDoc().setValue("# Marked in browser\n\nRendered by **marked**.")
+
+    def renderMarkdown(): Unit = {
+      val markdown = eRight.getDoc().getValue()
+      $(s"#${divs.render}").html(jsc.marked(markdown).toString())
+    }
+
+    eRight.on("keyup", (_: Editor) ⇒ renderMarkdown())
+
+    $(s"#${divs.parent}").append("""
+      <button id="click-me-button" type="button">Click me!</button>
+    """)
+    $("#click-me-button").click(addClickedMessage _)
+    renderMarkdown()
+  }
+
+  def setupEditor(id: String, mode: String): Option[Editor] = {
     dom.document.getElementById(id) match {
       case elem: HTMLTextAreaElement ⇒
-        val params = EditorConfig.mode("text/x-scala").lineNumbers(true).theme("solarized")
+        val params = EditorConfig.mode(mode).lineNumbers(true).theme("solarized")
         Some(CodeMirror.fromTextArea(elem, params))
       case elem ⇒
         Console.err.println(s"unexpected element: $elem")

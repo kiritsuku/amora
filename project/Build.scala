@@ -38,11 +38,14 @@ object Build extends sbt.Build {
     lazy val sjs = Def.setting(Seq(
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       // https://github.com/antonkulaga/codemirror-facade
-      "org.denigma" %%% "codemirror-facade" % "5.3-0.5"
+      "org.denigma" %%% "codemirror-facade" % "5.3-0.5",
+      // https://github.com/lihaoyi/scalatags
+      "com.lihaoyi" %%% "scalatags" % "0.5.2"
     ))
 
     lazy val webjars = Def.setting(Seq(
-      "org.webjars" % "codemirror" % "5.3" / "codemirror.js"
+      "org.webjars" % "codemirror" % "5.3" / "codemirror.js",
+      "org.webjars.bower" % "marked" % "0.3.3" / "marked.js"
     ))
 
     lazy val common = Def.setting(Seq(
