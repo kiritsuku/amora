@@ -8,6 +8,7 @@ import org.denigma.codemirror.Editor
 import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom
 import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.jquery.jQuery
 
 object TutorialApp extends JSApp {
@@ -24,7 +25,7 @@ object TutorialApp extends JSApp {
   }
 
   override def main(): Unit = {
-    $(setupUI _)
+    setupUI()
   }
 
   def setupDivs() = {
@@ -47,9 +48,7 @@ object TutorialApp extends JSApp {
     dom.document.body.appendChild(par)
   }
 
-  def setupUI(): Unit = {
-    setupDivs()
-
+  def setupEditors() = {
     val eLeft = setupEditor(divs.editorLeft, "text/x-scala").get
     eLeft.getDoc().setValue("""object O { val x = 0 }""")
     val eRight = setupEditor(divs.editorRight, "text/x-markdown").get
@@ -62,11 +61,22 @@ object TutorialApp extends JSApp {
 
     eRight.on("keyup", (_: Editor) ⇒ renderMarkdown())
 
-    $(s"#${divs.parent}").append("""
-      <button id="click-me-button" type="button">Click me!</button>
-    """)
-    $("#click-me-button").click(addClickedMessage _)
     renderMarkdown()
+  }
+
+  def setupTheButton() = {
+    import scalatags.JsDom.all._
+    val b = button(id := "click-me-button", `type` := "button", "Click me!").render
+    b.onclick = (_: MouseEvent) ⇒ {
+      $("body").append(p("You clicked the button!").render)
+    }
+    $(s"#${divs.parent}").append(b)
+  }
+
+  def setupUI(): Unit = {
+    setupDivs()
+    setupEditors()
+    setupTheButton()
   }
 
   def setupEditor(id: String, mode: String): Option[Editor] = {
@@ -78,9 +88,5 @@ object TutorialApp extends JSApp {
         Console.err.println(s"unexpected element: $elem")
         None
     }
-  }
-
-  def addClickedMessage(): Unit = {
-    $("body").append("<p>You clicked the button!</p>")
   }
 }
