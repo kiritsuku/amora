@@ -24,7 +24,10 @@ object Build extends sbt.Build {
     testFrameworks += new TestFramework("utest.runner.Framework"),
 
     persistLauncher in Compile := true,
-    persistLauncher in Test := false
+    persistLauncher in Test := false,
+
+    incOptions := incOptions.value.withNameHashing(true),
+    updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
   object deps {
