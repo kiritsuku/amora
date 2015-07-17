@@ -1,4 +1,6 @@
+target/
 **/target/
+bin/
 **/bin/
 node_modules/
 .cache*
