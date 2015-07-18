@@ -45,6 +45,7 @@ object Build extends sbt.Build {
 
     lazy val webjars = Def.setting(Seq(
       "org.webjars" % "codemirror" % "5.3" / "codemirror.js",
+      // https://github.com/chjj/marked
       "org.webjars.bower" % "marked" % "0.3.3" / "marked.js"
     ))
 
