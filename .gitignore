@@ -7,3 +7,5 @@ node_modules/
 .classpath
 .settings
 .project
+.jvm/
+.js/

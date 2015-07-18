@@ -31,6 +31,14 @@ object Build extends sbt.Build {
     updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
+  lazy val shared = crossProject crossType CrossType.Pure in file("shared") settings (
+    name := "scalajs-test-shared"
+  ) settings (commonSettings: _*)
+
+  lazy val sharedJvm = shared.jvm
+
+  lazy val sharedJs = shared.js
+
   lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
     name := "scalajs-test-ui",
     scalaJSStage in Global := FastOptStage,
@@ -46,11 +54,11 @@ object Build extends sbt.Build {
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false
-  )
+  ) dependsOn (sharedJs)
 
   lazy val backend = project in file("backend") settings commonSettings ++ Seq(
     name := "scalajs-test-backend"
-  )
+  ) dependsOn (sharedJvm)
 
   object deps {
     lazy val sjsTest = Def.setting(Seq(

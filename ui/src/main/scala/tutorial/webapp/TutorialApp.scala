@@ -77,6 +77,7 @@ object TutorialApp extends JSApp {
       $("body").append(r)
     }
     $(s"#${divs.parent}").append(b)
+    $("body").append(shared.test.Shared.func(5))
   }
 
   def setupUI(): Unit = {
