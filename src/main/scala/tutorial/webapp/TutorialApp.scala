@@ -15,6 +15,8 @@ object TutorialApp extends JSApp {
   private val $ = jQuery
   private val jsc = js.Dynamic.global
 
+  private val ui = new Ui
+
   private object divs {
     val parent = "parent"
     val editorLeft = "editor_left"
@@ -28,28 +30,23 @@ object TutorialApp extends JSApp {
     setupUI()
   }
 
+  var editors = Map[String, AEditor]()
+
   def setupDivs() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent).render
-    par.appendChild(div(
-      id := divs.left,
-      textarea(
-        id := divs.editorLeft
-      )
-    ).render)
-    par.appendChild(div(
-      id := divs.right,
-      textarea(id := divs.editorRight)
-    ).render)
+    par appendChild ui.editorDiv(divs.left, divs.editorLeft)
+    par appendChild ui.editorDiv(divs.right, divs.editorRight)
     par.appendChild(div(
       id := divs.render
     ).render)
 
-    dom.document.body.appendChild(par)
+    $("body").append(par)
   }
 
   def setupEditors() = {
     val eLeft = setupEditor(divs.editorLeft, "text/x-scala").get
+    dom.console.log(eLeft)
     eLeft.getDoc().setValue("""object O { val x = 0 }""")
     val eRight = setupEditor(divs.editorRight, "text/x-markdown").get
     eRight.getDoc().setValue("# Marked in browser\n\nRendered by **marked**.")
@@ -68,7 +65,16 @@ object TutorialApp extends JSApp {
     import scalatags.JsDom.all._
     val b = button(id := "click-me-button", `type` := "button", "Click me!").render
     b.onclick = (_: MouseEvent) ⇒ {
-      $("body").append(p("You clicked the button!").render)
+      val name = "editor"+editors.size
+      val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")
+
+      editors += name → editor
+      val r = div(id := s"$name-outer", editor.editorDiv, editor.resultDiv).render
+      editor.editor.on("keyup", (e: Editor) ⇒ {
+        val code = e.getDoc().getValue()
+        editor.resultDiv.innerHTML = code
+      })
+      $("body").append(r)
     }
     $(s"#${divs.parent}").append(b)
   }
