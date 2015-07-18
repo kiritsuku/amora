@@ -9,6 +9,21 @@ object Build extends sbt.Build {
 
   lazy val commonSettings = Seq(
     scalaVersion := "2.11.7",
+    scalacOptions ++= Seq(
+      "-deprecation",
+      "-encoding", "UTF-8",
+      "-feature",
+      "-language:_",
+      "-unchecked",
+      "-Xlint",
+      "-Xfuture",
+      //"-Xfatal-warnings",
+      "-Yno-adapted-args",
+      "-Ywarn-dead-code",
+      "-Ywarn-numeric-widen",
+      "-Ywarn-unused-import",
+      "-Ywarn-unused"
+    ),
 
     EclipseKeys.withSource := true,
 
