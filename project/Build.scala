@@ -7,12 +7,18 @@ import com.typesafe.sbteclipse.core.EclipsePlugin._
 
 object Build extends sbt.Build {
 
-  lazy val root = project in file(".") enablePlugins(ScalaJSPlugin, SbtWeb) settings (
-    name := "Scala.js Tutorial",
+  lazy val commonSettings = Seq(
     scalaVersion := "2.11.7",
-    scalaJSStage in Global := FastOptStage,
 
     EclipseKeys.withSource := true,
+
+    incOptions := incOptions.value.withNameHashing(true),
+    updateOptions := updateOptions.value.withCachedResolution(true)
+  )
+
+  lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
+    name := "scalajs-test-ui",
+    scalaJSStage in Global := FastOptStage,
 
     resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
 
@@ -24,10 +30,11 @@ object Build extends sbt.Build {
     testFrameworks += new TestFramework("utest.runner.Framework"),
 
     persistLauncher in Compile := true,
-    persistLauncher in Test := false,
+    persistLauncher in Test := false
+  )
 
-    incOptions := incOptions.value.withNameHashing(true),
-    updateOptions := updateOptions.value.withCachedResolution(true)
+  lazy val backend = project in file("backend") settings commonSettings ++ Seq(
+    name := "scalajs-test-backend"
   )
 
   object deps {
