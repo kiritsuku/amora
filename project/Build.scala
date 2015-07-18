@@ -32,7 +32,9 @@ object Build extends sbt.Build {
   )
 
   lazy val shared = crossProject crossType CrossType.Pure in file("shared") settings (
-    name := "scalajs-test-shared"
+    name := "scalajs-test-shared",
+    // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
+    EclipseKeys.eclipseOutput := Some("bin/")
   ) settings (commonSettings: _*)
 
   lazy val sharedJvm = shared.jvm
