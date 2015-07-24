@@ -1,5 +1,7 @@
 package tutorial.webapp
 
+import java.nio.ByteBuffer
+
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
 
@@ -7,9 +9,15 @@ import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
 import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom
+import org.scalajs.dom.raw.ErrorEvent
+import org.scalajs.dom.raw.Event
 import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.dom.raw.MessageEvent
 import org.scalajs.dom.raw.MouseEvent
+import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
+
+import shared.test.Person
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
@@ -30,7 +38,8 @@ object TutorialApp extends JSApp {
     setupUI()
   }
 
-  var editors = Map[String, AEditor]()
+  private var editors = Map[String, AEditor]()
+  private var ws: WebSocket = _
 
   def setupDivs() = {
     import scalatags.JsDom.all._
@@ -61,10 +70,41 @@ object TutorialApp extends JSApp {
     renderMarkdown()
   }
 
+  def setupWS() = {
+    def websocketUri(name: String): String = {
+      val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
+      s"$wsProtocol://localhost:9999/communication?name=$name"
+    }
+
+    def toByteBuffer(data: Any): ByteBuffer = {
+      val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
+      println("message size: " + ab.byteLength)
+      js.typedarray.TypedArrayBuffer.wrap(ab)
+    }
+
+    ws = new WebSocket(websocketUri("client1"))
+    ws.binaryType = "arraybuffer"
+    ws.onopen = (e: Event) ⇒ {
+      println("connection opened")
+    }
+    ws.onmessage = (e: MessageEvent) ⇒ {
+      import boopickle.Default._
+      val bytes = toByteBuffer(e.data)
+      val persons = Unpickle[Seq[Person]].fromBytes(bytes)
+      println(persons)
+    }
+    ws.onerror = (e: ErrorEvent) ⇒ {
+      println(s"error from ws: $e")
+    }
+  }
+
   def setupTheButton() = {
     import scalatags.JsDom.all._
+
     val b = button(id := "click-me-button", `type` := "button", "Click me!").render
     b.onclick = (_: MouseEvent) ⇒ {
+      ws.send("the message")
+
       val name = "editor"+editors.size
       val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")
 
@@ -84,6 +124,7 @@ object TutorialApp extends JSApp {
     setupDivs()
     setupEditors()
     setupTheButton()
+    setupWS()
   }
 
   def setupEditor(id: String, mode: String): Option[Editor] = {
