@@ -18,7 +18,7 @@ class BackendSystem(implicit system: ActorSystem) {
 
   import boopickle.Default._
   val persons = Seq(Person("myname", 50), Person("anothername", 26))
-  val personBuf = Pickle.intoBytes(persons)
+  def personBuf = Pickle.intoBytes(persons)
 
   val actor = system.actorOf(Props(new Actor {
     var clients = Map.empty[String, ActorRef]
