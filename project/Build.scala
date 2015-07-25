@@ -90,7 +90,8 @@ object Build extends sbt.Build {
 
     lazy val backend = Def.setting(Seq(
       "com.typesafe.akka" %% "akka-http-experimental" % "1.0",
-      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0"
+      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ))
 
     lazy val sjsTest = Def.setting(Seq(
