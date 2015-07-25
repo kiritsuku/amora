@@ -55,7 +55,6 @@ object TutorialApp extends JSApp {
 
   def setupEditors() = {
     val eLeft = setupEditor(divs.editorLeft, "text/x-scala").get
-    dom.console.log(eLeft)
     eLeft.getDoc().setValue("""object O { val x = 0 }""")
     val eRight = setupEditor(divs.editorRight, "text/x-markdown").get
     eRight.getDoc().setValue("# Marked in browser\n\nRendered by **marked**.")
@@ -95,6 +94,9 @@ object TutorialApp extends JSApp {
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
       println(s"error from ws: $e")
+    }
+    ws.onclose = (e: Event) ⇒ {
+      println(s"websocket closed")
     }
   }
 
