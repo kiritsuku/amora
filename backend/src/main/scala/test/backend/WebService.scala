@@ -15,7 +15,7 @@ import akka.stream.stage.Context
 
 class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
-  private val bs = new BackendSystem
+  private val bs = new BackendSystem()
 
   private def fromWebjar(path: String) =
     getFromResource(s"/home/antoras/dev/scala/scalajs-test/ui/target/web/web-modules/main/webjars/lib/$path")
@@ -39,17 +39,17 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
       path("solarized.css")(fromWebjar("codemirror/theme/solarized.css")) ~
       path("communication") {
         parameter('name) { name ⇒
-          println(s"Created connection to '$name'.")
           handleWebsocketMessages(websocketFlow(sender = name))
         }
       }
     }
 
-  def websocketFlow(sender: String): Flow[Message, Message, Unit] = Flow[Message]
+  def websocketFlow(sender: String): Flow[Message, Message, Unit] =
+    Flow[Message]
     .collect {
       case TextMessage.Strict(msg) ⇒ msg
     }
-    .via(bs.messageFlow())
+    .via(bs.messageFlow(sender))
     .map {
       case c ⇒ BinaryMessage(CompactByteString(c))
     }
