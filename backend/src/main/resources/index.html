@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>First Scala.js Steps</title>
+    <style>
+      html, body { background: #3b3f41; color:#ccc; height:100vh; width:100vw;}
+      #left {
+        float: left;
+        overflow: auto;
+        width: 50%;
+      }
+      #right {
+        margin-left: 50%;
+        border-left-width: 5px;
+        border-left-style: solid;
+      }
+    </style>
+    <link rel="stylesheet" type="text/css" href="codemirror.css">
+    <link rel="stylesheet" type="text/css" href="solarized.css">
+  </head>
+  <body>
+    <!-- Include Scala.js compiled code -->
+    <script type="text/javascript" src="scalajs-test-ui-jsdeps.js"></script>
+    <script type="text/javascript" src="scalajs-test-ui-fastopt.js"></script>
+    <script type="text/javascript" src="clike.js"></script>
+    <script type="text/javascript" src="markdown.js"></script>
+    <!-- Run JSApp -->
+    <script type="text/javascript" src="scalajs-test-ui-launcher.js"></script>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "nw-demo",
   "version": "0.0.1",
-  "main": "index-dev.html",
+  "main": "http://localhost:9999/",
   "dependencies": {
     "nw": "0.12.2",
     "source-map-support": "0.3.1"

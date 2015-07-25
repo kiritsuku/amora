@@ -67,12 +67,16 @@ object Build extends sbt.Build {
 
     libraryDependencies ++= deps.backend.value,
 
-    // add *fastopt.js file to resurces
+    // add *fastopt.js file to resources
     resourceGenerators in Compile <+= (fastOptJS in Compile in ui).map(r => Seq(r.data)),
-    // add *fullopt.js file to resurces
+    // add *fullopt.js file to resources
 //    (resourceGenerators in Compile) <+= (fullOptJS in Compile in ui).map(r => Seq(r.data)),
-    // add *launcher.js file to resurces
+    // add *launcher.js file to resources
     resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in ui).map(r => Seq(r.data)),
+    // add *jsdeps.js file to resources
+    resourceGenerators in Compile <+= (packageJSDependencies in Compile in ui).map(Seq(_)),
+    // add folder of webjars to resources
+    unmanagedResourceDirectories in Compile += (WebKeys.webTarget in Compile in ui).value / "web-modules" / "main" / "webjars" / "lib",
 
     // once the server is started, we also want to restart it on changes in the shared project
     watchSources ++= (watchSources in sharedJvm).value
