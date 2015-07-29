@@ -21,6 +21,7 @@ class BackendSystem(implicit system: ActorSystem) {
   def personBuf = Pickle.intoBytes(persons)
 
   val actor = system.actorOf(Props(new Actor {
+    val repl = new Repl
     var clients = Map.empty[String, ActorRef]
 
     def receive = {
@@ -30,7 +31,14 @@ class BackendSystem(implicit system: ActorSystem) {
         println(s"'$sender' joined")
       case ReceivedMessage(sender, msg) ⇒
         println(s"'$sender' sent '$msg'")
-        clients(sender) ! personBuf
+        msg match {
+          case msg if msg startsWith "/interpret/" =>
+            val expr = msg.stripPrefix("/interpret/")
+            repl.interpret(expr)
+            clients(sender) ! ByteBuffer.wrap(s">>$expr<< processed".getBytes)
+          case msg ⇒
+            clients(sender) ! personBuf
+        }
       case ClientLeft(sender) ⇒
         clients -= sender
         println(s"'$sender' left")

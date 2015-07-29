@@ -77,7 +77,6 @@ object TutorialApp extends JSApp {
 
     def toByteBuffer(data: Any): ByteBuffer = {
       val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
-      println("message size: " + ab.byteLength)
       js.typedarray.TypedArrayBuffer.wrap(ab)
     }
 
@@ -100,6 +99,15 @@ object TutorialApp extends JSApp {
     }
   }
 
+  private def mkKeyMap: js.Object = {
+    js.Dynamic.literal(
+      "Ctrl-Enter" → { (e: Editor) ⇒
+        val code = e.getDoc().getValue()
+        ws.send(s"/interpret/$code")
+      }
+    )
+  }
+
   def setupTheButton() = {
     import scalatags.JsDom.all._
 
@@ -109,6 +117,7 @@ object TutorialApp extends JSApp {
 
       val name = "editor"+editors.size
       val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")
+      editor.editor.addKeyMap(mkKeyMap)
 
       editors += name → editor
       val r = div(id := s"$name-outer", editor.editorDiv, editor.resultDiv).render
@@ -116,6 +125,13 @@ object TutorialApp extends JSApp {
         val code = e.getDoc().getValue()
         editor.resultDiv.innerHTML = code
       })
+      /*CodeMirror.on(editor.editor, "change", (_: Editor, change: EditorChange) ⇒ {
+        dom.console.log(change)
+      })
+      CodeMirror.on(editor.editor, "keydown", (_: Editor, e: KeyboardEvent) ⇒ {
+        if (e.key == "Enter")
+          println("enter pressed")
+      })*/
       $("body").append(r)
     }
     $(s"#${divs.parent}").append(b)
