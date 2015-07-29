@@ -7,12 +7,13 @@ import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.OverflowStrategy
-
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import shared.test.Interpret
 import shared.test.Person
+import shared.test.Request
 
 class BackendSystem(implicit system: ActorSystem) {
 
@@ -32,8 +33,7 @@ class BackendSystem(implicit system: ActorSystem) {
       case ReceivedMessage(sender, msg) ⇒
         println(s"'$sender' sent '$msg'")
         msg match {
-          case msg if msg startsWith "/interpret/" =>
-            val expr = msg.stripPrefix("/interpret/")
+          case Interpret(expr) =>
             repl.interpret(expr)
             clients(sender) ! ByteBuffer.wrap(s">>$expr<< processed".getBytes)
           case msg ⇒
@@ -47,9 +47,9 @@ class BackendSystem(implicit system: ActorSystem) {
 
   def sink(sender: String): Sink[Msg, Unit] = Sink.actorRef[Msg](actor, ClientLeft(sender))
 
-  def messageFlow(sender: String): Flow[String, ByteBuffer, Unit] = {
-    val in = Flow[String]
-      .map(ReceivedMessage(sender, _))
+  def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, Unit] = {
+    val in = Flow[ByteBuffer]
+      .map(b ⇒ ReceivedMessage(sender, Unpickle[Request].fromBytes(b)))
       .to(sink(sender))
     val out = Source
       .actorRef[ByteBuffer](1, OverflowStrategy.fail)
@@ -59,6 +59,6 @@ class BackendSystem(implicit system: ActorSystem) {
 }
 
 sealed trait Msg
-case class ReceivedMessage(sender: String, msg: String) extends Msg
+case class ReceivedMessage(sender: String, req: Request) extends Msg
 case class ClientLeft(sender: String) extends Msg
 case class NewClient(sender: String, subject: ActorRef) extends Msg

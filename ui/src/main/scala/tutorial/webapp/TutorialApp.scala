@@ -17,7 +17,10 @@ import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
+import shared.test.Execute
+import shared.test.Interpret
 import shared.test.Person
+import shared.test.Request
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
@@ -75,11 +78,6 @@ object TutorialApp extends JSApp {
       s"$wsProtocol://localhost:9999/communication?name=$name"
     }
 
-    def toByteBuffer(data: Any): ByteBuffer = {
-      val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
-      js.typedarray.TypedArrayBuffer.wrap(ab)
-    }
-
     ws = new WebSocket(websocketUri("client1"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
@@ -99,11 +97,23 @@ object TutorialApp extends JSApp {
     }
   }
 
+  private def toByteBuffer(data: Any): ByteBuffer = {
+    val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
+    js.typedarray.TypedArrayBuffer.wrap(ab)
+  }
+
+  private def toArrayBuffer(data: ByteBuffer): js.typedarray.ArrayBuffer = {
+    import js.typedarray.TypedArrayBufferOps._
+    data.arrayBuffer
+  }
+
   private def mkKeyMap: js.Object = {
     js.Dynamic.literal(
       "Ctrl-Enter" → { (e: Editor) ⇒
+        import boopickle.Default._
         val code = e.getDoc().getValue()
-        ws.send(s"/interpret/$code")
+        val msg = Pickle.intoBytes[Request](Interpret(code))
+        ws.send(toArrayBuffer(msg))
       }
     )
   }
@@ -113,7 +123,9 @@ object TutorialApp extends JSApp {
 
     val b = button(id := "click-me-button", `type` := "button", "Click me!").render
     b.onclick = (_: MouseEvent) ⇒ {
-      ws.send("the message")
+      import boopickle.Default._
+      val msg = Pickle.intoBytes[Request](Execute("the message"))
+      ws.send(toArrayBuffer(msg))
 
       val name = "editor"+editors.size
       val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")

@@ -12,6 +12,7 @@ import akka.util.CompactByteString
 import shared.test.Person
 import akka.stream.stage.PushStage
 import akka.stream.stage.Context
+import java.nio.ByteBuffer
 
 class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -37,7 +38,7 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
   def websocketFlow(sender: String): Flow[Message, Message, Unit] =
     Flow[Message]
     .collect {
-      case TextMessage.Strict(msg) ⇒ msg
+      case BinaryMessage.Strict(bs) ⇒ bs.toByteBuffer
     }
     .via(bs.messageFlow(sender))
     .map {
