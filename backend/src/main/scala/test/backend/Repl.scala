@@ -11,6 +11,17 @@ import scala.reflect.internal.util.AbstractFileClassLoader
 import scala.tools.nsc.interpreter.ILoop
 import java.io.PrintStream
 import java.io.ByteArrayOutputStream
+import java.io.PrintWriter
+
+object ReplApp extends App {
+  val repl = new Repl
+  val x = repl.interpret("var x = 0")
+  println(s">>>$x<<<")
+  val x2 = repl.interpret("x = 42")
+  println(s">>>$x2<<<")
+  val x3 = repl.interpret("x")
+  println(s">>>$x3<<<")
+}
 
 class Repl {
   val outputDir = new VirtualDirectory("<virtualdir>", None)
@@ -19,27 +30,15 @@ class Repl {
   s.usejavacp.value = true
   s.source.value = ScalaVersion("2.11.7")
 
-  val loop = new ILoop()
+  private val out = new ByteArrayOutputStream
+  val loop = new ILoop(None, new PrintWriter(out, /*autoflush*/ true))
   loop.settings = s
   loop.createInterpreter()
 
-  def interpret(expr: String): Unit = {
+  def interpret(expr: String): String = {
+    out.reset()
     loop.intp.interpret(expr)
-    /*
-    val m = classOf[ILoop].getMethod("compile", classOf[String], classOf[Boolean])
-    m.setAccessible(true)
-    val synthetic = java.lang.Boolean.valueOf(false)
-    val res = m.invoke(loop, expr, synthetic)
-    import scala.tools.nsc.interpreter._
-    val intp = loop.intp
-    import intp._
-    res.asInstanceOf[Either[IR.Result, Request]] match {
-      case Left(result) => result
-      case Right(req)   =>
-        new WrappedRequest(req).loadAndRunReq
-    }
-    *
-    */
+    out.toString()
   }
 
   /*
