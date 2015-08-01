@@ -1,7 +1,6 @@
 package test.backend
 
 import java.nio.ByteBuffer
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
@@ -14,6 +13,9 @@ import akka.stream.scaladsl.Source
 import shared.test.Interpret
 import shared.test.Person
 import shared.test.Request
+import shared.test.InterpretedResult
+import shared.test.PersonList
+import shared.test.Response
 
 class BackendSystem(implicit system: ActorSystem) {
 
@@ -25,7 +27,7 @@ class BackendSystem(implicit system: ActorSystem) {
     val repl = new Repl
     var clients = Map.empty[String, ActorRef]
 
-    def receive = {
+    override def receive = {
       case NewClient(sender, subject) ⇒
         context.watch(subject)
         clients += sender → subject
@@ -33,11 +35,11 @@ class BackendSystem(implicit system: ActorSystem) {
       case ReceivedMessage(sender, msg) ⇒
         println(s"'$sender' sent '$msg'")
         msg match {
-          case Interpret(expr) =>
-            repl.interpret(expr)
-            clients(sender) ! ByteBuffer.wrap(s">>$expr<< processed".getBytes)
+          case Interpret(id, expr) =>
+            val res = repl.interpret(expr)
+            clients(sender) ! InterpretedResult(id, res)
           case msg ⇒
-            clients(sender) ! personBuf
+            clients(sender) ! PersonList(persons)
         }
       case ClientLeft(sender) ⇒
         clients -= sender
@@ -52,8 +54,9 @@ class BackendSystem(implicit system: ActorSystem) {
       .map(b ⇒ ReceivedMessage(sender, Unpickle[Request].fromBytes(b)))
       .to(sink(sender))
     val out = Source
-      .actorRef[ByteBuffer](1, OverflowStrategy.fail)
+      .actorRef[Response](1, OverflowStrategy.fail)
       .mapMaterializedValue { actor ! NewClient(sender, _) }
+      .map(Pickle.intoBytes(_))
     Flow.wrap(in, out)(Keep.none)
   }
 }

@@ -1,10 +1,8 @@
 package tutorial.webapp
 
 import java.nio.ByteBuffer
-
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
-
 import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
 import org.denigma.codemirror.extensions.EditorConfig
@@ -16,11 +14,14 @@ import org.scalajs.dom.raw.MessageEvent
 import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
-
 import shared.test.Execute
 import shared.test.Interpret
 import shared.test.Person
 import shared.test.Request
+import shared.test.Response
+import shared.test.InterpretedResult
+import shared.test.PersonList
+import shared.test.Person
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
@@ -86,8 +87,16 @@ object TutorialApp extends JSApp {
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
       val bytes = toByteBuffer(e.data)
-      val persons = Unpickle[Seq[Person]].fromBytes(bytes)
-      println(persons)
+      val resp = Unpickle[Response].fromBytes(bytes)
+      resp match {
+        case InterpretedResult(id, res) ⇒
+          println(s"retrieved interpreted result for id '$id'")
+          $(s"#$id").html(s"<pre><code>$res</code></pre>")
+        case PersonList(persons) ⇒
+          println(s"retrieved persons: $persons")
+        case p: Person ⇒
+          println(s"retrieved person: $p")
+      }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
       println(s"error from ws: $e")
@@ -107,12 +116,12 @@ object TutorialApp extends JSApp {
     data.arrayBuffer
   }
 
-  private def mkKeyMap: js.Object = {
+  private def mkKeyMap(id: String): js.Object = {
     js.Dynamic.literal(
       "Ctrl-Enter" → { (e: Editor) ⇒
         import boopickle.Default._
         val code = e.getDoc().getValue()
-        val msg = Pickle.intoBytes[Request](Interpret(code))
+        val msg = Pickle.intoBytes[Request](Interpret(id, code))
         ws.send(toArrayBuffer(msg))
       }
     )
@@ -129,15 +138,15 @@ object TutorialApp extends JSApp {
 
       val name = "editor"+editors.size
       val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")
-      editor.editor.addKeyMap(mkKeyMap)
+      editor.editor.addKeyMap(mkKeyMap(editor.resultDiv.id))
 
       editors += name → editor
       val r = div(id := s"$name-outer", editor.editorDiv, editor.resultDiv).render
-      editor.editor.on("keyup", (e: Editor) ⇒ {
+      /*editor.editor.on("keyup", (e: Editor) ⇒ {
         val code = e.getDoc().getValue()
         editor.resultDiv.innerHTML = code
       })
-      /*CodeMirror.on(editor.editor, "change", (_: Editor, change: EditorChange) ⇒ {
+      CodeMirror.on(editor.editor, "change", (_: Editor, change: EditorChange) ⇒ {
         dom.console.log(change)
       })
       CodeMirror.on(editor.editor, "keydown", (_: Editor, e: KeyboardEvent) ⇒ {
