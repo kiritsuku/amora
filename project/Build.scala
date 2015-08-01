@@ -65,6 +65,7 @@ object Build extends sbt.Build {
   lazy val backend = project in file("backend") settings commonSettings ++ Revolver.settings ++ Seq(
     name := "scalajs-test-backend",
 
+    resolvers += Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= deps.backend.value,
 
     // add *fastopt.js file to resources
@@ -91,7 +92,10 @@ object Build extends sbt.Build {
     lazy val backend = Def.setting(Seq(
       "com.typesafe.akka" %% "akka-http-experimental" % "1.0",
       "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.scalameta" % "scalameta" % "0.1.0-SNAPSHOT" cross CrossVersion.binary,
+      "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
+      "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT"
     ))
 
     lazy val sjsTest = Def.setting(Seq(
