@@ -95,7 +95,10 @@ object Build extends sbt.Build {
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       "org.scalameta" % "scalameta" % "0.1.0-SNAPSHOT" cross CrossVersion.binary,
       "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
-      "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT"
+      "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT",
+      // https://github.com/ChrisNeveu/macrame
+      "com.chrisneveu" %% "macrame" % "1.0.1",
+      compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
     ))
 
     lazy val sjsTest = Def.setting(Seq(
