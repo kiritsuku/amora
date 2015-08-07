@@ -13,7 +13,9 @@ import java.io.PrintStream
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
 
-object ReplApp extends App {
+object ReplApp
+//extends App
+{
   val repl = new Repl
   val x = repl.interpret("var x = 0")
   println(s">>>$x<<<")
