@@ -116,7 +116,8 @@ object Build extends sbt.Build {
     lazy val webjars = Def.setting(Seq(
       "org.webjars" % "codemirror" % "5.5" / "codemirror.js",
       // https://github.com/chjj/marked
-      "org.webjars.bower" % "marked" % "0.3.3" / "marked.js"
+      "org.webjars.bower" % "marked" % "0.3.3" / "marked.js",
+      "org.webjars" % "d3js" % "3.5.5-1" / "d3.js"
     ))
 
     lazy val common = Def.setting(Seq(
