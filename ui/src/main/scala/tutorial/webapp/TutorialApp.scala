@@ -76,55 +76,11 @@ object TutorialApp extends JSApp {
   def setupD3() = {
     import scalatags.JsDom._, svgTags._, svgAttrs._, implicits._
 
-    // test 3
     val elem = svg(`class` := "svgtest", width := "200", height := "200").render
     val radi = Seq(40 -> "purple", 20 -> "green", 10 -> "red")
     for ((cur, curStyle) <- radi)
       elem appendChild circle(cx := 50, cy := 50, r := cur, style := s"fill:$curStyle;").render
     $("body").append(elem)
-
-    /*
-    // test 2
-    val elem = svg(`class` := "chart").render
-    $("body").append(elem)
-
-    val data = js.Array(4, 8, 15, 16, 23, 42)
-    val w = 420
-    val h = 20
-    val scale = jsc.d3.scale.linear()
-      .domain(js.Array(0, jsc.d3.max(data)))
-      .range(js.Array(0, 420))
-    val chart = jsc.d3.select(".chart")
-      .attr("width", w)
-      .attr("height", h*data.length)
-    val bar = chart.selectAll("g")
-        .data(data)
-      .enter().append("g")
-        .attr("transform", (d: Int, i: Int) => s"translate(0,${i*h})")
-
-    bar.append("rect")
-      .attr("width", scale)
-      .attr("height", h-1)
-    bar.append("text")
-      .attr("x", (d: Int) => scale(d).asInstanceOf[Double] - 3)
-      .attr("y", h/2)
-      .attr("dy", "0.35em")
-      .text((d: Int) => d)
-    */
-
-    /*
-    // test 1
-    import scalatags.JsDom.all._
-    val chart = div(`class` := "chart").render
-    $("body").append(chart)
-
-    jsc.d3.select(".chart")
-      .selectAll("div")
-        .data(data)
-      .enter().append("div")
-        .style("width", (d: Int) ⇒ scale(d) + "px")
-        .text((d: Int) ⇒ d)
-    */
   }
 
   def setupWS() = {

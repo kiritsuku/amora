@@ -25,11 +25,11 @@ class Ui {
     val params = EditorConfig.mode(editorMode).theme("solarized")
     val e = CodeMirror.fromTextArea(ta, params)
     e.setSize("50%", 50)
-    
+
     val r = resultDiv(s"$divId-result")
     AEditor(d, r, e)
   }
-  
+
   def resultDiv(
       divId: String) = {
     val d = div(id := divId).render
