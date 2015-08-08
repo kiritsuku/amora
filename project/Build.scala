@@ -83,6 +83,10 @@ object Build extends sbt.Build {
     watchSources ++= (watchSources in sharedJvm).value
   ) dependsOn (sharedJvm)
 
+  object versions {
+    val scalatags = "0.5.2"
+  }
+
   object deps {
     lazy val shared = Def.setting(Seq(
       // https://github.com/ochrons/boopickle
@@ -98,7 +102,8 @@ object Build extends sbt.Build {
       "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT",
       // https://github.com/ChrisNeveu/macrame
       "com.chrisneveu" %% "macrame" % "1.0.1",
-      compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full)
+      compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
+      "com.lihaoyi" %%% "scalatags" % versions.scalatags
     ))
 
     lazy val sjsTest = Def.setting(Seq(
@@ -110,7 +115,7 @@ object Build extends sbt.Build {
       // https://github.com/antonkulaga/codemirror-facade
       "org.denigma" %%% "codemirror-facade" % "5.5-0.5",
       // https://github.com/lihaoyi/scalatags
-      "com.lihaoyi" %%% "scalatags" % "0.5.2"
+      "com.lihaoyi" %%% "scalatags" % versions.scalatags
     ))
 
     lazy val webjars = Def.setting(Seq(

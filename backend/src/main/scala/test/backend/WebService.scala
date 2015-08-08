@@ -13,19 +13,29 @@ import shared.test.Person
 import akka.stream.stage.PushStage
 import akka.stream.stage.Context
 import java.nio.ByteBuffer
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.MediaType
+import akka.http.scaladsl.model.MediaTypes
 
 class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
   private val bs = new BackendSystem()
 
   def route = get {
-    pathSingleSlash(getFromResource("index.html")) ~
+    pathSingleSlash(complete {
+      val content = Content.indexPage(
+        cssDeps = Seq("default.css", "codemirror.css", "solarized.css"),
+        jsDeps = Seq("scalajs-test-ui-jsdeps.js", "scalajs-test-ui-fastopt.js", "clike.js", "markdown.js", "scalajs-test-ui-launcher.js")
+      )
+      HttpEntity(MediaTypes.`text/html`, content)
+    }) ~
     path("scalajs-test-ui-jsdeps.js")(getFromResource("scalajs-test-ui-jsdeps.js")) ~
     path("scalajs-test-ui-fastopt.js")(getFromResource("scalajs-test-ui-fastopt.js")) ~
     path("scalajs-test-ui-launcher.js")(getFromResource("scalajs-test-ui-launcher.js")) ~
     path("marked.js")(getFromResource("marked/lib/marked.js")) ~
     path("clike.js")(getFromResource("codemirror/mode/clike/clike.js")) ~
     path("markdown.js")(getFromResource("codemirror/mode/markdown/markdown.js")) ~
+    path("default.css")(getFromResource("default.css")) ~
     path("codemirror.css")(getFromResource("codemirror/lib/codemirror.css")) ~
     path("solarized.css")(getFromResource("codemirror/theme/solarized.css")) ~
     path("communication") {
