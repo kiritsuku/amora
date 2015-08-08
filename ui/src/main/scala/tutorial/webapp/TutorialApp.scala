@@ -77,20 +77,11 @@ object TutorialApp extends JSApp {
     import scalatags.JsDom._, svgTags._, svgAttrs._, implicits._
 
     // test 3
-    val elem = svg(`class` := "svgtest", width := "50", height := "50").render
-    val c = circle(cx := 25, cy := 25, r := 25, style := "fill:purple;").render
-    elem.appendChild(c)
+    val elem = svg(`class` := "svgtest", width := "200", height := "200").render
+    val radi = Seq(40 -> "purple", 20 -> "green", 10 -> "red")
+    for ((cur, curStyle) <- radi)
+      elem appendChild circle(cx := 50, cy := 50, r := cur, style := s"fill:$curStyle;").render
     $("body").append(elem)
-
-    jsc.d3.select("body").append("svg")
-      .attr("width", 50)
-      .attr("height", 50)
-      .append("circle")
-      .attr("cx", 25)
-      .attr("cy", 25)
-      .attr("r", 25)
-      .style("fill", "purple")
-
 
     /*
     // test 2
