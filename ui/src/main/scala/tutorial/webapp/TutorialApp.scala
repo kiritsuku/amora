@@ -42,7 +42,7 @@ object TutorialApp extends JSApp {
     setupUI()
   }
 
-  private var editors = Map[String, AEditor]()
+  private val bm = new BufferManager
   private var ws: WebSocket = _
 
   def setupDivs() = {
@@ -100,8 +100,9 @@ object TutorialApp extends JSApp {
       val resp = Unpickle[Response].fromBytes(bytes)
       resp match {
         case InterpretedResult(id, res) ⇒
-          println(s"retrieved interpreted result for id '$id'")
-          $(s"#$id").html(s"<pre><code>$res</code></pre>")
+          val resultBuf = bm.resultBufOf(BufferRef(id)) // TODO remove BufferRef construction here
+          println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
+          $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
         case PersonList(persons) ⇒
           println(s"retrieved persons: $persons")
         case p: Person ⇒
@@ -126,15 +127,44 @@ object TutorialApp extends JSApp {
     data.arrayBuffer
   }
 
-  private def mkKeyMap(id: String): js.Object = {
+  private def mkKeyMap(buf: Buffer): js.Object = {
     js.Dynamic.literal(
       "Ctrl-Enter" → { (e: Editor) ⇒
+        mkResult(buf.ref)
+
         import boopickle.Default._
         val code = e.getDoc().getValue()
-        val msg = Pickle.intoBytes[Request](Interpret(id, code))
+        val msg = Pickle.intoBytes[Request](Interpret(buf.ref.id, code))
         ws.send(toArrayBuffer(msg))
       }
     )
+  }
+
+  def mkResult(editorRef: BufferRef): Unit = {
+    val buf = bm.mkResultBuf(editorRef)
+
+    val divType = ui.bufferDiv(buf)
+    divType match {
+      case DivType.Result(div) ⇒
+        $("body").append(div)
+
+      case res ⇒
+        ??? // unexpected codepath
+    }
+  }
+
+  def mkEditor(): Unit = {
+    val buf = bm.mkEditorBuf("text/x-scala")
+
+    val divType = ui.bufferDiv(buf)
+    divType match {
+      case DivType.Editor(div, editor) ⇒
+        editor.addKeyMap(mkKeyMap(buf))
+        $("body").append(div)
+
+      case res ⇒
+        ??? // unexpected codepath
+    }
   }
 
   def setupTheButton() = {
@@ -142,28 +172,7 @@ object TutorialApp extends JSApp {
 
     val b = button(id := "click-me-button", `type` := "button", "Click me!").render
     b.onclick = (_: MouseEvent) ⇒ {
-      import boopickle.Default._
-      val msg = Pickle.intoBytes[Request](Execute("the message"))
-      ws.send(toArrayBuffer(msg))
-
-      val name = "editor"+editors.size
-      val editor = ui.editorDiv(name, s"$name-ta", "text/x-scala")
-      editor.editor.addKeyMap(mkKeyMap(editor.resultDiv.id))
-
-      editors += name → editor
-      val r = div(id := s"$name-outer", editor.editorDiv, editor.resultDiv).render
-      /*editor.editor.on("keyup", (e: Editor) ⇒ {
-        val code = e.getDoc().getValue()
-        editor.resultDiv.innerHTML = code
-      })
-      CodeMirror.on(editor.editor, "change", (_: Editor, change: EditorChange) ⇒ {
-        dom.console.log(change)
-      })
-      CodeMirror.on(editor.editor, "keydown", (_: Editor, e: KeyboardEvent) ⇒ {
-        if (e.key == "Enter")
-          println("enter pressed")
-      })*/
-      $("body").append(r)
+      mkEditor()
     }
     $(s"#${divs.parent}").append(b)
   }
