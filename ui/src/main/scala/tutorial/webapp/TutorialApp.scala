@@ -2,6 +2,7 @@ package tutorial.webapp
 
 import java.nio.ByteBuffer
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.{global => jsg, newInstance => jsnew}
 import scala.scalajs.js.JSApp
 import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
@@ -25,7 +26,6 @@ import shared.test.Person
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
-  private val jsc = js.Dynamic.global
 
   private val ui = new Ui
 
@@ -65,7 +65,7 @@ object TutorialApp extends JSApp {
 
     def renderMarkdown(): Unit = {
       val markdown = eRight.getDoc().getValue()
-      $(s"#${divs.render}").html(jsc.marked(markdown).toString())
+      $(s"#${divs.render}").html(jsg.marked(markdown).toString())
     }
 
     eRight.on("keyup", (_: Editor) ⇒ renderMarkdown())
