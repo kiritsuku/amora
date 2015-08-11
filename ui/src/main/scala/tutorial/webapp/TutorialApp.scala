@@ -131,6 +131,9 @@ object TutorialApp extends JSApp {
     js.Dynamic.literal(
       "Ctrl-Enter" → { (e: Editor) ⇒
         mkResult(buf.ref)
+        val resultBuf = bm.resultBufOf(buf.ref)
+        // TODO replace by spinner
+        $(s"#${resultBuf.ref.id}").html(s"<pre><code>...</code></pre>")
 
         import boopickle.Default._
         val code = e.getDoc().getValue()
