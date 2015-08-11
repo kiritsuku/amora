@@ -43,7 +43,9 @@ class Ui {
       val editorId = s"$divId-ta"
       val ta = textarea(id := editorId, rows := 1, cols := 50).render.asInstanceOf[HTMLTextAreaElement]
       val editorDiv = div(id := divId, ta).render
-      val params = EditorConfig.mode(editorMode).theme("solarized").viewportMargin(1e6.toInt)
+      val params = EditorConfig.mode(editorMode)
+          .theme("solarized")
+          .autofocus(true)
       val editor = CodeMirror.fromTextArea(ta, params)
 
       editor.setSize("50%", "auto")
