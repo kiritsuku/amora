@@ -103,6 +103,7 @@ object TutorialApp extends JSApp {
           val resultBuf = bm.resultBufOf(BufferRef(id)) // TODO remove BufferRef construction here
           println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
+          mkEditor()
         case PersonList(persons) ⇒
           println(s"retrieved persons: $persons")
         case p: Person ⇒
