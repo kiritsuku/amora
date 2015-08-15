@@ -9,6 +9,8 @@ import spray.revolver.RevolverPlugin._
 
 object Build extends sbt.Build {
 
+  val genElectronMain = TaskKey[Unit]("gen-electron-main", "Generates Electron application's main file.")
+
   lazy val commonSettings = Seq(
     scalaVersion := "2.11.7",
     scalacOptions ++= Seq(
@@ -58,6 +60,56 @@ object Build extends sbt.Build {
     jsDependencies ++= deps.webjars.value,
     testFrameworks += new TestFramework("utest.runner.Framework"),
 
+    /*
+     * We need to generate the Electron's main files "package.json" and "main.js".
+     */
+    genElectronMain := {
+      import java.nio.charset.Charset
+      // TODO we rely on the files written on disk but it would be better to be able to get the actual content directly from the tasks
+      val launchCode = IO.read((packageScalaJSLauncher in Compile).value.data, Charset.forName("UTF-8"))
+      val jsCode = IO.read((fastOptJS in Compile).value.data, Charset.forName("UTF-8"))
+
+      val pkgJson = """
+      {
+        "name": "electron-demo",
+        "version": "0.1",
+        "main": "main.js",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/sschaef/scalajs-test"
+        },
+        "license": "MIT"
+      }
+      """.stripMargin
+
+      // hack to get require and __dirname to work in the main process
+      // see https://gitter.im/scala-js/scala-js/archives/2015/04/25
+      val mainJs = s"""
+        var addGlobalProps = function(obj) {
+          obj.require = require;
+          obj.__dirname = __dirname;
+        }
+
+        if((typeof __ScalaJSEnv === "object") && typeof __ScalaJSEnv.global === "object") {
+          addGlobalProps(__ScalaJSEnv.global);
+        } else if(typeof  global === "object") {
+          addGlobalProps(global);
+        } else if(typeof __ScalaJSEnv === "object") {
+          __ScalaJSEnv.global = {};
+          addGlobalProps(__ScalaJSEnv.global);
+        } else {
+          var __ScalaJSEnv = { global: {} };
+          addGlobalProps(__ScalaJSEnv.global)
+        }
+        $jsCode
+        $launchCode
+      """
+
+      val dest = (classDirectory in Compile).value / ".."
+      IO.write(dest / "package.json", pkgJson)
+      IO.write(dest / "main.js", mainJs)
+    },
+
     persistLauncher in Compile := true,
     persistLauncher in Test := false
   ) dependsOn (sharedJs)
@@ -76,6 +128,8 @@ object Build extends sbt.Build {
     resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in ui).map(r => Seq(r.data)),
     // add *jsdeps.js file to resources
     resourceGenerators in Compile <+= (packageJSDependencies in Compile in ui).map(Seq(_)),
+    // depend on the genElectronMain task but don't add its generated resources since we don't need to route them at runtime
+    resourceGenerators in Compile <+= (genElectronMain in Compile in ui).map(_ => Seq()),
     // add folder of webjars to resources
     unmanagedResourceDirectories in Compile += (WebKeys.webTarget in Compile in ui).value / "web-modules" / "main" / "webjars" / "lib",
 

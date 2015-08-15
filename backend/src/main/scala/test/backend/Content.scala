@@ -9,15 +9,14 @@ object Content {
       head(
         meta(charset := "UTF-8"),
         tags2.title("First Scala.js steps"),
-        for (d <- cssDeps) yield
-          link(rel := "stylesheet", `type` := "text/css", href := d)
+        for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
       ),
       body(
-        for (d <- jsDeps) yield
-          script(`type` := "text/javascript", src := d)
+        script(`type` := "text/javascript", src := "scalajs-test-ui-jsdeps.js", onload := "window.$ = window.jQuery = module.exports;"),
+        (for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)),
+        script(`type` := "text/javascript", "tutorial.webapp.TutorialApp().main();")
       )
     )
   }
 
 }
-

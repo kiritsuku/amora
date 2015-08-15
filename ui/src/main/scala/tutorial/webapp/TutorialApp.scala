@@ -23,8 +23,10 @@ import shared.test.Response
 import shared.test.InterpretedResult
 import shared.test.PersonList
 import shared.test.Person
+import scala.scalajs.js.annotation.JSExport
 
-object TutorialApp extends JSApp {
+@JSExport
+object TutorialApp {
   private val $ = jQuery
 
   private val ui = new Ui
@@ -38,7 +40,8 @@ object TutorialApp extends JSApp {
     val left = "left"
   }
 
-  override def main(): Unit = {
+  @JSExport
+  def main(): Unit = {
     setupUI()
   }
 
