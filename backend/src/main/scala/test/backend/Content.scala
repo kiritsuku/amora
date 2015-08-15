@@ -13,8 +13,7 @@ object Content {
       ),
       body(
         script(`type` := "text/javascript", src := "scalajs-test-ui-jsdeps.js", onload := "window.$ = window.jQuery = module.exports;"),
-        (for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)),
-        script(`type` := "text/javascript", "tutorial.webapp.TutorialApp().main();")
+        for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )
     )
   }

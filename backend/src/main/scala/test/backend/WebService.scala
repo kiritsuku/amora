@@ -25,7 +25,7 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     pathSingleSlash(complete {
       val content = Content.indexPage(
         cssDeps = Seq("default.css", "codemirror.css", "solarized.css"),
-        jsDeps = Seq("scalajs-test-ui-fastopt.js", "clike.js", "markdown.js")
+        jsDeps = Seq("scalajs-test-ui-fastopt.js", "clike.js", "markdown.js", "scalajs-test-ui-launcher.js")
       )
       HttpEntity(MediaTypes.`text/html`, content)
     }) ~
