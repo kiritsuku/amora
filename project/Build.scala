@@ -47,18 +47,12 @@ object Build extends sbt.Build {
 
   lazy val sharedJs = shared.js
 
-  lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
-    name := "scalajs-test-ui",
-    scalaJSStage in Global := FastOptStage,
+  lazy val electron = project in file("electron") enablePlugins(ScalaJSPlugin) settings commonSettings ++ Seq(
+    name := "scalajs-test-electron",
+    scalaJSStage in Global := FullOptStage,
 
-    resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
-
-    libraryDependencies ++= deps.sjs.value ++ deps.sjsTest.value ++ deps.common.value,
-
-    skip in packageJSDependencies := false,
-    jsDependencies += RuntimeDOM,
-    jsDependencies ++= deps.webjars.value,
-    testFrameworks += new TestFramework("utest.runner.Framework"),
+    persistLauncher in Compile := true,
+    persistLauncher in Test := false,
 
     /*
      * We need to generate the Electron's main files "package.json" and "main.js".
@@ -108,7 +102,21 @@ object Build extends sbt.Build {
       val dest = (classDirectory in Compile).value / ".."
       IO.write(dest / "package.json", pkgJson)
       IO.write(dest / "main.js", mainJs)
-    },
+    }
+  )
+
+  lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
+    name := "scalajs-test-ui",
+    scalaJSStage in Global := FastOptStage,
+
+    resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
+
+    libraryDependencies ++= deps.sjs.value ++ deps.sjsTest.value ++ deps.common.value,
+
+    skip in packageJSDependencies := false,
+    jsDependencies += RuntimeDOM,
+    jsDependencies ++= deps.webjars.value,
+    testFrameworks += new TestFramework("utest.runner.Framework"),
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false
@@ -129,7 +137,7 @@ object Build extends sbt.Build {
     // add *jsdeps.js file to resources
     resourceGenerators in Compile <+= (packageJSDependencies in Compile in ui).map(Seq(_)),
     // depend on the genElectronMain task but don't add its generated resources since we don't need to route them at runtime
-    resourceGenerators in Compile <+= (genElectronMain in Compile in ui).map(_ => Seq()),
+    resourceGenerators in Compile <+= (genElectronMain in Compile in electron).map(_ => Seq()),
     // add folder of webjars to resources
     unmanagedResourceDirectories in Compile += (WebKeys.webTarget in Compile in ui).value / "web-modules" / "main" / "webjars" / "lib",
 
