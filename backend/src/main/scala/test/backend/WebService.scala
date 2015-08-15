@@ -42,6 +42,9 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
       parameter('name) { name ⇒
         handleWebsocketMessages(websocketFlow(sender = name))
       }
+    } ~
+    rejectEmptyResponse {
+      path("favicon.ico")(getFromResource("favicon.ico", MediaTypes.`image/x-icon`))
     }
   }
 
