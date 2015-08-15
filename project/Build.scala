@@ -49,7 +49,6 @@ object Build extends sbt.Build {
 
   lazy val electron = project in file("electron") enablePlugins(ScalaJSPlugin) settings commonSettings ++ Seq(
     name := "scalajs-test-electron",
-    scalaJSStage in Global := FullOptStage,
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false,
@@ -61,7 +60,7 @@ object Build extends sbt.Build {
       import java.nio.charset.Charset
       // TODO we rely on the files written on disk but it would be better to be able to get the actual content directly from the tasks
       val launchCode = IO.read((packageScalaJSLauncher in Compile).value.data, Charset.forName("UTF-8"))
-      val jsCode = IO.read((fastOptJS in Compile).value.data, Charset.forName("UTF-8"))
+      val jsCode = IO.read((fullOptJS in Compile).value.data, Charset.forName("UTF-8"))
 
       val pkgJson = """
       {
