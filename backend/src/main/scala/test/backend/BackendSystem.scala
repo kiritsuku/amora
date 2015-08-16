@@ -1,6 +1,7 @@
 package test.backend
 
 import java.nio.ByteBuffer
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
@@ -10,12 +11,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import shared.test.Interpret
-import shared.test.Person
-import shared.test.Request
-import shared.test.InterpretedResult
-import shared.test.PersonList
-import shared.test.Response
+import shared.test._
 
 class BackendSystem(implicit system: ActorSystem) {
 
@@ -29,9 +25,16 @@ class BackendSystem(implicit system: ActorSystem) {
 
     override def receive = {
       case NewClient(sender, subject) ⇒
-        context.watch(subject)
-        clients += sender → subject
-        println(s"'$sender' joined")
+        if (clients.contains(sender)) {
+          println(s"'$sender' already exists")
+          subject ! ConnectionFailure
+        }
+        else {
+          context.watch(subject)
+          clients += sender → subject
+          println(s"'$sender' joined")
+          subject ! ConnectionSuccessful
+        }
       case ReceivedMessage(sender, msg) ⇒
         println(s"'$sender' sent '$msg'")
         msg match {

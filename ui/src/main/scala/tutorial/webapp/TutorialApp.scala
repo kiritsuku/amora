@@ -1,9 +1,11 @@
 package tutorial.webapp
 
 import java.nio.ByteBuffer
+
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => jsg, newInstance => jsnew}
 import scala.scalajs.js.JSApp
+
 import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
 import org.denigma.codemirror.extensions.EditorConfig
@@ -15,15 +17,8 @@ import org.scalajs.dom.raw.MessageEvent
 import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
-import shared.test.Execute
-import shared.test.Interpret
-import shared.test.Person
-import shared.test.Request
-import shared.test.Response
-import shared.test.InterpretedResult
-import shared.test.PersonList
-import shared.test.Person
-import scala.scalajs.js.annotation.JSExport
+
+import shared.test._
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
@@ -100,13 +95,22 @@ object TutorialApp extends JSApp {
       val bytes = toByteBuffer(e.data)
       val resp = Unpickle[Response].fromBytes(bytes)
       resp match {
+        case ConnectionSuccessful ⇒
+          println("connection successful")
+
+        case ConnectionFailure ⇒
+          println("connection failure")
+          // TODO what to do here?
+
         case InterpretedResult(id, res) ⇒
           val resultBuf = bm.resultBufOf(BufferRef(id)) // TODO remove BufferRef construction here
           println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
           mkEditor()
+
         case PersonList(persons) ⇒
           println(s"retrieved persons: $persons")
+
         case p: Person ⇒
           println(s"retrieved person: $p")
       }
