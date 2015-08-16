@@ -53,8 +53,9 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
           case scalaz.-\/(e) =>
             p.failure(e)
 
-          case scalaz.\/-(Response(rtype, id, error, result)) =>
-            converter(result) match {
+          case scalaz.\/-(resp) =>
+            system.log.debug("retrieved response: " + resp)
+            converter(resp.result) match {
               case Success(value) => p.success(value)
               case Failure(f) => p.failure(f)
             }
