@@ -29,12 +29,12 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
   private val gen = new IdGenerator
 
   def sendRequest[A]
-      (command: String, params: Seq[String])
+      (command: String, params: Seq[MsgpackUnion])
       (converter: MsgpackUnion => Try[A])
       (implicit ec: ExecutionContext)
       : Future[A] = {
     val id = gen.nextId()
-    val ps = MsgpackUnion.array(params.map(MsgpackUnion.string)(collection.breakOut))
+    val ps = MsgpackUnion.array(params.toList)
     val req = Request(0, id, command, ps)
 
     implicit val m = ActorMaterializer()

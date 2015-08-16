@@ -3,15 +3,21 @@ package nvim
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 import akka.actor.ActorSystem
 import msgpack4z.MsgpackArray
 import msgpack4z.MsgpackExt
+import nvim.internal.NvimHelper
 
-class Nvim(val connection: Connection)(implicit val system: ActorSystem) {
+final case class Nvim(connection: Connection)(implicit val system: ActorSystem) {
 
-  def buffers(implicit ec: ExecutionContext): Future[Seq[Int]] = {
+  def apiInfo(implicit ec: ExecutionContext): Future[String] = {
+    connection.sendRequest("vim_get_api_info", Seq())(u => Success(NvimHelper.msgpackUnionAsString(u, nest = 0)))
+  }
+
+  def buffers(implicit ec: ExecutionContext): Future[Seq[Buffer]] = {
     connection.sendRequest("vim_get_buffers", Seq()) {
       case MsgpackArray(xs) => Try {
         val types = xs.forall(_.isInstanceOf[MsgpackExt])
@@ -21,7 +27,8 @@ class Nvim(val connection: Connection)(implicit val system: ActorSystem) {
         else {
           xs map { x => (x: @unchecked) match {
             case MsgpackExt(exttype, bin) =>
-              bin.value.head.toInt
+              val id = bin.value.head.toInt
+              Buffer(id, connection)
           }}
         }
       }
