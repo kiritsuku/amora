@@ -1,21 +1,16 @@
 package test.backend
 
-import java.io.PrintWriter
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
-import akka.http.scaladsl.model.ws.TextMessage
 import akka.http.scaladsl.server.Directives
 import akka.stream.Materializer
 import akka.stream.scaladsl.Flow
-import akka.util.CompactByteString
-import shared.test.Person
-import akka.stream.stage.PushStage
 import akka.stream.stage.Context
-import java.nio.ByteBuffer
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.MediaType
-import akka.http.scaladsl.model.MediaTypes
+import akka.stream.stage.PushStage
+import akka.util.CompactByteString
 
 class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -38,6 +33,9 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     path("default.css")(getFromResource("default.css")) ~
     path("codemirror.css")(getFromResource("codemirror/lib/codemirror.css")) ~
     path("solarized.css")(getFromResource("codemirror/theme/solarized.css")) ~
+    path("auth") {
+      handleWebsocketMessages(authClientFlow())
+    } ~
     path("communication") {
       parameter('name) { name ⇒
         handleWebsocketMessages(websocketFlow(sender = name))
@@ -48,6 +46,17 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     }
   }
 
+  def authClientFlow(): Flow[Message, Message, Unit] =
+    Flow[Message]
+    .collect {
+      case BinaryMessage.Strict(bs) ⇒ bs.toByteBuffer
+    }
+    .via(bs.authFlow())
+    .map {
+      case c ⇒ BinaryMessage(CompactByteString(c))
+    }
+    .via(reportErrorsFlow())
+
   def websocketFlow(sender: String): Flow[Message, Message, Unit] =
     Flow[Message]
     .collect {
@@ -57,9 +66,9 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     .map {
       case c ⇒ BinaryMessage(CompactByteString(c))
     }
-    .via(reportErrorsFlow)
+    .via(reportErrorsFlow())
 
-  def reportErrorsFlow[A]: Flow[A, A, Unit] =
+  def reportErrorsFlow[A](): Flow[A, A, Unit] =
     Flow[A].transform { () => new PushStage[A, A] {
       override def onPush(elem: A, ctx: Context[A]) = ctx push elem
       override def onUpstreamFailure(cause: Throwable, ctx: Context[A]) = {

@@ -24,17 +24,24 @@ class BackendSystem(implicit system: ActorSystem) {
     var clients = Map.empty[String, ActorRef]
 
     override def receive = {
-      case NewClient(sender, subject) ⇒
+      case NewClient(subject) ⇒
+        val sender = "client" + clients.size
+        println(s"New client '$sender' seen")
+        subject ! ConnectionSuccessful(sender)
+
+      case ClientReady(sender, subject) ⇒
         if (clients.contains(sender)) {
           println(s"'$sender' already exists")
+          // TODO this can only happen when multiple clients try to join at nearly the same moment
           subject ! ConnectionFailure
         }
         else {
           context.watch(subject)
           clients += sender → subject
           println(s"'$sender' joined")
-          subject ! ConnectionSuccessful
+          subject ! ConnectionSuccessful(sender)
         }
+
       case ReceivedMessage(sender, msg) ⇒
         println(s"'$sender' sent '$msg'")
         msg match {
@@ -44,6 +51,7 @@ class BackendSystem(implicit system: ActorSystem) {
           case msg ⇒
             clients(sender) ! PersonList(persons)
         }
+
       case ClientLeft(sender) ⇒
         clients -= sender
         println(s"'$sender' left")
@@ -52,13 +60,21 @@ class BackendSystem(implicit system: ActorSystem) {
 
   def sink(sender: String): Sink[Msg, Unit] = Sink.actorRef[Msg](actor, ClientLeft(sender))
 
+  def authFlow(): Flow[ByteBuffer, ByteBuffer, Unit] = {
+    val out = Source
+      .actorRef[Response](1, OverflowStrategy.fail)
+      .mapMaterializedValue { actor ! NewClient(_) }
+      .map(Pickle.intoBytes(_))
+    Flow.wrap(Sink.ignore, out)(Keep.none)
+  }
+
   def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, Unit] = {
     val in = Flow[ByteBuffer]
       .map(b ⇒ ReceivedMessage(sender, Unpickle[Request].fromBytes(b)))
       .to(sink(sender))
     val out = Source
       .actorRef[Response](1, OverflowStrategy.fail)
-      .mapMaterializedValue { actor ! NewClient(sender, _) }
+      .mapMaterializedValue { actor ! ClientReady(sender, _) }
       .map(Pickle.intoBytes(_))
     Flow.wrap(in, out)(Keep.none)
   }
@@ -67,4 +83,5 @@ class BackendSystem(implicit system: ActorSystem) {
 sealed trait Msg
 case class ReceivedMessage(sender: String, req: Request) extends Msg
 case class ClientLeft(sender: String) extends Msg
-case class NewClient(sender: String, subject: ActorRef) extends Msg
+case class NewClient(subject: ActorRef) extends Msg
+case class ClientReady(sender: String, subject: ActorRef) extends Msg

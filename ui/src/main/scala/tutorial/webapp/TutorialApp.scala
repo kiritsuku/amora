@@ -2,6 +2,7 @@ package tutorial.webapp
 
 import java.nio.ByteBuffer
 
+import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => jsg, newInstance => jsnew}
 import scala.scalajs.js.JSApp
@@ -40,6 +41,7 @@ object TutorialApp extends JSApp {
 
   private val bm = new BufferManager
   private var ws: WebSocket = _
+  private var clientName: String = _
 
   def setupDivs() = {
     import scalatags.JsDom.all._
@@ -79,24 +81,66 @@ object TutorialApp extends JSApp {
     $("body").append(elem)
   }
 
-  def setupWS() = {
-    def websocketUri(name: String): String = {
-      val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-      s"$wsProtocol://localhost:9999/communication?name=$name"
-    }
-
-    ws = new WebSocket(websocketUri("client1"))
+  def authenticate() = {
+    val ws = new WebSocket("ws://localhost:9999/auth")
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
       println("connection opened")
+    }
+    ws.onerror = (e: ErrorEvent) => {
+      dom.console.error(s"Couldn't create connection to server: $e")
     }
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
       val bytes = toByteBuffer(e.data)
       val resp = Unpickle[Response].fromBytes(bytes)
       resp match {
-        case ConnectionSuccessful ⇒
+        case ConnectionSuccessful(name) ⇒
+          clientName = name
           println("connection successful")
+
+          import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
+          Future(setupWS())
+
+        case ConnectionFailure ⇒
+          println("connection failure")
+          // TODO what to do here?
+
+        case msg =>
+          dom.console.error(s"Unexpected message: $msg")
+      }
+      ws.close()
+    }
+  }
+
+  def setupWS() = {
+    def websocketUri(name: String): String = {
+      val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
+      s"$wsProtocol://localhost:9999/communication?name=$name"
+    }
+
+    ws = new WebSocket(websocketUri(clientName))
+    ws.binaryType = "arraybuffer"
+    ws.onopen = (e: Event) ⇒ {
+      println("connection opened")
+    }
+    ws.onerror = (e: ErrorEvent) => {
+      dom.console.error(s"Couldn't create connection to server: $e")
+    }
+    ws.onmessage = (e: MessageEvent) ⇒ {
+      import boopickle.Default._
+      val bytes = toByteBuffer(e.data)
+      val resp = Unpickle[Response].fromBytes(bytes)
+      resp match {
+        case ConnectionSuccessful(name) ⇒
+          if (clientName != name) {
+            // TODO what to do when this happens? It is probably a bug on the server
+            dom.console.error(s"$clientName != $name")
+            println("connection failure")
+            clientName = null
+          }
+          else
+            println("connection successful")
 
         case ConnectionFailure ⇒
           println("connection failure")
@@ -191,7 +235,7 @@ object TutorialApp extends JSApp {
     setupEditors()
     setupD3()
     setupTheButton()
-    setupWS()
+    authenticate()
   }
 
   def setupEditor(id: String, mode: String): Option[Editor] = {
