@@ -3,7 +3,7 @@ package nvim
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.util.Failure
-import scala.util.Success
+import scala.util.Try
 
 import akka.actor.ActorSystem
 import msgpack4z.MsgpackArray
@@ -13,16 +13,18 @@ class Nvim(val connection: Connection)(implicit val system: ActorSystem) {
 
   def buffers(implicit ec: ExecutionContext): Future[Seq[Int]] = {
     connection.sendRequest("vim_get_buffers", Seq()) {
-      case MsgpackArray(xs) =>
+      case MsgpackArray(xs) => Try {
         val types = xs.forall(_.isInstanceOf[MsgpackExt])
 
         if (!types)
-          Failure(new UnexpectedResponse(s"expected: Seq[MsgpackExt], got: $xs"))
-        else
-          Success(xs map { x => (x: @unchecked) match {
+          throw new UnexpectedResponse(s"expected: Seq[MsgpackExt], got: $xs")
+        else {
+          xs map { x => (x: @unchecked) match {
             case MsgpackExt(exttype, bin) =>
-              bin.value.mkString.toInt
-          }})
+              bin.value.head.toInt
+          }}
+        }
+      }
 
       case res =>
         Failure(new UnexpectedResponse(s"expected: MsgpackArray, got: $res"))

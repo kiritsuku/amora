@@ -11,6 +11,8 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import nvim.Connection
+import nvim.Nvim
 import shared.test._
 
 final class BackendSystem(implicit system: ActorSystem) {
@@ -22,6 +24,7 @@ final class BackendSystem(implicit system: ActorSystem) {
   val actor = system.actorOf(Props(new Actor {
     val repl = new Repl
     var clients = Map.empty[String, ActorRef]
+    val nvim = new Nvim(new Connection("127.0.0.1", 6666))
 
     override def receive = {
       case NewClient(subject) ⇒
@@ -46,6 +49,13 @@ final class BackendSystem(implicit system: ActorSystem) {
         println(s"'$sender' sent '$msg'")
         msg match {
           case Interpret(id, expr) =>
+            import scala.concurrent.ExecutionContext.Implicits.global
+            val buffers = nvim.buffers
+            buffers.onComplete {
+              case util.Success(s) => println("nvim buffers: " + s)
+              case util.Failure(f) => f.printStackTrace()
+            }
+
             val res = repl.interpret(expr)
             clients(sender) ! InterpretedResult(id, res)
           case msg ⇒
