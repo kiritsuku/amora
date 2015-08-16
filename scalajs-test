@@ -1,0 +1,11 @@
+#!/bin/bash
+
+path="electron/target/scala-2.11"
+
+# Check if electron main files exist
+[ ! -d $"$path" ] && echo >&2 "error: electron main files do not yet exist, please run the sbt build first." && exit 1
+
+# Check if electron is installed
+command -v electron > /dev/null 2>&1 || { echo >&2 "error: command 'electron' does not exist. You have to install it first."; exit 1; }
+
+electron "$path"
