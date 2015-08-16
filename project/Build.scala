@@ -121,6 +121,12 @@ object Build extends sbt.Build {
     persistLauncher in Test := false
   ) dependsOn (sharedJs)
 
+  lazy val nvim = project in file("nvim") settings commonSettings ++ Seq(
+    name := "scalajs-test-nvim",
+
+    libraryDependencies ++= deps.nvim.value
+  )
+
   lazy val backend = project in file("backend") settings commonSettings ++ Revolver.settings ++ Seq(
     name := "scalajs-test-backend",
 
@@ -142,7 +148,7 @@ object Build extends sbt.Build {
 
     // once the server is started, we also want to restart it on changes in the shared project
     watchSources ++= (watchSources in sharedJvm).value
-  ) dependsOn (sharedJvm)
+  ) dependsOn (sharedJvm, nvim)
 
   object versions {
     val scalatags = "0.5.2"
@@ -165,6 +171,14 @@ object Build extends sbt.Build {
       "com.chrisneveu" %% "macrame" % "1.0.1",
       compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
       "com.lihaoyi" %%% "scalatags" % versions.scalatags
+    ))
+
+    lazy val nvim = Def.setting(Seq(
+      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+      // https://github.com/msgpack4z/msgpack4z-core
+      "com.github.xuwei-k" %% "msgpack4z-core" % "0.1.6",
+      // https://github.com/msgpack4z/msgpack4z-java07
+      "com.github.xuwei-k" % "msgpack4z-java07" % "0.1.6"
     ))
 
     lazy val sjsTest = Def.setting(Seq(
