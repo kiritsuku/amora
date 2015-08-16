@@ -13,7 +13,7 @@ import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import shared.test._
 
-class BackendSystem(implicit system: ActorSystem) {
+final class BackendSystem(implicit system: ActorSystem) {
 
   import boopickle.Default._
   val persons = Seq(Person("myname", 50), Person("anothername", 26))
@@ -58,8 +58,6 @@ class BackendSystem(implicit system: ActorSystem) {
     }
   }))
 
-  def sink(sender: String): Sink[Msg, Unit] = Sink.actorRef[Msg](actor, ClientLeft(sender))
-
   def authFlow(): Flow[ByteBuffer, ByteBuffer, Unit] = {
     val out = Source
       .actorRef[Response](1, OverflowStrategy.fail)
@@ -69,6 +67,8 @@ class BackendSystem(implicit system: ActorSystem) {
   }
 
   def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, Unit] = {
+    def sink(sender: String) = Sink.actorRef[Msg](actor, ClientLeft(sender))
+
     val in = Flow[ByteBuffer]
       .map(b ⇒ ReceivedMessage(sender, Unpickle[Request].fromBytes(b)))
       .to(sink(sender))

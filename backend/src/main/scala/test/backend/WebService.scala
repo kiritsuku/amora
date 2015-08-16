@@ -1,5 +1,7 @@
 package test.backend
 
+import java.nio.ByteBuffer
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.MediaTypes
@@ -12,7 +14,7 @@ import akka.stream.stage.Context
 import akka.stream.stage.PushStage
 import akka.util.CompactByteString
 
-class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
+final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
   private val bs = new BackendSystem()
 
@@ -38,7 +40,7 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     } ~
     path("communication") {
       parameter('name) { name ⇒
-        handleWebsocketMessages(websocketFlow(sender = name))
+        handleWebsocketMessages(communicationFlow(sender = name))
       }
     } ~
     rejectEmptyResponse {
@@ -46,29 +48,24 @@ class WebService(implicit m: Materializer, system: ActorSystem) extends Directiv
     }
   }
 
-  def authClientFlow(): Flow[Message, Message, Unit] =
+  private def withWebsocketFlow(flow: Flow[ByteBuffer, ByteBuffer, Unit]): Flow[Message, Message, Unit] =
     Flow[Message]
     .collect {
       case BinaryMessage.Strict(bs) ⇒ bs.toByteBuffer
     }
-    .via(bs.authFlow())
+    .via(flow)
     .map {
       case c ⇒ BinaryMessage(CompactByteString(c))
     }
     .via(reportErrorsFlow())
 
-  def websocketFlow(sender: String): Flow[Message, Message, Unit] =
-    Flow[Message]
-    .collect {
-      case BinaryMessage.Strict(bs) ⇒ bs.toByteBuffer
-    }
-    .via(bs.messageFlow(sender))
-    .map {
-      case c ⇒ BinaryMessage(CompactByteString(c))
-    }
-    .via(reportErrorsFlow())
+  private def authClientFlow(): Flow[Message, Message, Unit] =
+    withWebsocketFlow(bs.authFlow())
 
-  def reportErrorsFlow[A](): Flow[A, A, Unit] =
+  private def communicationFlow(sender: String): Flow[Message, Message, Unit] =
+    withWebsocketFlow(bs.messageFlow(sender))
+
+  private def reportErrorsFlow[A](): Flow[A, A, Unit] =
     Flow[A].transform { () => new PushStage[A, A] {
       override def onPush(elem: A, ctx: Context[A]) = ctx push elem
       override def onUpstreamFailure(cause: Throwable, ctx: Context[A]) = {
