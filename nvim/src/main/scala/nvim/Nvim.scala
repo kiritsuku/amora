@@ -2,13 +2,11 @@ package nvim
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
 
 import akka.actor.ActorSystem
 import msgpack4z.MsgpackArray
 import msgpack4z.MsgpackExt
+import msgpack4z.MsgpackUnion
 import nvim.internal.NvimHelper
 
 final case class Nvim(connection: Connection)(implicit val system: ActorSystem) {
@@ -18,6 +16,15 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
       case u ⇒ NvimHelper.msgpackUnionAsString(u, nest = 0)
     }
   }
+
+  /**
+   * Sends `cmd` to Nvim. Example usage:
+   * {{{
+   * nvim.sendVimCommand(":help")
+   * }}}
+   */
+  def sendVimCommand(cmd: String): Unit =
+    connection.sendNotification("vim_command", MsgpackUnion.string(cmd))
 
   def buffers(implicit ec: ExecutionContext): Future[Seq[Buffer]] = {
     connection.sendRequest("vim_get_buffers") {
