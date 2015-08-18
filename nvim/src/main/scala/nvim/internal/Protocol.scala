@@ -3,11 +3,11 @@ package nvim.internal
 import msgpack4z._
 import msgpack4z.CodecInstances.all._
 
-final case class Request(`type`: Int, id: Int, name: String, params: MsgpackUnion = MsgpackUnion.array(List())) {
+final case class Request(tpe: Int, id: Int, name: String, params: MsgpackUnion = MsgpackUnion.array(List())) {
   override def toString = {
     val sb = new StringBuilder
     sb.append("Request(\n")
-    sb.append("  type: ").append(`type`).append(",\n")
+    sb.append("  type: ").append(tpe).append(",\n")
     sb.append("  id: ").append(id).append(",\n")
     sb.append("  name: ").append(name).append(",\n")
     sb.append("  params: ").append(NvimHelper.msgpackUnionAsString(params, nest = 1)).append("\n")
@@ -19,11 +19,11 @@ object Request {
   implicit val instance: MsgpackCodec[Request] = CaseCodec.codec(Request.apply _, Request.unapply _)
 }
 
-final case class Response(`type`: Int, id: Int, error: MsgpackUnion, result: MsgpackUnion) {
+final case class Response(tpe: Int, id: Int, error: MsgpackUnion, result: MsgpackUnion) {
   override def toString = {
     val sb = new StringBuilder
     sb.append("Response(\n")
-    sb.append("  type: ").append(`type`).append(",\n")
+    sb.append("  type: ").append(tpe).append(",\n")
     sb.append("  id: ").append(id).append(",\n")
     sb.append("  error: ").append(NvimHelper.msgpackUnionAsString(error, nest = 1)).append(",\n")
     sb.append("  result: ").append(NvimHelper.msgpackUnionAsString(result, nest = 1)).append("\n")
@@ -33,6 +33,21 @@ final case class Response(`type`: Int, id: Int, error: MsgpackUnion, result: Msg
 }
 object Response {
   implicit val instance: MsgpackCodec[Response] = CaseCodec.codec(Response.apply _, Response.unapply _)
+}
+
+final case class Notification(tpe: Int, method: String, params: MsgpackUnion) {
+  override def toString = {
+    val sb = new StringBuilder
+    sb.append("Notification(\n")
+    sb.append("  type: ").append(tpe).append(",\n")
+    sb.append("  method: ").append(method).append(",\n")
+    sb.append("  params: ").append(NvimHelper.msgpackUnionAsString(params, nest = 1)).append("\n")
+    sb.append(")")
+    sb.toString
+  }
+}
+object Notification {
+  implicit val instance: MsgpackCodec[Notification] = CaseCodec.codec(Notification.apply _, Notification.unapply _)
 }
 
 object NvimHelper {
