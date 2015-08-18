@@ -29,8 +29,8 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
   private val gen = new IdGenerator
 
   def sendRequest[A]
-      (command: String, params: Seq[MsgpackUnion])
-      (converter: MsgpackUnion => Try[A])
+      (command: String, params: MsgpackUnion*)
+      (converter: PartialFunction[MsgpackUnion, A])
       (implicit ec: ExecutionContext)
       : Future[A] = {
     val id = gen.nextId()
@@ -55,10 +55,13 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
           case scalaz.\/-(resp) =>
             system.log.debug("retrieved response: " + resp)
-            converter(resp.result) match {
-              case Success(value) => p.success(value)
-              case Failure(f) => p.failure(f)
-            }
+            if (!converter.isDefinedAt(resp.result))
+              p.failure(new UnexpectedResponse(resp.result.toString))
+            else
+              Try(converter(resp.result)) match {
+                case Success(value) => p.success(value)
+                case Failure(f) => p.failure(f)
+              }
         }
 
       case Failure(e) =>

@@ -12,12 +12,9 @@ import msgpack4z.MsgpackUnion
 final case class Buffer(id: Int, connection: Connection)(implicit system: ActorSystem) {
 
   def name(implicit ec: ExecutionContext): Future[String] = {
-    connection.sendRequest("buffer_get_name", Seq(MsgpackUnion.int(id))) {
+    connection.sendRequest("buffer_get_name", MsgpackUnion.int(id)) {
       case MsgpackBinary(bin) =>
-        Success(new String(bin, "UTF-8"))
-
-      case res =>
-        Failure(new UnexpectedResponse(s"expected: MsgpackArray, got: $res"))
+        new String(bin, "UTF-8")
     }
   }
 }
