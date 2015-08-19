@@ -2,6 +2,7 @@ package tutorial.webapp
 
 import org.scalajs.dom
 import org.denigma.{codemirror ⇒ cm}
+import scala.scalajs.js.Dynamic.{global => jsg}
 import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom.raw.HTMLTextAreaElement
@@ -40,11 +41,32 @@ class Ui {
     val divId = buf.ref.id
 
     def mkEditorDiv(editorMode: String) = {
+      def enterVimMode(e: cm.Editor) = {
+        e.setOption("disableInput", true)
+        e.setOption("showCursorWhenSelecting", false)
+      }
+      def leaveVimMode(e: cm.Editor) = {
+        e.setOption("disableInput", false)
+        e.setOption("showCursorWhenSelecting", true)
+      }
+      def attach(e: cm.Editor) = {
+        jsg.CodeMirror.addClass(e.getWrapperElement(), "cm-fat-cursor")
+        enterVimMode(e)
+      }
+      def detach(e: cm.Editor) = {
+        jsg.CodeMirror.rmClass(e.getWrapperElement(), "cm-fat-cursor")
+        leaveVimMode(e)
+      }
+
       val editorId = s"$divId-ta"
       val ta = textarea(id := editorId).render.asInstanceOf[HTMLTextAreaElement]
       val editorDiv = div(id := divId, ta).render
       val params = EditorConfig.mode(editorMode)
           .theme("solarized")
+          .extraKeys(scalajs.js.Dynamic.literal(
+              "F6" → {(e: cm.Editor) ⇒ attach(e) },
+              "F7" → {(e: cm.Editor) ⇒ detach(e) }
+          ))
       val editor = CodeMirror.fromTextArea(ta, params)
       f(editor)
 
