@@ -36,12 +36,25 @@ object TutorialApp extends JSApp {
   }
 
   override def main(): Unit = {
-    setupUI()
+    setupUI2()
   }
 
   private val bm = new BufferManager
   private var ws: WebSocket = _
   private var clientName: String = _
+
+  def setupUI2() = {
+    import scalatags.JsDom.all._
+    val par = div(id := divs.parent, `class` := "fullscreen").render
+    val buf = bm.mkEditorBuf("text/x-scala")
+
+    val b = ui.bufferDiv(buf) { editor ⇒
+      editor.setSize("100vw", "100vh")
+    }
+    par.appendChild(b.div)
+
+    $("body").append(par)
+  }
 
   def setupDivs() = {
     import scalatags.JsDom.all._
@@ -196,7 +209,9 @@ object TutorialApp extends JSApp {
   def mkResult(editorRef: BufferRef): Unit = {
     val buf = bm.mkResultBuf(editorRef)
 
-    val divType = ui.bufferDiv(buf)
+    val divType = ui.bufferDiv(buf) { editor ⇒
+      editor.setSize("50%", "auto")
+    }
     divType match {
       case DivType.Result(div) ⇒
         $("body").append(div)
@@ -209,7 +224,10 @@ object TutorialApp extends JSApp {
   def mkEditor(): Unit = {
     val buf = bm.mkEditorBuf("text/x-scala")
 
-    val divType = ui.bufferDiv(buf)
+    val divType = ui.bufferDiv(buf) { editor ⇒
+      editor.setSize("50%", "auto")
+    }
+
     divType match {
       case DivType.Editor(div, editor) ⇒
         editor.addKeyMap(mkKeyMap(buf))

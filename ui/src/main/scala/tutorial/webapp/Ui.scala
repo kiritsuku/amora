@@ -36,19 +36,18 @@ class Ui {
     d
   }
 
-  def bufferDiv(buf: Buffer): DivType.DivType = {
+  def bufferDiv(buf: Buffer)(f: cm.Editor ⇒ Unit): DivType.DivType = {
     val divId = buf.ref.id
 
     def mkEditorDiv(editorMode: String) = {
       val editorId = s"$divId-ta"
-      val ta = textarea(id := editorId, rows := 1, cols := 50).render.asInstanceOf[HTMLTextAreaElement]
+      val ta = textarea(id := editorId).render.asInstanceOf[HTMLTextAreaElement]
       val editorDiv = div(id := divId, ta).render
       val params = EditorConfig.mode(editorMode)
           .theme("solarized")
-          .autofocus(true)
       val editor = CodeMirror.fromTextArea(ta, params)
+      f(editor)
 
-      editor.setSize("50%", "auto")
       DivType.Editor(editorDiv, editor)
     }
 
