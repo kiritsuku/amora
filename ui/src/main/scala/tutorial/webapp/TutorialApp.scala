@@ -50,7 +50,6 @@ object TutorialApp extends JSApp {
   private var ws: WebSocket = _
   private var clientName: String = _
   private var keyMap = Set[Int]()
-  private var ignoreEvent = false
 
   def setupUI2() = {
     import scalatags.JsDom.all._
@@ -59,7 +58,6 @@ object TutorialApp extends JSApp {
 
     val b = ui.bufferDiv2(buf)
     par.appendChild(b)
-    b.onkeydown = (e: KeyboardEvent) ⇒ {
     def handleKeyUpDown(e: KeyboardEvent): Boolean = {
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
@@ -80,23 +78,9 @@ object TutorialApp extends JSApp {
       false /* prevent default action */
     }
 
-    b.onkeydown = (e: KeyboardEvent) ⇒ {
-      if (!ignoreEvent)
-        handleKeyUpDown(e)
-      else {
-        ignoreEvent = false
-        true
-      }
-    }
+    b.onkeydown = handleKeyUpDown _
     b.onkeyup = b.onkeydown
-    b.onkeypress = (e: KeyboardEvent) ⇒ {
-      if (!ignoreEvent)
-        handleKeyPress(e)
-      else {
-        ignoreEvent = false
-        true
-      }
-    }
+    b.onkeypress = handleKeyPress _
     // TODO focus lost does not work here
     b.onfocusout = (_: FocusEvent) ⇒ keyMap = Set()
     $("body").append(par)
