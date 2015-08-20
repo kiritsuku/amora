@@ -20,11 +20,17 @@ import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
 import shared.test._
+import org.scalajs.dom.raw.KeyboardEvent
+import org.scalajs.dom.raw.FocusEvent
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
 
   private val ui = new Ui
+
+  implicit class AsDynamic[A](private val a: A) extends AnyVal {
+    def d: js.Dynamic = a.asInstanceOf[js.Dynamic]
+  }
 
   private object divs {
     val parent = "parent"
@@ -42,17 +48,23 @@ object TutorialApp extends JSApp {
   private val bm = new BufferManager
   private var ws: WebSocket = _
   private var clientName: String = _
+  private var keyMap = Set[Int]()
 
   def setupUI2() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent, `class` := "fullscreen").render
     val buf = bm.mkEditorBuf("text/x-scala")
 
-    val b = ui.bufferDiv(buf) { editor ⇒
-      editor.setSize("100vw", "100vh")
-    }
-    par.appendChild(b.div)
+    val b = ui.bufferDiv2(buf)
+    par.appendChild(b)
+    b.onkeydown = (e: KeyboardEvent) ⇒ {
+      val isDown = e.`type` == "keydown"
+      keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
+
+    }
+    b.onkeyup = b.onkeydown
+    b.onfocusout = (_: FocusEvent) ⇒ keyMap = Set()
     $("body").append(par)
   }
 

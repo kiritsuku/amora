@@ -37,6 +37,13 @@ class Ui {
     d
   }
 
+  def bufferDiv2(buf: Buffer) = {
+    val divId = buf.ref.id
+    val editorId = s"$divId-ta"
+    val ta = textarea(id := editorId, `class` := "fullscreen", style := "resize: none;").render.asInstanceOf[HTMLTextAreaElement]
+    ta
+  }
+
   def bufferDiv(buf: Buffer)(f: cm.Editor ⇒ Unit): DivType.DivType = {
     val divId = buf.ref.id
 
