@@ -18,7 +18,8 @@ object ElectronMain extends JSApp {
     var w: BrowserWindow = null
 
     app.on("ready", () => {
-      w = BrowserWindow(width = 800, height = 600)
+      w = BrowserWindow(width = 1000, height = 800)
+      w.maximize()
       // TODO don't hardcode URL and port here
       w.loadUrl("http://localhost:9999")
       w.openDevTools()
