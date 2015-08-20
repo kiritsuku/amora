@@ -46,18 +46,19 @@ final class BackendSystem(implicit system: ActorSystem) {
         }
 
       case ReceivedMessage(sender, msg) ⇒
-        println(s"'$sender' sent '$msg'")
         msg match {
           case Interpret(id, expr) =>
-            import scala.concurrent.ExecutionContext.Implicits.global
-            val buffers = nvim.buffers
-            buffers.onComplete {
-              case util.Success(s) => println("nvim buffers: " + s)
-              case util.Failure(f) => f.printStackTrace()
-            }
-
             val res = repl.interpret(expr)
             clients(sender) ! InterpretedResult(id, res)
+
+          case in: Input ⇒
+            import scala.concurrent.ExecutionContext.Implicits.global
+            val resp = Update.tupled(Input.unapply(in).get)
+            for {
+              bs ← nvim.buffers
+              _ ← nvim.sendInput(in.text)
+            } clients(sender) ! resp
+
           case msg ⇒
             clients(sender) ! PersonList(persons)
         }

@@ -29,7 +29,7 @@ object TutorialApp extends JSApp {
   private val ui = new Ui
 
   implicit class AsDynamic[A](private val a: A) extends AnyVal {
-    def d: js.Dynamic = a.asInstanceOf[js.Dynamic]
+    def jsg: js.Dynamic = a.asInstanceOf[js.Dynamic]
   }
 
   private object divs {
@@ -42,6 +42,7 @@ object TutorialApp extends JSApp {
   }
 
   override def main(): Unit = {
+    authenticate()
     setupUI2()
   }
 
@@ -49,6 +50,7 @@ object TutorialApp extends JSApp {
   private var ws: WebSocket = _
   private var clientName: String = _
   private var keyMap = Set[Int]()
+  private var ignoreEvent = false
 
   def setupUI2() = {
     import scalatags.JsDom.all._
@@ -58,12 +60,44 @@ object TutorialApp extends JSApp {
     val b = ui.bufferDiv2(buf)
     par.appendChild(b)
     b.onkeydown = (e: KeyboardEvent) ⇒ {
+    def handleKeyUpDown(e: KeyboardEvent): Boolean = {
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
 
+      true
+    }
+
+    def handleKeyPress(e: KeyboardEvent): Boolean = {
+      val character = jsg.String.fromCharCode(e.jsg.which).toString
+
+      println(s"> $character")
+      import boopickle.Default._
+      val input = Input(b.id, 0, 0, character)
+      val msg = Pickle.intoBytes[Request](input)
+      ws.send(toArrayBuffer(msg))
+
+      false /* prevent default action */
+    }
+
+    b.onkeydown = (e: KeyboardEvent) ⇒ {
+      if (!ignoreEvent)
+        handleKeyUpDown(e)
+      else {
+        ignoreEvent = false
+        true
+      }
     }
     b.onkeyup = b.onkeydown
+    b.onkeypress = (e: KeyboardEvent) ⇒ {
+      if (!ignoreEvent)
+        handleKeyPress(e)
+      else {
+        ignoreEvent = false
+        true
+      }
+    }
+    // TODO focus lost does not work here
     b.onfocusout = (_: FocusEvent) ⇒ keyMap = Set()
     $("body").append(par)
   }
@@ -182,6 +216,9 @@ object TutorialApp extends JSApp {
 
         case p: Person ⇒
           println(s"retrieved person: $p")
+
+        case u @ Update(bufferRef, start, end, text) ⇒
+          println(s"received update: $u")
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
