@@ -51,6 +51,9 @@ object TutorialApp extends JSApp {
   private var clientName: String = _
   private var keyMap = Set[Int]()
 
+  // used to measure running time of code
+  private var startTime: js.Dynamic = _
+
   def setupUI2() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent, `class` := "fullscreen").render
@@ -67,6 +70,7 @@ object TutorialApp extends JSApp {
     }
 
     def handleKeyPress(e: KeyboardEvent): Boolean = {
+      startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
       println(s"> $character")
@@ -203,6 +207,12 @@ object TutorialApp extends JSApp {
 
         case u @ Update(bufferRef, start, end, text) ⇒
           println(s"received update: $u")
+          val ta = dom.document.getElementById(bufferRef).asInstanceOf[HTMLTextAreaElement]
+
+          val endTime = jsg.performance.now()
+          val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
+          println(s"update time: $time")
+          ta.value += text
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
