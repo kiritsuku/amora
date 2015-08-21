@@ -4,9 +4,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
-import msgpack4z.MsgpackArray
-import msgpack4z.MsgpackBinary
-import msgpack4z.MsgpackLong
+import msgpack4z._
 import msgpack4z.MsgpackUnion._
 
 /**
@@ -75,6 +73,20 @@ final case class Buffer(id: Int, connection: Connection)(implicit system: ActorS
           lines map { x => (x: @unchecked) match {
             case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
           }}
+    }
+  }
+
+  /**
+   * Returns the position of the mark that is associated with `name`.
+   * @example {{{
+   * val lastChangePosition = buffer.mark('.')
+   * // this returns the position where the last change occurred in current buffer
+   * }}}
+   */
+  def mark(name: Char)(implicit ec: ExecutionContext): Future[Position] = {
+    connection.sendRequest("buffer_get_mark", int(id), string(name.toString)) {
+      case MsgpackArray(List(MsgpackLong(row), MsgpackLong(col))) ⇒
+        Position(row.toInt, col.toInt)
     }
   }
 
