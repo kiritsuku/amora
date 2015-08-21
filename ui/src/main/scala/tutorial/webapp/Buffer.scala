@@ -1,8 +1,8 @@
 package tutorial.webapp
 
-case class Buffer(ref: BufferRef, tpe: BufferType.BufferType)
+import shared.test.BufferRef
 
-case class BufferRef(id: String)
+case class Buffer(ref: BufferRef, tpe: BufferType.BufferType)
 
 object BufferType {
   sealed trait BufferType

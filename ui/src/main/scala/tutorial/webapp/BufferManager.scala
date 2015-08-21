@@ -1,5 +1,7 @@
 package tutorial.webapp
 
+import shared.test.BufferRef
+
 class BufferManager {
 
   private var buffers = Map[BufferRef, Buffer]()

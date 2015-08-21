@@ -13,15 +13,15 @@ import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom
 import org.scalajs.dom.raw.ErrorEvent
 import org.scalajs.dom.raw.Event
+import org.scalajs.dom.raw.FocusEvent
 import org.scalajs.dom.raw.HTMLTextAreaElement
+import org.scalajs.dom.raw.KeyboardEvent
 import org.scalajs.dom.raw.MessageEvent
 import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
 import shared.test._
-import org.scalajs.dom.raw.KeyboardEvent
-import org.scalajs.dom.raw.FocusEvent
 
 object TutorialApp extends JSApp {
   private val $ = jQuery
@@ -61,12 +61,30 @@ object TutorialApp extends JSApp {
 
     val b = ui.bufferDiv2(buf)
     par.appendChild(b)
+
     def handleKeyUpDown(e: KeyboardEvent): Boolean = {
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
+      if (isDown) {
+        val controlSeq = if (e.keyCode == 8) "<bs>" else ""
+        if (controlSeq.nonEmpty) {
+          // TODO don't create BufferRef manually here
+          val input = Control(BufferRef(b.id), 0, 0, controlSeq)
+          send(input)
+        }
+      }
+
+      println(keyMap)
 
       true
+    }
+
+    def send(req: Request): Unit = {
+      import boopickle.Default._
+      val msg = Pickle.intoBytes(req)
+      ws.send(toArrayBuffer(msg))
+      println(s"> sent: $input")
     }
 
     def handleKeyPress(e: KeyboardEvent): Boolean = {
@@ -74,10 +92,9 @@ object TutorialApp extends JSApp {
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
       println(s"> $character")
-      import boopickle.Default._
-      val input = Input(b.id, 0, 0, character)
-      val msg = Pickle.intoBytes[Request](input)
-      ws.send(toArrayBuffer(msg))
+      // TODO don't create BufferRef manually here
+      val input = TextChange(BufferRef(b.id), 0, 0, character)
+      send(input)
 
       false /* prevent default action */
     }
@@ -87,6 +104,7 @@ object TutorialApp extends JSApp {
     b.onkeypress = handleKeyPress _
     // TODO focus lost does not work here
     b.onfocusout = (_: FocusEvent) ⇒ keyMap = Set()
+
     $("body").append(par)
   }
 
@@ -205,9 +223,9 @@ object TutorialApp extends JSApp {
         case p: Person ⇒
           println(s"retrieved person: $p")
 
-        case u @ Update(bufferRef, start, end, text) ⇒
-          println(s"received update: $u")
-          val ta = dom.document.getElementById(bufferRef).asInstanceOf[HTMLTextAreaElement]
+        case change @ TextChangeAnswer(bufferRef, start, end, text) ⇒
+          println(s"> received: $change")
+          val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]

@@ -51,13 +51,29 @@ final class BackendSystem(implicit system: ActorSystem) {
             val res = repl.interpret(expr)
             clients(sender) ! InterpretedResult(id, res)
 
-          case in: Input ⇒
+          case change @ TextChange(bufferRef, start, end, text) ⇒
+            println(s"> received: $change")
             import scala.concurrent.ExecutionContext.Implicits.global
-            val resp = Update.tupled(Input.unapply(in).get)
             for {
               bs ← nvim.buffers
-              _ ← nvim.sendInput(in.text)
-            } clients(sender) ! resp
+              _ ← nvim.sendInput(text)
+            } {
+              val resp = TextChangeAnswer(bufferRef, start, end, text)
+              clients(sender) ! resp
+              println(s"> sent: $resp")
+            }
+
+          case control @ Control(bufferRef, start, end, controlSeq) ⇒
+            println(s"> received: $control")
+            import scala.concurrent.ExecutionContext.Implicits.global
+            for {
+              bs ← nvim.buffers
+              _ ← nvim.sendInput(controlSeq)
+            } {
+              val resp = TextChangeAnswer(bufferRef, start, end, "")
+              clients(sender) ! resp
+              println(s"> sent: $resp")
+            }
 
           case msg ⇒
             clients(sender) ! PersonList(persons)
