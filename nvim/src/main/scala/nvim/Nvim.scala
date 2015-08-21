@@ -4,10 +4,8 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
 import akka.actor.ActorSystem
-import msgpack4z.MsgpackArray
-import msgpack4z.MsgpackExt
-import msgpack4z.MsgpackLong
-import msgpack4z.MsgpackUnion
+import msgpack4z._
+import msgpack4z.MsgpackUnion._
 import nvim.internal.NvimHelper
 
 final case class Nvim(connection: Connection)(implicit val system: ActorSystem) {
@@ -28,7 +26,7 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
    * }}}
    */
   def sendVimCommand(cmd: String): Unit =
-    connection.sendNotification("vim_command", MsgpackUnion.string(cmd))
+    connection.sendNotification("vim_command", string(cmd))
 
   /**
    * Sends `input` to Nvim. If the request was successful, Nvim will answer with
@@ -38,11 +36,14 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
    * }}}
    */
   def sendInput(input: String)(implicit ec: ExecutionContext): Future[Long] = {
-    connection.sendRequest("vim_input", MsgpackUnion.string(input)) {
+    connection.sendRequest("vim_input", string(input)) {
       case MsgpackLong(long) => long
     }
   }
 
+  /**
+   * Returns all existing Nvim buffers.
+   */
   def buffers(implicit ec: ExecutionContext): Future[Seq[Buffer]] = {
     connection.sendRequest("vim_get_buffers") {
       case MsgpackArray(xs) ⇒
@@ -50,10 +51,21 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
           throw new UnexpectedResponse(xs.toString)
         else
           xs map { x => (x: @unchecked) match {
-            case MsgpackExt(exttype, bin) ⇒
+            case MsgpackExt(0, bin) ⇒
               val id = bin.value.head.toInt
               Buffer(id, connection)
           }}
+    }
+  }
+
+  /**
+   * Returns the active Nvim buffer.
+   */
+  def currentBuffer(implicit ec: ExecutionContext): Future[Buffer] = {
+    connection.sendRequest("vim_get_current_buffer") {
+      case MsgpackExt(0, bin) ⇒
+        val id = bin.value.head.toInt
+        Buffer(id, connection)
     }
   }
 }
