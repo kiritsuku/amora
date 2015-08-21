@@ -10,6 +10,10 @@ import nvim.internal.NvimHelper
 
 final case class Nvim(connection: Connection)(implicit val system: ActorSystem) {
 
+  private val BufferId = 0
+  private val WindowId = 1
+  private val TabpageId = 2
+
   def apiInfo(implicit ec: ExecutionContext): Future[String] = {
     connection.sendRequest("vim_get_api_info") {
       case u ⇒ NvimHelper.msgpackUnionAsString(u, nest = 0)
@@ -51,7 +55,7 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
           throw new UnexpectedResponse(xs.toString)
         else
           xs map { x => (x: @unchecked) match {
-            case MsgpackExt(0, bin) ⇒
+            case MsgpackExt(BufferId, bin) ⇒
               val id = bin.value.head.toInt
               Buffer(id, connection)
           }}
@@ -63,9 +67,37 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
    */
   def currentBuffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("vim_get_current_buffer") {
-      case MsgpackExt(0, bin) ⇒
+      case MsgpackExt(BufferId, bin) ⇒
         val id = bin.value.head.toInt
         Buffer(id, connection)
+    }
+  }
+
+  /**
+   * Returns all existing Nvim windows.
+   */
+  def windows(implicit ec: ExecutionContext): Future[Seq[Window]] = {
+    connection.sendRequest("vim_get_windows") {
+      case MsgpackArray(xs) ⇒
+        if (!xs.forall(_.isInstanceOf[MsgpackExt]))
+          throw new UnexpectedResponse(xs.toString)
+        else
+          xs map { x => (x: @unchecked) match {
+            case MsgpackExt(WindowId, bin) ⇒
+              val id = bin.value.head.toInt
+              Window(id, connection)
+          }}
+    }
+  }
+
+  /**
+   * Returns the current Nvim window.
+   */
+  def currentWindow(implicit ec: ExecutionContext): Future[Window] = {
+    connection.sendRequest("vim_get_current_window") {
+      case MsgpackExt(WindowId, bin) ⇒
+        val id = bin.value.head.toInt
+        Window(id, connection)
     }
   }
 }
