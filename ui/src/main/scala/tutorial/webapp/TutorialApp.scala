@@ -54,6 +54,27 @@ object TutorialApp extends JSApp {
   // used to measure running time of code
   private var startTime: js.Dynamic = _
 
+  private val vimMap = Map(
+    8  → "<bs>",
+    9  → "<tab>",
+    13 → "<enter>",
+    16 → "<shift>",
+    17 → "<ctrl>",
+    18 → "<alt>",
+    27 → "<esc>",
+    32 → "<space>",
+    33 → "<pageup>",
+    34 → "<pagedown>",
+    35 → "<end>",
+    36 → "<home>",
+    37 → "<left>",
+    38 → "<up>",
+    39 → "<right>",
+    40 → "<down>",
+    45 → "<ins>",
+    46 → "<del>"
+  )
+
   def setupUI2() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent, `class` := "fullscreen").render
@@ -67,7 +88,7 @@ object TutorialApp extends JSApp {
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
       if (isDown) {
-        val controlSeq = if (e.keyCode == 8) "<bs>" else ""
+        val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
           // TODO don't create BufferRef manually here
           val input = Control(BufferRef(b.id), 0, 0, controlSeq)
