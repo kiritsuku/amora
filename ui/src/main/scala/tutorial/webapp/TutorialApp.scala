@@ -239,12 +239,6 @@ object TutorialApp extends JSApp {
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
           mkEditor()
 
-        case PersonList(persons) ⇒
-          println(s"retrieved persons: $persons")
-
-        case p: Person ⇒
-          println(s"retrieved person: $p")
-
         case change @ TextChangeAnswer(bufferRef, start, end, text) ⇒
           println(s"> received: $change")
           val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]

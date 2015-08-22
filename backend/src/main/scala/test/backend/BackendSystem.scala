@@ -20,10 +20,7 @@ import shared.test._
 import scala.concurrent.ExecutionContext.Implicits.global
 
 final class BackendSystem(implicit system: ActorSystem) {
-
   import boopickle.Default._
-  val persons = Seq(Person("myname", 50), Person("anothername", 26))
-  def personBuf = Pickle.intoBytes(persons)
 
   val actor = system.actorOf(Props(new Actor {
     val repl = new Repl
@@ -93,9 +90,6 @@ final class BackendSystem(implicit system: ActorSystem) {
               case Failure(f) ⇒
                 system.log.error(f, s"Failed to send response after client request `$control`.")
             }
-
-          case msg ⇒
-            clients(sender) ! PersonList(persons)
         }
 
       case ClientLeft(sender) ⇒
