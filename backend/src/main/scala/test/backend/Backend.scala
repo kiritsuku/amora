@@ -24,8 +24,7 @@ object Backend extends App {
       val addr = binding.localAddress
       println(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
     case Failure(e) ⇒
-      Console.err.println(s"Binding failed with message '${e.getMessage}'")
-      e.printStackTrace()
+      system.log.error(e, "Failed to start server")
       system.shutdown()
   }
 }
