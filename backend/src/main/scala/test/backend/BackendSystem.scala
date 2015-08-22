@@ -2,6 +2,7 @@ package test.backend
 
 import java.nio.ByteBuffer
 
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.util.Failure
 import scala.util.Success
 
@@ -14,10 +15,8 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import nvim.Connection
-import nvim.Nvim
+import nvim._
 import shared.test._
-import scala.concurrent.ExecutionContext.Implicits.global
 
 final class BackendSystem(implicit system: ActorSystem) {
   import boopickle.Default._
@@ -55,6 +54,21 @@ final class BackendSystem(implicit system: ActorSystem) {
             val res = repl.interpret(expr)
             clients(sender) ! InterpretedResult(id, res)
 
+          case change @ SelectionChange(bufferRef, start, end) ⇒
+            println(s"> received: $change")
+            // TODO handle multi line cursor positions
+            val resp = window.flatMap(_.cursor = Position(1, start))
+
+            resp onComplete {
+              case Success(_) ⇒
+                val resp = SelectionChangeAnswer(bufferRef, start, start)
+                clients(sender) ! resp
+                println(s"> sent: $resp")
+
+              case Failure(f) ⇒
+                system.log.error(f, s"Failed to send response after client request `$change`.")
+            }
+
           case change @ TextChange(bufferRef, start, end, text) ⇒
             println(s"> received: $change")
             val newCursorPos = for {
@@ -65,6 +79,7 @@ final class BackendSystem(implicit system: ActorSystem) {
 
             newCursorPos onComplete {
               case Success(newCursorPos) ⇒
+                // TODO handle multi line cursor positions
                 val resp = TextChangeAnswer(bufferRef, newCursorPos.col, newCursorPos.col, text)
                 clients(sender) ! resp
                 println(s"> sent: $resp")

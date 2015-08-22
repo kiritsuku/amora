@@ -106,7 +106,7 @@ object TutorialApp extends JSApp {
       import boopickle.Default._
       val msg = Pickle.intoBytes(req)
       ws.send(toArrayBuffer(msg))
-      println(s"> sent: $input")
+      println(s"> sent: $req")
     }
 
     def handleKeyPress(e: KeyboardEvent): Boolean = {
@@ -121,10 +121,16 @@ object TutorialApp extends JSApp {
       false /* prevent default action */
     }
 
+    def handleMouseUp(e: MouseEvent): Unit = {
+      val input = SelectionChange(BufferRef(b.id), start, end)
+      send(input)
+    }
+
     b.onkeydown = handleKeyUpDown _
     b.onkeyup = b.onkeydown
     b.onkeypress = handleKeyPress _
     b.onblur = (_: FocusEvent) ⇒ keyMap = Set()
+    b.onmouseup = handleMouseUp _
 
     $("body").append(par)
   }
@@ -249,6 +255,13 @@ object TutorialApp extends JSApp {
           val len = text.length
           ta.selectionStart = start + len
           ta.selectionEnd = end + len
+
+        case change @ SelectionChangeAnswer(bufferRef, start, end) ⇒
+          println(s"> received: $change")
+          val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
+
+          ta.selectionStart = start
+          ta.selectionEnd = end
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
