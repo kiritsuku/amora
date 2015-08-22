@@ -124,8 +124,7 @@ object TutorialApp extends JSApp {
     b.onkeydown = handleKeyUpDown _
     b.onkeyup = b.onkeydown
     b.onkeypress = handleKeyPress _
-    // TODO focus lost does not work here
-    b.onfocusout = (_: FocusEvent) ⇒ keyMap = Set()
+    b.onblur = (_: FocusEvent) ⇒ keyMap = Set()
 
     $("body").append(par)
   }
