@@ -83,7 +83,11 @@ object TutorialApp extends JSApp {
     val b = ui.bufferDiv2(buf)
     par.appendChild(b)
 
-    def handleKeyUpDown(e: KeyboardEvent): Boolean = {
+    def start = b.selectionStart
+    def end = b.selectionEnd
+
+    def handleKeyUpDown(e: KeyboardEvent): Unit = {
+      startTime = jsg.performance.now()
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
@@ -91,14 +95,11 @@ object TutorialApp extends JSApp {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
           // TODO don't create BufferRef manually here
-          val input = Control(BufferRef(b.id), 0, 0, controlSeq)
+          val input = Control(BufferRef(b.id), start, end, controlSeq)
           send(input)
+          e.preventDefault()
         }
       }
-
-      println(keyMap)
-
-      true
     }
 
     def send(req: Request): Unit = {
@@ -114,7 +115,7 @@ object TutorialApp extends JSApp {
 
       println(s"> $character")
       // TODO don't create BufferRef manually here
-      val input = TextChange(BufferRef(b.id), 0, 0, character)
+      val input = TextChange(BufferRef(b.id), start, end, character)
       send(input)
 
       false /* prevent default action */
@@ -251,7 +252,10 @@ object TutorialApp extends JSApp {
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
-          ta.value += text
+          ta.value = ta.value.substring(0, start) + text + ta.value.substring(end)
+          val len = text.length
+          ta.selectionStart = start + len
+          ta.selectionEnd = end + len
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {

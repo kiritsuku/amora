@@ -17,6 +17,7 @@ import akka.stream.scaladsl.Source
 import nvim.Connection
 import nvim.Nvim
 import shared.test._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 final class BackendSystem(implicit system: ActorSystem) {
 
@@ -28,6 +29,9 @@ final class BackendSystem(implicit system: ActorSystem) {
     val repl = new Repl
     var clients = Map.empty[String, ActorRef]
     val nvim = new Nvim(new Connection("127.0.0.1", 6666))
+
+    // we cache window here in order to reduce communication overhead
+    val window = nvim.currentWindow
 
     override def receive = {
       case NewClient(subject) ⇒
@@ -56,12 +60,15 @@ final class BackendSystem(implicit system: ActorSystem) {
 
           case change @ TextChange(bufferRef, start, end, text) ⇒
             println(s"> received: $change")
-            import scala.concurrent.ExecutionContext.Implicits.global
-            val req = nvim.sendInput(text)
+            val newCursorPos = for {
+              _ ← nvim.sendInput(text)
+              win ← window
+              c ← win.cursor
+            } yield c
 
-            req.onComplete {
-              case Success(_) ⇒
-                val resp = TextChangeAnswer(bufferRef, start, end, text)
+            newCursorPos onComplete {
+              case Success(newCursorPos) ⇒
+                val resp = TextChangeAnswer(bufferRef, newCursorPos.col, newCursorPos.col, text)
                 clients(sender) ! resp
                 println(s"> sent: $resp")
 
@@ -71,12 +78,15 @@ final class BackendSystem(implicit system: ActorSystem) {
 
           case control @ Control(bufferRef, start, end, controlSeq) ⇒
             println(s"> received: $control")
-            import scala.concurrent.ExecutionContext.Implicits.global
-            val req = nvim.sendInput(controlSeq)
+            val newCursorPos = for {
+              _ ← nvim.sendInput(controlSeq)
+              win ← window
+              c ← win.cursor
+            } yield c
 
-            req.onComplete {
-              case Success(_) ⇒
-                val resp = TextChangeAnswer(bufferRef, start, end, "")
+            newCursorPos onComplete {
+              case Success(newCursorPos) ⇒
+                val resp = TextChangeAnswer(bufferRef, newCursorPos.col, newCursorPos.col, "")
                 clients(sender) ! resp
                 println(s"> sent: $resp")
 
