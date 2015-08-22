@@ -20,4 +20,12 @@ case class Window(id: Int, connection: Connection)(implicit system: ActorSystem)
     }
   }
 
+  /**
+   * Sets the cursor to `pos`.
+   */
+  def cursor_=(pos: Position)(implicit ec: ExecutionContext): Future[Unit] = {
+    connection.sendRequest("window_set_cursor", int(id), array(List(int(pos.row), int(pos.col)))) {
+      case _ ⇒ ()
+    }
+  }
 }
