@@ -66,6 +66,9 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
     val p = Promise[A]
 
     resp onComplete {
+      case Success(resp) if resp.isEmpty ⇒
+        p.failure(new InvalidResponse(s"response to the following request was empty: $req"))
+
       case Success(resp) =>
         val unpacker = Msgpack07Unpacker.defaultUnpacker(resp.toArray)
 
@@ -98,3 +101,5 @@ final class IdGenerator {
 
   def nextId(): Int = id.getAndIncrement
 }
+
+final class InvalidResponse(msg: String) extends RuntimeException(msg)

@@ -2,6 +2,9 @@ package test.backend
 
 import java.nio.ByteBuffer
 
+import scala.util.Failure
+import scala.util.Success
+
 import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
@@ -54,25 +57,31 @@ final class BackendSystem(implicit system: ActorSystem) {
           case change @ TextChange(bufferRef, start, end, text) ⇒
             println(s"> received: $change")
             import scala.concurrent.ExecutionContext.Implicits.global
-            for {
-              bs ← nvim.buffers
-              _ ← nvim.sendInput(text)
-            } {
-              val resp = TextChangeAnswer(bufferRef, start, end, text)
-              clients(sender) ! resp
-              println(s"> sent: $resp")
+            val req = nvim.sendInput(text)
+
+            req.onComplete {
+              case Success(_) ⇒
+                val resp = TextChangeAnswer(bufferRef, start, end, text)
+                clients(sender) ! resp
+                println(s"> sent: $resp")
+
+              case Failure(f) ⇒
+                system.log.error(f, s"Failed to send response after client request `$change`.")
             }
 
           case control @ Control(bufferRef, start, end, controlSeq) ⇒
             println(s"> received: $control")
             import scala.concurrent.ExecutionContext.Implicits.global
-            for {
-              bs ← nvim.buffers
-              _ ← nvim.sendInput(controlSeq)
-            } {
-              val resp = TextChangeAnswer(bufferRef, start, end, "")
-              clients(sender) ! resp
-              println(s"> sent: $resp")
+            val req = nvim.sendInput(controlSeq)
+
+            req.onComplete {
+              case Success(_) ⇒
+                val resp = TextChangeAnswer(bufferRef, start, end, "")
+                clients(sender) ! resp
+                println(s"> sent: $resp")
+
+              case Failure(f) ⇒
+                system.log.error(f, s"Failed to send response after client request `$control`.")
             }
 
           case msg ⇒
