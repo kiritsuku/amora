@@ -132,6 +132,9 @@ object Build extends sbt.Build {
 
     resolvers += Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= deps.backend.value,
+    javaOptions ++= Seq(
+      "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"
+    ),
 
     // add *fastopt.js file to resources
     resourceGenerators in Compile <+= (fastOptJS in Compile in ui).map(r => Seq(r.data)),
