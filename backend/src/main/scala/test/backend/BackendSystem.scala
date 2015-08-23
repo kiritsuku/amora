@@ -25,7 +25,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
   private val window = nvim.currentWindow
 
   def handleTextChange(change: TextChange, sender: String, self: ActorRef): Unit = {
-    println(s"> received: $change")
+    system.log.info(s"received: $change")
     val newCursorPos = for {
       _ ← nvim.sendInput(change.text)
       win ← window
@@ -37,7 +37,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
         // TODO handle multi line cursor positions
         val resp = TextChangeAnswer(change.bufferRef, newCursorPos.col, newCursorPos.col, change.text)
         self ! NvimSignal(sender, resp)
-        println(s"> sent: $resp")
+        system.log.info(s"sent: $resp")
 
       case Failure(f) ⇒
         system.log.error(f, s"Failed to send response after client request `$change`.")
@@ -45,7 +45,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
   }
 
   def handleSelectionChange(change: SelectionChange, sender: String, self: ActorRef): Unit = {
-    println(s"> received: $change")
+    system.log.info(s"received: $change")
     // TODO handle multi line cursor positions
     val resp = window.flatMap(_.cursor = Position(1, change.start))
 
@@ -53,7 +53,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
       case Success(_) ⇒
         val resp = SelectionChangeAnswer(change.bufferRef, change.start, change.start)
         self ! NvimSignal(sender, resp)
-        println(s"> sent: $resp")
+        system.log.info(s"sent: $resp")
 
       case Failure(f) ⇒
         system.log.error(f, s"Failed to send response after client request `$change`.")
@@ -61,7 +61,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
   }
 
   def handleControl(control: Control, sender: String, self: ActorRef): Unit = {
-    println(s"> received: $control")
+    system.log.info(s"received: $control")
     val newCursorPos = for {
       _ ← nvim.sendInput(control.controlSeq)
       win ← window
@@ -72,7 +72,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
       case Success(newCursorPos) ⇒
         val resp = TextChangeAnswer(control.bufferRef, newCursorPos.col, newCursorPos.col, "")
         self ! NvimSignal(sender, resp)
-        println(s"> sent: $resp")
+        system.log.info(s"sent: $resp")
 
       case Failure(f) ⇒
         system.log.error(f, s"Failed to send response after client request `$control`.")
@@ -117,19 +117,19 @@ final class MsgActor extends Actor {
   override def receive = {
     case NewClient(subject) ⇒
       val sender = "client" + clients.size
-      println(s"New client '$sender' seen")
+      system.log.info(s"New client '$sender' seen")
       subject ! ConnectionSuccessful(sender)
 
     case ClientReady(sender, subject) ⇒
       if (clients.contains(sender)) {
-        println(s"'$sender' already exists")
+        system.log.info(s"'$sender' already exists")
         // TODO this can only happen when multiple clients try to join at nearly the same moment
         subject ! ConnectionFailure
       }
       else {
         context.watch(subject)
         clients += sender → subject
-        println(s"'$sender' joined")
+        system.log.info(s"'$sender' joined")
         subject ! ConnectionSuccessful(sender)
       }
 
@@ -154,7 +154,7 @@ final class MsgActor extends Actor {
 
     case ClientLeft(sender) ⇒
       clients -= sender
-      println(s"'$sender' left")
+      system.log.info(s"'$sender' left")
   }
 }
 

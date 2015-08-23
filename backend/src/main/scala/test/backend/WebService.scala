@@ -69,8 +69,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     Flow[A].transform { () => new PushStage[A, A] {
       override def onPush(elem: A, ctx: Context[A]) = ctx push elem
       override def onUpstreamFailure(cause: Throwable, ctx: Context[A]) = {
-        Console.err.println(s"WebService stream failed with ${cause.getMessage}")
-        cause.printStackTrace()
+        system.log.error(cause, "WebService stream failed")
         super.onUpstreamFailure(cause, ctx)
       }
     }}

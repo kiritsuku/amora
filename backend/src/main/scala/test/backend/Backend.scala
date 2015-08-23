@@ -22,7 +22,7 @@ object Backend extends App {
   binding.onComplete {
     case Success(binding) ⇒
       val addr = binding.localAddress
-      println(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
+      system.log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
     case Failure(e) ⇒
       system.log.error(e, "Failed to start server")
       system.shutdown()
