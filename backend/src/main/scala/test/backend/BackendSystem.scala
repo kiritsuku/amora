@@ -18,13 +18,13 @@ import nvim._
 import shared.test._
 
 final class NvimAccessor(implicit system: ActorSystem) {
-  val nvim = new Nvim(new Connection("127.0.0.1", 6666))
+  import system.dispatcher
 
-  implicit val ec = system.dispatcher
+  private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
   // we cache window here in order to reduce communication overhead
-  val window = nvim.currentWindow
+  private val window = nvim.currentWindow
 
-  def handleTextChange(change: TextChange, sender: String, self: ActorRef) = {
+  def handleTextChange(change: TextChange, sender: String, self: ActorRef): Unit = {
     println(s"> received: $change")
     val newCursorPos = for {
       _ ← nvim.sendInput(change.text)
@@ -44,7 +44,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
     }
   }
 
-  def handleSelectionChange(change: SelectionChange, sender: String, self: ActorRef) = {
+  def handleSelectionChange(change: SelectionChange, sender: String, self: ActorRef): Unit = {
     println(s"> received: $change")
     // TODO handle multi line cursor positions
     val resp = window.flatMap(_.cursor = Position(1, change.start))
@@ -60,7 +60,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
     }
   }
 
-  def handleControl(control: Control, sender: String, self: ActorRef) = {
+  def handleControl(control: Control, sender: String, self: ActorRef): Unit = {
     println(s"> received: $control")
     val newCursorPos = for {
       _ ← nvim.sendInput(control.controlSeq)
@@ -135,17 +135,17 @@ final class MsgActor extends Actor {
 
     case ReceivedMessage(sender, msg) ⇒
       msg match {
-        case Interpret(id, expr) =>
+        case Interpret(id, expr) ⇒
           val res = repl.interpret(expr)
           clients(sender) ! InterpretedResult(id, res)
 
-        case change @ SelectionChange(bufferRef, start, end) ⇒
+        case change: SelectionChange ⇒
           nvim.handleSelectionChange(change, sender, self)
 
-        case change @ TextChange(bufferRef, start, end, text) ⇒
+        case change: TextChange ⇒
           nvim.handleTextChange(change, sender, self)
 
-        case control @ Control(bufferRef, start, end, controlSeq) ⇒
+        case control: Control ⇒
           nvim.handleControl(control, sender, self)
       }
 
