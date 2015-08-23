@@ -35,7 +35,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
     newCursorPos onComplete {
       case Success(newCursorPos) ⇒
         // TODO handle multi line cursor positions
-        val resp = TextChangeAnswer(change.bufferRef, newCursorPos.col, newCursorPos.col, change.text)
+        val resp = TextChangeAnswer(change.bufferRef, change.start, change.end, change.text, newCursorPos.col)
         self ! NvimSignal(sender, resp)
         system.log.info(s"sent: $resp")
 
@@ -70,7 +70,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
 
     newCursorPos onComplete {
       case Success(newCursorPos) ⇒
-        val resp = TextChangeAnswer(control.bufferRef, newCursorPos.col, newCursorPos.col, "")
+        val resp = TextChangeAnswer(control.bufferRef, newCursorPos.col, control.start, "", newCursorPos.col)
         self ! NvimSignal(sender, resp)
         system.log.info(s"sent: $resp")
 

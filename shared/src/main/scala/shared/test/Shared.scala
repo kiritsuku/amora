@@ -12,5 +12,5 @@ sealed trait Response
 case class ConnectionSuccessful(name: String) extends Response
 case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
-case class TextChangeAnswer(bufferRef: BufferRef, start: Int, end: Int, text: String) extends Response
+case class TextChangeAnswer(bufferRef: BufferRef, start: Int, end: Int, text: String, cursor: Int) extends Response
 case class SelectionChangeAnswer(bufferRef: BufferRef, start: Int, end: Int) extends Response
