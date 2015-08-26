@@ -2,8 +2,6 @@ package nvim
 
 import java.util.concurrent.atomic.AtomicInteger
 
-import scala.collection.immutable
-import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
@@ -23,6 +21,12 @@ import akka.util.ByteString
 import msgpack4z._
 import nvim.internal._
 
+/**
+ * Manages the connection to Neovim. Communication is done through the
+ * msgpack-rpc protocol, whose spec is here:
+ *
+ * [[https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md]]
+ */
 final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
   private var notificationHandlers = List[Notification ⇒ Unit]()
@@ -33,14 +37,25 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
   private val connectionActor = system.actorOf(Props(classOf[ConnectionActor], host, port, notifyHandlers))
   private val gen = new IdGenerator
 
+  /**
+   * Adds a new notification handler and notifies it for every incoming
+   * notification event. If the handler is already added, it is not added again.
+   */
   def addNotificationHandler(handler: Notification ⇒ Unit): Unit = {
-    notificationHandlers +:= handler
+    if (!notificationHandlers.contains(handler))
+      notificationHandlers +:= handler
   }
 
+  /**
+   * Removes the notification handler from the list of registered handlers.
+   */
   def removeNotificationHandler(handler: Notification ⇒ Unit): Unit = {
     notificationHandlers = notificationHandlers.filterNot(_ == handler)
   }
 
+  /**
+   * Sends a [[nvim.internal.Notification]] to Nvim.
+   */
   def sendNotification[A]
       (method: String, params: MsgpackUnion*)
       : Unit = {
@@ -49,10 +64,14 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
     connectionActor ! req
   }
 
+  /**
+   * Sends a [[nvim.internal.Request]] to Nvim and returns the value that is in
+   * the response. `converter` is used to convert the data that is sent over the
+   * wire into the actual value that is expected.
+   */
   def sendRequest[A]
       (command: String, params: MsgpackUnion*)
       (converter: PartialFunction[MsgpackUnion, A])
-      (implicit ec: ExecutionContext)
       : Future[A] = {
     val id = gen.nextId()
     val ps = MsgpackUnion.array(params.toList)
@@ -68,13 +87,13 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
           case Failure(f) => p.failure(f)
         }
     }
-    connectionActor ! Msg(req, f)
+    connectionActor ! SendRequest(req, f)
 
     p.future
   }
 }
 
-private final case class Msg(req: Request, f: Response ⇒ Unit)
+private final case class SendRequest(req: Request, f: Response ⇒ Unit)
 
 private final class ConnectionActor(host: String, port: Int, notificationHandler: Notification ⇒ Unit) extends Actor {
   val ConnectionLost = "ConnectionLost"
@@ -83,17 +102,20 @@ private final class ConnectionActor(host: String, port: Int, notificationHandler
 
   var requests = Map[Int, Response ⇒ Unit]()
 
-  val tcpFlow = Flow[ByteString].via(Tcp().outgoingConnection(host, port))
-  val pipelineActor = Source.actorRef(1, OverflowStrategy.fail).via(tcpFlow).to(Sink.actorRef(self, ConnectionLost)).run()
+  val flow = Flow[ByteString].via(Tcp().outgoingConnection(host, port))
+  val sink = Sink.actorRef(self, ConnectionLost)
+  val pipelineActor = Source.actorRef(1, OverflowStrategy.fail).via(flow).to(sink).run()
 
   override def receive = {
-    case Msg(req, f) ⇒
+    case SendRequest(req, f) ⇒
       val bs = ByteString(MsgpackCodec[Request].toBytes(req, new Msgpack07Packer))
       requests += req.id → f
+      system.log.debug(s"sending: $req")
       pipelineActor ! bs
 
     case n: Notification ⇒
       val bs = ByteString(MsgpackCodec[Notification].toBytes(n, new Msgpack07Packer))
+      system.log.debug(s"sending: $n")
       pipelineActor ! bs
 
     case resp: ByteString ⇒
@@ -107,12 +129,12 @@ private final class ConnectionActor(host: String, port: Int, notificationHandler
                 system.log.error(e, "Couldn't unpack response")
 
               case scalaz.\/-(notification) ⇒
-                system.log.debug("retrieved notification: " + notification)
+                system.log.debug(s"retrieved: $notification")
                 notificationHandler(notification)
             }
 
           case scalaz.\/-(resp) ⇒
-            system.log.debug("retrieved response: " + resp)
+            system.log.debug(s"retrieved: $resp")
             requests.get(resp.id) match {
               case Some(f) ⇒
                 f(resp)
