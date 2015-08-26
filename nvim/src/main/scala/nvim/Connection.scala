@@ -25,8 +25,21 @@ import nvim.internal._
 
 final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
-  private val connectionActor = system.actorOf(Props(classOf[ConnectionActor], host, port))
+  private var notificationHandlers = List[Notification ⇒ Unit]()
+  private val notifyHandlers: Notification ⇒ Unit = { n ⇒
+    notificationHandlers foreach (_(n))
+  }
+
+  private val connectionActor = system.actorOf(Props(classOf[ConnectionActor], host, port, notifyHandlers))
   private val gen = new IdGenerator
+
+  def addNotificationHandler(handler: Notification ⇒ Unit): Unit = {
+    notificationHandlers +:= handler
+  }
+
+  def removeNotificationHandler(handler: Notification ⇒ Unit): Unit = {
+    notificationHandlers = notificationHandlers.filterNot(_ == handler)
+  }
 
   def sendNotification[A]
       (method: String, params: MsgpackUnion*)
@@ -63,7 +76,7 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
 private final case class Msg(req: Request, f: Response ⇒ Unit)
 
-private final class ConnectionActor(host: String, port: Int) extends Actor {
+private final class ConnectionActor(host: String, port: Int, notificationHandler: Notification ⇒ Unit) extends Actor {
   val ConnectionLost = "ConnectionLost"
   implicit val m = ActorMaterializer()
   import context.system
@@ -95,6 +108,7 @@ private final class ConnectionActor(host: String, port: Int) extends Actor {
 
               case scalaz.\/-(notification) ⇒
                 system.log.debug("retrieved notification: " + notification)
+                notificationHandler(notification)
             }
 
           case scalaz.\/-(resp) ⇒
