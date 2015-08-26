@@ -53,12 +53,13 @@ final class NvimAccessor(implicit system: ActorSystem) {
 
   def handleSelectionChange(change: SelectionChange, sender: String, self: ActorRef): Unit = {
     system.log.info(s"received: $change")
-    // TODO handle multi line cursor positions
-    val resp = window.flatMap(_.cursor = Position(1, change.start))
+    val resp = for {
+      win ← window
+      _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
+    } yield SelectionChangeAnswer(change.bufferRef, change.cursorRow, change.cursorColumn, change.cursorRow, change.cursorColumn)
 
     resp onComplete {
-      case Success(_) ⇒
-        val resp = SelectionChangeAnswer(change.bufferRef, change.start, change.start)
+      case Success(resp) ⇒
         self ! NvimSignal(sender, resp)
         system.log.info(s"sent: $resp")
 

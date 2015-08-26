@@ -83,8 +83,8 @@ object TutorialApp extends JSApp {
     val b = ui.bufferDiv2(buf)
     par.appendChild(b)
 
-    def start = b.selectionStart
-    def end = b.selectionEnd
+    def start = offsetToVimPos(b, b.selectionStart)
+    def end = offsetToVimPos(b, b.selectionEnd)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
       startTime = jsg.performance.now()
@@ -95,7 +95,8 @@ object TutorialApp extends JSApp {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
           // TODO don't create BufferRef manually here
-          val input = Control(BufferRef(b.id), start, end, controlSeq)
+          // TODO don't use -1 here
+          val input = Control(BufferRef(b.id), -1, -1, controlSeq)
           send(input)
           e.preventDefault()
         }
@@ -115,14 +116,17 @@ object TutorialApp extends JSApp {
 
       println(s"> $character")
       // TODO don't create BufferRef manually here
-      val input = TextChange(BufferRef(b.id), start, end, character)
+      // TODO don't use -1 here
+      val input = TextChange(BufferRef(b.id), -1, -1, character)
       send(input)
 
       false /* prevent default action */
     }
 
     def handleMouseUp(e: MouseEvent): Unit = {
-      val input = SelectionChange(BufferRef(b.id), start, end)
+      startTime = jsg.performance.now()
+      val s = start
+      val input = SelectionChange(BufferRef(b.id), s._1, s._2)
       send(input)
     }
 
@@ -205,6 +209,24 @@ object TutorialApp extends JSApp {
     }
   }
 
+  private def offsetToVimPos(ta: HTMLTextAreaElement, offset: Int): (Int, Int) = {
+    val content = ta.value.substring(0, offset)
+    val row = content.count(_ == '\n')
+    val col = offset-content.lastIndexWhere(_ == '\n')-1
+    (row, col)
+  }
+
+  private def vimPosToOffset(ta: HTMLTextAreaElement, row: Int, col: Int): Int = {
+    val lines = ta.value.split("\n")
+    val nrOfCharsBeforeCursor =
+      if (row == 0)
+        0
+      else
+        lines.take(row).map(_.length).sum+row
+
+    nrOfCharsBeforeCursor+col
+  }
+
   def setupWS() = {
     def websocketUri(name: String): String = {
       val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
@@ -247,26 +269,26 @@ object TutorialApp extends JSApp {
         case change @ TextChangeAnswer(bufferRef, lines, cursorRow, cursorCol) ⇒
           println(s"> received: $change")
           val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
+          ta.value = lines.mkString("\n")
+          ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)
+          ta.selectionEnd = ta.selectionStart
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
-          ta.value = lines.mkString("\n")
 
-          val nrOfCharsBeforeCursor =
-            if (cursorRow == 0)
-              0
-            else
-              lines.take(cursorRow).map(_.length).sum+cursorRow
-          ta.selectionStart = nrOfCharsBeforeCursor+cursorCol
-          ta.selectionEnd = ta.selectionStart
-
-        case change @ SelectionChangeAnswer(bufferRef, start, end) ⇒
+        case change @ SelectionChangeAnswer(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol) ⇒
           println(s"> received: $change")
           val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
+          ta.selectionStart = vimPosToOffset(ta, cursorStartRow, cursorStartCol)
+          if (cursorStartRow == cursorEndRow && cursorStartCol == cursorEndCol)
+            ta.selectionEnd = ta.selectionStart
+          else
+            ta.selectionEnd = vimPosToOffset(ta, cursorEndRow, cursorEndCol)
 
-          ta.selectionStart = start
-          ta.selectionEnd = end
+          val endTime = jsg.performance.now()
+          val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
+          println(s"update time: $time")
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
