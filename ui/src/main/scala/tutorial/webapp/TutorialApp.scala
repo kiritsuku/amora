@@ -244,15 +244,21 @@ object TutorialApp extends JSApp {
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
           mkEditor()
 
-        case change @ TextChangeAnswer(bufferRef, start, end, text, cursor) ⇒
+        case change @ TextChangeAnswer(bufferRef, lines, cursorRow, cursorCol) ⇒
           println(s"> received: $change")
           val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
-          ta.value = ta.value.substring(0, start) + text + ta.value.substring(end)
-          ta.selectionStart = cursor
+          ta.value = lines.mkString("\n")
+
+          val nrOfCharsBeforeCursor =
+            if (cursorRow == 0)
+              0
+            else
+              lines.take(cursorRow).map(_.length).sum+cursorRow
+          ta.selectionStart = nrOfCharsBeforeCursor+cursorCol
           ta.selectionEnd = ta.selectionStart
 
         case change @ SelectionChangeAnswer(bufferRef, start, end) ⇒

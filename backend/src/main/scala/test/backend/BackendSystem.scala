@@ -23,19 +23,26 @@ final class NvimAccessor(implicit system: ActorSystem) {
   private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
   // we cache window here in order to reduce communication overhead
   private val window = nvim.currentWindow
+  // set ruler for better debugging purposes
+  nvim.sendVimCommand(":set ruler")
+
+  private def currentBufferContent = for {
+    b ← nvim.currentBuffer
+    count ← b.lineCount
+    s ← b.lineSlice(0, count)
+  } yield s
 
   def handleTextChange(change: TextChange, sender: String, self: ActorRef): Unit = {
     system.log.info(s"received: $change")
-    val newCursorPos = for {
+    val resp = for {
       _ ← nvim.sendInput(change.text)
       win ← window
-      c ← win.cursor
-    } yield c
+      cursor ← win.cursor
+      content ← currentBufferContent
+    } yield TextChangeAnswer(change.bufferRef, content, cursor.row-1, cursor.col)
 
-    newCursorPos onComplete {
-      case Success(newCursorPos) ⇒
-        // TODO handle multi line cursor positions
-        val resp = TextChangeAnswer(change.bufferRef, change.start, change.end, change.text, newCursorPos.col)
+    resp onComplete {
+      case Success(resp) ⇒
         self ! NvimSignal(sender, resp)
         system.log.info(s"sent: $resp")
 
@@ -62,15 +69,15 @@ final class NvimAccessor(implicit system: ActorSystem) {
 
   def handleControl(control: Control, sender: String, self: ActorRef): Unit = {
     system.log.info(s"received: $control")
-    val newCursorPos = for {
+    val resp = for {
       _ ← nvim.sendInput(control.controlSeq)
       win ← window
-      c ← win.cursor
-    } yield c
+      cursor ← win.cursor
+      content ← currentBufferContent
+    } yield TextChangeAnswer(control.bufferRef, content, cursor.row-1, cursor.col)
 
-    newCursorPos onComplete {
-      case Success(newCursorPos) ⇒
-        val resp = TextChangeAnswer(control.bufferRef, newCursorPos.col, control.start, "", newCursorPos.col)
+    resp onComplete {
+      case Success(resp) ⇒
         self ! NvimSignal(sender, resp)
         system.log.info(s"sent: $resp")
 
