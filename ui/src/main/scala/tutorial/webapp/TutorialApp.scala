@@ -289,7 +289,7 @@ object TutorialApp extends JSApp {
           println(s"> received: $update")
 
           val buf = bm.currentBuffer
-          val ta = dom.document.getElementById(buf.ref.id + "-ta").asInstanceOf[HTMLTextAreaElement]
+          val ta = dom.document.getElementById(buf.ref.id).asInstanceOf[HTMLTextAreaElement]
           ta.value = lines.mkString("\n")
           ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)
           ta.selectionEnd = ta.selectionStart
