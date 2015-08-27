@@ -4,8 +4,8 @@ case class BufferRef(id: String)
 
 sealed trait Request
 case class Interpret(id: String, code: String) extends Request
-case class Control(bufferRef: BufferRef, start: Int, end: Int, controlSeq: String) extends Request
-case class TextChange(bufferRef: BufferRef, start: Int, end: Int, text: String) extends Request
+case class Control(bufferRef: BufferRef, controlSeq: String) extends Request
+case class TextChange(bufferRef: BufferRef, text: String) extends Request
 case class SelectionChange(bufferRef: BufferRef, cursorRow: Int, cursorColumn: Int) extends Request
 
 sealed trait Response

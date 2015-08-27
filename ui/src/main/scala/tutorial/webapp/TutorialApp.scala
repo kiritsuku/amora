@@ -94,9 +94,7 @@ object TutorialApp extends JSApp {
       if (isDown) {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
-          // TODO don't create BufferRef manually here
-          // TODO don't use -1 here
-          val input = Control(BufferRef(b.id), -1, -1, controlSeq)
+          val input = Control(BufferRef(b.id), controlSeq)
           send(input)
           e.preventDefault()
         }
@@ -114,10 +112,7 @@ object TutorialApp extends JSApp {
       startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
-      println(s"> $character")
-      // TODO don't create BufferRef manually here
-      // TODO don't use -1 here
-      val input = TextChange(BufferRef(b.id), -1, -1, character)
+      val input = TextChange(BufferRef(b.id), character)
       send(input)
 
       false /* prevent default action */
