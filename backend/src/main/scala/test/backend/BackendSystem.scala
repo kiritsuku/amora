@@ -32,6 +32,23 @@ final class NvimAccessor(implicit system: ActorSystem) {
     s ← b.lineSlice(0, count)
   } yield s
 
+  def handleClientJoined(sender: String, self: ActorRef): Unit = {
+    val resp = for {
+      win ← window
+      cursor ← win.cursor
+      content ← currentBufferContent
+    } yield ClientUpdate(content, cursor.row, cursor.col)
+
+    resp onComplete {
+      case Success(resp) ⇒
+        self ! NvimSignal(sender, resp)
+        system.log.info(s"sent: $resp")
+
+      case Failure(f) ⇒
+        system.log.error(f, s"Failed to send an update to the client '$sender'.")
+    }
+  }
+
   def handleTextChange(change: TextChange, sender: String, self: ActorRef): Unit = {
     system.log.info(s"received: $change")
     val resp = for {
@@ -139,6 +156,7 @@ final class MsgActor extends Actor {
         clients += sender → subject
         system.log.info(s"'$sender' joined")
         subject ! ConnectionSuccessful(sender)
+        nvim.handleClientJoined(sender, self)
       }
 
     case ReceivedMessage(sender, msg) ⇒

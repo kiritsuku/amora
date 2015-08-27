@@ -6,9 +6,15 @@ class BufferManager {
 
   private var buffers = Map[BufferRef, Buffer]()
 
+  private var curBuffer: Buffer = _
+
+  def currentBuffer: Buffer =
+    if (curBuffer == null) mkEditorBuf("text") else curBuffer
+
   def mkEditorBuf(mode: String): Buffer = {
-    val buf = Buffer(mkBufRef, BufferType.Editor(mode))
-    addBuf(buf)
+    val buf = addBuf(Buffer(mkBufRef, BufferType.Editor(mode)))
+    curBuffer = buf
+    buf
   }
 
   def mkResultBuf(editorRef: BufferRef): Buffer = {
@@ -17,9 +23,8 @@ class BufferManager {
   }
 
   def resultBufOf(editorRef: BufferRef): Buffer = {
-    println(s">> $editorRef")
     val res = buffers find {
-      case (_, buf) => println(">" + buf.tpe); buf.tpe match {
+      case (_, buf) => buf.tpe match {
         case BufferType.Result(_editorRef) => _editorRef == editorRef
         case _ => false
       }

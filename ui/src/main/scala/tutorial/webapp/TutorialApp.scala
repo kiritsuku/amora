@@ -284,6 +284,15 @@ object TutorialApp extends JSApp {
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
+
+        case update @ ClientUpdate(lines, cursorRow, cursorCol) ⇒
+          println(s"> received: $update")
+
+          val buf = bm.currentBuffer
+          val ta = dom.document.getElementById(buf.ref.id + "-ta").asInstanceOf[HTMLTextAreaElement]
+          ta.value = lines.mkString("\n")
+          ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)
+          ta.selectionEnd = ta.selectionStart
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
