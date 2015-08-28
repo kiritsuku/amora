@@ -37,6 +37,14 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
   private val connectionActor = system.actorOf(Props(classOf[ConnectionActor], host, port, notifyHandlers))
   private val gen = new IdGenerator
 
+  // I don't know any better than to delay the creation of a new connection.
+  // If we don't do this, we can't immediately after startup of the connection
+  // send messages because no downstream demand is yet registered. The solution
+  // would be to wait until this demand is registered but I don't know how to find
+  // out when it gets registered. Therefore we just wait a little bit and hope
+  // that the delay is enough.
+  Thread.sleep(100)
+
   /**
    * Adds a new notification handler and notifies it for every incoming
    * notification event. If the handler is already added, it is not added again.
@@ -104,7 +112,7 @@ private final class ConnectionActor(host: String, port: Int, notificationHandler
 
   val flow = Flow[ByteString].via(Tcp().outgoingConnection(host, port))
   val sink = Sink.actorRef(self, ConnectionLost)
-  val pipelineActor = Source.actorRef(1, OverflowStrategy.fail).via(flow).to(sink).run()
+  val pipelineActor = Source.actorRef(0, OverflowStrategy.fail).via(flow).to(sink).run()
 
   override def receive = {
     case SendRequest(req, f) ⇒
