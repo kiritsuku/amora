@@ -154,7 +154,11 @@ object Build extends sbt.Build {
   ) dependsOn (sharedJvm, nvim)
 
   object versions {
+    // https://github.com/lihaoyi/scalatags
     val scalatags = "0.5.2"
+    // https://github.com/ChrisNeveu/macrame
+    val macrame = "1.0.1"
+    val paradise = "2.1.0-M5"
   }
 
   object deps {
@@ -170,9 +174,8 @@ object Build extends sbt.Build {
       "org.scalameta" % "scalameta" % "0.1.0-SNAPSHOT" cross CrossVersion.binary,
       "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
       "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT",
-      // https://github.com/ChrisNeveu/macrame
-      "com.chrisneveu" %% "macrame" % "1.0.1",
-      compilerPlugin("org.scalamacros" % "paradise" % "2.1.0-M5" cross CrossVersion.full),
+      "com.chrisneveu" %% "macrame" % versions.macrame,
+      compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
       "com.lihaoyi" %%% "scalatags" % versions.scalatags
     ))
 
@@ -181,7 +184,10 @@ object Build extends sbt.Build {
       // https://github.com/msgpack4z/msgpack4z-core
       "com.github.xuwei-k" %% "msgpack4z-core" % "0.1.6",
       // https://github.com/msgpack4z/msgpack4z-java07
-      "com.github.xuwei-k" % "msgpack4z-java07" % "0.1.6"
+      "com.github.xuwei-k" % "msgpack4z-java07" % "0.1.6",
+      "com.chrisneveu" %% "macrame" % versions.macrame,
+      compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value
     ))
 
     lazy val sjsTest = Def.setting(Seq(
@@ -192,7 +198,6 @@ object Build extends sbt.Build {
       "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
       // https://github.com/antonkulaga/codemirror-facade
       "org.denigma" %%% "codemirror-facade" % "5.5-0.5",
-      // https://github.com/lihaoyi/scalatags
       "com.lihaoyi" %%% "scalatags" % versions.scalatags
     ))
 
@@ -201,6 +206,7 @@ object Build extends sbt.Build {
       // https://github.com/chjj/marked
       "org.webjars.bower" % "marked" % "0.3.3" / "marked.js",
       "org.webjars" % "d3js" % "3.5.5-1" / "d3.js",
+      // https://github.com/fgnass/spin.js
       "org.webjars.bower" % "spin.js" % "2.3.1" / "spin.js"
     ))
 
