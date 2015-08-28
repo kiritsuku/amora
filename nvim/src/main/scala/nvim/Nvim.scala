@@ -100,4 +100,17 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
         Window(id, connection)
     }
   }
+
+  /**
+   * Evaluates a vimscript expression.
+   * @example {{{
+   * // get actual active vim mode
+   * nvim.eval("""mode("")""")
+   * }}}
+   */
+  def eval(expr: String)(implicit ec: ExecutionContext): Future[MsgpackUnion] = {
+    connection.sendRequest("vim_eval", string(expr)) {
+      case m ⇒ m
+    }
+  }
 }
