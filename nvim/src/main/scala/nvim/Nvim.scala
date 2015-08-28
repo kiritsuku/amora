@@ -7,8 +7,12 @@ import akka.actor.ActorSystem
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
 import nvim.internal.NvimHelper
+import macrame.enum
 
-final case class Nvim(connection: Connection)(implicit val system: ActorSystem) {
+final case class Nvim
+    (connection: Connection)
+    (implicit val system: ActorSystem)
+      extends NoNvimProtocolFunctionality {
 
   private val BufferId = 0
   private val WindowId = 1
@@ -137,4 +141,66 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
       case _ ⇒ ()
     }
   }
+}
+
+trait NoNvimProtocolFunctionality {
+  this: Nvim ⇒
+
+  import Mode._
+
+  /**
+   * Returns the active Vim mode. For documentation about the possible modes run
+   * `:help mode()` in Vim.
+   */
+  def activeMode(implicit ec: ExecutionContext): Future[Mode] = {
+    eval("""mode("1")""") map { res => (res: @unchecked) match {
+      case MsgpackBinary(mode) ⇒ mode.map(_.toChar).mkString match {
+        case "n"             ⇒ Normal
+        case "no"            ⇒ OperatorPending
+        case "v"             ⇒ VisualByCharacter
+        case "V"             ⇒ VisualByLine
+        case s if s(0) == 22 ⇒ VisualBlockwise // 22 == CTRL-V
+        case "s"             ⇒ SelectByCharacter
+        case "S"             ⇒ SelectByLine
+        case s if s(0) == 19 ⇒ SelectBlockwise // 19 == CTRL-S
+        case "i"             ⇒ Insert
+        case "R"             ⇒ Replace
+        case "Rv"            ⇒ VirtualReplace
+        case "c"             ⇒ CommandLine
+        case "cv"            ⇒ VimExMode
+        case "ce"            ⇒ NormalExMode
+        case "r"             ⇒ HitEnterPrompt
+        case "rm"            ⇒ MorePrompt
+        case "r?"            ⇒ ConfirmQuery
+        case "!"             ⇒ ExternalCommandRunning
+        case s               ⇒ throw new IllegalArgumentException(s"Vim mode `$s` is unknown.")
+      }
+    }}
+  }
+
+}
+
+/**
+ * Represents all possible Vim modes. For documentation about the possible
+ * modes run `:help mode()` in Vim.
+ */
+@enum class Mode {
+  Normal
+  OperatorPending
+  VisualByCharacter
+  VisualByLine
+  VisualBlockwise
+  SelectByCharacter
+  SelectByLine
+  SelectBlockwise
+  Insert
+  Replace
+  VirtualReplace
+  CommandLine
+  VimExMode
+  NormalExMode
+  HitEnterPrompt
+  MorePrompt
+  ConfirmQuery
+  ExternalCommandRunning
 }
