@@ -113,4 +113,28 @@ final case class Nvim(connection: Connection)(implicit val system: ActorSystem) 
       case m ⇒ m
     }
   }
+
+  /**
+   * Subscribes to a Nvim event.
+   * @example {{{
+   * nvim.subscribe("test-event")
+   * }}}
+   */
+  def subscribe(event: String)(implicit ec: ExecutionContext): Future[Unit] = {
+    connection.sendRequest("vim_subscribe", string(event)) {
+      case _ ⇒ ()
+    }
+  }
+
+  /**
+   * Unsubscribes from a Nvim event.
+   * @example {{{
+   * nvim.unsubscribe("test-event")
+   * }}}
+   */
+  def unsubscribe(event: String)(implicit ec: ExecutionContext): Future[Unit] = {
+    connection.sendRequest("vim_unsubscribe", string(event)) {
+      case _ ⇒ ()
+    }
+  }
 }
