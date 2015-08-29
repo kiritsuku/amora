@@ -6,8 +6,8 @@ import scala.concurrent.Future
 import akka.actor.ActorSystem
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
-import nvim.internal.NvimHelper
 import macrame.enum
+import nvim.internal.NvimHelper
 
 final case class Nvim
     (connection: Connection)
@@ -178,7 +178,27 @@ trait NoNvimProtocolFunctionality {
     }}
   }
 
+  /**
+   * Returns the selection of the active buffer.
+   */
+  def selection(implicit ec: ExecutionContext): Future[Selection] = {
+    def asPos(u: MsgpackUnion) = u match {
+      // TODO handle `bufnum` and `off`
+      case MsgpackArray(List(MsgpackLong(bufnum), MsgpackLong(row), MsgpackLong(col), MsgpackLong(off))) ⇒
+        Position(row.toInt, col.toInt)
+      case s ⇒
+        throw new IllegalArgumentException(s"Unknown selection result: ${NvimHelper.msgpackUnionAsString(s, 0)}")
+    }
+
+    for {
+      selStart ← eval("""getpos("v")""")
+      selEnd ← eval("""getpos(".")""")
+    } yield Selection(asPos(selStart), asPos(selEnd))
+  }
+
 }
+
+final case class Selection(start: Position, end: Position)
 
 /**
  * Represents all possible Vim modes. For documentation about the possible
