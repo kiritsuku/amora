@@ -80,11 +80,11 @@ object TutorialApp extends JSApp {
     val par = div(id := divs.parent, `class` := "fullscreen").render
     val buf = bm.mkEditorBuf("text/x-scala")
 
-    val b = ui.bufferDiv2(buf)
-    par.appendChild(b)
+    val ta = ui.bufferDiv2(buf)
+    par.appendChild(ta)
 
-    def start = offsetToVimPos(b, b.selectionStart)
-    def end = offsetToVimPos(b, b.selectionEnd)
+    def start = offsetToVimPos(ta, ta.selectionStart)
+    def end = offsetToVimPos(ta, ta.selectionEnd)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
       startTime = jsg.performance.now()
@@ -94,7 +94,7 @@ object TutorialApp extends JSApp {
       if (isDown) {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
-          val input = Control(BufferRef(b.id), controlSeq)
+          val input = Control(BufferRef(ta.id), controlSeq)
           send(input)
           e.preventDefault()
         }
@@ -112,7 +112,7 @@ object TutorialApp extends JSApp {
       startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
-      val input = TextChange(BufferRef(b.id), character)
+      val input = TextChange(BufferRef(ta.id), character)
       send(input)
 
       false /* prevent default action */
@@ -121,15 +121,15 @@ object TutorialApp extends JSApp {
     def handleMouseUp(e: MouseEvent): Unit = {
       startTime = jsg.performance.now()
       val s = start
-      val input = SelectionChange(BufferRef(b.id), s._1, s._2)
+      val input = SelectionChange(BufferRef(ta.id), s._1, s._2)
       send(input)
     }
 
-    b.onkeydown = handleKeyUpDown _
-    b.onkeyup = b.onkeydown
-    b.onkeypress = handleKeyPress _
-    b.onblur = (_: FocusEvent) ⇒ keyMap = Set()
-    b.onmouseup = handleMouseUp _
+    ta.onkeydown = handleKeyUpDown _
+    ta.onkeyup = ta.onkeydown
+    ta.onkeypress = handleKeyPress _
+    ta.onblur = (_: FocusEvent) ⇒ keyMap = Set()
+    ta.onmouseup = handleMouseUp _
 
     $("body").append(par)
   }
@@ -285,10 +285,11 @@ object TutorialApp extends JSApp {
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
 
-        case update @ ClientUpdate(lines, cursorRow, cursorCol) ⇒
+        case update @ ClientUpdate(bufferRef, mode, lines, cursorRow, cursorCol) ⇒
           println(s"> received: $update")
 
-          val buf = bm.currentBuffer
+          val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
+          buf.mode = mode
           val ta = dom.document.getElementById(buf.ref.id).asInstanceOf[HTMLTextAreaElement]
           ta.value = lines.mkString("\n")
           ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)

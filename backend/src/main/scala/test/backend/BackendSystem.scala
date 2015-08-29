@@ -15,7 +15,7 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import nvim._
-import shared.test._
+import shared.test.{Mode ⇒ _, _}
 
 final class NvimAccessor(implicit system: ActorSystem) {
   import system.dispatcher
@@ -37,7 +37,8 @@ final class NvimAccessor(implicit system: ActorSystem) {
       win ← window
       cursor ← win.cursor
       content ← currentBufferContent
-    } yield ClientUpdate(content, cursor.row, cursor.col)
+      mode ← nvim.activeMode
+    } yield ClientUpdate(None, Mode.asString(mode), content, cursor.row-1, cursor.col)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -92,7 +93,8 @@ final class NvimAccessor(implicit system: ActorSystem) {
       win ← window
       cursor ← win.cursor
       content ← currentBufferContent
-    } yield TextChangeAnswer(control.bufferRef, content, cursor.row-1, cursor.col)
+      mode ← nvim.activeMode
+    } yield ClientUpdate(Some(control.bufferRef), Mode.asString(mode), content, cursor.row-1, cursor.col)
 
     resp onComplete {
       case Success(resp) ⇒

@@ -204,3 +204,10 @@ trait NoNvimProtocolFunctionality {
   ConfirmQuery
   ExternalCommandRunning
 }
+object Mode {
+  def asString(mode: Mode): String =
+    asStringImpl(mode)
+
+  def asMode(s: String): Mode =
+    fromStringImpl(s).getOrElse(throw new NoSuchElementException(s"Mode `$s` doesn't exist."))
+}

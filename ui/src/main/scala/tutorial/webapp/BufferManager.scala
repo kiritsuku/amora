@@ -22,6 +22,9 @@ class BufferManager {
     addBuf(buf)
   }
 
+  def bufferOf(bufferRef: BufferRef): Buffer =
+    buffers(bufferRef)
+
   def resultBufOf(editorRef: BufferRef): Buffer = {
     val res = buffers find {
       case (_, buf) => buf.tpe match {
