@@ -1,4 +1,4 @@
-package test.backend
+package backend
 
 import scala.reflect.internal.util.BatchSourceFile
 import scala.tools.nsc.reporters.StoreReporter

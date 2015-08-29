@@ -35,20 +35,20 @@ object Build extends sbt.Build {
     updateOptions := updateOptions.value.withCachedResolution(true)
   )
 
-  lazy val shared = crossProject crossType CrossType.Pure in file("shared") settings (
-    name := "scalajs-test-shared",
+  lazy val protocol = crossProject crossType CrossType.Pure in file("protocol") settings (
+    name := "protocol",
     // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
     EclipseKeys.eclipseOutput := Some("bin/"),
 
-    libraryDependencies ++= deps.shared.value
+    libraryDependencies ++= deps.protocol.value
   ) settings (commonSettings: _*)
 
-  lazy val sharedJvm = shared.jvm
+  lazy val protocolJvm = protocol.jvm
 
-  lazy val sharedJs = shared.js
+  lazy val protocolJs = protocol.js
 
   lazy val electron = project in file("electron") enablePlugins(ScalaJSPlugin) settings commonSettings ++ Seq(
-    name := "scalajs-test-electron",
+    name := "electron",
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false,
@@ -105,7 +105,7 @@ object Build extends sbt.Build {
   )
 
   lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
-    name := "scalajs-test-ui",
+    name := "ui",
     scalaJSStage in Global := FastOptStage,
 
     resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
@@ -119,16 +119,16 @@ object Build extends sbt.Build {
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false
-  ) dependsOn (sharedJs)
+  ) dependsOn (protocolJs)
 
   lazy val nvim = project in file("nvim") settings commonSettings ++ Seq(
-    name := "scalajs-test-nvim",
+    name := "nvim",
 
     libraryDependencies ++= deps.nvim.value
   )
 
   lazy val backend = project in file("backend") settings commonSettings ++ Revolver.settings ++ Seq(
-    name := "scalajs-test-backend",
+    name := "backend",
 
     resolvers += Resolver.sonatypeRepo("snapshots"),
     libraryDependencies ++= deps.backend.value,
@@ -149,9 +149,9 @@ object Build extends sbt.Build {
     // add folder of webjars to resources
     unmanagedResourceDirectories in Compile += (WebKeys.webTarget in Compile in ui).value / "web-modules" / "main" / "webjars" / "lib",
 
-    // once the server is started, we also want to restart it on changes in the shared project
-    watchSources ++= (watchSources in sharedJvm).value
-  ) dependsOn (sharedJvm, nvim)
+    // once the server is started, we also want to restart it on changes in the protocol project
+    watchSources ++= (watchSources in protocolJvm).value
+  ) dependsOn (protocolJvm, nvim)
 
   object versions {
     // https://github.com/lihaoyi/scalatags
@@ -162,7 +162,7 @@ object Build extends sbt.Build {
   }
 
   object deps {
-    lazy val shared = Def.setting(Seq(
+    lazy val protocol = Def.setting(Seq(
       // https://github.com/ochrons/boopickle
       "me.chrons" %%% "boopickle" % "1.1.0"
     ))

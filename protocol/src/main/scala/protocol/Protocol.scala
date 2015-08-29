@@ -1,4 +1,4 @@
-package shared.test
+package protocol
 
 case class BufferRef(id: String)
 

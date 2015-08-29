@@ -1,7 +1,6 @@
-package tutorial.webapp
+package ui
 
-import shared.test.BufferRef
-import shared.test.Mode
+import protocol._
 
 case class Buffer(ref: BufferRef, tpe: BufferType.BufferType) {
   var mode: String = Mode.Normal

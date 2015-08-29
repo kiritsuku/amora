@@ -1,6 +1,6 @@
-package tutorial.webapp
+package ui
 
-import shared.test.BufferRef
+import protocol.BufferRef
 
 class BufferManager {
 

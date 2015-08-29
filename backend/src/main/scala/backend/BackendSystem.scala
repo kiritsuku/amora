@@ -1,4 +1,4 @@
-package test.backend
+package backend
 
 import java.nio.ByteBuffer
 
@@ -15,7 +15,7 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import nvim._
-import shared.test.{Mode ⇒ _, _}
+import protocol.{Mode ⇒ _, _}
 
 final class NvimAccessor(implicit system: ActorSystem) {
   import system.dispatcher

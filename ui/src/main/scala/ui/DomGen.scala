@@ -1,4 +1,4 @@
-package tutorial.webapp
+package ui
 
 import org.scalajs.dom
 import org.denigma.{codemirror ⇒ cm}
@@ -7,7 +7,7 @@ import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom.raw.HTMLTextAreaElement
 
-class Ui {
+class DomGen {
   import scalatags.JsDom.all
   import scalatags.JsDom.all._
 

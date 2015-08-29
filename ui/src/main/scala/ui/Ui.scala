@@ -1,11 +1,10 @@
-package tutorial.webapp
+package ui
 
 import java.nio.ByteBuffer
 
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.Dynamic.{global => jsg, newInstance => jsnew}
-import scala.scalajs.js.JSApp
 
 import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
@@ -21,16 +20,21 @@ import org.scalajs.dom.raw.MouseEvent
 import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
-import shared.test._
+import protocol._
 
-object TutorialApp extends JSApp {
-  private val $ = jQuery
-
-  private val ui = new Ui
+object Ui {
 
   implicit class AsDynamic[A](private val a: A) extends AnyVal {
     def jsg: js.Dynamic = a.asInstanceOf[js.Dynamic]
   }
+
+}
+
+class Ui {
+  import Ui._
+
+  private val $ = jQuery
+  private val gen = new DomGen
 
   private object divs {
     val parent = "parent"
@@ -39,11 +43,6 @@ object TutorialApp extends JSApp {
     val render = "render"
     val right = "right"
     val left = "left"
-  }
-
-  override def main(): Unit = {
-    authenticate()
-    setupUI2()
   }
 
   private val bm = new BufferManager
@@ -57,10 +56,10 @@ object TutorialApp extends JSApp {
   private val vimMap = Map(
     8  → "<bs>",
     9  → "<tab>",
-//    13 → "<enter>",
-//    16 → "<shift>",
-//    17 → "<ctrl>",
-//    18 → "<alt>",
+//    13 → "enter",
+//    16 → "shift",
+//    17 → "C",
+//    18 → "alt",
     27 → "<esc>",
     32 → "<space>",
     33 → "<pageup>",
@@ -80,13 +79,14 @@ object TutorialApp extends JSApp {
     val par = div(id := divs.parent, `class` := "fullscreen").render
     val buf = bm.mkEditorBuf("text/x-scala")
 
-    val ta = ui.bufferDiv2(buf)
+    val ta = gen.bufferDiv2(buf)
     par.appendChild(ta)
 
     def start = offsetToVimPos(ta, ta.selectionStart)
     def end = offsetToVimPos(ta, ta.selectionEnd)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
+      println("keyUpDown: " + e.keyCode)
       startTime = jsg.performance.now()
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
@@ -115,6 +115,7 @@ object TutorialApp extends JSApp {
     }
 
     def handleKeyPress(e: KeyboardEvent): Boolean = {
+      println("keyPress: " + e.keyCode)
       startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
@@ -143,8 +144,8 @@ object TutorialApp extends JSApp {
   def setupDivs() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent).render
-    par appendChild ui.editorDiv(divs.left, divs.editorLeft)
-    par appendChild ui.editorDiv(divs.right, divs.editorRight)
+    par appendChild gen.editorDiv(divs.left, divs.editorLeft)
+    par appendChild gen.editorDiv(divs.right, divs.editorRight)
     par.appendChild(div(
       id := divs.render
     ).render)
@@ -328,6 +329,14 @@ object TutorialApp extends JSApp {
         // TODO replace by spinner
         $(s"#${resultBuf.ref.id}").html(s"<pre><code>...</code></pre>")
 
+        /*
+        val opts = js.Dynamic.literal(
+          color = "#fff",
+          lines = 12
+        )
+        jsnew(jsg.Spinner)(opts).spin(dom.document.getElementById(resultBuf.ref.id))
+        */
+
         import boopickle.Default._
         val code = e.getDoc().getValue()
         val msg = Pickle.intoBytes[Request](Interpret(buf.ref.id, code))
@@ -339,7 +348,7 @@ object TutorialApp extends JSApp {
   def mkResult(editorRef: BufferRef): Unit = {
     val buf = bm.mkResultBuf(editorRef)
 
-    val divType = ui.bufferDiv(buf) { editor ⇒
+    val divType = gen.bufferDiv(buf) { editor ⇒
       editor.setSize("50%", "auto")
     }
     divType match {
@@ -354,7 +363,7 @@ object TutorialApp extends JSApp {
   def mkEditor(): Unit = {
     val buf = bm.mkEditorBuf("text/x-scala")
 
-    val divType = ui.bufferDiv(buf) { editor ⇒
+    val divType = gen.bufferDiv(buf) { editor ⇒
       editor.setSize("50%", "auto")
     }
 
@@ -375,6 +384,21 @@ object TutorialApp extends JSApp {
     b.onclick = (_: MouseEvent) ⇒ {
       mkEditor()
     }
+    /*
+        val d = div(id := "hello").render
+        $(s"#${divs.parent}").append(d)
+        val opts = js.Dynamic.literal(
+          color = "#fff",
+          lines = 12,
+          width = 3,
+          length = 6,
+          radius = 5,
+          top = "5%",
+          left = "5%",
+          position = "relative"
+        )
+        jsnew(jsg.Spinner)(opts).spin(dom.document.getElementById("hello"))
+    */
     $(s"#${divs.parent}").append(b)
   }
 

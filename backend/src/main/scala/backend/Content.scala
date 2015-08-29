@@ -1,4 +1,4 @@
-package test.backend
+package backend
 
 object Content {
   import scalatags.Text.all._
@@ -12,7 +12,7 @@ object Content {
         for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
       ),
       body(
-        script(`type` := "text/javascript", src := "scalajs-test-ui-jsdeps.js", onload := "window.$ = window.jQuery = module.exports;"),
+        script(`type` := "text/javascript", src := "ui-jsdeps.js", onload := "window.$ = window.jQuery = module.exports;"),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )
     )

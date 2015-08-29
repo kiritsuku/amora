@@ -1,4 +1,4 @@
-package tutorial.webapp
+package electron
 
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.Dynamic.{global => jsg}

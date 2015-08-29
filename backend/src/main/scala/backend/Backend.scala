@@ -1,4 +1,4 @@
-package test.backend
+package backend
 
 import scala.util.Failure
 import scala.util.Success
