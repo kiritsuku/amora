@@ -91,12 +91,18 @@ object TutorialApp extends JSApp {
       val isDown = e.`type` == "keydown"
       keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
 
+      def isCtrlPressed = keyMap.contains(17)
+
       if (isDown) {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
           val input = Control(BufferRef(ta.id), controlSeq)
           send(input)
           e.preventDefault()
+        } else if (isCtrlPressed && e.keyCode != 17) {
+          val character = jsg.String.fromCharCode(e.jsg.which).toString
+          val input = Control(BufferRef(ta.id), s"<C-$character>")
+          send(input)
         }
       }
     }
