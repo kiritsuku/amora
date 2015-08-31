@@ -5,6 +5,7 @@ import scala.scalajs.js
 /**
  * See http://electron.atom.io/docs/v0.30.0/api/app/
  */
+@js.native
 trait App extends js.Object with EventEmitter {
 
   def quit(): Unit = js.native

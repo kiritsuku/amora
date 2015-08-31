@@ -8,7 +8,7 @@ object Content {
     "<!DOCTYPE html>" + html(
       head(
         meta(charset := "UTF-8"),
-        tags2.title("First Scala.js steps"),
+        tags2.title("IDE research"),
         for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
       ),
       body(

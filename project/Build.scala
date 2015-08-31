@@ -64,12 +64,12 @@ object Build extends sbt.Build {
 
       val pkgJson = """
       {
-        "name": "electron-demo",
+        "name": "electron-starter",
         "version": "0.1",
         "main": "main.js",
         "repository": {
           "type": "git",
-          "url": "https://github.com/sschaef/scalajs-test"
+          "url": "https://github.com/sschaef/ide-research"
         },
         "license": "MIT"
       }
@@ -159,6 +159,9 @@ object Build extends sbt.Build {
     // https://github.com/ChrisNeveu/macrame
     val macrame = "1.0.1"
     val paradise = "2.1.0-M5"
+    val akkaStream = "1.0"
+    val akkaHttp = "1.0"
+    val scalameta = "0.1.0-SNAPSHOT"
   }
 
   object deps {
@@ -168,19 +171,19 @@ object Build extends sbt.Build {
     ))
 
     lazy val backend = Def.setting(Seq(
-      "com.typesafe.akka" %% "akka-http-experimental" % "1.0",
-      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+      "com.typesafe.akka" %% "akka-http-experimental" % versions.akkaHttp,
+      "com.typesafe.akka" %% "akka-stream-experimental" % versions.akkaStream,
       "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalameta" % "scalameta" % "0.1.0-SNAPSHOT" cross CrossVersion.binary,
-      "org.scalameta" % "scalahost" % "0.1.0-SNAPSHOT" cross CrossVersion.full,
-      "org.scalameta" %% "interpreter" % "0.1.0-SNAPSHOT",
+      "org.scalameta" % "scalameta" % versions.scalameta cross CrossVersion.binary,
+      "org.scalameta" % "scalahost" % versions.scalameta cross CrossVersion.full,
+      "org.scalameta" %% "interpreter" % versions.scalameta,
       "com.chrisneveu" %% "macrame" % versions.macrame,
       compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
       "com.lihaoyi" %%% "scalatags" % versions.scalatags
     ))
 
     lazy val nvim = Def.setting(Seq(
-      "com.typesafe.akka" %% "akka-stream-experimental" % "1.0",
+      "com.typesafe.akka" %% "akka-stream-experimental" % versions.akkaStream,
       // https://github.com/msgpack4z/msgpack4z-core
       "com.github.xuwei-k" %% "msgpack4z-core" % "0.1.6",
       // https://github.com/msgpack4z/msgpack4z-java07
