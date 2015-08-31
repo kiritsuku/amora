@@ -8,7 +8,7 @@ object Main extends JSApp {
 
   override def main(): Unit = {
     ui.authenticate()
-    ui.setupUI2()
+    ui.setupUI3()
   }
 
 }

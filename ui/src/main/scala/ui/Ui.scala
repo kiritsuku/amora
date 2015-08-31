@@ -74,6 +74,74 @@ class Ui {
     46 → "<del>"
   )
 
+  def setupUI3() = {
+    import scalatags.JsDom.all._
+    val par = div(id := divs.parent, `class` := "fullscreen").render
+    val buf = bm.mkEditorBuf("text/x-scala")
+    val d = gen.bufferDiv3(buf, tabIndex = 1)
+    val ta = textarea(id := s"${buf.ref.id}-ta", style := "display: none;").render
+
+    d.appendChild(ta)
+    par.appendChild(d)
+
+    def handleKeyUpDown(e: KeyboardEvent): Unit = {
+      println("keyUpDown: " + e.keyCode)
+      startTime = jsg.performance.now()
+      val isDown = e.`type` == "keydown"
+      keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
+
+      def isCtrlPressed = keyMap.contains(17)
+
+      if (isDown) {
+        val controlSeq = vimMap.getOrElse(e.keyCode, "")
+        if (controlSeq.nonEmpty) {
+          val input = Control(buf.ref, controlSeq)
+          send(input)
+          e.preventDefault()
+        } else if (isCtrlPressed && e.keyCode != 17) {
+          val character = jsg.String.fromCharCode(e.jsg.which).toString
+          val input = Control(buf.ref, s"<C-$character>")
+          send(input)
+        }
+      }
+    }
+
+    def send(req: Request): Unit = {
+      import boopickle.Default._
+      val msg = Pickle.intoBytes(req)
+      ws.send(toArrayBuffer(msg))
+      println(s"> sent: $req")
+    }
+
+    def handleKeyPress(e: KeyboardEvent): Boolean = {
+      println("keyPress: " + e.keyCode)
+      startTime = jsg.performance.now()
+      val character = jsg.String.fromCharCode(e.jsg.which).toString
+
+      val input = TextChange(buf.ref, character)
+      send(input)
+
+      false /* prevent default action */
+    }
+
+    def handleMouseUp(e: MouseEvent): Unit = {
+      println(s"mouse event: $e")
+//      startTime = jsg.performance.now()
+//      val s = start
+//      val input = SelectionChange(buf.ref, s._1, s._2)
+//      send(input)
+    }
+
+    d.onkeydown = handleKeyUpDown _
+    d.onkeyup = d.onkeydown
+    d.onkeypress = handleKeyPress _
+    d.onblur = (_: FocusEvent) ⇒ keyMap = Set()
+    d.onmouseup = handleMouseUp _
+
+    $("body").append(par)
+    $(s"#${buf.ref.id}").focus()
+  }
+
   def setupUI2() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent, `class` := "fullscreen").render
@@ -83,7 +151,7 @@ class Ui {
     par.appendChild(ta)
 
     def start = offsetToVimPos(ta, ta.selectionStart)
-    def end = offsetToVimPos(ta, ta.selectionEnd)
+//    def end = offsetToVimPos(ta, ta.selectionEnd)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
       println("keyUpDown: " + e.keyCode)
@@ -297,10 +365,16 @@ class Ui {
 
           val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
           buf.mode = mode
-          val ta = dom.document.getElementById(buf.ref.id).asInstanceOf[HTMLTextAreaElement]
-          ta.value = lines.mkString("\n")
-          ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)
-          ta.selectionEnd = ta.selectionStart
+          val parent = dom.document.getElementById(buf.ref.id)
+          import scalatags.JsDom.all._
+
+          while (parent.firstChild != null)
+            parent.removeChild(parent.firstChild)
+
+          lines.zipWithIndex foreach { case (line, i) ⇒
+            val d = div(id := s"line$i", line).render
+            parent.appendChild(d)
+          }
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {

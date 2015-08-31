@@ -37,6 +37,12 @@ class DomGen {
     d
   }
 
+  def bufferDiv3(buf: Buffer, tabIndex: Int) = {
+    val bid = buf.ref.id
+    val d = div(id := bid, `class` := "borders", tabindex := tabIndex.toString).render
+    d
+  }
+
   def bufferDiv2(buf: Buffer) = {
     val bid = buf.ref.id
     val ta = textarea(id := bid, `class` := "fullscreen", style := "resize: none;").render.asInstanceOf[HTMLTextAreaElement]
