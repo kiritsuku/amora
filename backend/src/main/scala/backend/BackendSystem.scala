@@ -154,7 +154,6 @@ final class MsgActor extends Actor {
         subject ! ConnectionFailure
       }
       else {
-        context.watch(subject)
         clients += sender → subject
         system.log.info(s"'$sender' joined")
         subject ! ConnectionSuccessful(sender)
