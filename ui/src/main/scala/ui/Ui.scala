@@ -76,6 +76,7 @@ class Ui {
 
   def setupUI3() = {
     import scalatags.JsDom.all._
+
     val par = div(id := divs.parent, `class` := "fullscreen").render
     val buf = bm.mkEditorBuf("text/x-scala")
     val d = gen.bufferDiv3(buf, tabIndex = 1)
@@ -338,10 +339,7 @@ class Ui {
 
         case change @ TextChangeAnswer(bufferRef, lines, cursorRow, cursorCol) ⇒
           println(s"> received: $change")
-          val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
-          ta.value = lines.mkString("\n")
-          ta.selectionStart = vimPosToOffset(ta, cursorRow, cursorCol)
-          ta.selectionEnd = ta.selectionStart
+          updateBuffer(bufferRef.id, lines)
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -365,16 +363,20 @@ class Ui {
 
           val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
           buf.mode = mode
-          val parent = dom.document.getElementById(buf.ref.id)
-          import scalatags.JsDom.all._
+          updateBuffer(buf.ref.id, lines)
+      }
+    }
 
-          while (parent.firstChild != null)
-            parent.removeChild(parent.firstChild)
+    def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
+      val parent = dom.document.getElementById(bufferId)
+      import scalatags.JsDom.all._
 
-          lines.zipWithIndex foreach { case (line, i) ⇒
-            val d = div(id := s"line$i", line).render
-            parent.appendChild(d)
-          }
+      while (parent.firstChild != null)
+        parent.removeChild(parent.firstChild)
+
+      lines.zipWithIndex foreach { case (line, i) ⇒
+        val d = div(id := s"line$i", line).render
+        parent.appendChild(d)
       }
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
