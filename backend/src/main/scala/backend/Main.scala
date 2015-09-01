@@ -7,7 +7,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 
-object Backend extends App {
+object Main extends App {
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
