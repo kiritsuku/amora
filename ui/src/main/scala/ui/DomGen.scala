@@ -39,7 +39,13 @@ class DomGen {
 
   def bufferDiv3(buf: Buffer, tabIndex: Int) = {
     val bid = buf.ref.id
-    val d = div(id := bid, `class` := "borders", tabindex := tabIndex.toString).render
+    val d = div(
+      id := bid,
+      `class` := "borders",
+      tabindex := tabIndex.toString,
+      contenteditable := true,
+      style := "white-space: pre-line;"
+    ).render
     d
   }
 

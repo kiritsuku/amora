@@ -126,11 +126,35 @@ class Ui {
     }
 
     def handleMouseUp(e: MouseEvent): Unit = {
-      println(s"mouse event: $e")
-//      startTime = jsg.performance.now()
-//      val s = start
-//      val input = SelectionChange(buf.ref, s._1, s._2)
-//      send(input)
+      startTime = jsg.performance.now()
+      val sel = selection
+      val start = offsetToVimPos(sel._1)
+      val input = SelectionChange(buf.ref, start._1, start._2)
+      send(input)
+    }
+
+    /* Returns the selection as (start, end). */
+    def selection: (Int, Int) = {
+      val sel = dom.window.getSelection()
+      val range = sel.getRangeAt(0)
+      val elem = dom.document.getElementById(buf.ref.id)
+      val content = range.cloneRange()
+      content.selectNodeContents(elem)
+      content.setEnd(range.startContainer, range.startOffset)
+      val start = content.toString().length()
+
+      content.setStart(range.startContainer, range.startOffset)
+      content.setEnd(range.endContainer, range.endOffset)
+      val len = content.toString().length()
+      (start, start+len)
+    }
+
+    def offsetToVimPos(offset: Int): (Int, Int) = {
+      val elem = dom.document.getElementById(buf.ref.id)
+      val content = elem.textContent.substring(0, offset)
+      val row = content.count(_ == '\n')
+      val col = offset-content.lastIndexWhere(_ == '\n')-1
+      (row, col)
     }
 
     d.onkeydown = handleKeyUpDown _
@@ -347,12 +371,7 @@ class Ui {
 
         case change @ SelectionChangeAnswer(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol) ⇒
           println(s"> received: $change")
-          val ta = dom.document.getElementById(bufferRef.id).asInstanceOf[HTMLTextAreaElement]
-          ta.selectionStart = vimPosToOffset(ta, cursorStartRow, cursorStartCol)
-          if (cursorStartRow == cursorEndRow && cursorStartCol == cursorEndCol)
-            ta.selectionEnd = ta.selectionStart
-          else
-            ta.selectionEnd = vimPosToOffset(ta, cursorEndRow, cursorEndCol)
+          // TODO update cursor
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -369,16 +388,11 @@ class Ui {
 
     def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
       val parent = dom.document.getElementById(bufferId)
-      import scalatags.JsDom.all._
 
-      while (parent.firstChild != null)
-        parent.removeChild(parent.firstChild)
-
-      lines.zipWithIndex foreach { case (line, i) ⇒
-        val d = div(id := s"line$i", line).render
-        parent.appendChild(d)
-      }
+      val content = lines.mkString("\n")
+      parent.innerHTML = content
     }
+
     ws.onerror = (e: ErrorEvent) ⇒ {
       println(s"error from ws: $e")
     }
