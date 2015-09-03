@@ -364,6 +364,7 @@ class Ui {
         case change @ TextChangeAnswer(bufferRef, lines, cursorRow, cursorCol) ⇒
           println(s"> received: $change")
           updateBuffer(bufferRef.id, lines)
+          updateCursor(bufferRef, cursorRow, cursorCol, cursorRow, cursorCol)
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -371,15 +372,7 @@ class Ui {
 
         case change @ SelectionChangeAnswer(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol) ⇒
           println(s"> received: $change")
-          val offset = vimPosToOffset(bufferRef, cursorStartRow, cursorStartCol)
-          val sel = dom.window.getSelection()
-          val range = sel.getRangeAt(0)
-          range.setStart(range.startContainer, offset)
-
-          if (cursorStartRow != cursorEndRow || cursorStartCol != cursorEndCol) {
-            val offset = vimPosToOffset(bufferRef, cursorEndRow, cursorEndCol)
-            range.setEnd(range.startContainer, offset)
-          }
+          updateCursor(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol)
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -391,6 +384,7 @@ class Ui {
           val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
+          updateCursor(buf.ref, cursorRow, cursorCol, cursorRow, cursorCol)
       }
     }
 
@@ -404,6 +398,23 @@ class Ui {
           lines.take(row).map(_.length).sum+row
 
       nrOfCharsBeforeCursor+col
+    }
+
+    def updateCursor(bufferRef: BufferRef, cursorStartRow: Int, cursorStartCol: Int, cursorEndRow: Int, cursorEndCol: Int): Unit = {
+      val offset = vimPosToOffset(bufferRef, cursorStartRow, cursorStartCol)
+      val sel = dom.window.getSelection()
+      val range = sel.getRangeAt(0)
+      range.setStart(range.startContainer, offset)
+
+      if (cursorStartRow != cursorEndRow || cursorStartCol != cursorEndCol) {
+        val offset = vimPosToOffset(bufferRef, cursorEndRow, cursorEndCol)
+        range.setEnd(range.startContainer, offset)
+      }
+      else
+        range.setEnd(range.startContainer, offset)
+
+      sel.removeAllRanges()
+      sel.addRange(range)
     }
 
     def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
