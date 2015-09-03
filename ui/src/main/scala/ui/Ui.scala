@@ -371,7 +371,15 @@ class Ui {
 
         case change @ SelectionChangeAnswer(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol) ⇒
           println(s"> received: $change")
-          // TODO update cursor
+          val offset = vimPosToOffset(bufferRef, cursorStartRow, cursorStartCol)
+          val sel = dom.window.getSelection()
+          val range = sel.getRangeAt(0)
+          range.setStart(range.startContainer, offset)
+
+          if (cursorStartRow != cursorEndRow || cursorStartCol != cursorEndCol) {
+            val offset = vimPosToOffset(bufferRef, cursorEndRow, cursorEndCol)
+            range.setEnd(range.startContainer, offset)
+          }
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -384,6 +392,18 @@ class Ui {
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
       }
+    }
+
+    def vimPosToOffset(ref: BufferRef, row: Int, col: Int): Int = {
+      val elem = dom.document.getElementById(ref.id)
+      val lines = elem.textContent.split("\n")
+      val nrOfCharsBeforeCursor =
+        if (row == 0)
+          0
+        else
+          lines.take(row).map(_.length).sum+row
+
+      nrOfCharsBeforeCursor+col
     }
 
     def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
