@@ -85,8 +85,8 @@ final class NvimAccessor(implicit system: ActorSystem) {
     val resp = for {
       win ← window
       _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
-      pos = Pos(change.cursorRow, change.cursorColumn)
-    } yield SelectionChangeAnswer(change.bufferRef, Selection(pos, pos))
+      s ← selection
+    } yield SelectionChangeAnswer(change.bufferRef, s)
 
     resp onComplete {
       case Success(resp) ⇒
