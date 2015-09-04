@@ -41,7 +41,7 @@ class DomGen {
     val bid = buf.ref.id
     val d = div(
       id := bid,
-      `class` := "borders",
+      `class` := "buffer borders",
       tabindex := tabIndex.toString,
       contenteditable := true,
       style := "white-space: pre-line;"

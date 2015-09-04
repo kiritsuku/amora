@@ -21,6 +21,12 @@ html, body {
   border-color: red;
 }
 
+.buffer {
+  font-family: "Fantasque Sans Mono";
+  font-style: italic;
+  font-size: 11pt;
+}
+
 #left {
   float: left;
   overflow: auto;
