@@ -103,6 +103,7 @@ class Ui {
           val character = jsg.String.fromCharCode(e.jsg.which).toString
           val input = Control(buf.ref, s"<C-$character>")
           send(input)
+          e.preventDefault()
         }
       }
     }
