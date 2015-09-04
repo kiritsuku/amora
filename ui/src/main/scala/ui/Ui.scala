@@ -168,73 +168,6 @@ class Ui {
     $(s"#${buf.ref.id}").focus()
   }
 
-  def setupUI2() = {
-    import scalatags.JsDom.all._
-    val par = div(id := divs.parent, `class` := "fullscreen").render
-    val buf = bm.mkEditorBuf("text/x-scala")
-
-    val ta = gen.bufferDiv2(buf)
-    par.appendChild(ta)
-
-    def start = offsetToVimPos(ta, ta.selectionStart)
-//    def end = offsetToVimPos(ta, ta.selectionEnd)
-
-    def handleKeyUpDown(e: KeyboardEvent): Unit = {
-      println("keyUpDown: " + e.keyCode)
-      startTime = jsg.performance.now()
-      val isDown = e.`type` == "keydown"
-      keyMap = if (isDown) keyMap + e.keyCode else keyMap - e.keyCode
-
-      def isCtrlPressed = keyMap.contains(17)
-
-      if (isDown) {
-        val controlSeq = vimMap.getOrElse(e.keyCode, "")
-        if (controlSeq.nonEmpty) {
-          val input = Control(BufferRef(ta.id), controlSeq)
-          send(input)
-          e.preventDefault()
-        } else if (isCtrlPressed && e.keyCode != 17) {
-          val character = jsg.String.fromCharCode(e.jsg.which).toString
-          val input = Control(BufferRef(ta.id), s"<C-$character>")
-          send(input)
-        }
-      }
-    }
-
-    def send(req: Request): Unit = {
-      import boopickle.Default._
-      val msg = Pickle.intoBytes(req)
-      ws.send(toArrayBuffer(msg))
-      println(s"> sent: $req")
-    }
-
-    def handleKeyPress(e: KeyboardEvent): Boolean = {
-      println("keyPress: " + e.keyCode)
-      startTime = jsg.performance.now()
-      val character = jsg.String.fromCharCode(e.jsg.which).toString
-
-      val input = TextChange(BufferRef(ta.id), character)
-      send(input)
-
-      false /* prevent default action */
-    }
-
-    def handleMouseUp(e: MouseEvent): Unit = {
-      startTime = jsg.performance.now()
-      val s = start
-      val input = SelectionChange(BufferRef(ta.id), s._1, s._2)
-      send(input)
-    }
-
-    ta.onkeydown = handleKeyUpDown _
-    ta.onkeyup = ta.onkeydown
-    ta.onkeypress = handleKeyPress _
-    ta.onblur = (_: FocusEvent) ⇒ keyMap = Set()
-    ta.onmouseup = handleMouseUp _
-
-    $("body").append(par)
-  }
-
   def setupDivs() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent).render
@@ -303,24 +236,6 @@ class Ui {
       }
       ws.close()
     }
-  }
-
-  private def offsetToVimPos(ta: HTMLTextAreaElement, offset: Int): (Int, Int) = {
-    val content = ta.value.substring(0, offset)
-    val row = content.count(_ == '\n')
-    val col = offset-content.lastIndexWhere(_ == '\n')-1
-    (row, col)
-  }
-
-  private def vimPosToOffset(ta: HTMLTextAreaElement, row: Int, col: Int): Int = {
-    val lines = ta.value.split("\n")
-    val nrOfCharsBeforeCursor =
-      if (row == 0)
-        0
-      else
-        lines.take(row).map(_.length).sum+row
-
-    nrOfCharsBeforeCursor+col
   }
 
   def setupWS() = {
@@ -420,7 +335,6 @@ class Ui {
 
     def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
       val parent = dom.document.getElementById(bufferId)
-
       val content = lines.mkString("\n")
       parent.innerHTML = content
     }
