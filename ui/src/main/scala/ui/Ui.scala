@@ -361,30 +361,30 @@ class Ui {
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
           mkEditor()
 
-        case change @ TextChangeAnswer(bufferRef, lines, cursorRow, cursorCol) ⇒
+        case change @ TextChangeAnswer(bufferRef, lines, sel) ⇒
           println(s"> received: $change")
           updateBuffer(bufferRef.id, lines)
-          updateCursor(bufferRef, cursorRow, cursorCol, cursorRow, cursorCol)
+          updateCursor(bufferRef, sel)
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
 
-        case change @ SelectionChangeAnswer(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol) ⇒
+        case change @ SelectionChangeAnswer(bufferRef, sel) ⇒
           println(s"> received: $change")
-          updateCursor(bufferRef, cursorStartRow, cursorStartCol, cursorEndRow, cursorEndCol)
+          updateCursor(bufferRef, sel)
 
           val endTime = jsg.performance.now()
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
 
-        case update @ ClientUpdate(bufferRef, mode, lines, cursorRow, cursorCol) ⇒
+        case update @ ClientUpdate(bufferRef, mode, lines, sel) ⇒
           println(s"> received: $update")
 
           val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
-          updateCursor(buf.ref, cursorRow, cursorCol, cursorRow, cursorCol)
+          updateCursor(buf.ref, sel)
       }
     }
 
@@ -400,21 +400,21 @@ class Ui {
       nrOfCharsBeforeCursor+col
     }
 
-    def updateCursor(bufferRef: BufferRef, cursorStartRow: Int, cursorStartCol: Int, cursorEndRow: Int, cursorEndCol: Int): Unit = {
-      val offset = vimPosToOffset(bufferRef, cursorStartRow, cursorStartCol)
-      val sel = dom.window.getSelection()
-      val range = sel.getRangeAt(0)
+    def updateCursor(bufferRef: BufferRef, sel: Selection): Unit = {
+      val offset = vimPosToOffset(bufferRef, sel.start.row, sel.start.col)
+      val bsel = dom.window.getSelection()
+      val range = bsel.getRangeAt(0)
       range.setStart(range.startContainer, offset)
 
-      if (cursorStartRow != cursorEndRow || cursorStartCol != cursorEndCol) {
-        val offset = vimPosToOffset(bufferRef, cursorEndRow, cursorEndCol)
+      if (sel.start.row != sel.end.row || sel.start.col != sel.end.col) {
+        val offset = vimPosToOffset(bufferRef, sel.end.row, sel.end.col)
         range.setEnd(range.startContainer, offset)
       }
       else
         range.setEnd(range.startContainer, offset)
 
-      sel.removeAllRanges()
-      sel.addRange(range)
+      bsel.removeAllRanges()
+      bsel.addRange(range)
     }
 
     def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {

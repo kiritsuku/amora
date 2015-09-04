@@ -14,7 +14,7 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import nvim._
+import nvim.{Selection ⇒ _, _}
 import protocol.{Mode ⇒ _, _}
 
 final class NvimAccessor(implicit system: ActorSystem) {
@@ -35,10 +35,11 @@ final class NvimAccessor(implicit system: ActorSystem) {
   def handleClientJoined(sender: String, self: ActorRef): Unit = {
     val resp = for {
       win ← window
-      cursor ← win.cursor
       content ← currentBufferContent
       mode ← nvim.activeMode
-    } yield ClientUpdate(None, Mode.asString(mode), content, cursor.row-1, cursor.col)
+      sel ← nvim.selection
+      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+    } yield ClientUpdate(None, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -55,9 +56,11 @@ final class NvimAccessor(implicit system: ActorSystem) {
     val resp = for {
       _ ← nvim.sendInput(change.text)
       win ← window
-      cursor ← win.cursor
       content ← currentBufferContent
-    } yield TextChangeAnswer(change.bufferRef, content, cursor.row-1, cursor.col)
+      mode ← nvim.activeMode
+      sel ← nvim.selection
+      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+    } yield ClientUpdate(Some(change.bufferRef), Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -74,7 +77,8 @@ final class NvimAccessor(implicit system: ActorSystem) {
     val resp = for {
       win ← window
       _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
-    } yield SelectionChangeAnswer(change.bufferRef, change.cursorRow, change.cursorColumn, change.cursorRow, change.cursorColumn)
+      pos = Pos(change.cursorRow, change.cursorColumn)
+    } yield SelectionChangeAnswer(change.bufferRef, Selection(pos, pos))
 
     resp onComplete {
       case Success(resp) ⇒
@@ -91,10 +95,11 @@ final class NvimAccessor(implicit system: ActorSystem) {
     val resp = for {
       _ ← nvim.sendInput(control.controlSeq)
       win ← window
-      cursor ← win.cursor
       content ← currentBufferContent
       mode ← nvim.activeMode
-    } yield ClientUpdate(Some(control.bufferRef), Mode.asString(mode), content, cursor.row-1, cursor.col)
+      sel ← nvim.selection
+      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+    } yield ClientUpdate(Some(control.bufferRef), Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
