@@ -190,10 +190,33 @@ trait NoNvimProtocolFunctionality {
         throw new IllegalArgumentException(s"Unknown selection result: ${NvimHelper.msgpackUnionAsString(s, 0)}")
     }
 
-    for {
-      selStart ← eval("""getpos("v")""")
-      selEnd ← eval("""getpos(".")""")
+    def cursorPos = for {
+      selStart ← eval("""getpos(".")""")
+    } yield Selection(asPos(selStart), asPos(selStart))
+
+    def visualLineSel = for {
+      _ ← sendInput("<esc>")
+      selStart ← eval("""getpos("'<")""")
+      selEnd ← eval("""getpos("'>")""")
+      _ ← sendInput("gv")
+      end = asPos(selEnd)
+      b ← currentBuffer
+      line ← b.line(end.row-1)
+      len = line.length
+    } yield Selection(asPos(selStart), Position(end.row, len))
+
+    def currentSel = for {
+      _ ← sendInput("<esc>")
+      selStart ← eval("""getpos("'<")""")
+      selEnd ← eval("""getpos("'>")""")
+      _ ← sendInput("gv")
     } yield Selection(asPos(selStart), asPos(selEnd))
+
+    activeMode flatMap {
+      case VisualByCharacter | VisualBlockwise ⇒ currentSel
+      case VisualByLine                        ⇒ visualLineSel
+      case _                                   ⇒ cursorPos
+    }
   }
 
 }
