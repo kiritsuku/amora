@@ -32,13 +32,22 @@ final class NvimAccessor(implicit system: ActorSystem) {
     s ← b.lineSlice(0, count)
   } yield s
 
+  private def selection = for {
+    sel ← nvim.selection
+  } yield {
+    val List(start, end) = List(
+      Pos(sel.start.row-1, sel.start.col-1),
+      Pos(sel.end.row-1, sel.end.col-1)
+    ).sorted
+    Selection(start, end)
+  }
+
   def handleClientJoined(sender: String, self: ActorRef): Unit = {
     val resp = for {
       win ← window
       content ← currentBufferContent
       mode ← nvim.activeMode
-      sel ← nvim.selection
-      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+      s ← selection
     } yield ClientUpdate(None, Mode.asString(mode), content, s)
 
     resp onComplete {
@@ -58,8 +67,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
       win ← window
       content ← currentBufferContent
       mode ← nvim.activeMode
-      sel ← nvim.selection
-      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+      s ← selection
     } yield ClientUpdate(Some(change.bufferRef), Mode.asString(mode), content, s)
 
     resp onComplete {
@@ -97,8 +105,7 @@ final class NvimAccessor(implicit system: ActorSystem) {
       win ← window
       content ← currentBufferContent
       mode ← nvim.activeMode
-      sel ← nvim.selection
-      s = Selection(Pos(sel.start.row-1, sel.start.col), Pos(sel.end.row-1, sel.end.col))
+      s ← selection
     } yield ClientUpdate(Some(control.bufferRef), Mode.asString(mode), content, s)
 
     resp onComplete {

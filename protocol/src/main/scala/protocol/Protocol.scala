@@ -18,6 +18,15 @@ case class ClientUpdate(bufferRef: Option[BufferRef], mode: String, lines: Seq[S
 case class Selection(start: Pos, end: Pos) extends Response
 case class Pos(row: Int, col: Int) extends Response
 
+object Pos {
+  implicit object PosOrdering extends Ordering[Pos] {
+    override def compare(a: Pos, b: Pos) = {
+      val r = a.row - b.row
+      if (r == 0) a.col - b.col else r
+    }
+  }
+}
+
 /**
  * Represents all possible Vim modes. For documentation about the possible
  * modes run `:help mode()` in Vim.
