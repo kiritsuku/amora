@@ -1,7 +1,8 @@
 package electron
 
+import scala.scalajs.js.Dynamic.{ global ⇒ jsg }
 import scala.scalajs.js.JSApp
-import scala.scalajs.js.Dynamic.{global => jsg}
+
 import io.atom.electron._
 
 object ElectronMain extends JSApp {
@@ -17,13 +18,13 @@ object ElectronMain extends JSApp {
     // be closed automatically when the JavaScript object is GCed.
     var w: BrowserWindow = null
 
-    app.on("ready", () => {
+    app.on("ready", () ⇒ {
       w = BrowserWindow(width = 1000, height = 800)
       w.maximize()
       // TODO don't hardcode URL and port here
       w.loadUrl("http://localhost:9999")
       w.openDevTools()
-      w.on("closed", () => {
+      w.on("closed", () ⇒ {
         w = null
       })
 
