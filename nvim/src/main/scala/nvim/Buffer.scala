@@ -90,4 +90,13 @@ final case class Buffer(id: Int, connection: Connection)(implicit system: ActorS
     }
   }
 
+  /**
+   * Returns the content of `line`. The first line is indexed with 0.
+   */
+  def line(line: Int)(implicit ec: ExecutionContext): Future[String] = {
+    connection.sendRequest("buffer_get_line", int(id), int(line)) {
+      case MsgpackBinary(bin) ⇒  new String(bin, "UTF-8")
+    }
+  }
+
 }
