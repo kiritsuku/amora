@@ -17,6 +17,7 @@ case class SelectionChangeAnswer(bufferRef: BufferRef, sel: Selection) extends R
 case class ClientUpdate(bufferRef: Option[BufferRef], mode: String, lines: Seq[String], sel: Selection) extends Response
 case class Selection(start: Pos, end: Pos) extends Response
 case class Pos(row: Int, col: Int) extends Response
+case class FocusChange(windowId: Int, bufferId: Int) extends Response
 
 object Pos {
   implicit object PosOrdering extends Ordering[Pos] {

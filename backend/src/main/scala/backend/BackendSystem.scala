@@ -15,16 +15,50 @@ import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import nvim.{Selection ⇒ _, _}
+import nvim.internal.Notification
 import protocol.{Mode ⇒ _, _}
 
-final class NvimAccessor(implicit system: ActorSystem) {
+final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   import system.dispatcher
 
   private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
+
+  object events {
+    val WinEnter = "_WinEnter"
+
+    val AllEvents = Seq(WinEnter)
+  }
+
+  private val handler: Notification ⇒ Unit = n ⇒ {
+    import events._
+    n.method match {
+      case WinEnter ⇒
+        val resp = for {
+          win ← nvim.currentWindow
+          b ← win.buffer
+        } yield FocusChange(win.id, b.id)
+
+        resp onComplete {
+          case Success(resp) ⇒
+            self ! NvimSignal(resp)
+            system.log.info(s"sent: $resp")
+
+          case Failure(f) ⇒
+            system.log.error(f, s"Failed to send a broadcast event.")
+        }
+
+      case _ ⇒
+        system.log.warning(s"Notification for unknown event type arrived: $n")
+    }
+  }
+
   // we cache window here in order to reduce communication overhead
   private val window = nvim.currentWindow
   // set ruler for better debugging purposes
   nvim.sendVimCommand(":set ruler")
+
+  nvim.connection.addNotificationHandler(handler)
+  events.AllEvents foreach nvim.subscribe
 
   private def currentBufferContent = for {
     b ← nvim.currentBuffer
@@ -151,7 +185,7 @@ final class MsgActor extends Actor {
 
   private val repl = new Repl
   private var clients = Map.empty[String, ActorRef]
-  private val nvim = new NvimAccessor
+  private val nvim = new NvimAccessor(self)
 
   override def receive = {
     case NewClient(subject) ⇒
@@ -188,8 +222,11 @@ final class MsgActor extends Actor {
           nvim.handleControl(control, sender, self)
       }
 
-    case NvimSignal(sender, resp) ⇒
+    case NvimSignal(Some(sender), resp) ⇒
       clients(sender) ! resp
+
+    case NvimSignal(None, resp) ⇒
+      clients.values foreach (_ ! resp)
 
     case ClientLeft(sender) ⇒
       clients -= sender
@@ -202,4 +239,11 @@ case class ReceivedMessage(sender: String, req: Request) extends Msg
 case class ClientLeft(sender: String) extends Msg
 case class NewClient(subject: ActorRef) extends Msg
 case class ClientReady(sender: String, subject: ActorRef) extends Msg
-case class NvimSignal(sender: String, resp: Response)
+case class NvimSignal(sender: Option[String], resp: Response)
+object NvimSignal {
+  def apply(sender: String, resp: Response): NvimSignal =
+    NvimSignal(Some(sender), resp)
+
+  def apply(resp: Response): NvimSignal =
+    NvimSignal(None, resp)
+}

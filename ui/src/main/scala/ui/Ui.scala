@@ -301,6 +301,12 @@ class Ui {
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
           updateCursor(buf.ref, sel)
+
+        case f @ FocusChange(winId, bufId) ⇒
+          println(s"> received: $f")
+
+        case ev ⇒
+          dom.console.error(s"Unexpected response: $ev")
       }
     }
 
