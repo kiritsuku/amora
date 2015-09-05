@@ -28,4 +28,15 @@ case class Window(id: Int, connection: Connection)(implicit system: ActorSystem)
       case _ ⇒ ()
     }
   }
+
+  /**
+   * Returns the buffer that is displayed in this window.
+   */
+  def buffer(implicit ec: ExecutionContext): Future[Buffer] = {
+    connection.sendRequest("window_get_buffer", int(id)) {
+      case MsgpackExt(Nvim.BufferId, MsgpackBinary(bin)) ⇒
+        val bufId = bin.head.toInt
+        Buffer(bufId, connection)
+    }
+  }
 }

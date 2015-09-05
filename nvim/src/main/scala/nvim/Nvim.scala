@@ -9,14 +9,18 @@ import msgpack4z.MsgpackUnion._
 import macrame.enum
 import nvim.internal.NvimHelper
 
+object Nvim {
+  val BufferId = 0
+  val WindowId = 1
+  val TabpageId = 2
+}
+
 final case class Nvim
     (connection: Connection)
     (implicit val system: ActorSystem)
       extends NoNvimProtocolFunctionality {
 
-  private val BufferId = 0
-  private val WindowId = 1
-  private val TabpageId = 2
+  import Nvim._
 
   def apiInfo(implicit ec: ExecutionContext): Future[String] = {
     connection.sendRequest("vim_get_api_info") {
