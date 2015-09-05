@@ -1,3 +1,5 @@
+" Enable ruler for better debugging purposes
+set ruler
 
 " Nvim can't yet send any VimL events through its msgpack-rpc protocol.
 " But it is possible to send arbitrary events through the rpcnotiy function.

@@ -52,11 +52,6 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     }
   }
 
-  // we cache window here in order to reduce communication overhead
-  private val window = nvim.currentWindow
-  // set ruler for better debugging purposes
-  nvim.sendVimCommand(":set ruler")
-
   nvim.connection.addNotificationHandler(handler)
   events.AllEvents foreach nvim.subscribe
 
@@ -76,9 +71,9 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     Selection(start, end)
   }
 
-  def handleClientJoined(sender: String, self: ActorRef): Unit = {
+  def handleClientJoined(sender: String): Unit = {
     val resp = for {
-      win ← window
+      win ← nvim.currentWindow
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
@@ -94,11 +89,11 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     }
   }
 
-  def handleTextChange(change: TextChange, sender: String, self: ActorRef): Unit = {
+  def handleTextChange(change: TextChange, sender: String): Unit = {
     system.log.info(s"received: $change")
     val resp = for {
       _ ← nvim.sendInput(change.text)
-      win ← window
+      win ← nvim.currentWindow
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
@@ -114,10 +109,10 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     }
   }
 
-  def handleSelectionChange(change: SelectionChange, sender: String, self: ActorRef): Unit = {
+  def handleSelectionChange(change: SelectionChange, sender: String): Unit = {
     system.log.info(s"received: $change")
     val resp = for {
-      win ← window
+      win ← nvim.currentWindow
       _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
       s ← selection
     } yield SelectionChangeAnswer(change.bufferRef, s)
@@ -132,11 +127,11 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     }
   }
 
-  def handleControl(control: Control, sender: String, self: ActorRef): Unit = {
+  def handleControl(control: Control, sender: String): Unit = {
     system.log.info(s"received: $control")
     val resp = for {
       _ ← nvim.sendInput(control.controlSeq)
-      win ← window
+      win ← nvim.currentWindow
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
@@ -203,7 +198,7 @@ final class MsgActor extends Actor {
         clients += sender → subject
         system.log.info(s"'$sender' joined")
         subject ! ConnectionSuccessful(sender)
-        nvim.handleClientJoined(sender, self)
+        nvim.handleClientJoined(sender)
       }
 
     case ReceivedMessage(sender, msg) ⇒
@@ -213,13 +208,13 @@ final class MsgActor extends Actor {
           clients(sender) ! InterpretedResult(id, res)
 
         case change: SelectionChange ⇒
-          nvim.handleSelectionChange(change, sender, self)
+          nvim.handleSelectionChange(change, sender)
 
         case change: TextChange ⇒
-          nvim.handleTextChange(change, sender, self)
+          nvim.handleTextChange(change, sender)
 
         case control: Control ⇒
-          nvim.handleControl(control, sender, self)
+          nvim.handleControl(control, sender)
       }
 
     case NvimSignal(Some(sender), resp) ⇒
