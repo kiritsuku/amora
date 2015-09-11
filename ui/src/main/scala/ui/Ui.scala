@@ -75,10 +75,13 @@ class Ui {
   )
 
   def setupUI3() = {
+  }
+
+  def createBufferContent(buf: Buffer) = {
+    println(s"Create new DOM for buffer `${buf.ref.id}`")
     import scalatags.JsDom.all._
 
     val par = div(id := divs.parent, `class` := "fullscreen").render
-    val buf = bm.mkEditorBuf("text/x-scala")
     val d = gen.bufferDiv3(buf, tabIndex = 1)
     val ta = textarea(id := s"${buf.ref.id}-ta", style := "display: none;").render
 
@@ -96,12 +99,12 @@ class Ui {
       if (isDown) {
         val controlSeq = vimMap.getOrElse(e.keyCode, "")
         if (controlSeq.nonEmpty) {
-          val input = Control(buf.ref, controlSeq)
+          val input = Control(buf.ref.id, controlSeq)
           send(input)
           e.preventDefault()
         } else if (isCtrlPressed && e.keyCode != 17) {
           val character = jsg.String.fromCharCode(e.jsg.which).toString
-          val input = Control(buf.ref, s"<C-$character>")
+          val input = Control(buf.ref.id, s"<C-$character>")
           send(input)
           e.preventDefault()
         }
@@ -120,7 +123,7 @@ class Ui {
       startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
-      val input = TextChange(buf.ref, character)
+      val input = TextChange(buf.ref.id, character)
       send(input)
 
       false /* prevent default action */
@@ -138,7 +141,7 @@ class Ui {
     def selection: (Int, Int) = {
       val sel = dom.window.getSelection()
       val range = sel.getRangeAt(0)
-      val elem = dom.document.getElementById(buf.ref.id)
+      val elem = dom.document.getElementById(buf.ref.id.toString)
       val content = range.cloneRange()
       content.selectNodeContents(elem)
       content.setEnd(range.startContainer, range.startOffset)
@@ -151,7 +154,7 @@ class Ui {
     }
 
     def offsetToVimPos(offset: Int): (Int, Int) = {
-      val elem = dom.document.getElementById(buf.ref.id)
+      val elem = dom.document.getElementById(buf.ref.id.toString)
       val content = elem.textContent.substring(0, offset)
       val row = content.count(_ == '\n')
       val col = offset-content.lastIndexWhere(_ == '\n')-1
@@ -272,7 +275,7 @@ class Ui {
           // TODO what to do here?
 
         case InterpretedResult(id, res) ⇒
-          val resultBuf = bm.resultBufOf(BufferRef(id)) // TODO remove BufferRef construction here
+          val resultBuf = bm.resultBufOf(BufferRef(id.toInt)) // TODO remove BufferRef construction here
           println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
           $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
           mkEditor()
@@ -294,10 +297,12 @@ class Ui {
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
 
-        case update @ ClientUpdate(bufferRef, mode, lines, sel) ⇒
+        case update @ ClientUpdate(bufferId, mode, lines, sel) ⇒
           println(s"> received: $update")
 
-          val buf = bufferRef map bm.bufferOf getOrElse bm.currentBuffer
+          // TODO remove BufferRef creation here
+          val buf = bm.bufferOf(BufferRef(bufferId))(createBufferContent)
+
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
           updateCursor(buf.ref, sel)
@@ -311,7 +316,7 @@ class Ui {
     }
 
     def vimPosToOffset(ref: BufferRef, row: Int, col: Int): Int = {
-      val elem = dom.document.getElementById(ref.id)
+      val elem = dom.document.getElementById(ref.id.toString)
       val lines = elem.textContent.split("\n")
       val nrOfCharsBeforeCursor =
         if (row == 0)
@@ -339,8 +344,8 @@ class Ui {
       bsel.addRange(range)
     }
 
-    def updateBuffer(bufferId: String, lines: Seq[String]): Unit = {
-      val parent = dom.document.getElementById(bufferId)
+    def updateBuffer(bufferId: Int, lines: Seq[String]): Unit = {
+      val parent = dom.document.getElementById(bufferId.toString)
       val content = lines.mkString("\n")
       parent.innerHTML = content
     }
@@ -381,7 +386,7 @@ class Ui {
 
         import boopickle.Default._
         val code = e.getDoc().getValue()
-        val msg = Pickle.intoBytes[Request](Interpret(buf.ref.id, code))
+        val msg = Pickle.intoBytes[Request](Interpret(buf.ref.id.toString, code))
         ws.send(toArrayBuffer(msg))
       }
     )

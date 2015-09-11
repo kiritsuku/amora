@@ -1,11 +1,11 @@
 package protocol
 
-case class BufferRef(id: String)
+case class BufferRef(id: Int)
 
 sealed trait Request
 case class Interpret(id: String, code: String) extends Request
-case class Control(bufferRef: BufferRef, controlSeq: String) extends Request
-case class TextChange(bufferRef: BufferRef, text: String) extends Request
+case class Control(bufferId: Int, controlSeq: String) extends Request
+case class TextChange(bufferId: Int, text: String) extends Request
 case class SelectionChange(bufferRef: BufferRef, cursorRow: Int, cursorColumn: Int) extends Request
 
 sealed trait Response
@@ -14,7 +14,7 @@ case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(bufferRef: BufferRef, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(bufferRef: BufferRef, sel: Selection) extends Response
-case class ClientUpdate(bufferRef: Option[BufferRef], mode: String, lines: Seq[String], sel: Selection) extends Response
+case class ClientUpdate(bufferId: Int, mode: String, lines: Seq[String], sel: Selection) extends Response
 case class Selection(start: Pos, end: Pos) extends Response
 case class Pos(row: Int, col: Int) extends Response
 case class FocusChange(windowId: Int, bufferId: Int) extends Response

@@ -74,10 +74,11 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleClientJoined(sender: String): Unit = {
     val resp = for {
       win ← nvim.currentWindow
+      buf ← win.buffer
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(None, Mode.asString(mode), content, s)
+    } yield ClientUpdate(buf.id, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -97,7 +98,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Some(change.bufferRef), Mode.asString(mode), content, s)
+    } yield ClientUpdate(change.bufferId, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -135,7 +136,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Some(control.bufferRef), Mode.asString(mode), content, s)
+    } yield ClientUpdate(control.bufferId, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
