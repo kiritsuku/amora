@@ -33,10 +33,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     import events._
     n.method match {
       case WinEnter ⇒
-        val resp = for {
-          win ← nvim.currentWindow
-          b ← win.buffer
-        } yield FocusChange(win.id, b.id)
+        val resp = clientUpdate
 
         resp onComplete {
           case Success(resp) ⇒
@@ -71,14 +68,16 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     Selection(start, end)
   }
 
+  private def clientUpdate = for {
+    win ← nvim.currentWindow
+    buf ← win.buffer
+    content ← currentBufferContent
+    mode ← nvim.activeMode
+    s ← selection
+  } yield ClientUpdate(win.id, buf.id, Mode.asString(mode), content, s)
+
   def handleClientJoined(sender: String): Unit = {
-    val resp = for {
-      win ← nvim.currentWindow
-      buf ← win.buffer
-      content ← currentBufferContent
-      mode ← nvim.activeMode
-      s ← selection
-    } yield ClientUpdate(win.id, buf.id, Mode.asString(mode), content, s)
+    val resp = clientUpdate
 
     resp onComplete {
       case Success(resp) ⇒
