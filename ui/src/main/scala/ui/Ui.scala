@@ -76,17 +76,16 @@ class Ui {
   )
 
   def setupUI3() = {
+    import scalatags.JsDom.all._
+
+    val par = div(id := divs.parent).render
+    $("body").append(par)
   }
 
   def createBufferContent(buf: Buffer) = {
-    println(s"Create new DOM for buffer `${buf.ref.id}`")
-    import scalatags.JsDom.all._
-
-    val par = div(id := divs.parent, `class` := "fullscreen").render
     val d = gen.bufferDiv3(buf, tabIndex = 1)
-    val ta = textarea(id := s"${buf.ref.id}-ta", style := "display: none;").render
 
-    d.appendChild(ta)
+    val par = dom.document.getElementById(divs.parent)
     par.appendChild(d)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
