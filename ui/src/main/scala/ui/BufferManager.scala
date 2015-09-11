@@ -12,18 +12,21 @@ class BufferManager {
     if (curBuffer == null) mkEditorBuf("text") else curBuffer
 
   def mkEditorBuf(mode: String): Buffer = {
-    val buf = addBuf(Buffer(mkBufRef, BufferType.Editor(mode)))
-    curBuffer = buf
-    buf
+    ???
   }
 
   def mkResultBuf(editorRef: BufferRef): Buffer = {
-    val buf = Buffer(mkBufRef, BufferType.Result(editorRef))
-    addBuf(buf)
+    ???
   }
 
-  def bufferOf(bufferRef: BufferRef): Buffer =
-    buffers(bufferRef)
+  def bufferOf(bufferRef: BufferRef): Buffer = {
+    buffers.get(bufferRef) match {
+      case Some(buf) ⇒
+        buf
+      case None ⇒
+        addBuf(Buffer(bufferRef, BufferType.Editor("text")))
+    }
+  }
 
   def resultBufOf(editorRef: BufferRef): Buffer = {
     val res = buffers find {
@@ -41,7 +44,4 @@ class BufferManager {
     buffers += buf.ref → buf
     buf
   }
-
-  private def mkBufRef: BufferRef =
-    BufferRef(s"buf${buffers.size}")
 }

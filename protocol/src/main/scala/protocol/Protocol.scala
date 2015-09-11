@@ -14,7 +14,7 @@ case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(bufferRef: BufferRef, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(bufferRef: BufferRef, sel: Selection) extends Response
-case class ClientUpdate(bufferId: Int, mode: String, lines: Seq[String], sel: Selection) extends Response
+case class ClientUpdate(windowId: Int, bufferId: Int, mode: String, lines: Seq[String], sel: Selection) extends Response
 case class Selection(start: Pos, end: Pos) extends Response
 case class Pos(row: Int, col: Int) extends Response
 case class FocusChange(windowId: Int, bufferId: Int) extends Response

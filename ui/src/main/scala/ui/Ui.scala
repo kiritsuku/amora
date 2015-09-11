@@ -49,6 +49,7 @@ class Ui {
   private var ws: WebSocket = _
   private var clientName: String = _
   private var keyMap = Set[Int]()
+  private var windows = Set[Int]()
 
   // used to measure running time of code
   private var startTime: js.Dynamic = _
@@ -297,11 +298,15 @@ class Ui {
           val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
           println(s"update time: $time")
 
-        case update @ ClientUpdate(bufferId, mode, lines, sel) ⇒
+        case update @ ClientUpdate(winId, bufferId, mode, lines, sel) ⇒
           println(s"> received: $update")
 
           // TODO remove BufferRef creation here
-          val buf = bm.bufferOf(BufferRef(bufferId))(createBufferContent)
+          val buf = bm.bufferOf(BufferRef(bufferId))
+          if (!windows(winId)) {
+            windows += winId
+            createBufferContent(buf)
+          }
 
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)

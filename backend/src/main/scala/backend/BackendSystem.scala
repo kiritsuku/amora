@@ -78,7 +78,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(buf.id, Mode.asString(mode), content, s)
+    } yield ClientUpdate(win.id, buf.id, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -98,7 +98,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(change.bufferId, Mode.asString(mode), content, s)
+    } yield ClientUpdate(win.id, change.bufferId, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -136,7 +136,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(control.bufferId, Mode.asString(mode), content, s)
+    } yield ClientUpdate(win.id, control.bufferId, Mode.asString(mode), content, s)
 
     resp onComplete {
       case Success(resp) ⇒
