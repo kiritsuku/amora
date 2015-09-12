@@ -5,8 +5,17 @@ set ruler
 " But it is possible to send arbitrary events through the rpcnotiy function.
 " Therefore we receive any VimL events here and forward them to the client
 " through with help of rpcnotify.
-function! SendWinEnter(fname)
-  call rpcnotify(0, "_WinEnter", a:fname)
+function! SendWinEnter()
+  let a:fname = expand("<afile>")
+  let a:winId = winnr()
+  call rpcnotify(0, "_WinEnter", a:winId, a:fname)
 endfunction
 
-autocmd WinEnter * :call SendWinEnter(expand("<afile>"))
+function! SendWinLeave()
+  let a:fname = expand("<afile>")
+  let a:winId = winnr()
+  call rpcnotify(0, "_WinLeave", a:winId, a:fname)
+endfunction
+
+autocmd WinEnter * :call SendWinEnter()
+autocmd WinLeave * :call SendWinLeave()
