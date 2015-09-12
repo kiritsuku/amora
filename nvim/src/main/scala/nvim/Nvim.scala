@@ -58,15 +58,12 @@ final case class Nvim
    */
   def buffers(implicit ec: ExecutionContext): Future[Seq[Buffer]] = {
     connection.sendRequest("vim_get_buffers") {
-      case MsgpackArray(xs) ⇒
-        if (!xs.forall(_.isInstanceOf[MsgpackExt]))
+      case MsgpackArray(xs) ⇒ xs map {
+        case MsgpackExt(BufferId, MsgpackBinary(Array(bufId))) ⇒
+          Buffer(bufId.toInt, connection)
+        case _ ⇒
           throw new UnexpectedResponse(xs.toString)
-        else
-          xs map { x => (x: @unchecked) match {
-            case MsgpackExt(BufferId, bin) ⇒
-              val id = bin.value.head.toInt
-              Buffer(id, connection)
-          }}
+      }
     }
   }
 
@@ -75,9 +72,8 @@ final case class Nvim
    */
   def currentBuffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("vim_get_current_buffer") {
-      case MsgpackExt(BufferId, bin) ⇒
-        val id = bin.value.head.toInt
-        Buffer(id, connection)
+      case MsgpackExt(BufferId, MsgpackBinary(Array(bufId))) ⇒
+        Buffer(bufId.toInt, connection)
     }
   }
 
@@ -86,15 +82,12 @@ final case class Nvim
    */
   def windows(implicit ec: ExecutionContext): Future[Seq[Window]] = {
     connection.sendRequest("vim_get_windows") {
-      case MsgpackArray(xs) ⇒
-        if (!xs.forall(_.isInstanceOf[MsgpackExt]))
+      case MsgpackArray(xs) ⇒ xs map {
+        case MsgpackExt(WindowId, MsgpackBinary(Array(winId))) ⇒
+          Window(winId.toInt, connection)
+        case _ ⇒
           throw new UnexpectedResponse(xs.toString)
-        else
-          xs map { x => (x: @unchecked) match {
-            case MsgpackExt(WindowId, bin) ⇒
-              val id = bin.value.head.toInt
-              Window(id, connection)
-          }}
+      }
     }
   }
 
@@ -103,9 +96,8 @@ final case class Nvim
    */
   def currentWindow(implicit ec: ExecutionContext): Future[Window] = {
     connection.sendRequest("vim_get_current_window") {
-      case MsgpackExt(WindowId, bin) ⇒
-        val id = bin.value.head.toInt
-        Window(id, connection)
+      case MsgpackExt(WindowId, MsgpackBinary(Array(winId))) ⇒
+        Window(winId.toInt, connection)
     }
   }
 

@@ -34,9 +34,8 @@ case class Window(id: Int, connection: Connection)(implicit system: ActorSystem)
    */
   def buffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("window_get_buffer", int(id)) {
-      case MsgpackExt(Nvim.BufferId, MsgpackBinary(bin)) ⇒
-        val bufId = bin.head.toInt
-        Buffer(bufId, connection)
+      case MsgpackExt(Nvim.BufferId, MsgpackBinary(Array(bufId))) ⇒
+        Buffer(bufId.toInt, connection)
     }
   }
 }

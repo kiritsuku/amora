@@ -66,13 +66,10 @@ final case class Buffer(id: Int, connection: Connection)(implicit system: ActorS
       (implicit ec: ExecutionContext)
       : Future[Seq[String]] = {
     connection.sendRequest("buffer_get_line_slice", int(id), int(start), int(end), bool(includeStart), bool(includeEnd)) {
-      case MsgpackArray(lines) ⇒
-        if (!lines.forall(_.isInstanceOf[MsgpackBinary]))
-          throw new UnexpectedResponse(lines.toString)
-        else
-          lines map { x => (x: @unchecked) match {
-            case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
-          }}
+      case MsgpackArray(xs) ⇒ xs map {
+        case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
+        case _                  ⇒ throw new UnexpectedResponse(xs.toString)
+      }
     }
   }
 
