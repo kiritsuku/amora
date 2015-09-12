@@ -51,7 +51,8 @@ class Ui {
   private var clientName: String = _
   private var keyMap = Set[Int]()
   private var windows = Set[Int]()
-  private var bufferDivs = Map[Int, Set[String]]()
+  private var bufferDivIds = Map[Int, Set[String]]()
+  private var selectedDivId = ""
 
   // used to measure running time of code
   private var startTime: js.Dynamic = _
@@ -85,7 +86,7 @@ class Ui {
   }
 
   def divIdsOfBufferId(bufferId: Int): Set[String] =
-    bufferDivs.getOrElse(bufferId, Set())
+    bufferDivIds.getOrElse(bufferId, Set())
 
   def divsOfBufferId(bufferId: Int): Set[Element] =
     divIdsOfBufferId(bufferId) map dom.document.getElementById
@@ -94,9 +95,10 @@ class Ui {
     val divId = {
       val divs = divIdsOfBufferId(buf.ref.id)
       val divId = s"buf${buf.ref.id}-${divs.size}"
-      bufferDivs += buf.ref.id → (divs + divId)
+      bufferDivIds += buf.ref.id → (divs + divId)
       divId
     }
+    selectedDivId = divId
 
     val d = gen.bufferDiv3(divId, tabIndex = 1)
 
@@ -156,7 +158,7 @@ class Ui {
     def selection: (Int, Int) = {
       val sel = dom.window.getSelection()
       val range = sel.getRangeAt(0)
-      val elem = dom.document.getElementById(buf.ref.id.toString)
+      val elem = dom.document.getElementById(selectedDivId)
       val content = range.cloneRange()
       content.selectNodeContents(elem)
       content.setEnd(range.startContainer, range.startOffset)
@@ -169,7 +171,7 @@ class Ui {
     }
 
     def offsetToVimPos(offset: Int): (Int, Int) = {
-      val elem = dom.document.getElementById(buf.ref.id.toString)
+      val elem = dom.document.getElementById(selectedDivId)
       val content = elem.textContent.substring(0, offset)
       val row = content.count(_ == '\n')
       val col = offset-content.lastIndexWhere(_ == '\n')-1
@@ -332,7 +334,7 @@ class Ui {
     }
 
     def vimPosToOffset(ref: BufferRef, row: Int, col: Int): Int = {
-      val elem = dom.document.getElementById(ref.id.toString)
+      val elem = dom.document.getElementById(selectedDivId)
       val lines = elem.textContent.split("\n")
       val nrOfCharsBeforeCursor =
         if (row == 0)
