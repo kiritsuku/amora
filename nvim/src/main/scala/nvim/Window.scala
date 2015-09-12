@@ -21,12 +21,13 @@ case class Window(id: Int, connection: Connection)(implicit system: ActorSystem)
   }
 
   /**
-   * Sets the cursor to `pos`.
+   * Sets the cursor to `pos` and returns `pos` afterwards.
    */
-  def cursor_=(pos: Position)(implicit ec: ExecutionContext): Future[Unit] = {
-    connection.sendRequest("window_set_cursor", int(id), array(List(int(pos.row), int(pos.col)))) {
+  def cursor_=(pos: Position)(implicit ec: ExecutionContext): Future[Position] = {
+    val req = connection.sendRequest("window_set_cursor", int(id), array(List(int(pos.row), int(pos.col)))) {
       case _ ⇒ ()
     }
+    req map (_ ⇒ pos)
   }
 
   /**

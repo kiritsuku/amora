@@ -92,13 +92,24 @@ final case class Nvim
   }
 
   /**
-   * Returns the current Nvim window.
+   * Returns the active Nvim window.
    */
-  def currentWindow(implicit ec: ExecutionContext): Future[Window] = {
+  def window(implicit ec: ExecutionContext): Future[Window] = {
     connection.sendRequest("vim_get_current_window") {
       case MsgpackExt(WindowId, MsgpackBinary(Array(winId))) ⇒
         Window(winId.toInt, connection)
     }
+  }
+
+  /**
+   * Sets the active window to the window of the given `winId` and returns the
+   * active window afterwards.
+   */
+  def window_=(winId: Int)(implicit ec: ExecutionContext): Future[Window] = {
+    val req = connection.sendRequest("vim_set_current_window", int(winId)) {
+      case _ ⇒ ()
+    }
+    req map (_ ⇒ Window(winId, connection))
   }
 
   /**
@@ -217,7 +228,13 @@ trait NoNvimProtocolFunctionality {
 
 }
 
-final case class Selection(start: Position, end: Position)
+final case class Selection(start: Position, end: Position) {
+  override def toString =
+    if (start == end)
+      s"Selection(cursor=$start)"
+    else
+      s"Selection(start=$start,end=$end)"
+}
 
 /**
  * Represents all possible Vim modes. For documentation about the possible
