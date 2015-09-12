@@ -50,7 +50,9 @@ class Ui {
   private var ws: WebSocket = _
   private var clientName: String = _
   private var keyMap = Set[Int]()
-  private var windows = Set[Int]()
+  // winId → divId
+  private var windows = Map[Int, String]()
+  // bufferId → Set[divId]
   private var bufferDivIds = Map[Int, Set[String]]()
   private var selectedDivId = ""
 
@@ -91,14 +93,13 @@ class Ui {
   def divsOfBufferId(bufferId: Int): Set[Element] =
     divIdsOfBufferId(bufferId) map dom.document.getElementById
 
-  def createBufferContent(buf: Buffer) = {
+  def createBufferContent(buf: Buffer): String = {
     val divId = {
       val divs = divIdsOfBufferId(buf.ref.id)
       val divId = s"buf${buf.ref.id}-${divs.size}"
       bufferDivIds += buf.ref.id → (divs + divId)
       divId
     }
-    selectedDivId = divId
 
     val d = gen.bufferDiv3(divId, tabIndex = 1)
 
@@ -186,6 +187,8 @@ class Ui {
 
     $("body").append(par)
     $(s"#${buf.ref.id}").focus()
+
+    divId
   }
 
   def setupDivs() = {
@@ -319,10 +322,16 @@ class Ui {
 
           // TODO remove BufferRef creation here
           val buf = bm.bufferOf(BufferRef(bufferId))
-          if (!windows(winId)) {
-            windows += winId
-            createBufferContent(buf)
+
+          val divId = windows.get(winId) match {
+            case Some(divId) ⇒
+              divId
+            case None ⇒
+              val divId = createBufferContent(buf)
+              windows += winId → divId
+              divId
           }
+          selectedDivId = divId
 
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
