@@ -54,7 +54,7 @@ class Ui {
   private var windows = Map[Int, String]()
   // bufferId → Set[winId]
   private var bufferDivIds = Map[Int, Set[String]]()
-  private var selectedBufDivId = ""
+  private var selectedWinId = ""
 
   // used to measure running time of code
   private var startTime: js.Dynamic = _
@@ -149,6 +149,7 @@ class Ui {
 
     def handleMouseUp(e: MouseEvent): Unit = {
       startTime = jsg.performance.now()
+      selectedWinId = e.srcElement.id
       val sel = selection
       val start = offsetToVimPos(sel._1)
       val input = SelectionChange(winId, buf.ref.id, start._1, start._2)
@@ -159,7 +160,7 @@ class Ui {
     def selection: (Int, Int) = {
       val sel = dom.window.getSelection()
       val range = sel.getRangeAt(0)
-      val elem = dom.document.getElementById(selectedBufDivId)
+      val elem = dom.document.getElementById(selectedWinId)
       val content = range.cloneRange()
       content.selectNodeContents(elem)
       content.setEnd(range.startContainer, range.startOffset)
@@ -172,7 +173,7 @@ class Ui {
     }
 
     def offsetToVimPos(offset: Int): (Int, Int) = {
-      val elem = dom.document.getElementById(selectedBufDivId)
+      val elem = dom.document.getElementById(selectedWinId)
       val content = elem.textContent.substring(0, offset)
       val row = content.count(_ == '\n')
       val col = offset-content.lastIndexWhere(_ == '\n')-1
@@ -184,9 +185,6 @@ class Ui {
     d.onkeypress = handleKeyPress _
     d.onblur = (_: FocusEvent) ⇒ keyMap = Set()
     d.onmouseup = handleMouseUp _
-    d.onmousedown = (e: MouseEvent) ⇒ {
-      selectedBufDivId = e.srcElement.id
-    }
 
     $("body").append(par)
     $(s"#${buf.ref.id}").focus()
@@ -307,18 +305,12 @@ class Ui {
           println(s"> received: $change")
           updateBuffer(bufferId, lines)
           updateCursor(sel)
-
-          val endTime = jsg.performance.now()
-          val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
-          println(s"update time: $time")
+          calculateTime()
 
         case change @ SelectionChangeAnswer(winId, bufferId, sel) ⇒
           println(s"> received: $change")
           updateCursor(sel)
-
-          val endTime = jsg.performance.now()
-          val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
-          println(s"update time: $time")
+          calculateTime()
 
         case update @ ClientUpdate(winId, bufferId, mode, lines, sel) ⇒
           println(s"> received: $update")
@@ -334,19 +326,26 @@ class Ui {
               windows += winId → divId
               divId
           }
-          selectedBufDivId = divId
+          selectedWinId = divId
 
           buf.mode = mode
           updateBuffer(buf.ref.id, lines)
           updateCursor(sel)
+          calculateTime()
 
         case ev ⇒
           dom.console.error(s"Unexpected response: $ev")
       }
     }
 
+    def calculateTime(): Unit = {
+      val endTime = jsg.performance.now()
+      val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
+      println(s"update time: ${time}ms")
+    }
+
     def vimPosToOffset(row: Int, col: Int): Int = {
-      val elem = dom.document.getElementById(selectedBufDivId)
+      val elem = dom.document.getElementById(selectedWinId)
       val lines = elem.textContent.split("\n")
       val nrOfCharsBeforeCursor =
         if (row == 0)
