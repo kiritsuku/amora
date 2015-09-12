@@ -23,6 +23,15 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
 
+  /**
+   * Whenever this is set to `true`, the next WinEnter event that is receives by
+   * `handler` needs to be ignored. This is necessary because in some cases we
+   * know that we changed the active window and therefore there may not be a
+   * need to handle the sent WinEnter event.
+   */
+  @volatile
+  private var ignoreNextWinEnter = false
+
   object events {
     val WinEnter = "_WinEnter"
 
@@ -32,6 +41,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   private val handler: Notification ⇒ Unit = n ⇒ {
     import events._
     n.method match {
+      case WinEnter if ignoreNextWinEnter ⇒
+        ignoreNextWinEnter = false
       case WinEnter ⇒
         val resp = clientUpdate
 
@@ -69,7 +80,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   }
 
   private def clientUpdate = for {
-    win ← nvim.currentWindow
+    win ← nvim.window
     buf ← win.buffer
     content ← currentBufferContent
     mode ← nvim.activeMode
@@ -93,7 +104,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     system.log.info(s"received: $change")
     val resp = for {
       _ ← nvim.sendInput(change.text)
-      win ← nvim.currentWindow
+      win ← nvim.window = change.winId
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
@@ -112,10 +123,12 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleSelectionChange(change: SelectionChange, sender: String): Unit = {
     system.log.info(s"received: $change")
     val resp = for {
-      win ← nvim.currentWindow
+      w ← nvim.window
+      _ = if (w.id != change.winId) ignoreNextWinEnter = true
+      win ← nvim.window = change.winId
       _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
       s ← selection
-    } yield SelectionChangeAnswer(change.bufferRef, s)
+    } yield SelectionChangeAnswer(win.id, change.bufferId, s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -130,8 +143,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleControl(control: Control, sender: String): Unit = {
     system.log.info(s"received: $control")
     val resp = for {
+      win ← nvim.window = control.winId
       _ ← nvim.sendInput(control.controlSeq)
-      win ← nvim.currentWindow
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
