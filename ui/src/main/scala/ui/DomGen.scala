@@ -37,10 +37,9 @@ class DomGen {
     d
   }
 
-  def bufferDiv3(buf: Buffer, tabIndex: Int) = {
-    val bid = buf.ref.id
+  def bufferDiv3(bufferId: String, tabIndex: Int) = {
     val d = div(
-      id := bid,
+      id := bufferId,
       `class` := "buffer borders",
       tabindex := tabIndex.toString,
       contenteditable := true,

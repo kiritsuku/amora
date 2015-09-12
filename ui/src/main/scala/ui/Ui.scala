@@ -10,6 +10,7 @@ import org.denigma.codemirror.CodeMirror
 import org.denigma.codemirror.Editor
 import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom
+import org.scalajs.dom.raw.Element
 import org.scalajs.dom.raw.ErrorEvent
 import org.scalajs.dom.raw.Event
 import org.scalajs.dom.raw.FocusEvent
@@ -50,6 +51,7 @@ class Ui {
   private var clientName: String = _
   private var keyMap = Set[Int]()
   private var windows = Set[Int]()
+  private var bufferDivs = Map[Int, Set[String]]()
 
   // used to measure running time of code
   private var startTime: js.Dynamic = _
@@ -82,8 +84,21 @@ class Ui {
     $("body").append(par)
   }
 
+  def divIdsOfBufferId(bufferId: Int): Set[String] =
+    bufferDivs.getOrElse(bufferId, Set())
+
+  def divsOfBufferId(bufferId: Int): Set[Element] =
+    divIdsOfBufferId(bufferId) map dom.document.getElementById
+
   def createBufferContent(buf: Buffer) = {
-    val d = gen.bufferDiv3(buf, tabIndex = 1)
+    val divId = {
+      val divs = divIdsOfBufferId(buf.ref.id)
+      val divId = s"buf${buf.ref.id}-${divs.size}"
+      bufferDivs += buf.ref.id → (divs + divId)
+      divId
+    }
+
+    val d = gen.bufferDiv3(divId, tabIndex = 1)
 
     val par = dom.document.getElementById(divs.parent)
     par.appendChild(d)
@@ -346,9 +361,9 @@ class Ui {
     }
 
     def updateBuffer(bufferId: Int, lines: Seq[String]): Unit = {
-      val parent = dom.document.getElementById(bufferId.toString)
+      val elems = divsOfBufferId(bufferId)
       val content = lines.mkString("\n")
-      parent.innerHTML = content
+      elems foreach (_.innerHTML = content)
     }
 
     ws.onerror = (e: ErrorEvent) ⇒ {
