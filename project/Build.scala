@@ -162,6 +162,9 @@ object Build extends sbt.Build {
     val akkaStream = "1.0"
     val akkaHttp = "1.0"
     val scalameta = "0.1.0-SNAPSHOT"
+    // https://github.com/typesafehub/scala-logging
+    val scalaLogging = "3.1.0"
+    val slf4jLog4j12 = "1.7.12"
   }
 
   object deps {
@@ -179,7 +182,8 @@ object Build extends sbt.Build {
       "org.scalameta" %% "interpreter" % versions.scalameta,
       "com.chrisneveu" %% "macrame" % versions.macrame,
       compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
-      "com.lihaoyi" %%% "scalatags" % versions.scalatags
+      "com.lihaoyi" %%% "scalatags" % versions.scalatags,
+      "org.slf4j" % "slf4j-log4j12" % versions.slf4jLog4j12
     ))
 
     lazy val nvim = Def.setting(Seq(
@@ -190,7 +194,8 @@ object Build extends sbt.Build {
       "com.github.xuwei-k" % "msgpack4z-java07" % "0.1.6",
       "com.chrisneveu" %% "macrame" % versions.macrame,
       compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "com.typesafe.scala-logging" %% "scala-logging" % versions.scalaLogging
     ))
 
     lazy val sjsTest = Def.setting(Seq(

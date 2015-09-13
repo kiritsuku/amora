@@ -3,11 +3,16 @@ package backend
 import scala.util.Failure
 import scala.util.Success
 
+import org.apache.log4j.ConsoleAppender
+import org.apache.log4j.Level
+import org.apache.log4j.LogManager
+import org.apache.log4j.PatternLayout
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 
-object Main extends App {
+object Main extends App with LoggerConfig {
   implicit val system = ActorSystem()
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
@@ -27,4 +32,12 @@ object Main extends App {
       system.log.error(e, "Failed to start server")
       system.shutdown()
   }
+}
+
+trait LoggerConfig {
+  val layout = new PatternLayout("%d %5p [%t] - %c - %m%n")
+  val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
+  val rootLogger = LogManager.getRootLogger
+  rootLogger.setLevel(Level.DEBUG)
+  rootLogger.addAppender(consoleAppender)
 }
