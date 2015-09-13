@@ -1,5 +1,9 @@
 package nvim
 
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.concurrent.Future
@@ -8,15 +12,13 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import org.msgpack.core.MessagePack
+import org.msgpack.core.MessageUnpacker
+
 import akka.actor.Actor
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.ActorMaterializer
-import akka.stream.OverflowStrategy
-import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Sink
-import akka.stream.scaladsl.Source
-import akka.stream.scaladsl.Tcp
 import akka.util.ByteString
 import msgpack4z._
 import nvim.internal._
@@ -103,6 +105,20 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
 private final case class SendRequest(req: Request, f: Response ⇒ Unit)
 
+private final class SocketConnection(host: String, port: Int) {
+
+  private val socket = new Socket(host, port)
+
+  def inputStream: InputStream =
+    socket.getInputStream
+
+  def outputStream: OutputStream =
+    socket.getOutputStream
+
+  def close(): Unit =
+    socket.close()
+}
+
 private final class ConnectionActor(host: String, port: Int, notificationHandler: Notification ⇒ Unit) extends Actor {
   val ConnectionLost = "ConnectionLost"
   implicit val m = ActorMaterializer()
@@ -110,21 +126,86 @@ private final class ConnectionActor(host: String, port: Int, notificationHandler
 
   var requests = Map[Int, Response ⇒ Unit]()
 
-  val flow = Flow[ByteString].via(Tcp().outgoingConnection(host, port))
-  val sink = Sink.actorRef(self, ConnectionLost)
-  val pipelineActor = Source.actorRef(0, OverflowStrategy.fail).via(flow).to(sink).run()
+  val ResponseId = 1
+  val NotificationId = 2
+
+  val conn = new SocketConnection(host, port)
+
+  val thread = new Thread(new Runnable {
+    override def run() = {
+      val unp = MessagePack.DEFAULT.newUnpacker(conn.inputStream)
+      val unpacker = new Msgpack07Unpacker(unp)
+      readResp(unp, unpacker)
+
+      system.log.warning(s"Connection to $host:$port lost")
+    }
+  })
+  thread.start()
+
+  def readResp(unp: MessageUnpacker, unpacker: Msgpack07Unpacker): Unit = {
+    /*
+     * The stupid API doesn't allow to do a look ahead, therefore we have to
+     * use reflection to correct the internal position in the buffer.
+     */
+    def lookAheadType(): Int = {
+      unpacker.unpackArrayHeader()
+      val tpe = unpacker.unpackInt()
+      val f = classOf[MessageUnpacker].getDeclaredField("position")
+      f.setAccessible(true)
+      val pos = f.getInt(unp)
+      f.setInt(unp, pos-2)
+      tpe
+    }
+
+    lookAheadType() match {
+      case ResponseId ⇒
+        MsgpackCodec[Response].unpack(unpacker) match {
+          case scalaz.-\/(e) ⇒
+            system.log.error(e, "Couldn't unpack response")
+
+          case scalaz.\/-(resp) ⇒
+            system.log.debug(s"retrieved: $resp")
+            requests.get(resp.id) match {
+              case Some(f) ⇒
+                f(resp)
+              case None ⇒
+                system.log.warning(s"The following response is ignored because its ID '${resp.id}' is unexpected: $resp")
+            }
+        }
+
+      case NotificationId ⇒
+        MsgpackCodec[Notification].unpack(unpacker) match {
+          case scalaz.-\/(e) ⇒
+            system.log.error(e, "Couldn't unpack response")
+
+          case scalaz.\/-(notification) ⇒
+            system.log.debug(s"retrieved: $notification")
+            notificationHandler(notification)
+        }
+
+      case tpe ⇒
+        system.log.error(new Throwable, s"Unknow type: $tpe")
+    }
+
+    if (unp.hasNext())
+      readResp(unp, unpacker)
+  }
 
   override def receive = {
     case SendRequest(req, f) ⇒
-      val bs = ByteString(MsgpackCodec[Request].toBytes(req, new Msgpack07Packer))
+      val bytes = MsgpackCodec[Request].toBytes(req, new Msgpack07Packer)
       requests += req.id → f
       system.log.debug(s"sending: $req")
-      pipelineActor ! bs
+      val out = conn.outputStream
+      out.write(bytes)
+      out.flush()
 
     case n: Notification ⇒
-      val bs = ByteString(MsgpackCodec[Notification].toBytes(n, new Msgpack07Packer))
+      val bytes = MsgpackCodec[Notification].toBytes(n, new Msgpack07Packer)
       system.log.debug(s"sending: $n")
-      pipelineActor ! bs
+      val out = conn.outputStream
+      out.write(bytes)
+      out.flush()
 
     case resp: ByteString ⇒
       val unpacker = Msgpack07Unpacker.defaultUnpacker(resp.toArray)
