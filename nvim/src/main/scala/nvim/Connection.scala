@@ -14,7 +14,8 @@ import scala.util.Try
 import org.msgpack.core.MessagePack
 import org.msgpack.core.MessageUnpacker
 
-import akka.actor.ActorSystem
+import com.typesafe.scalalogging.LazyLogging
+
 import msgpack4z._
 import nvim.internal._
 
@@ -24,7 +25,7 @@ import nvim.internal._
  *
  * [[https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md]]
  */
-final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
+final class Connection(host: String, port: Int) extends LazyLogging {
 
   val ResponseId = 1
   val NotificationId = 2
@@ -40,7 +41,7 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
       val unpacker = new Msgpack07Unpacker(unp)
       readResp(unp, unpacker)
 
-      system.log.warning(s"Connection to $host:$port lost")
+      logger.warn(s"Connection to $host:$port lost")
     }
   })
   thread.start()
@@ -64,30 +65,30 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
       case ResponseId ⇒
         MsgpackCodec[Response].unpack(unpacker) match {
           case scalaz.-\/(e) ⇒
-            system.log.error(e, "Couldn't unpack response")
+            logger.error("Couldn't unpack response", e)
 
           case scalaz.\/-(resp) ⇒
-            system.log.debug(s"retrieved: $resp")
+            logger.debug(s"retrieved: $resp")
             requests.get(resp.id) match {
               case Some(f) ⇒
                 f(resp)
               case None ⇒
-                system.log.warning(s"The following response is ignored because its ID '${resp.id}' is unexpected: $resp")
+                logger.warn(s"The following response is ignored because its ID '${resp.id}' is unexpected: $resp")
             }
         }
 
       case NotificationId ⇒
         MsgpackCodec[Notification].unpack(unpacker) match {
           case scalaz.-\/(e) ⇒
-            system.log.error(e, "Couldn't unpack response")
+            logger.error("Couldn't unpack response", e)
 
           case scalaz.\/-(notification) ⇒
-            system.log.debug(s"retrieved: $notification")
+            logger.debug(s"retrieved: $notification")
             notificationHandlers foreach (_(notification))
         }
 
       case tpe ⇒
-        system.log.error(new Throwable, s"Unknow type: $tpe")
+        logger.error(s"Unknow type: $tpe", new Throwable)
     }
 
     if (unp.hasNext())
@@ -120,7 +121,7 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
     val req = Notification(2, method, ps)
 
     val bytes = MsgpackCodec[Notification].toBytes(req, new Msgpack07Packer)
-    system.log.debug(s"sending: $req")
+    logger.debug(s"sending: $req")
     val out = conn.outputStream
     out.write(bytes)
     out.flush()
@@ -152,7 +153,7 @@ final class Connection(host: String, port: Int)(implicit system: ActorSystem) {
 
     val bytes = MsgpackCodec[Request].toBytes(req, new Msgpack07Packer)
     requests += req.id → f
-    system.log.debug(s"sending: $req")
+    logger.debug(s"sending: $req")
     val out = conn.outputStream
     out.write(bytes)
     out.flush()

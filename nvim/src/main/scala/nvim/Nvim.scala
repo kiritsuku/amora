@@ -3,7 +3,6 @@ package nvim
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import akka.actor.ActorSystem
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
 import macrame.enum
@@ -15,10 +14,7 @@ object Nvim {
   val TabpageId = 2
 }
 
-final case class Nvim
-    (connection: Connection)
-    (implicit val system: ActorSystem)
-      extends NoNvimProtocolFunctionality {
+final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionality {
 
   import Nvim._
 

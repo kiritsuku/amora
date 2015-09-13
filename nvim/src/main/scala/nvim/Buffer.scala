@@ -3,7 +3,6 @@ package nvim
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import akka.actor.ActorSystem
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
 
@@ -11,7 +10,7 @@ import msgpack4z.MsgpackUnion._
  * Low level wrapper around Nvims msgpack-rpc protocol. Represents a Nvim
  * buffer; all operations operate directly on the buffer data structure of Nvim.
  */
-final case class Buffer(id: Int, connection: Connection)(implicit system: ActorSystem) {
+final case class Buffer(id: Int, connection: Connection) {
 
   /**
    * Returns the absolute path of the file that is represented by this buffer.

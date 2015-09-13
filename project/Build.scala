@@ -187,7 +187,6 @@ object Build extends sbt.Build {
     ))
 
     lazy val nvim = Def.setting(Seq(
-      "com.typesafe.akka" %% "akka-stream-experimental" % versions.akkaStream,
       // https://github.com/msgpack4z/msgpack4z-core
       "com.github.xuwei-k" %% "msgpack4z-core" % "0.1.6",
       // https://github.com/msgpack4z/msgpack4z-java07

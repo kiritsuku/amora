@@ -3,11 +3,10 @@ package nvim
 import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 
-import akka.actor.ActorSystem
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
 
-case class Window(id: Int, connection: Connection)(implicit system: ActorSystem) {
+case class Window(id: Int, connection: Connection) {
 
   /**
    * Returns the cursor of the window as a tuple of row and column. The row
