@@ -3,4 +3,5 @@
 config_file="$(pwd)/nvimconfig.vim"
 
 cd /tmp
+# NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim -S "$config_file" -V9nvimdebug.log
 NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim -S "$config_file"

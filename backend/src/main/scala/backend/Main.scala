@@ -38,6 +38,6 @@ trait LoggerConfig {
   val layout = new PatternLayout("%d %5p [%t] - %c - %m%n")
   val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
   val rootLogger = LogManager.getRootLogger
-  rootLogger.setLevel(Level.DEBUG)
+  rootLogger.setLevel(Level.INFO)
   rootLogger.addAppender(consoleAppender)
 }

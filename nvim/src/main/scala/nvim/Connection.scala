@@ -34,10 +34,10 @@ final class Connection(host: String, port: Int) extends LazyLogging {
   private var notificationHandlers = List[Notification ⇒ Unit]()
 
   private val gen = new IdGenerator
-  private val conn = new SocketConnection(host, port)
+  private val socket = new Socket(host, port)
   private val thread = new Thread(new Runnable {
     override def run() = {
-      val unp = MessagePack.DEFAULT.newUnpacker(conn.inputStream)
+      val unp = MessagePack.DEFAULT.newUnpacker(socket.getInputStream)
       val unpacker = new Msgpack07Unpacker(unp)
       readResp(unp, unpacker)
 
@@ -122,7 +122,7 @@ final class Connection(host: String, port: Int) extends LazyLogging {
 
     val bytes = MsgpackCodec[Notification].toBytes(req, new Msgpack07Packer)
     logger.debug(s"sending: $req")
-    val out = conn.outputStream
+    val out = socket.getOutputStream
     out.write(bytes)
     out.flush()
   }
@@ -154,23 +154,12 @@ final class Connection(host: String, port: Int) extends LazyLogging {
     val bytes = MsgpackCodec[Request].toBytes(req, new Msgpack07Packer)
     requests += req.id → f
     logger.debug(s"sending: $req")
-    val out = conn.outputStream
+    val out = socket.getOutputStream
     out.write(bytes)
     out.flush()
 
     p.future
   }
-}
-
-private final class SocketConnection(host: String, port: Int) {
-
-  private val socket = new Socket(host, port)
-
-  def inputStream: InputStream =
-    socket.getInputStream
-
-  def outputStream: OutputStream =
-    socket.getOutputStream
 
   def close(): Unit =
     socket.close()
