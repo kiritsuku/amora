@@ -62,9 +62,9 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   nvim.connection.addNotificationHandler(handler)
   events.AllEvents foreach nvim.subscribe
+  private def currentBufferContent: Future[Seq[String]] = for {
+    b ← nvim.buffer
 
-  private def currentBufferContent = for {
-    b ← nvim.currentBuffer
     count ← b.lineCount
     s ← b.lineSlice(0, count)
   } yield s

@@ -66,11 +66,22 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
   /**
    * Returns the active Nvim buffer.
    */
-  def currentBuffer(implicit ec: ExecutionContext): Future[Buffer] = {
+  def buffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("vim_get_current_buffer") {
       case MsgpackExt(BufferId, MsgpackBinary(Array(bufId))) ⇒
         Buffer(bufId.toInt, connection)
     }
+  }
+
+  /**
+   * Sets the active buffer to the buffer of the given `bufferId` and returns
+   * the active buffer afterwards.
+   */
+  def buffer_=(bufferId: Int)(implicit ec: ExecutionContext): Future[Buffer] = {
+    val req = connection.sendRequest("vim_set_current_buffer") {
+      case _ ⇒ ()
+    }
+    req map (_ ⇒ Buffer(bufferId, connection))
   }
 
   /**
@@ -203,7 +214,7 @@ trait NoNvimProtocolFunctionality {
       selEnd ← eval("""getpos("'>")""")
       _ ← sendInput("gv")
       end = asPos(selEnd)
-      b ← currentBuffer
+      b ← buffer
       line ← b.line(end.row-1)
       len = line.length
     } yield Selection(asPos(selStart), Position(end.row, len))
