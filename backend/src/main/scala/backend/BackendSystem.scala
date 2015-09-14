@@ -50,13 +50,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       case WinEnter ⇒
         val resp = updateWindows() flatMap (_ ⇒ clientUpdate)
 
-        resp onComplete {
-          case Success(resp) ⇒
-            self ! NvimSignal(resp)
-            system.log.info(s"sent: $resp")
-
-          case Failure(f) ⇒
-            system.log.error(f, s"Failed to send a broadcast event.")
+        handle(resp, "Failed to send a broadcast event.") { resp ⇒
+          NvimSignal(resp)
         }
 
       case WinLeave ⇒
@@ -120,13 +115,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleClientJoined(sender: String): Unit = {
     val resp = clientUpdate
 
-    resp onComplete {
-      case Success(resp) ⇒
-        self ! NvimSignal(sender, resp)
-        system.log.info(s"sent: $resp")
-
-      case Failure(f) ⇒
-        system.log.error(f, s"Failed to send an update to the client '$sender'.")
+    handle(resp, s"Failed to send an update to the client '$sender'.") {
+      resp ⇒ NvimSignal(sender, resp)
     }
   }
 
@@ -140,13 +130,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       s ← selection
     } yield ClientUpdate(Seq(WindowUpdate(win.id, change.bufferId, content)), Mode.asString(mode), s)
 
-    resp onComplete {
-      case Success(resp) ⇒
-        self ! NvimSignal(sender, resp)
-        system.log.info(s"sent: $resp")
-
-      case Failure(f) ⇒
-        system.log.error(f, s"Failed to send response after client request `$change`.")
+    handle(resp, s"Failed to send response after client request `$change`.") {
+      resp ⇒ NvimSignal(sender, resp)
     }
   }
 
@@ -160,13 +145,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       s ← selection
     } yield SelectionChangeAnswer(win.id, change.bufferId, s)
 
-    resp onComplete {
-      case Success(resp) ⇒
-        self ! NvimSignal(sender, resp)
-        system.log.info(s"sent: $resp")
-
-      case Failure(f) ⇒
-        system.log.error(f, s"Failed to send response after client request `$change`.")
+    handle(resp, s"Failed to send response after client request `$change`.") {
+      resp ⇒ NvimSignal(sender, resp)
     }
   }
 
@@ -180,13 +160,20 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       s ← selection
     } yield ClientUpdate(Seq(WindowUpdate(win.id, control.bufferId, content)), Mode.asString(mode), s)
 
-    resp onComplete {
-      case Success(resp) ⇒
-        self ! NvimSignal(sender, resp)
-        system.log.info(s"sent: $resp")
+    handle(resp, s"Failed to send response after client request `$control`.") {
+      resp ⇒ NvimSignal(sender, resp)
+    }
+  }
 
-      case Failure(f) ⇒
-        system.log.error(f, s"Failed to send response after client request `$control`.")
+  private def handle[A, B](f: Future[A], errMsg: String)(onSuccess: A ⇒ B): Unit = {
+    f onComplete {
+      case Success(a) ⇒
+        val res = onSuccess(a)
+        self ! res
+        system.log.info(s"sent: $res")
+
+      case Failure(t) ⇒
+        system.log.error(t, errMsg)
     }
   }
 }
