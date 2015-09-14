@@ -2,6 +2,7 @@ package backend
 
 import java.nio.ByteBuffer
 
+import scala.concurrent.Future
 import scala.util.Failure
 import scala.util.Success
 
@@ -23,6 +24,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
 
+  private var windows = Set[Int]()
+
   /**
    * Whenever this is set to `true`, the next WinEnter event that is receives by
    * `handler` needs to be ignored. This is necessary because in some cases we
@@ -34,8 +37,9 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   object events {
     val WinEnter = "_WinEnter"
+    val WinLeave = "_WinLeave"
 
-    val AllEvents = Seq(WinEnter)
+    val AllEvents = Seq(WinEnter, WinLeave)
   }
 
   private val handler: Notification ⇒ Unit = n ⇒ {
@@ -44,7 +48,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       case WinEnter if ignoreNextWinEnter ⇒
         ignoreNextWinEnter = false
       case WinEnter ⇒
-        val resp = clientUpdate
+        val resp = updateWindows() flatMap (_ ⇒ clientUpdate)
 
         resp onComplete {
           case Success(resp) ⇒
@@ -55,6 +59,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
             system.log.error(f, s"Failed to send a broadcast event.")
         }
 
+      case WinLeave ⇒
+
       case _ ⇒
         system.log.warning(s"Notification for unknown event type arrived: $n")
     }
@@ -62,30 +68,54 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   nvim.connection.addNotificationHandler(handler)
   events.AllEvents foreach nvim.subscribe
+  updateWindows()
+
+  private def updateWindows(): Future[Unit] = {
+    nvim.windows map { ws ⇒
+      val winIds = ws.map(_.id).toSet
+      val removed = windows diff winIds
+      val added = winIds diff windows
+      windows --= removed
+      windows ++= added
+    }
+  }
+
   private def currentBufferContent: Future[Seq[String]] = for {
     b ← nvim.buffer
+    c ← bufferContent(b)
+  } yield c
 
+  private def bufferContent(b: Buffer): Future[Seq[String]] = for {
     count ← b.lineCount
     s ← b.lineSlice(0, count)
   } yield s
 
   private def selection = for {
+    win ← nvim.window
+    buf ← win.buffer
     sel ← nvim.selection
   } yield {
     val List(start, end) = List(
       Pos(sel.start.row-1, sel.start.col-1),
       Pos(sel.end.row-1, sel.end.col-1)
     ).sorted
-    Selection(start, end)
+    Selection(win.id, buf.id, start, end)
   }
 
-  private def clientUpdate = for {
-    win ← nvim.window
+  private def winOf(winId: Int): Future[Window] =
+    Future.successful(Window(winId, nvim.connection))
+
+  private def winInfo(winId: Int) = for {
+    win ← winOf(winId)
     buf ← win.buffer
-    content ← currentBufferContent
+    content ← bufferContent(buf)
+  } yield WindowUpdate(win.id, buf.id,  content)
+
+  private def clientUpdate = for {
+    wins ← Future.sequence(windows map winInfo)
     mode ← nvim.activeMode
-    s ← selection
-  } yield ClientUpdate(win.id, buf.id, Mode.asString(mode), content, s)
+    sel ← selection
+  } yield ClientUpdate(wins.toSeq, Mode.asString(mode), sel)
 
   def handleClientJoined(sender: String): Unit = {
     val resp = clientUpdate
@@ -108,7 +138,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(win.id, change.bufferId, Mode.asString(mode), content, s)
+    } yield ClientUpdate(Seq(WindowUpdate(win.id, change.bufferId, content)), Mode.asString(mode), s)
 
     resp onComplete {
       case Success(resp) ⇒
@@ -148,7 +178,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       content ← currentBufferContent
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(win.id, control.bufferId, Mode.asString(mode), content, s)
+    } yield ClientUpdate(Seq(WindowUpdate(win.id, control.bufferId, content)), Mode.asString(mode), s)
 
     resp onComplete {
       case Success(resp) ⇒

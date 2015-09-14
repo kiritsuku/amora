@@ -312,24 +312,25 @@ class Ui {
           updateCursor(sel)
           calculateTime()
 
-        case update @ ClientUpdate(winId, bufferId, mode, lines, sel) ⇒
+        case update @ ClientUpdate(wins, mode, sel) ⇒
           println(s"> received: $update")
 
-          // TODO remove BufferRef creation here
-          val buf = bm.bufferOf(BufferRef(bufferId))
+          wins foreach { case WindowUpdate(winId, bufferId, lines) ⇒
+            // TODO remove BufferRef creation here
+            val buf = bm.bufferOf(BufferRef(bufferId))
 
-          val divId = windows.get(winId) match {
-            case Some(divId) ⇒
-              divId
-            case None ⇒
+            if (!windows.contains(winId)) {
               val divId = createBufferContent(winId, buf)
               windows += winId → divId
-              divId
+              updateBuffer(buf.ref.id, lines)
+            }
           }
-          selectedWinId = divId
+
+          selectedWinId = windows(sel.winId)
+          // TODO remove BufferRef creation here
+          val buf = bm.bufferOf(BufferRef(sel.bufId))
 
           buf.mode = mode
-          updateBuffer(buf.ref.id, lines)
           updateCursor(sel)
           calculateTime()
 
