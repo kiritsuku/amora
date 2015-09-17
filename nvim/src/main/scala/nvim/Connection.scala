@@ -1,10 +1,9 @@
 package nvim
 
-import java.io.InputStream
-import java.io.OutputStream
 import java.net.Socket
 import java.util.concurrent.atomic.AtomicInteger
 
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
@@ -30,7 +29,7 @@ final class Connection(host: String, port: Int) extends LazyLogging {
   val ResponseId = 1
   val NotificationId = 2
 
-  private var requests = Map[Int, Response ⇒ Unit]()
+  private val requests = TrieMap[Int, Response ⇒ Unit]()
   private var notificationHandlers = List[Notification ⇒ Unit]()
 
   private val gen = new IdGenerator
@@ -69,7 +68,7 @@ final class Connection(host: String, port: Int) extends LazyLogging {
 
           case scalaz.\/-(resp) ⇒
             logger.debug(s"retrieved: $resp")
-            requests.get(resp.id) match {
+            requests.remove(resp.id) match {
               case Some(f) ⇒
                 f(resp)
               case None ⇒
