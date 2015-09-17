@@ -14,10 +14,22 @@ case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(winId: Int, bufferId: Int, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(winId: Int, bufferId: Int, sel: Selection) extends Response
-case class WindowUpdate(winId: Int, bufferId: Int, lines: Seq[String]) extends Response
-case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection) extends Response
-case class Selection(winId: Int, bufId: Int, start: Pos, end: Pos) extends Response
-case class Pos(row: Int, col: Int) extends Response
+case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String]) extends Response {
+  override def toString =
+    s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size})"
+}
+case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection) extends Response {
+  override def toString =
+    s"ClientUpdate(windows=${windows.mkString("[", ", ", "]")}, mode=$mode, sel=$sel)"
+}
+case class Selection(winId: Int, bufId: Int, start: Pos, end: Pos) extends Response {
+  override def toString =
+    s"(winId=$winId, bufId=$bufId, start=$start, end=$end)"
+}
+case class Pos(row: Int, col: Int) extends Response {
+  override def toString =
+    s"(row=$row, col=$col)"
+}
 
 object Pos {
   implicit object PosOrdering extends Ordering[Pos] {
