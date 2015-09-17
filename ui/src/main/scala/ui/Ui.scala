@@ -343,9 +343,9 @@ class Ui {
     }
 
     def selectActiveWindow(): Unit = {
-      val elem = dom.document.getElementById(activeWinId)
+      val textElem = dom.document.getElementById(activeWinId).childNodes(0)
       val range = dom.document.createRange()
-      range.setStart(elem, 0)
+      range.setStart(textElem, 0)
 
       val sel = dom.document.getSelection()
       sel.removeAllRanges()
@@ -374,15 +374,15 @@ class Ui {
       val offset = vimPosToOffset(sel.start.row, sel.start.col)
       val winSel = dom.window.getSelection()
       val range = winSel.getRangeAt(0)
-      val textElem = range.startContainer.childNodes(0)
-      range.setStart(textElem, offset)
+      val elem = range.startContainer
+      range.setStart(elem, offset)
 
       if (sel.start.row != sel.end.row || sel.start.col != sel.end.col) {
         val offset = vimPosToOffset(sel.end.row, sel.end.col)
-        range.setEnd(textElem, offset)
+        range.setEnd(elem, offset)
       }
       else
-        range.setEnd(textElem, offset)
+        range.setEnd(elem, offset)
 
       winSel.removeAllRanges()
       winSel.addRange(range)
