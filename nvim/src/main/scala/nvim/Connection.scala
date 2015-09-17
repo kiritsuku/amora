@@ -1,9 +1,11 @@
 package nvim
 
 import java.net.Socket
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.concurrent.TrieMap
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.util.Failure
@@ -30,7 +32,10 @@ final class Connection(host: String, port: Int) extends LazyLogging {
   val NotificationId = 2
 
   private val requests = TrieMap[Int, Response ⇒ Unit]()
-  private var notificationHandlers = List[Notification ⇒ Unit]()
+  private val notificationHandlers: mutable.Set[Notification ⇒ Unit] = {
+    import scala.collection.JavaConverters._
+    new ConcurrentSkipListSet().asScala
+  }
 
   private val gen = new IdGenerator
   private val socket = new Socket(host, port)
@@ -99,15 +104,14 @@ final class Connection(host: String, port: Int) extends LazyLogging {
    * notification event. If the handler is already added, it is not added again.
    */
   def addNotificationHandler(handler: Notification ⇒ Unit): Unit = {
-    if (!notificationHandlers.contains(handler))
-      notificationHandlers +:= handler
+    notificationHandlers += handler
   }
 
   /**
    * Removes the notification handler from the list of registered handlers.
    */
   def removeNotificationHandler(handler: Notification ⇒ Unit): Unit = {
-    notificationHandlers = notificationHandlers.filterNot(_ == handler)
+    notificationHandlers -= handler
   }
 
   /**
