@@ -323,8 +323,8 @@ class Ui {
             if (!windows.contains(winId)) {
               val divId = createBufferContent(winId, buf)
               windows += winId → divId
-              updateBuffer(buf.ref.id, lines)
             }
+            updateBuffer(buf.ref.id, lines)
           }
 
           activeWinId = windows(sel.winId)
