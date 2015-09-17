@@ -88,6 +88,9 @@ class Ui {
     $("body").append(par)
   }
 
+  def activeWindowDiv: Element =
+    dom.document.getElementById(activeWinId)
+
   def divIdsOfBufferId(bufferId: Int): Set[String] =
     bufferDivIds.getOrElse(bufferId, Set())
 
@@ -159,11 +162,9 @@ class Ui {
 
     /* Returns the selection as (start, end). */
     def selection: (Int, Int) = {
-      val sel = dom.window.getSelection()
-      val range = sel.getRangeAt(0)
-      val elem = dom.document.getElementById(activeWinId)
+      val range = dom.window.getSelection().getRangeAt(0)
       val content = range.cloneRange()
-      content.selectNodeContents(elem)
+      content.selectNodeContents(activeWindowDiv)
       content.setEnd(range.startContainer, range.startOffset)
       val start = content.toString().length()
 
@@ -174,8 +175,7 @@ class Ui {
     }
 
     def offsetToVimPos(offset: Int): (Int, Int) = {
-      val elem = dom.document.getElementById(activeWinId)
-      val content = elem.textContent.substring(0, offset)
+      val content = activeWindowDiv.textContent.substring(0, offset)
       val row = content.count(_ == '\n')
       val col = offset-content.lastIndexWhere(_ == '\n')-1
       (row, col)
@@ -343,7 +343,7 @@ class Ui {
     }
 
     def selectActiveWindow(): Unit = {
-      val textElem = dom.document.getElementById(activeWinId).childNodes(0)
+      val textElem = activeWindowDiv.childNodes(0)
       val range = dom.document.createRange()
       range.setStart(textElem, 0)
 
@@ -359,8 +359,7 @@ class Ui {
     }
 
     def vimPosToOffset(row: Int, col: Int): Int = {
-      val elem = dom.document.getElementById(activeWinId)
-      val lines = elem.textContent.split("\n")
+      val lines = activeWindowDiv.textContent.split("\n")
       val nrOfCharsBeforeCursor =
         if (row == 0)
           0
