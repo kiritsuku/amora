@@ -54,7 +54,8 @@ class Ui {
   private var windows = Map[Int, String]()
   // bufferId → Set[winId]
   private var bufferDivIds = Map[Int, Set[String]]()
-  private var selectedWinId = ""
+  /** The window that has the selection. */
+  private var activeWinId = ""
 
   // used to measure running time of code
   private var startTime: js.Dynamic = _
@@ -149,7 +150,7 @@ class Ui {
 
     def handleMouseUp(e: MouseEvent): Unit = {
       startTime = jsg.performance.now()
-      selectedWinId = e.srcElement.id
+      activeWinId = e.srcElement.id
       val sel = selection
       val start = offsetToVimPos(sel._1)
       val input = SelectionChange(winId, buf.ref.id, start._1, start._2)
@@ -160,7 +161,7 @@ class Ui {
     def selection: (Int, Int) = {
       val sel = dom.window.getSelection()
       val range = sel.getRangeAt(0)
-      val elem = dom.document.getElementById(selectedWinId)
+      val elem = dom.document.getElementById(activeWinId)
       val content = range.cloneRange()
       content.selectNodeContents(elem)
       content.setEnd(range.startContainer, range.startOffset)
@@ -173,7 +174,7 @@ class Ui {
     }
 
     def offsetToVimPos(offset: Int): (Int, Int) = {
-      val elem = dom.document.getElementById(selectedWinId)
+      val elem = dom.document.getElementById(activeWinId)
       val content = elem.textContent.substring(0, offset)
       val row = content.count(_ == '\n')
       val col = offset-content.lastIndexWhere(_ == '\n')-1
@@ -326,7 +327,9 @@ class Ui {
             }
           }
 
-          selectedWinId = windows(sel.winId)
+          activeWinId = windows(sel.winId)
+          selectActiveWindow()
+
           // TODO remove BufferRef creation here
           val buf = bm.bufferOf(BufferRef(sel.bufId))
 
@@ -339,6 +342,16 @@ class Ui {
       }
     }
 
+    def selectActiveWindow(): Unit = {
+      val elem = dom.document.getElementById(activeWinId)
+      val range = dom.document.createRange()
+      range.setStart(elem, 0)
+
+      val sel = dom.document.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(range)
+    }
+
     def calculateTime(): Unit = {
       val endTime = jsg.performance.now()
       val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
@@ -346,7 +359,7 @@ class Ui {
     }
 
     def vimPosToOffset(row: Int, col: Int): Int = {
-      val elem = dom.document.getElementById(selectedWinId)
+      val elem = dom.document.getElementById(activeWinId)
       val lines = elem.textContent.split("\n")
       val nrOfCharsBeforeCursor =
         if (row == 0)
