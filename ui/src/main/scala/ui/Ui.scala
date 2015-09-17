@@ -372,19 +372,20 @@ class Ui {
 
     def updateCursor(sel: Selection): Unit = {
       val offset = vimPosToOffset(sel.start.row, sel.start.col)
-      val bsel = dom.window.getSelection()
-      val range = bsel.getRangeAt(0)
-      range.setStart(range.startContainer, offset)
+      val winSel = dom.window.getSelection()
+      val range = winSel.getRangeAt(0)
+      val textElem = range.startContainer.childNodes(0)
+      range.setStart(textElem, offset)
 
       if (sel.start.row != sel.end.row || sel.start.col != sel.end.col) {
         val offset = vimPosToOffset(sel.end.row, sel.end.col)
-        range.setEnd(range.startContainer, offset)
+        range.setEnd(textElem, offset)
       }
       else
-        range.setEnd(range.startContainer, offset)
+        range.setEnd(textElem, offset)
 
-      bsel.removeAllRanges()
-      bsel.addRange(range)
+      winSel.removeAllRanges()
+      winSel.addRange(range)
     }
 
     def updateBuffer(bufferId: Int, lines: Seq[String]): Unit = {
