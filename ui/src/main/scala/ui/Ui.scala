@@ -343,7 +343,10 @@ class Ui {
     }
 
     def selectActiveWindow(): Unit = {
-      val textElem = activeWindowDiv.childNodes(0)
+      val div = activeWindowDiv
+      // TODO in case the window is empty we select the div. Actually, the cursor
+      // should be placed in the window, but I don't know how to do it for empty divs.
+      val textElem = if (div.childNodes.length != 0) div.childNodes(0) else div
       val range = dom.document.createRange()
       range.setStart(textElem, 0)
 
