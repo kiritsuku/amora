@@ -1,0 +1,54 @@
+#!/bin/bash
+#
+# Downloads the sources of neovim and builds them.
+
+cd "target/"
+
+nvim_dir="`pwd`/neovim"
+
+color_green="\E[32m"
+color_red="\E[31m"
+color_reset="\E[0m"
+
+# parameters:
+# $1 - the message to print
+function print_msg {
+  printf "$color_green>>> $1$color_reset\n"
+}
+
+# parameters:
+# $1 - the message to print
+function print_err {
+  printf "$color_red>>> $1$color_reset\n"
+}
+
+function build_nvim {
+  print_msg "Building neovim."
+  make
+  build_ret=$?
+  # Check the return value of the build
+  if [[ $build_ret -eq 0 ]]; then
+    print_err "Building neovim failed."
+  else
+    print_msg "Building neovim succeeded."
+  fi
+}
+
+# Check if neovim directory exists
+if [ -d "$nvim_dir" ]; then
+  print_msg "Updating neovim repo."
+  cd "$nvim_dir"
+  git fetch origin
+  merge_res=`git merge origin/master | head -n 1`
+  # Check if a new head is available
+  if [ "$merge_res" = "Already up-to-date." ]; then
+    print_msg "No update needed."
+  else
+    build_nvim
+  fi
+else
+  print_msg "Cloning neovim repo."
+  git clone -b master git://github.com/neovim/neovim "$nvim_dir"
+  cd "$nvim_dir"
+  build_nvim
+fi

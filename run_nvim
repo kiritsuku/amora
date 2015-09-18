@@ -1,9 +1,13 @@
 #!/bin/bash
 
-config_file="$(pwd)/nvimconfig.vim"
+config_file="`pwd`/nvimconfig.vim"
 # Enable core dumps
 ulimit -c unlimited
 
+nvim_runner="`pwd`/target/neovim/build/bin/nvim"
+
+[ ! -e "$nvim_runner" ] && echo "nvim executable not found. Run the make_neovim script first." && exit 1
+
 cd /tmp
-# NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim -S "$config_file" -V9nvimdebug.log
-NVIM_LISTEN_ADDRESS=127.0.0.1:6666 nvim -S "$config_file"
+# NVIM_LISTEN_ADDRESS=127.0.0.1:6666 "$nvim_runner" -S "$config_file" -V9nvimdebug.log
+NVIM_LISTEN_ADDRESS=127.0.0.1:6666 "$nvim_runner" -S "$config_file"
