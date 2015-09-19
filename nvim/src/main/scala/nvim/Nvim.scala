@@ -167,27 +167,29 @@ trait NoNvimProtocolFunctionality {
    * `:help mode()` in Vim.
    */
   def activeMode(implicit ec: ExecutionContext): Future[Mode] = {
+    val `CTRL-S` = 19
+    val `CTRL-V` = 22
     eval("""mode("1")""") map { res => (res: @unchecked) match {
       case MsgpackBinary(mode) ⇒ mode.map(_.toChar).mkString match {
-        case "n"             ⇒ Normal
-        case "no"            ⇒ OperatorPending
-        case "v"             ⇒ VisualByCharacter
-        case "V"             ⇒ VisualByLine
-        case s if s(0) == 22 ⇒ VisualBlockwise // 22 == CTRL-V
-        case "s"             ⇒ SelectByCharacter
-        case "S"             ⇒ SelectByLine
-        case s if s(0) == 19 ⇒ SelectBlockwise // 19 == CTRL-S
-        case "i"             ⇒ Insert
-        case "R"             ⇒ Replace
-        case "Rv"            ⇒ VirtualReplace
-        case "c"             ⇒ CommandLine
-        case "cv"            ⇒ VimExMode
-        case "ce"            ⇒ NormalExMode
-        case "r"             ⇒ HitEnterPrompt
-        case "rm"            ⇒ MorePrompt
-        case "r?"            ⇒ ConfirmQuery
-        case "!"             ⇒ ExternalCommandRunning
-        case s               ⇒ throw new IllegalArgumentException(s"Vim mode `$s` is unknown.")
+          case "n"                   ⇒ Normal
+          case "no"                  ⇒ OperatorPending
+          case "v"                   ⇒ VisualByCharacter
+          case "V"                   ⇒ VisualByLine
+          case s if s(0) == `CTRL-V` ⇒ VisualBlockwise
+          case "s"                   ⇒ SelectByCharacter
+          case "S"                   ⇒ SelectByLine
+          case s if s(0) == `CTRL-S` ⇒ SelectBlockwise
+          case "i"                   ⇒ Insert
+          case "R"                   ⇒ Replace
+          case "Rv"                  ⇒ VirtualReplace
+          case "c"                   ⇒ CommandLine
+          case "cv"                  ⇒ VimExMode
+          case "ce"                  ⇒ NormalExMode
+          case "r"                   ⇒ HitEnterPrompt
+          case "rm"                  ⇒ MorePrompt
+          case "r?"                  ⇒ ConfirmQuery
+          case "!"                   ⇒ ExternalCommandRunning
+          case s                     ⇒ throw new IllegalStateException(s"Vim mode `$s` is unknown.")
       }
     }}
   }

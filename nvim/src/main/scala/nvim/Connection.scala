@@ -77,14 +77,14 @@ final class Connection(host: String, port: Int) extends LazyLogging {
               case Some(f) ⇒
                 f(resp)
               case None ⇒
-                logger.warn(s"The following response is ignored because its ID '${resp.id}' is unexpected: $resp")
+                logger.warn(s"The following response is ignored because its id '${resp.id}' is unexpected: $resp")
             }
         }
 
       case NotificationId ⇒
         MsgpackCodec[Notification].unpack(unpacker) match {
           case scalaz.-\/(e) ⇒
-            logger.error("Couldn't unpack response", e)
+            logger.error("Couldn't unpack notification", e)
 
           case scalaz.\/-(notification) ⇒
             logger.debug(s"retrieved: $notification")
@@ -174,5 +174,3 @@ private final class IdGenerator {
 
   def nextId(): Int = id.getAndIncrement
 }
-
-final class InvalidResponse(msg: String) extends RuntimeException(msg)

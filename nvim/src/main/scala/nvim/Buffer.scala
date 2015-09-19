@@ -5,6 +5,7 @@ import scala.concurrent.Future
 
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
+import nvim.internal.NvimHelper
 
 /**
  * Low level wrapper around Nvims msgpack-rpc protocol. Represents a Nvim
@@ -17,7 +18,7 @@ final case class Buffer(id: Int, connection: Connection) {
    */
   def name(implicit ec: ExecutionContext): Future[String] = {
     connection.sendRequest("buffer_get_name", int(id)) {
-      case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
+      case MsgpackBinary(bin) ⇒ NvimHelper.asString(bin)
     }
   }
 
@@ -44,7 +45,7 @@ final case class Buffer(id: Int, connection: Connection) {
    */
   def lineAt(index: Int)(implicit ec: ExecutionContext): Future[String] = {
     connection.sendRequest("buffer_get_line", int(id), int(index)) {
-      case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
+      case MsgpackBinary(bin) ⇒ NvimHelper.asString(bin)
     }
   }
 
@@ -66,7 +67,7 @@ final case class Buffer(id: Int, connection: Connection) {
       : Future[Seq[String]] = {
     connection.sendRequest("buffer_get_line_slice", int(id), int(start), int(end), bool(includeStart), bool(includeEnd)) {
       case MsgpackArray(xs) ⇒ xs map {
-        case MsgpackBinary(bin) ⇒ new String(bin, "UTF-8")
+        case MsgpackBinary(bin) ⇒ NvimHelper.asString(bin)
         case _                  ⇒ throw new UnexpectedResponse(xs.toString)
       }
     }
@@ -91,7 +92,7 @@ final case class Buffer(id: Int, connection: Connection) {
    */
   def line(line: Int)(implicit ec: ExecutionContext): Future[String] = {
     connection.sendRequest("buffer_get_line", int(id), int(line)) {
-      case MsgpackBinary(bin) ⇒  new String(bin, "UTF-8")
+      case MsgpackBinary(bin) ⇒ NvimHelper.asString(bin)
     }
   }
 

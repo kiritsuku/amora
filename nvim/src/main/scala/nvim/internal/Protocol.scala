@@ -103,4 +103,9 @@ object NvimHelper {
     sb.toString()
   }
 
+  /**
+   * Converts a `Array[Byte]` to a String. The bytes are decoded with UTF-8.
+   */
+  def asString(bin: Array[Byte]): String =
+    new String(bin, "UTF-8")
 }
