@@ -38,4 +38,15 @@ case class Window(id: Int, connection: Connection) {
         Buffer(bufId.toInt, connection)
     }
   }
+
+  /**
+   * Returns the screen position of the window. Both the row and the col start
+   * at zero.
+   */
+  def position(implicit ec: ExecutionContext): Future[Position] = {
+    connection.sendRequest("window_get_position", int(id)) {
+      case MsgpackArray(List(MsgpackLong(x), MsgpackLong(y))) ⇒
+        Position(x.toInt, y.toInt)
+    }
+  }
 }
