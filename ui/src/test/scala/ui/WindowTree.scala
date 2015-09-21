@@ -27,7 +27,7 @@ object WindowTreeCreator {
   private def mkRows(wins: Seq[WinInfo]): Rows = wins match {
     case Seq(WinInfo(id, _, _)) ⇒
       Rows(Seq(Window(s"window$id")))
-    case WinInfo(id1, _, _) +: WinInfo(id2, r1, _) +: xs ⇒
+    case WinInfo(id1, _, _) +: WinInfo(id2, _, _) +: xs ⇒
       val ret = Rows(Seq(Window(s"window$id1"), Window(s"window$id2")))
       val rows = mkRows(xs)
       Rows(ret.rows ++ rows.rows)
