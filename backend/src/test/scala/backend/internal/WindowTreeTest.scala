@@ -3,6 +3,10 @@ package internal
 
 import org.junit.Test
 
+import protocol.ui.Columns
+import protocol.ui.Rows
+import protocol.ui.Window
+
 class WindowTreeTest {
   import WindowTreeCreator._
   import TestUtils._

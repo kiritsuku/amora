@@ -1,9 +1,9 @@
 package backend.internal
 
-sealed trait WindowTree
-case class Rows(rows: Seq[WindowTree]) extends WindowTree
-case class Columns(columns: Seq[WindowTree]) extends WindowTree
-case class Window(divId: String) extends WindowTree
+import protocol.ui.Columns
+import protocol.ui.Rows
+import protocol.ui.Window
+import protocol.ui.WindowTree
 
 object WindowTreeCreator {
 
