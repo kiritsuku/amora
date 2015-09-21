@@ -1,10 +1,11 @@
-package backend.internal
+package backend
+package internal
 
-import org.scalatest.FunSuite
+import org.junit.Test
 
-class WindowTreeTest extends FunSuite {
-
+class WindowTreeTest {
   import WindowTreeCreator._
+  import TestUtils._
 
   private def infos(pos: (Int, Int)*): Seq[WinInfo] = {
     pos.zipWithIndex map {
@@ -12,27 +13,30 @@ class WindowTreeTest extends FunSuite {
     }
   }
 
-  test("single window") {
+  @Test
+  def single_window() = {
     /*
      ---
      | |
      ---
     */
     val tree = mkWindowTree(infos((0, 0)))
-    assert(tree == Window("window1"))
+    tree === Window("window1")
   }
 
-  test("multiple windows in a single row") {
+  @Test
+  def multiple_windows_in_a_single_row() = {
     /*
      -----
      | | |
      -----
     */
     val tree = mkWindowTree(infos((0, 0), (0, 1), (0, 2)))
-    assert(tree == Columns(Seq(Window("window1"), Window("window2"), Window("window3"))))
+    tree === Columns(Seq(Window("window1"), Window("window2"), Window("window3")))
   }
 
-  test("multiple windows in a single column") {
+  @Test
+  def multiple_windows_in_a_single_column() = {
     /*
      ---
      | |
@@ -41,10 +45,11 @@ class WindowTreeTest extends FunSuite {
      ---
     */
     val tree = mkWindowTree(infos((0, 0), (1, 0), (2, 0)))
-    assert(tree == Rows(Seq(Window("window1"), Window("window2"), Window("window3"))))
+    tree === Rows(Seq(Window("window1"), Window("window2"), Window("window3")))
   }
 
-  test("multiple windows in first row and one window in second row") {
+  @Test
+  def multiple_windows_in_first_row_and_one_window_in_second_row() = {
     /*
      -----
      | | |
@@ -53,12 +58,13 @@ class WindowTreeTest extends FunSuite {
      -----
     */
     val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0)))
-    assert(tree == Rows(Seq(
+    tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
-        Window("window3"))))
+        Window("window3")))
   }
 
-  test("single window in first row and multiple windows in second row") {
+  @Test
+  def single_window_in_first_row_and_multiple_windows_in_second_row() = {
     /*
      -----
      |   |
@@ -67,12 +73,13 @@ class WindowTreeTest extends FunSuite {
      -----
     */
     val tree = mkWindowTree(infos((0, 0), (1, 0), (1, 1)))
-    assert(tree == Rows(Seq(
+    tree === Rows(Seq(
         Window("window1"),
-        Columns(Seq(Window("window2"), Window("window3"))))))
+        Columns(Seq(Window("window2"), Window("window3")))))
   }
 
-  test("multiple windows in all rows") {
+  @Test
+  def multiple_windows_in_all_rows() = {
     /*
      -----
      | | |
@@ -81,8 +88,8 @@ class WindowTreeTest extends FunSuite {
      -----
     */
     val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1)))
-    assert(tree == Rows(Seq(
+    tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
-        Columns(Seq(Window("window3"), Window("window4"))))))
+        Columns(Seq(Window("window3"), Window("window4")))))
   }
 }
