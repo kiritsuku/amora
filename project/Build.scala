@@ -198,7 +198,7 @@ object Build extends sbt.Build {
     ))
 
     lazy val sjsTest = Def.setting(Seq(
-      "com.lihaoyi" %%% "utest" % "0.3.0" % "test"
+      "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
     ))
 
     lazy val sjs = Def.setting(Seq(
