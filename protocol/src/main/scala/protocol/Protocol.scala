@@ -1,5 +1,7 @@
 package protocol
 
+import ui.WindowTree
+
 case class BufferRef(id: Int)
 
 sealed trait Request
@@ -18,7 +20,7 @@ case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String], screenPos: P
   override def toString =
     s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size}, screenPos=$screenPos)"
 }
-case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection) extends Response {
+case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection, tree: Option[WindowTree]) extends Response {
   override def toString =
     s"ClientUpdate(windows=${windows.mkString("[", ", ", "]")}, mode=$mode, sel=$sel)"
 }

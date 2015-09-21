@@ -313,7 +313,7 @@ class Ui {
           updateCursor(sel)
           calculateTime()
 
-        case update @ ClientUpdate(wins, mode, sel) ⇒
+        case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
           println(s"> received: $update")
 
           wins foreach { case WindowUpdate(winId, bufferId, lines, pos) ⇒

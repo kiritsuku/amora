@@ -6,9 +6,11 @@ import scala.util.Success
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import backend.internal.WindowTreeCreator
 import nvim.{Selection ⇒ _, _}
 import nvim.internal.Notification
 import protocol.{Mode ⇒ _, _}
+import protocol.ui.WindowTree
 
 final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   import system.dispatcher
@@ -18,7 +20,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   private var windows = Set[Int]()
 
   /**
-   * Whenever this is set to `true`, the next WinEnter event that is receives by
+   * Whenever this is set to `true`, the next WinEnter event that is received by
    * `handler` needs to be ignored. This is necessary because in some cases we
    * know that we changed the active window and therefore there may not be a
    * need to handle the sent WinEnter event.
@@ -97,7 +99,17 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     wins ← Future.sequence(windows map winInfo)
     mode ← nvim.activeMode
     sel ← selection
-  } yield ClientUpdate(wins.toSeq, Mode.asString(mode), sel)
+    tree ← windowTree
+  } yield ClientUpdate(wins.toSeq, Mode.asString(mode), sel, Some(tree))
+
+  private def windowTree: Future[WindowTree] = for {
+    windows ← Future.sequence(windows map winOf)
+    ws = windows.toList
+    positions ← Future.sequence(ws map (_.position))
+    infos = (ws, positions).zipped map { (win, pos) ⇒
+      WindowTreeCreator.WinInfo(win.id, pos.row, pos.col)
+    }
+  } yield WindowTreeCreator.mkWindowTree(infos)
 
   def handleClientJoined(sender: String): Unit = {
     val resp = clientUpdate
@@ -115,7 +127,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       update ← winInfo(change.winId)
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Seq(update), Mode.asString(mode), s)
+    } yield ClientUpdate(Seq(update), Mode.asString(mode), s, None)
 
     handle(resp, s"Failed to send response after client request `$change`.") {
       resp ⇒ NvimSignal(sender, resp)
@@ -145,7 +157,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       update ← winInfo(control.winId)
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Seq(update), Mode.asString(mode), s)
+    } yield ClientUpdate(Seq(update), Mode.asString(mode), s, None)
 
     handle(resp, s"Failed to send response after client request `$control`.") {
       resp ⇒ NvimSignal(sender, resp)

@@ -9,12 +9,12 @@ object WindowTreeCreator {
 
   case class WinInfo(winId: Int, row: Int, col: Int)
 
-  def mkWindowTree(wins: Seq[WinInfo]): WindowTree = wins match {
+  def mkWindowTree(infos: Seq[WinInfo]): WindowTree = infos match {
     case Seq(WinInfo(id, _, _)) ⇒
       Window(s"window$id")
 
     case e1 +: _ +: _ ⇒
-      val (classifiedElems, remainingElems) = wins.span(_.row == e1.row)
+      val (classifiedElems, remainingElems) = infos.span(_.row == e1.row)
       val splitPoint = remainingElems.headOption map { h ⇒
         classifiedElems.span(_.col != h.col)
       }
