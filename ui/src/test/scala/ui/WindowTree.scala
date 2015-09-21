@@ -13,28 +13,37 @@ object WindowTreeCreator {
     case Seq(WinInfo(id, _, _)) ⇒
       Rows(Seq(Window(s"window$id")))
     case WinInfo(id1, r1, c1) +: WinInfo(id2, r2, c2) +: xs ⇒
-      if (r1 == r2)
-        Rows(Seq(mkCols(wins)))
-      else
+      if (r1 == r2) {
+        val ret = mkCols(wins)
+        if (ret._2.isEmpty)
+          Rows(Seq(ret._1))
+        else {
+          Rows(ret._1 +: mkRows(ret._2).rows)
+        }
+      } else
         mkRows(wins)
   }
 
   private def mkRows(wins: Seq[WinInfo]): Rows = wins match {
     case Seq(WinInfo(id, _, _)) ⇒
       Rows(Seq(Window(s"window$id")))
-    case WinInfo(id1, _, c1) +: WinInfo(id2, _, c2) +: xs ⇒
+    case WinInfo(id1, _, _) +: WinInfo(id2, r1, _) +: xs ⇒
       val ret = Rows(Seq(Window(s"window$id1"), Window(s"window$id2")))
-      val cols = mkRows(xs)
-      Rows(ret.rows ++ cols.rows)
+      val rows = mkRows(xs)
+      Rows(ret.rows ++ rows.rows)
   }
 
-  private def mkCols(wins: Seq[WinInfo]): Columns = wins match {
+  private def mkCols(wins: Seq[WinInfo]): (Columns, Seq[WinInfo]) = wins match {
     case Seq(WinInfo(id, _, _)) ⇒
-      Columns(Seq(Window(s"window$id")))
-    case WinInfo(id1, _, c1) +: WinInfo(id2, _, c2) +: xs ⇒
-      val ret = Columns(Seq(Window(s"window$id1"), Window(s"window$id2")))
-      val cols = mkCols(xs)
-      Columns(ret.columns ++ cols.columns)
+      Columns(Seq(Window(s"window$id"))) → Nil
+    case WinInfo(id1, _, c1) +: WinInfo(id2, r1, c2) +: xs ⇒
+      val cols = Columns(Seq(Window(s"window$id1"), Window(s"window$id2")))
+      if (xs.isEmpty || r1 == xs.head.row) {
+        val ret = mkCols(xs)
+        Columns(cols.columns ++ ret._1.columns) → ret._2
+      }
+      else
+        (cols, xs)
   }
 
 }

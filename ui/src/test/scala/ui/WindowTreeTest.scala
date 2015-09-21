@@ -46,5 +46,18 @@ object WindowTreeTest extends TestSuite {
       assert(tree == Rows(Seq(Window("window1"), Window("window2"), Window("window3"))))
     }
 
+    "multiple windows in first row and one column in second row" - {
+      /*
+       -----
+       | | |
+       -----
+       |   |
+       -----
+       */
+      val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0)))
+      assert(tree == Rows(Seq(
+          Columns(Seq(Window("window1"), Window("window2"))),
+          Window("window3"))))
+    }
   }
 }
