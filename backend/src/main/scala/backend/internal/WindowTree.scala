@@ -12,53 +12,37 @@ object WindowTreeCreator {
   def mkWindowTree(wins: Seq[WinInfo]): WindowTree = wins match {
     case Seq(WinInfo(id, _, _)) ⇒
       Window(s"window$id")
-    case WinInfo(id1, r1, c1) +: WinInfo(id2, r2, c2) +: xs ⇒
-      if (r1 == r2) {
-        val ret = mkCols(wins)
-        if (ret._2.isEmpty)
-          ret._1
-        else {
-          val t = mkWindowTree(ret._2)
-          Rows(Seq(ret._1, t))
-        }
-      } else
-        mkRows(wins)
-  }
 
-  private def mkRows(wins: Seq[WinInfo]): Rows = wins match {
-    case Seq(WinInfo(id, _, _)) ⇒
-      Rows(Seq(Window(s"window$id")))
-    case WinInfo(id1, _, _) +: WinInfo(id2, r1, _) +: xs ⇒
-      if (xs.isEmpty)
-        Rows(Seq(Window(s"window$id1"), Window(s"window$id2")))
-      else if (r1 < xs.head.row) {
-        val rows = Rows(Seq(Window(s"window$id1"), Window(s"window$id2")))
-        val ret = mkRows(xs)
-        Rows(rows.rows ++ ret.rows)
+    case e1 +: _ +: _ ⇒
+      val (classifiedElems, remainingElems) = wins.span(_.row == e1.row)
+      val splitPoint = remainingElems.headOption map { h ⇒
+        classifiedElems.span(_.col != h.col)
       }
-      else {
-        val rows = Rows(Seq(Window(s"window$id1")))
-        val ret = mkCols(wins.tail)
-        if (ret._2.isEmpty)
-          Rows(rows.rows :+ ret._1)
-        else
-          ???
+      splitPoint match {
+        case Some((firstRow, secondRow)) ⇒
+          if (secondRow.isEmpty)
+            ???
+          val remainingRows = {
+            val remainingColumns =
+              if (secondRow.size == 1)
+                Window(s"window${secondRow.head.winId}")
+              else
+                Columns(secondRow map (w ⇒ Window(s"window${w.winId}")))
+            mkWindowTree(remainingElems) match {
+              case Rows(seq) ⇒ Rows(remainingColumns +: seq)
+              case ret ⇒ Rows(Seq(remainingColumns, ret))
+            }
+          }
+          if (firstRow.isEmpty)
+            remainingRows
+          else if (firstRow.size == 1)
+            Columns(Seq(Window(s"window${firstRow.head.winId}"), remainingRows))
+          else {
+            Columns(Seq(Columns(firstRow map (w ⇒ Window(s"window${w.winId}"))), remainingRows))
+          }
+
+        case None ⇒
+          Columns(classifiedElems map (w ⇒ Window(s"window${w.winId}")))
       }
   }
-
-  private def mkCols(wins: Seq[WinInfo]): (Columns, Seq[WinInfo]) = wins match {
-    case Seq(WinInfo(id, _, _)) ⇒
-      Columns(Seq(Window(s"window$id"))) → Nil
-    case WinInfo(id1, _, c1) +: WinInfo(id2, r1, c2) +: xs ⇒
-      val cols = Columns(Seq(Window(s"window$id1"), Window(s"window$id2")))
-      if (xs.isEmpty)
-        cols → Nil
-      else if (r1 == xs.head.row) {
-        val ret = mkCols(xs)
-        Columns(cols.columns ++ ret._1.columns) → ret._2
-      }
-      else
-        (cols, xs)
-  }
-
 }

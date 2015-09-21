@@ -27,9 +27,9 @@ class WindowTreeTest {
   @Test
   def multiple_windows_in_a_single_row() = {
     /*
-     -----
-     | | |
-     -----
+     -------
+     | | | |
+     -------
     */
     val tree = mkWindowTree(infos((0, 0), (0, 1), (0, 2)))
     tree === Columns(Seq(Window("window1"), Window("window2"), Window("window3")))
@@ -38,6 +38,8 @@ class WindowTreeTest {
   @Test
   def multiple_windows_in_a_single_column() = {
     /*
+     ---
+     | |
      ---
      | |
      ---
@@ -91,5 +93,28 @@ class WindowTreeTest {
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Columns(Seq(Window("window3"), Window("window4")))))
+  }
+
+  @Test
+  def multiple_windows_nested_between_multiple_windows() = {
+    /*
+     ---------
+     |   |   |
+     |   |   |
+     |   |   |
+     ---------
+     |   | | |
+     |   -----
+     |   | | |
+     ---------
+    */
+    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (2, 1), (2,2)))
+    tree === Rows(Seq(
+        Columns(Seq(Window("window1"), Window("window2"))),
+        Columns(Seq(
+            Window("window3"),
+            Rows(Seq(
+                Columns(Seq(Window("window4"), Window("window5"))),
+                Columns(Seq(Window("window6"), Window("window7")))))))))
   }
 }
