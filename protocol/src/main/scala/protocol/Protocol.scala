@@ -14,9 +14,9 @@ case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(winId: Int, bufferId: Int, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(winId: Int, bufferId: Int, sel: Selection) extends Response
-case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String]) extends Response {
+case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String], screenPos: Pos) extends Response {
   override def toString =
-    s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size})"
+    s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size}, screenPos=$screenPos)"
 }
 case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection) extends Response {
   override def toString =

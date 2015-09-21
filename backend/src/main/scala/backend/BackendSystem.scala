@@ -75,11 +75,6 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     }
   }
 
-  private def currentBufferContent: Future[Seq[String]] = for {
-    b ← nvim.buffer
-    c ← bufferContent(b)
-  } yield c
-
   private def bufferContent(b: Buffer): Future[Seq[String]] = for {
     count ← b.lineCount
     s ← b.lineSlice(0, count)
@@ -104,7 +99,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     win ← winOf(winId)
     buf ← win.buffer
     content ← bufferContent(buf)
-  } yield WindowUpdate(win.id, buf.id,  content)
+    pos ← win.position
+  } yield WindowUpdate(win.id, buf.id, content, Pos(pos.row, pos.col))
 
   private def clientUpdate = for {
     wins ← Future.sequence(windows map winInfo)
@@ -124,11 +120,11 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     system.log.info(s"received: $change")
     val resp = for {
       _ ← nvim.sendInput(change.text)
-      win ← nvim.window = change.winId
-      content ← currentBufferContent
+      _ ← nvim.window = change.winId
+      update ← winInfo(change.winId)
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Seq(WindowUpdate(win.id, change.bufferId, content)), Mode.asString(mode), s)
+    } yield ClientUpdate(Seq(update), Mode.asString(mode), s)
 
     handle(resp, s"Failed to send response after client request `$change`.") {
       resp ⇒ NvimSignal(sender, resp)
@@ -153,12 +149,12 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleControl(control: Control, sender: String): Unit = {
     system.log.info(s"received: $control")
     val resp = for {
-      win ← nvim.window = control.winId
+      _ ← nvim.window = control.winId
       _ ← nvim.sendInput(control.controlSeq)
-      content ← currentBufferContent
+      update ← winInfo(control.winId)
       mode ← nvim.activeMode
       s ← selection
-    } yield ClientUpdate(Seq(WindowUpdate(win.id, control.bufferId, content)), Mode.asString(mode), s)
+    } yield ClientUpdate(Seq(update), Mode.asString(mode), s)
 
     handle(resp, s"Failed to send response after client request `$control`.") {
       resp ⇒ NvimSignal(sender, resp)

@@ -316,7 +316,7 @@ class Ui {
         case update @ ClientUpdate(wins, mode, sel) ⇒
           println(s"> received: $update")
 
-          wins foreach { case WindowUpdate(winId, bufferId, lines) ⇒
+          wins foreach { case WindowUpdate(winId, bufferId, lines, pos) ⇒
             // TODO remove BufferRef creation here
             val buf = bm.bufferOf(BufferRef(bufferId))
 
