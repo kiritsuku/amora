@@ -110,12 +110,10 @@ object Build extends sbt.Build {
 
     resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
 
-    libraryDependencies ++= deps.sjs.value ++ deps.sjsTest.value ++ deps.common.value,
+    libraryDependencies ++= deps.sjs.value,
 
     skip in packageJSDependencies := false,
-    jsDependencies += RuntimeDOM,
     jsDependencies ++= deps.webjars.value,
-    testFrameworks += new TestFramework("utest.runner.Framework"),
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false
@@ -155,73 +153,69 @@ object Build extends sbt.Build {
 
   object versions {
     // https://github.com/lihaoyi/scalatags
-    val scalatags = "0.5.2"
+    val scalatags       = "0.5.2"
     // https://github.com/ChrisNeveu/macrame
-    val macrame = "1.0.1"
-    val paradise = "2.1.0-M5"
-    val akkaStream = "1.0"
-    val akkaHttp = "1.0"
-    val scalameta = "0.1.0-SNAPSHOT"
+    val macrame         = "1.0.1"
+    val paradise        = "2.1.0-M5"
+    val akkaStream      = "1.0"
+    val akkaHttp        = "1.0"
+    val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
-    val scalaLogging = "3.1.0"
-    val slf4jLog4j12 = "1.7.12"
-    val junit = "4.12"
+    val scalaLogging    = "3.1.0"
+    val slf4jLog4j12    = "1.7.12"
+    val junit           = "4.12"
+    // https://github.com/ochrons/boopickle
+    val boopickle       = "1.1.0"
+    // https://github.com/msgpack4z/msgpack4z-core
+    val msgpack4zCore   = "0.1.6"
+    // https://github.com/msgpack4z/msgpack4z-java07
+    val msgpack4zJava07 = "0.1.6"
+    // https://github.com/antonkulaga/codemirror-facade
+    val codemirror      = "5.5-0.5"
+    val jquery          = "0.8.0"
   }
 
   object deps {
     lazy val protocol = Def.setting(Seq(
-      // https://github.com/ochrons/boopickle
-      "me.chrons" %%% "boopickle" % "1.1.0"
+      "me.chrons" %%% "boopickle" % versions.boopickle
     ))
 
     lazy val backend = Def.setting(Seq(
-      "com.typesafe.akka" %% "akka-http-experimental" % versions.akkaHttp,
-      "com.typesafe.akka" %% "akka-stream-experimental" % versions.akkaStream,
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "org.scalameta" % "scalameta" % versions.scalameta cross CrossVersion.binary,
-      "org.scalameta" % "scalahost" % versions.scalameta cross CrossVersion.full,
-      "org.scalameta" %% "interpreter" % versions.scalameta,
-      "com.chrisneveu" %% "macrame" % versions.macrame,
-      compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
-      "com.lihaoyi" %%% "scalatags" % versions.scalatags,
-      "org.slf4j" % "slf4j-log4j12" % versions.slf4jLog4j12,
-      "junit" % "junit" % versions.junit % "test"
+      compilerPlugin("org.scalamacros" %   "paradise"                   % versions.paradise         cross CrossVersion.full),
+      "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akkaHttp,
+      "com.typesafe.akka"              %%  "akka-stream-experimental"   % versions.akkaStream,
+      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
+      "org.scalameta"                  %   "scalameta"                  % versions.scalameta        cross CrossVersion.binary,
+      "org.scalameta"                  %   "scalahost"                  % versions.scalameta        cross CrossVersion.full,
+      "org.scalameta"                  %%  "interpreter"                % versions.scalameta,
+      "com.chrisneveu"                 %%  "macrame"                    % versions.macrame,
+      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags,
+      "org.slf4j"                      %   "slf4j-log4j12"              % versions.slf4jLog4j12,
+      "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
 
     lazy val nvim = Def.setting(Seq(
-      // https://github.com/msgpack4z/msgpack4z-core
-      "com.github.xuwei-k" %% "msgpack4z-core" % "0.1.6",
-      // https://github.com/msgpack4z/msgpack4z-java07
-      "com.github.xuwei-k" % "msgpack4z-java07" % "0.1.6",
-      "com.chrisneveu" %% "macrame" % versions.macrame,
-      compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
-      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      "com.typesafe.scala-logging" %% "scala-logging" % versions.scalaLogging
-    ))
-
-    lazy val sjsTest = Def.setting(Seq(
-      "com.lihaoyi" %%% "utest" % "0.3.1" % "test"
+      compilerPlugin("org.scalamacros" %   "paradise"                   % versions.paradise         cross CrossVersion.full),
+      "com.github.xuwei-k"             %%  "msgpack4z-core"             % versions.msgpack4zCore,
+      "com.github.xuwei-k"             %   "msgpack4z-java07"           % versions.msgpack4zJava07,
+      "com.chrisneveu"                 %%  "macrame"                    % versions.macrame,
+      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
+      "com.typesafe.scala-logging"     %%  "scala-logging"              % versions.scalaLogging
     ))
 
     lazy val sjs = Def.setting(Seq(
-      "be.doeraene" %%% "scalajs-jquery" % "0.8.0",
-      // https://github.com/antonkulaga/codemirror-facade
-      "org.denigma" %%% "codemirror-facade" % "5.5-0.5",
-      "com.lihaoyi" %%% "scalatags" % versions.scalatags
+      "be.doeraene"                    %%% "scalajs-jquery"            % versions.jquery,
+      "org.denigma"                    %%% "codemirror-facade"         % versions.codemirror,
+      "com.lihaoyi"                    %%% "scalatags"                 % versions.scalatags
     ))
 
     lazy val webjars = Def.setting(Seq(
-      "org.webjars" % "codemirror" % "5.5" / "codemirror.js",
+      "org.webjars"                    % "codemirror"                  % "5.5"                      / "codemirror.js",
       // https://github.com/chjj/marked
-      "org.webjars.bower" % "marked" % "0.3.3" / "marked.js",
-      "org.webjars" % "d3js" % "3.5.5-1" / "d3.js",
+      "org.webjars.bower"              % "marked"                      % "0.3.3"                    / "marked.js",
+      "org.webjars"                    % "d3js"                        % "3.5.5-1"                  / "d3.js",
       // https://github.com/fgnass/spin.js
-      "org.webjars.bower" % "spin.js" % "2.3.1" / "spin.js"
-    ))
-
-    lazy val common = Def.setting(Seq(
-      // use scalaVersion.value to suppress warning about multiple Scala versions found
-      "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      "org.webjars.bower"              % "spin.js"                     % "2.3.1"                    / "spin.js"
     ))
   }
 }
