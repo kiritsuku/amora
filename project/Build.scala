@@ -165,6 +165,7 @@ object Build extends sbt.Build {
     // https://github.com/typesafehub/scala-logging
     val scalaLogging = "3.1.0"
     val slf4jLog4j12 = "1.7.12"
+    val scalaTest = "2.2.4"
   }
 
   object deps {
@@ -183,7 +184,8 @@ object Build extends sbt.Build {
       "com.chrisneveu" %% "macrame" % versions.macrame,
       compilerPlugin("org.scalamacros" % "paradise" % versions.paradise cross CrossVersion.full),
       "com.lihaoyi" %%% "scalatags" % versions.scalatags,
-      "org.slf4j" % "slf4j-log4j12" % versions.slf4jLog4j12
+      "org.slf4j" % "slf4j-log4j12" % versions.slf4jLog4j12,
+      "org.scalatest" %% "scalatest" % versions.scalaTest % "test"
     ))
 
     lazy val nvim = Def.setting(Seq(

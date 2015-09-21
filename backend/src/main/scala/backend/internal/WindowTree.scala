@@ -1,4 +1,4 @@
-package ui
+package backend.internal
 
 sealed trait WindowTree
 case class Rows(rows: Seq[WindowTree]) extends WindowTree
