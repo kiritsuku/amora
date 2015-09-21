@@ -19,7 +19,7 @@ class WindowTreeTest extends FunSuite {
      ---
     */
     val tree = mkWindowTree(infos((0, 0)))
-    assert(tree == Rows(Seq(Window("window1"))))
+    assert(tree == Window("window1"))
   }
 
   test("multiple windows in a single row") {
@@ -29,7 +29,7 @@ class WindowTreeTest extends FunSuite {
      -----
     */
     val tree = mkWindowTree(infos((0, 0), (0, 1), (0, 2)))
-    assert(tree == Rows(Seq(Columns(Seq(Window("window1"), Window("window2"), Window("window3"))))))
+    assert(tree == Columns(Seq(Window("window1"), Window("window2"), Window("window3"))))
   }
 
   test("multiple windows in a single column") {
@@ -72,4 +72,17 @@ class WindowTreeTest extends FunSuite {
         Columns(Seq(Window("window2"), Window("window3"))))))
   }
 
+  test("multiple windows in all rows") {
+    /*
+     -----
+     | | |
+     -----
+     | | |
+     -----
+    */
+    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1)))
+    assert(tree == Rows(Seq(
+        Columns(Seq(Window("window1"), Window("window2"))),
+        Columns(Seq(Window("window3"), Window("window4"))))))
+  }
 }
