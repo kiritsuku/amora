@@ -7,12 +7,12 @@ import protocol.ui.Columns
 import protocol.ui.Rows
 import protocol.ui.Window
 
-class WindowTreeTest {
+class WindowTreeCreatorTest {
   import WindowTreeCreator._
   import TestUtils._
 
   private def infos(pos: (Int, Int)*): Seq[WinInfo] = {
-    pos.zipWithIndex map {
+    pos.zipWithIndex.toList map {
       case ((row, col), i) ⇒ WinInfo(i+1, row, col)
     }
   }
@@ -112,7 +112,7 @@ class WindowTreeTest {
      |   | | |
      ---------
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (2, 1), (2,2)))
+    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (2, 1), (2, 2)))
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Columns(Seq(
@@ -120,5 +120,20 @@ class WindowTreeTest {
             Rows(Seq(
                 Columns(Seq(Window("window4"), Window("window5"))),
                 Columns(Seq(Window("window6"), Window("window7")))))))))
+  }
+
+  @Test
+  def unsorted_coordinates_should_be_handled_well() = {
+    /*
+     -----
+     | | |
+     -----
+     | | |
+     -----
+    */
+    val tree = mkWindowTree(infos((1, 0), (0, 1), (0, 0), (1, 1)))
+    tree === Rows(Seq(
+        Columns(Seq(Window("window3"), Window("window2"))),
+        Columns(Seq(Window("window1"), Window("window4")))))
   }
 }

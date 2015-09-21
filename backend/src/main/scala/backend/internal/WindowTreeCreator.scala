@@ -9,7 +9,13 @@ object WindowTreeCreator {
 
   case class WinInfo(winId: Int, row: Int, col: Int)
 
-  def mkWindowTree(infos: Seq[WinInfo]): WindowTree = infos match {
+  def mkWindowTree(infos: Seq[WinInfo]): WindowTree = {
+    val sorted = infos.sortBy(info ⇒ (info.row, info.col))
+    println(sorted)
+    mkLoop(sorted)
+  }
+
+  private def mkLoop(infos: Seq[WinInfo]): WindowTree = infos match {
     case Seq(WinInfo(id, _, _)) ⇒
       Window(s"window$id")
 
@@ -28,7 +34,7 @@ object WindowTreeCreator {
                 Window(s"window${secondRow.head.winId}")
               else
                 Columns(secondRow map (w ⇒ Window(s"window${w.winId}")))
-            mkWindowTree(remainingElems) match {
+            mkLoop(remainingElems) match {
               case Rows(seq) ⇒ Rows(remainingColumns +: seq)
               case ret ⇒ Rows(Seq(remainingColumns, ret))
             }
