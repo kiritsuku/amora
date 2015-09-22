@@ -7,22 +7,22 @@ import protocol.ui.WindowTree
 
 object WindowTreeCreator {
 
-  case class WinInfo(winId: Int, row: Int, col: Int)
+  case class WinInfo(winId: Int, x: Int, y: Int, w: Int, h: Int)
 
   def mkWindowTree(infos: Seq[WinInfo]): WindowTree = {
-    val sorted = infos.sortBy(info ⇒ (info.row, info.col))
+    val sorted = infos.sortBy(info ⇒ (info.x, info.y))
     println(sorted)
     mkLoop(sorted)
   }
 
   private def mkLoop(infos: Seq[WinInfo]): WindowTree = infos match {
-    case Seq(WinInfo(id, _, _)) ⇒
-      Window(s"window$id")
+    case Seq(info) ⇒
+      Window(s"window${info.winId}")
 
     case e1 +: _ +: _ ⇒
-      val (classifiedElems, remainingElems) = infos.span(_.row == e1.row)
+      val (classifiedElems, remainingElems) = infos.span(_.x == e1.x)
       val splitPoint = remainingElems.headOption map { h ⇒
-        classifiedElems.span(_.col != h.col)
+        classifiedElems.span(_.y != h.y)
       }
       splitPoint match {
         case Some((firstRow, secondRow)) ⇒

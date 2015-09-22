@@ -16,9 +16,9 @@ case object ConnectionFailure extends Response
 case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(winId: Int, bufferId: Int, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(winId: Int, bufferId: Int, sel: Selection) extends Response
-case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String], screenPos: Pos) extends Response {
+case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String], dim: WinDim) extends Response {
   override def toString =
-    s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size}, screenPos=$screenPos)"
+    s"WindowUpdate(winId=$winId, bufId=$bufId, nrOfLines=${lines.size}, dim=$dim)"
 }
 case class ClientUpdate(windows: Seq[WindowUpdate], mode: String, sel: Selection, tree: Option[WindowTree]) extends Response {
   override def toString =
@@ -31,6 +31,10 @@ case class Selection(winId: Int, bufId: Int, start: Pos, end: Pos) extends Respo
 case class Pos(row: Int, col: Int) extends Response {
   override def toString =
     s"(row=$row, col=$col)"
+}
+case class WinDim(x: Int, y: Int, w: Int, h: Int) extends Response {
+  override def toString =
+    s"(x=$x, y=$y, w=$w, h=$h)"
 }
 
 object Pos {

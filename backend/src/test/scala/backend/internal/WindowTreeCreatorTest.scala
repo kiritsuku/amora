@@ -13,7 +13,7 @@ class WindowTreeCreatorTest {
 
   private def infos(pos: (Int, Int)*): Seq[WinInfo] = {
     pos.zipWithIndex.toList map {
-      case ((row, col), i) ⇒ WinInfo(i+1, row, col)
+      case ((row, col), i) ⇒ WinInfo(i+1, row, col, 1, 1)
     }
   }
 

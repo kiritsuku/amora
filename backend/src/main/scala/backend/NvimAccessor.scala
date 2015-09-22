@@ -93,7 +93,9 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     buf ← win.buffer
     content ← bufferContent(buf)
     pos ← win.position
-  } yield WindowUpdate(win.id, buf.id, content, Pos(pos.row, pos.col))
+    w ← win.width
+    h ← win.height
+  } yield WindowUpdate(win.id, buf.id, content, WinDim(pos.row, pos.col, w, h))
 
   private def clientUpdate = for {
     wins ← Future.sequence(windows map winInfo)
@@ -104,11 +106,13 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
 
   private def windowTree: Future[WindowTree] = for {
     windows ← Future.sequence(windows map winOf)
-    ws = windows.toList
-    positions ← Future.sequence(ws map (_.position))
-    infos = (ws, positions).zipped map { (win, pos) ⇒
-      WindowTreeCreator.WinInfo(win.id, pos.row, pos.col)
-    }
+    infos ← Future.sequence(windows.toList map { win ⇒
+      for {
+        pos ← win.position
+        w ← win.width
+        h ← win.height
+      } yield WindowTreeCreator.WinInfo(win.id, pos.row, pos.col, w, h)
+    })
   } yield WindowTreeCreator.mkWindowTree(infos)
 
   def handleClientJoined(sender: String): Unit = {
