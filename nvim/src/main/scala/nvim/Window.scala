@@ -23,10 +23,9 @@ case class Window(id: Int, connection: Connection) {
    * Sets the cursor to `pos` and returns `pos` afterwards.
    */
   def cursor_=(pos: Position)(implicit ec: ExecutionContext): Future[Position] = {
-    val req = connection.sendRequest("window_set_cursor", int(id), array(List(int(pos.row), int(pos.col)))) {
-      case _ ⇒ ()
+    connection.sendRequest("window_set_cursor", int(id), array(List(int(pos.row), int(pos.col)))) {
+      case _ ⇒ pos
     }
-    req map (_ ⇒ pos)
   }
 
   /**
@@ -47,6 +46,26 @@ case class Window(id: Int, connection: Connection) {
     connection.sendRequest("window_get_position", int(id)) {
       case MsgpackArray(List(MsgpackLong(x), MsgpackLong(y))) ⇒
         Position(x.toInt, y.toInt)
+    }
+  }
+
+  /**
+   * Gets the height of the window. The height is measured in number of lines
+   * that can be displayed by the window.
+   */
+  def height(implicit ec: ExecutionContext): Future[Int] = {
+    connection.sendRequest("window_get_height", int(id)) {
+      case MsgpackLong(long) ⇒ long.toInt
+    }
+  }
+
+  /**
+   * Sets the height of the window. The height is measured in number of lines
+   * that can be displayed by the window.
+   */
+  def height_=(height: Int)(implicit ec: ExecutionContext): Future[Int] = {
+    connection.sendRequest("window_set_height", int(id), int(height)) {
+      case _ ⇒ height
     }
   }
 }
