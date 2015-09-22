@@ -61,11 +61,33 @@ case class Window(id: Int, connection: Connection) {
 
   /**
    * Sets the height of the window. The height is measured in number of lines
-   * that can be displayed by the window.
+   * that can be displayed by the window. Returns the height when the request
+   * has been completed.
    */
   def height_=(height: Int)(implicit ec: ExecutionContext): Future[Int] = {
     connection.sendRequest("window_set_height", int(id), int(height)) {
       case _ ⇒ height
+    }
+  }
+
+  /**
+   * Gets the width of the window. The width is measured in number of characters
+   * that can be displayed by the window in a single line.
+   */
+  def width(implicit ec: ExecutionContext): Future[Int] = {
+    connection.sendRequest("window_get_width", int(id)) {
+      case MsgpackLong(long) ⇒ long.toInt
+    }
+  }
+
+  /**
+   * Sets the height of the window. The width is measured in number of characters
+   * that can be displayed by the window in a single line. Returns the width
+   * when the request has been completed.
+   */
+  def width_=(width: Int)(implicit ec: ExecutionContext): Future[Int] = {
+    connection.sendRequest("window_set_width", int(id), int(width)) {
+      case _ ⇒ width
     }
   }
 }
