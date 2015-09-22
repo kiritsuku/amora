@@ -55,6 +55,21 @@ class WindowTreeCreatorTest {
   }
 
   @Test
+  def multiple_winodws_in_first_column_and_one_window_in_second_column() = {
+    /*
+     -----
+     | | |
+     --- |
+     | | |
+     -----
+    */
+    val tree = mkWindowTree(infos((0, 0), (1, 0), (0, 1)))
+    tree === Columns(Seq(
+        Rows(Seq(Window("window1"), Window("window2"))),
+        Window("window3")))
+  }
+
+  @Test
   def multiple_windows_in_first_row_and_one_window_in_second_row() = {
     /*
      -----
@@ -100,7 +115,7 @@ class WindowTreeCreatorTest {
   }
 
   @Test
-  def multiple_windows_nested_between_multiple_windows() = {
+  def multiple_windows_nested_between_multiple_windows1() = {
     /*
      ---------
      |   |   |
@@ -120,6 +135,29 @@ class WindowTreeCreatorTest {
             Rows(Seq(
                 Columns(Seq(Window("window4"), Window("window5"))),
                 Columns(Seq(Window("window6"), Window("window7")))))))))
+  }
+
+  @Test
+  def multiple_windows_nested_between_multiple_windows2() = {
+    /*
+     ---------
+     |   |   |
+     |   |   |
+     |   |   |
+     ---------
+     | | |   |
+     -----   |
+     | | |   |
+     ---------
+    */
+    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (1, 3)))
+    tree === Rows(Seq(
+        Columns(Seq(Window("window1"), Window("window2"))),
+        Columns(Seq(
+            Rows(Seq(
+                Columns(Seq(Window("window3"), Window("window4"))),
+                Columns(Seq(Window("window5"), Window("window6"))))),
+            Window("window7")))))
   }
 
   @Test
