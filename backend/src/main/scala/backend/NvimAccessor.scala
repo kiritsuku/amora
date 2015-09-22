@@ -15,7 +15,7 @@ import protocol.ui.WindowTree
 final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   import system.dispatcher
 
-  private val nvim = new Nvim(new Connection("127.0.0.1", 6666))
+  private val nvim = Nvim(Connection("127.0.0.1", 6666))
 
   private var windows = Set[Int]()
 

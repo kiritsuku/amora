@@ -26,7 +26,7 @@ import nvim.internal._
  *
  * [[https://github.com/msgpack-rpc/msgpack-rpc/blob/master/spec.md]]
  */
-final class Connection(host: String, port: Int) extends LazyLogging {
+final case class Connection(host: String, port: Int) extends LazyLogging {
 
   val ResponseId = 1
   val NotificationId = 2

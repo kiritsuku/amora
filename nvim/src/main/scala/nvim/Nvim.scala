@@ -78,10 +78,9 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
    * the active buffer afterwards.
    */
   def buffer_=(bufferId: Int)(implicit ec: ExecutionContext): Future[Buffer] = {
-    val req = connection.sendRequest("vim_set_current_buffer") {
-      case _ ⇒ ()
+    connection.sendRequest("vim_set_current_buffer") {
+      case _ ⇒ Buffer(bufferId, connection)
     }
-    req map (_ ⇒ Buffer(bufferId, connection))
   }
 
   /**
@@ -113,10 +112,9 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
    * active window afterwards.
    */
   def window_=(winId: Int)(implicit ec: ExecutionContext): Future[Window] = {
-    val req = connection.sendRequest("vim_set_current_window", int(winId)) {
-      case _ ⇒ ()
+    connection.sendRequest("vim_set_current_window", int(winId)) {
+      case _ ⇒ Window(winId, connection)
     }
-    req map (_ ⇒ Window(winId, connection))
   }
 
   /**
