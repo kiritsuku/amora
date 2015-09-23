@@ -11,9 +11,9 @@ class WindowTreeCreatorTest {
   import WindowTreeCreator._
   import TestUtils._
 
-  private def infos(pos: (Int, Int)*): Seq[WinInfo] = {
-    pos.zipWithIndex.toList map {
-      case ((row, col), i) ⇒ WinInfo(i+1, row, col, 1, 1)
+  private def dims(dim: (Int, Int, Int, Int)*): Seq[WinInfo] = {
+    dim.zipWithIndex.toList map {
+      case ((x, y, w, h), i) ⇒ WinInfo(i+1, x, y, w, h)
     }
   }
 
@@ -24,7 +24,7 @@ class WindowTreeCreatorTest {
      | |
      ---
     */
-    val tree = mkWindowTree(infos((0, 0)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1)))
     tree === Window("window1")
   }
 
@@ -35,7 +35,7 @@ class WindowTreeCreatorTest {
      | | | |
      -------
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (0, 2)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (1, 0, 1, 1), (2, 0, 1, 1)))
     tree === Columns(Seq(Window("window1"), Window("window2"), Window("window3")))
   }
 
@@ -50,7 +50,7 @@ class WindowTreeCreatorTest {
      | |
      ---
     */
-    val tree = mkWindowTree(infos((0, 0), (1, 0), (2, 0)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (0, 1, 1, 1), (0, 2, 1, 1)))
     tree === Rows(Seq(Window("window1"), Window("window2"), Window("window3")))
   }
 
@@ -63,7 +63,7 @@ class WindowTreeCreatorTest {
      | | |
      -----
     */
-    val tree = mkWindowTree(infos((0, 0), (1, 0), (0, 1)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (0, 1, 1, 1), (1, 0, 1, 2)))
     tree === Columns(Seq(
         Rows(Seq(Window("window1"), Window("window2"))),
         Window("window3")))
@@ -78,7 +78,7 @@ class WindowTreeCreatorTest {
      |   |
      -----
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (1, 0, 1, 1), (0, 1, 2, 1)))
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Window("window3")))
@@ -93,7 +93,7 @@ class WindowTreeCreatorTest {
      | | |
      -----
     */
-    val tree = mkWindowTree(infos((0, 0), (1, 0), (1, 1)))
+    val tree = mkWindowTree(dims((0, 0, 2, 1), (0, 1, 1, 1), (1, 1, 1, 1)))
     tree === Rows(Seq(
         Window("window1"),
         Columns(Seq(Window("window2"), Window("window3")))))
@@ -108,7 +108,7 @@ class WindowTreeCreatorTest {
      | | |
      -----
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1)))
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (1, 0, 1, 1), (0, 1, 1, 1), (1, 1, 1, 1)))
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Columns(Seq(Window("window3"), Window("window4")))))
@@ -127,7 +127,7 @@ class WindowTreeCreatorTest {
      |   | | |
      ---------
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (1, 2), (2, 1), (2, 2)))
+    val tree = mkWindowTree(dims((0, 0, 2, 2), (2, 0, 2, 2), (0, 2, 2, 2), (2, 2, 1, 1), (3, 2, 1, 1), (2, 3, 1, 1), (3, 3, 1, 1)))
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Columns(Seq(
@@ -150,7 +150,7 @@ class WindowTreeCreatorTest {
      | | |   |
      ---------
     */
-    val tree = mkWindowTree(infos((0, 0), (0, 1), (1, 0), (1, 1), (2, 0), (2, 1), (1, 3)))
+    val tree = mkWindowTree(dims((0, 0, 2, 2), (2, 0, 2, 2), (0, 2, 1, 1), (1, 2, 1, 1), (0, 3, 1, 1), (1, 3, 1, 1), (2, 2, 2, 2)))
     tree === Rows(Seq(
         Columns(Seq(Window("window1"), Window("window2"))),
         Columns(Seq(
@@ -169,9 +169,9 @@ class WindowTreeCreatorTest {
      | | |
      -----
     */
-    val tree = mkWindowTree(infos((1, 0), (0, 1), (0, 0), (1, 1)))
+    val tree = mkWindowTree(dims((0, 1, 1, 1), (1, 0, 1, 1), (1, 1, 1, 1), (0, 0, 1, 1)))
     tree === Rows(Seq(
-        Columns(Seq(Window("window3"), Window("window2"))),
-        Columns(Seq(Window("window1"), Window("window4")))))
+        Columns(Seq(Window("window4"), Window("window2"))),
+        Columns(Seq(Window("window1"), Window("window3")))))
   }
 }
