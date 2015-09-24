@@ -11,6 +11,7 @@ class WindowTreeCreatorTest {
   import WindowTreeCreator._
   import TestUtils._
 
+  /** Takes (x, y, w, h). */
   private def dims(dim: (Int, Int, Int, Int)*): Seq[WinInfo] = {
     dim.zipWithIndex.toList map {
       case ((x, y, w, h), i) ⇒ WinInfo(i+1, x, y, w, h)
@@ -158,6 +159,77 @@ class WindowTreeCreatorTest {
                 Columns(Seq(Window("window3"), Window("window4"))),
                 Columns(Seq(Window("window5"), Window("window6"))))),
             Window("window7")))))
+  }
+
+  @Test
+  def multiple_windows_nested_between_multiple_windows3() = {
+    /*
+     ---------
+     |   | | |
+     |   -----
+     |   | | |
+     ---------
+     |   |   |
+     |   |   |
+     |   |   |
+     ---------
+    */
+    val tree = mkWindowTree(dims((0, 0, 2, 2), (2, 0, 1, 1), (3, 0, 1, 1), (2, 1, 1, 1), (3, 1, 1, 1), (0, 2, 2, 2), (2, 2, 2, 2)))
+    tree === Rows(Seq(
+        Columns(Seq(
+            Window("window1"),
+            Rows(Seq(
+                Columns(Seq(Window("window2"), Window("window3"))),
+                Columns(Seq(Window("window4"), Window("window5"))))))),
+        Columns(Seq(Window("window6"), Window("window7")))))
+  }
+
+  @Test
+  def multiple_windows_nested_between_multiple_windows4() = {
+    /*
+     ---------
+     | | |   |
+     -----   |
+     | | |   |
+     ---------
+     |   |   |
+     |   |   |
+     |   |   |
+     ---------
+    */
+    val tree = mkWindowTree(dims((0, 0, 1, 1), (1, 0, 1, 1), (0, 1, 1, 1), (1, 1, 1, 1), (2, 0, 2, 2), (0, 2, 2, 2), (2, 2, 2, 2)))
+    tree === Rows(Seq(
+        Columns(Seq(
+            Rows(Seq(
+                Columns(Seq(Window("window1"), Window("window2"))),
+                Columns(Seq(Window("window3"), Window("window4"))),
+            Window("window5"))))),
+        Columns(Seq(Window("window6"), Window("window7")))))
+  }
+
+  @Test
+  def multiple_windows_surrounded_by_single_windows() = {
+    /*
+     -------------
+     |           |
+     -------------
+     |   | | |   |
+     |   -----   |
+     |   |   |   |
+     -------------
+     |           |
+     -------------
+    */
+    val tree = mkWindowTree(dims((0, 0, 6, 1), (0, 1, 2, 2), (2, 1, 1, 1), (3, 1, 1, 1), (2, 2, 2, 1), (4, 1, 2, 2), (0, 3, 6, 1)))
+    tree === Rows(Seq(
+        Window("window1"),
+        Columns(Seq(
+            Window("window2"),
+            Rows(Seq(
+                Columns(Seq(Window("window3"), Window("window4"))),
+                Window("window5"))),
+            Window("window6"))),
+        Window("window7")))
   }
 
   @Test
