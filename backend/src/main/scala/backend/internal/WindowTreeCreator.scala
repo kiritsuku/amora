@@ -24,44 +24,62 @@ object WindowTreeCreator {
   }
 
   def mkWindowTree(infos: Seq[WinInfo]): WindowTree = {
-    val sorted = infos.sorted
-    mkLoop(sorted)
+    mkLoop(infos.sorted) match {
+      case Seq(tree) ⇒ tree
+      case elems ⇒ ???
+    }
   }
 
-  private def mkLoop(infos: Seq[WinInfo]): WindowTree = infos match {
+  private def mkLoop(infos: Seq[WinInfo]): Seq[WindowTree] = infos match {
     case Seq(info) ⇒
-      Window(s"window${info.winId}")
+      Seq(Window(s"window${info.winId}"))
 
     case e1 +: _ +: _ ⇒
       val (classifiedElems, remainingElems) = infos.span(_.y == e1.y)
       val splitPoint = remainingElems.headOption map { h ⇒
+        // TODO what if x is always different?
         classifiedElems.span(_.x != h.x)
       }
       splitPoint match {
-        case Some((firstRow, secondRow)) ⇒
-          if (secondRow.isEmpty)
-            ???
-          val remainingRows = {
-            val remainingColumns =
-              if (secondRow.size == 1)
-                Window(s"window${secondRow.head.winId}")
-              else
-                Columns(secondRow map (w ⇒ Window(s"window${w.winId}")))
-            mkLoop(remainingElems) match {
-              case Rows(seq) ⇒ Rows(remainingColumns +: seq)
-              case ret ⇒ Rows(Seq(remainingColumns, ret))
+        case Some((colsBeforeSplit, colsAfterSplit)) ⇒
+          if (colsAfterSplit.isEmpty) {
+            val remainingRows = mkLoop(remainingElems) match {
+              case Seq(tree) ⇒ tree
+              case trees ⇒ ???// Rows(trees)
             }
+            if (colsBeforeSplit.isEmpty)
+              Seq(remainingRows)
+            else if (colsBeforeSplit.size == 1)
+              Seq(Window(s"window${colsBeforeSplit.head.winId}"), remainingRows)
+            else
+              Seq(Columns(colsBeforeSplit map (w ⇒ Window(s"window${w.winId}"))), remainingRows)
           }
-          if (firstRow.isEmpty)
-            remainingRows
-          else if (firstRow.size == 1)
-            Columns(Seq(Window(s"window${firstRow.head.winId}"), remainingRows))
           else {
-            Columns(Seq(Columns(firstRow map (w ⇒ Window(s"window${w.winId}"))), remainingRows))
+            val remainingRows = {
+              // TODO rename remainingColumns to treeOfCurrentIteration
+              val remainingColumns =
+                if (colsAfterSplit.size == 1)
+                  Window(s"window${colsAfterSplit.head.winId}")
+                else
+                  Columns(colsAfterSplit map (w ⇒ Window(s"window${w.winId}")))
+              mkLoop(remainingElems) match {
+                case Seq(Rows(rows)) ⇒ Seq(Rows(remainingColumns +: rows))
+                // TODO rename tree to treeOfNextIteration
+                case Seq(tree) ⇒ Seq(Rows(Seq(remainingColumns, tree)))
+                case Seq(rows, tree) ⇒ Seq(Rows(Seq(remainingColumns, rows)), tree)
+              }
+            }
+            if (colsBeforeSplit.isEmpty)
+              if (remainingRows.size == 1)
+                remainingRows
+              else
+                Seq(Columns(remainingRows))
+            else
+              Seq(Columns(colsBeforeSplit.map(w ⇒ Window(s"window${w.winId}")) ++ remainingRows))
           }
 
         case None ⇒
-          Columns(classifiedElems map (w ⇒ Window(s"window${w.winId}")))
+          Seq(Columns(classifiedElems map (w ⇒ Window(s"window${w.winId}"))))
       }
   }
 }
