@@ -111,7 +111,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
         pos ← win.position
         w ← win.width
         h ← win.height
-      } yield WindowTreeCreator.WinInfo(win.id, pos.row, pos.col, w, h)
+      } yield WindowTreeCreator.WinInfo(win.id, pos.col, pos.row, w, h)
     })
   } yield WindowTreeCreator.mkWindowTree(infos)
 
