@@ -74,8 +74,16 @@ object WindowTreeCreator {
                 remainingRows
               else
                 Seq(Columns(remainingRows))
-            else
-              Seq(Columns(colsBeforeSplit.map(w ⇒ Window(s"window${w.winId}")) ++ remainingRows))
+            else {
+              val cols = colsBeforeSplit.map(w ⇒ Window(s"window${w.winId}"))
+              remainingRows match {
+                case Seq(rows, tree) ⇒
+                  Seq(Rows(Seq(Columns(cols :+ rows), tree)))
+
+                case Seq(tree) ⇒
+                  Seq(Columns(cols ++ remainingRows))
+              }
+            }
           }
 
         case None ⇒
