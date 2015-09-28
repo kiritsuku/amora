@@ -32,7 +32,7 @@ object WindowTreeCreator {
 
   private def mkLoop(infos: Seq[WinInfo]): Seq[WindowTree] = infos match {
     case Seq(info) ⇒
-      Seq(Window(s"window${info.winId}"))
+      Seq(Window(info.winId))
 
     case e1 +: _ +: _ ⇒
       val (classifiedElems, remainingElems) = infos.span(_.y == e1.y)
@@ -50,18 +50,18 @@ object WindowTreeCreator {
             if (colsBeforeSplit.isEmpty)
               Seq(remainingRows)
             else if (colsBeforeSplit.size == 1)
-              Seq(Window(s"window${colsBeforeSplit.head.winId}"), remainingRows)
+              Seq(Window(colsBeforeSplit.head.winId), remainingRows)
             else
-              Seq(Columns(colsBeforeSplit map (w ⇒ Window(s"window${w.winId}"))), remainingRows)
+              Seq(Columns(colsBeforeSplit map (w ⇒ Window(w.winId))), remainingRows)
           }
           else {
             val remainingRows = {
               // TODO rename remainingColumns to treeOfCurrentIteration
               val remainingColumns =
                 if (colsAfterSplit.size == 1)
-                  Window(s"window${colsAfterSplit.head.winId}")
+                  Window(colsAfterSplit.head.winId)
                 else
-                  Columns(colsAfterSplit map (w ⇒ Window(s"window${w.winId}")))
+                  Columns(colsAfterSplit map (w ⇒ Window(w.winId)))
               mkLoop(remainingElems) match {
                 case Seq(Rows(rows)) ⇒ Seq(Rows(remainingColumns +: rows))
                 // TODO rename tree to treeOfNextIteration
@@ -75,7 +75,7 @@ object WindowTreeCreator {
               else
                 Seq(Columns(remainingRows))
             else {
-              val cols = colsBeforeSplit.map(w ⇒ Window(s"window${w.winId}"))
+              val cols = colsBeforeSplit.map(w ⇒ Window(w.winId))
               remainingRows match {
                 case Seq(rows, tree) ⇒
                   Seq(Rows(Seq(Columns(cols :+ rows), tree)))
@@ -87,7 +87,7 @@ object WindowTreeCreator {
           }
 
         case None ⇒
-          Seq(Columns(classifiedElems map (w ⇒ Window(s"window${w.winId}"))))
+          Seq(Columns(classifiedElems map (w ⇒ Window(w.winId))))
       }
   }
 }
