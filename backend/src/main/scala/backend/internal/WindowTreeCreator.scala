@@ -24,70 +24,93 @@ object WindowTreeCreator {
   }
 
   def mkWindowTree(infos: Seq[WinInfo]): WindowTree = {
-    mkLoop(infos.sorted) match {
-      case Seq(tree) ⇒ tree
-      case elems ⇒ ???
-    }
-  }
-
-  private def mkLoop(infos: Seq[WinInfo]): Seq[WindowTree] = infos match {
-    case Seq(info) ⇒
-      Seq(Window(info.winId))
-
-    case e1 +: _ +: _ ⇒
-      val (classifiedElems, remainingElems) = infos.span(_.y == e1.y)
-      val splitPoint = remainingElems.headOption map { h ⇒
-        // TODO what if x is always different?
-        classifiedElems.span(_.x != h.x)
+    def groupCols(infos: Seq[WinInfo]): Seq[Seq[WinInfo]] = {
+      val h = infos.head
+      val (same, remaining) = infos span (_.y == h.y)
+      val splitPoint = remaining.headOption map { h ⇒
+        same span (_.x != h.x)
       }
       splitPoint match {
-        case Some((colsBeforeSplit, colsAfterSplit)) ⇒
-          if (colsAfterSplit.isEmpty) {
-            val remainingRows = mkLoop(remainingElems) match {
-              case Seq(tree) ⇒ tree
-              case trees ⇒ ???// Rows(trees)
-            }
-            if (colsBeforeSplit.isEmpty)
-              Seq(remainingRows)
-            else if (colsBeforeSplit.size == 1)
-              Seq(Window(colsBeforeSplit.head.winId), remainingRows)
-            else
-              Seq(Columns(colsBeforeSplit map (w ⇒ Window(w.winId))), remainingRows)
-          }
-          else {
-            val remainingRows = {
-              // TODO rename remainingColumns to treeOfCurrentIteration
-              val remainingColumns =
-                if (colsAfterSplit.size == 1)
-                  Window(colsAfterSplit.head.winId)
-                else
-                  Columns(colsAfterSplit map (w ⇒ Window(w.winId)))
-              mkLoop(remainingElems) match {
-                case Seq(Rows(rows)) ⇒ Seq(Rows(remainingColumns +: rows))
-                // TODO rename tree to treeOfNextIteration
-                case Seq(tree) ⇒ Seq(Rows(Seq(remainingColumns, tree)))
-                case Seq(rows, tree) ⇒ Seq(Rows(Seq(remainingColumns, rows)), tree)
-              }
-            }
-            if (colsBeforeSplit.isEmpty)
-              if (remainingRows.size == 1)
-                remainingRows
-              else
-                Seq(Columns(remainingRows))
-            else {
-              val cols = colsBeforeSplit.map(w ⇒ Window(w.winId))
-              remainingRows match {
-                case Seq(rows, tree) ⇒
-                  Seq(Rows(Seq(Columns(cols :+ rows), tree)))
-
-                case Seq(tree) ⇒
-                  Seq(Columns(cols ++ remainingRows))
-              }
-            }
-          }
-
         case None ⇒
-          Seq(Columns(classifiedElems map (w ⇒ Window(w.winId))))
+          Seq(same)
+        case Some((before, after)) ⇒
+          if (before.isEmpty)
+            after +: groupCols(remaining)
+          else if (after.isEmpty)
+            before +: groupCols(remaining)
+          else
+            before +: after +: groupCols(remaining)
       }
+    }
+
+    def groupRows(infos: Seq[Seq[WinInfo]]): Seq[Seq[Seq[WinInfo]]] = infos match {
+      case h +: t ⇒
+        val hh = h.head
+        val (same, remaining) = t span (w ⇒ w.head.y > hh.y && w.head.x >= hh.x)
+        if (remaining.isEmpty)
+          Seq(h +: same)
+        else
+          (h +: same) +: groupRows(remaining)
+    }
+
+    def groupSuperRows(infos: Seq[Seq[Seq[WinInfo]]]): Seq[Seq[Seq[Seq[WinInfo]]]] = infos match {
+      case h +: t ⇒
+        val hh = h.head.head
+        val (same, remaining) = t span (w ⇒ w.head.head.y == hh.y)
+        if (remaining.isEmpty)
+          Seq(h +: same)
+        else
+          (h +: same) +: groupSuperRows(remaining)
+    }
+
+    def loop(groups: Seq[Seq[WinInfo]]): WindowTree = {
+      def mkRows(group: Seq[Seq[Seq[WinInfo]]]) = {
+        val h = group.head
+        val hh = {
+          val hh = h.head.map(w ⇒ Window(w.winId))
+          if (hh.size == 1)
+            hh.head
+          else
+            Columns(hh)
+        }
+        if (h.size == 1)
+          hh
+        else {
+          val ret = loop(h.tail)
+          ret match {
+            case Rows(rows) ⇒ Rows(hh +: rows)
+            case tree ⇒ Rows(Seq(hh, tree))
+          }
+        }
+      }
+
+      def mkCols(group: Seq[Seq[Seq[WinInfo]]]) = {
+        val ret = group map loop
+        if (ret.size == 1)
+          ret.head
+        else
+          Columns(ret)
+      }
+
+      def mkTree(group: Seq[Seq[Seq[WinInfo]]]) = {
+        if (group.size == 1)
+          mkRows(group)
+        else
+          mkCols(group)
+      }
+
+      val group = groupRows(groups)
+      val superGroup = groupSuperRows(group)
+
+      val trees = superGroup map mkTree
+      if (trees.size == 1)
+        trees.head
+      else
+        Rows(trees)
+    }
+
+    val sortedInfos = infos.sorted
+    val groups = groupCols(sortedInfos)
+    loop(groups)
   }
 }
