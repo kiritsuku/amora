@@ -202,8 +202,8 @@ class WindowTreeCreatorTest {
         Columns(Seq(
             Rows(Seq(
                 Columns(Seq(Window(1), Window(2))),
-                Columns(Seq(Window(3), Window(4))),
-            Window(5))))),
+                Columns(Seq(Window(3), Window(4))))),
+            Window(5))),
         Columns(Seq(Window(6), Window(7)))))
   }
 
