@@ -22,6 +22,7 @@ import org.scalajs.dom.raw.WebSocket
 import org.scalajs.jquery.jQuery
 
 import protocol._
+import protocol.ui._
 
 object Ui {
 
@@ -98,17 +99,9 @@ class Ui {
     divIdsOfBufferId(bufferId) map dom.document.getElementById
 
   def createBufferContent(winId: Int, buf: Buffer): String = {
-    val divId = {
-      val divs = divIdsOfBufferId(buf.ref.id)
-      val divId = s"window$winId"
-      bufferDivIds += buf.ref.id → (divs + divId)
-      divId
-    }
-
-    val d = gen.bufferDiv3(divId, tabIndex = 1)
-
-    val par = dom.document.getElementById(divs.parent)
-    par.appendChild(d)
+    val d = dom.document.getElementById(s"window$winId").asInstanceOf[dom.html.Div]
+    val divs = divIdsOfBufferId(buf.ref.id)
+    bufferDivIds += buf.ref.id → (divs + d.id)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
       println("keyUpDown: " + e.keyCode)
@@ -187,10 +180,7 @@ class Ui {
     d.onblur = (_: FocusEvent) ⇒ keyMap = Set()
     d.onmouseup = handleMouseUp _
 
-    $("body").append(par)
-    $(s"#${buf.ref.id}").focus()
-
-    divId
+    s"window$winId"
   }
 
   def setupDivs() = {
@@ -315,6 +305,12 @@ class Ui {
 
         case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
           println(s"> received: $update")
+          winTree foreach { tree ⇒
+            val rows = mkWindowLayout(tree)
+            val par = dom.document.getElementById(divs.parent)
+            par.innerHTML = ""
+            par.appendChild(rows)
+          }
 
           wins foreach { case WindowUpdate(winId, bufferId, lines, pos) ⇒
             // TODO remove BufferRef creation here
@@ -339,6 +335,57 @@ class Ui {
 
         case ev ⇒
           dom.console.error(s"Unexpected response: $ev")
+      }
+    }
+
+    def mkWindowLayout(tree: WindowTree): Element = {
+      import scalatags.JsDom.all._
+
+      def loop(tree: WindowTree): Element = tree match {
+        case Rows(rows) ⇒
+          val rowsLayout = div(`class` := "rows").render
+          val ret = rows map loop
+          ret foreach { row ⇒
+            rowsLayout appendChild row
+          }
+          rowsLayout
+
+        case Columns(cols) ⇒
+          val row = div(`class` := "columns").render
+          cols.zipWithIndex foreach { case (col, i) ⇒
+            col match {
+              case Window(winId) ⇒
+                val c = div(
+                  id := s"window$winId",
+                  `class` := s"column column-c$i buffer borders",
+                  tabindex := "1",
+                  contenteditable := true,
+                  style := "white-space: pre-line;"
+                ).render
+                row appendChild c
+              case _ ⇒
+                val e = loop(col)
+                val c = div(`class` := s"column column-c$i", e).render
+                row appendChild c
+            }
+          }
+          row
+
+        case Window(winId) ⇒
+          val row = div(`class` := "columns").render
+          val win = div(`class` := "column column-c0", id := s"window$winId").render
+          row appendChild win
+          row
+      }
+
+      val elem = loop(tree)
+      tree match {
+        case _: Rows ⇒
+          elem
+        case _ ⇒
+          val rowsLayout = div(`class` := "rows").render
+          rowsLayout appendChild elem
+          rowsLayout
       }
     }
 

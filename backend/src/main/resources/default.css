@@ -27,6 +27,34 @@ html, body {
   font-size: 11pt;
 }
 
+.rows {
+  display: flex;
+  flex-flow: column;
+}
+
+.columns {
+  display: flex;
+  flex-flow: row;
+}
+
+.column {
+  flex: 1;
+  border: 1px solid #e6e6e6;
+  box-sizing: border-box;
+}
+
+.column-c0 {
+  order: 1;
+}
+
+.column-c1 {
+  order: 2;
+}
+
+.column-c2 {
+  order: 3;
+}
+
 #left {
   float: left;
   overflow: auto;
