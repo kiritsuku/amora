@@ -66,9 +66,8 @@ final case class Buffer(id: Int, connection: Connection) {
       (implicit ec: ExecutionContext)
       : Future[Seq[String]] = {
     connection.sendRequest("buffer_get_line_slice", int(id), int(start), int(end), bool(includeStart), bool(includeEnd)) {
-      case MsgpackArray(xs) ⇒ xs map {
-        case MsgpackBinary(bin) ⇒ NvimHelper.asString(bin)
-        case _                  ⇒ throw new UnexpectedResponse(xs.toString)
+      case MsgpackArray(xs) ⇒ xs map NvimHelper.parse {
+        case MsgpackString(str) ⇒ str
       }
     }
   }

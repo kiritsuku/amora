@@ -145,13 +145,10 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
 
     val p = Promise[A]
     val f: Response ⇒ Unit = { resp ⇒
-      if (!converter.isDefinedAt(resp.result))
-        p.failure(new UnexpectedResponse(resp.result.toString))
-      else
-        Try(converter(resp.result)) match {
-          case Success(value) => p.success(value)
-          case Failure(f) => p.failure(f)
-        }
+      Try(NvimHelper.parse(converter)(resp.result)) match {
+        case Success(value) => p.success(value)
+        case Failure(f) => p.failure(f)
+      }
     }
 
     val bytes = MsgpackCodec[Request].toBytes(req, new Msgpack07Packer)

@@ -2,6 +2,7 @@ package nvim.internal
 
 import msgpack4z._
 import msgpack4z.CodecInstances.all._
+import nvim.UnexpectedResponse
 
 final case class Request(tpe: Int, id: Int, name: String, params: MsgpackUnion = MsgpackUnion.array(List())) {
   override def toString = {
@@ -108,4 +109,16 @@ object NvimHelper {
    */
   def asString(bin: Array[Byte]): String =
     new String(bin, "UTF-8")
+
+  /**
+   * Tries to parse some input `a` by `converter`. If `converter` is not defined
+   * for the input, an [[nvim.UnexpectedResponse]] is thrown, otherwise the
+   * result of `converter` is returned.
+   */
+  def parse[A, B](converter: PartialFunction[A, B])(a: A): B = {
+    if (!converter.isDefinedAt(a))
+      throw new UnexpectedResponse(s"Request can't handle `$a`.")
+    else
+      converter(a)
+  }
 }
