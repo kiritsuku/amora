@@ -28,9 +28,9 @@ function build_nvim {
   build_ret=$?
   # Check the return value of the build
   if [[ $build_ret -eq 0 ]]; then
-    print_err "Building neovim failed."
-  else
     print_msg "Building neovim succeeded."
+  else
+    print_err "Building neovim failed."
   fi
 }
 
