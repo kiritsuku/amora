@@ -38,7 +38,12 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
   }
 
   private val gen = new IdGenerator
-  private val socket = new Socket(host, port)
+  private val socket = {
+    try new Socket(host, port) catch {
+      case e: java.net.ConnectException ⇒
+        throw new IllegalArgumentException(s"No Nvim instance running at $host:$port.")
+    }
+  }
   private val thread = new Thread(new Runnable {
     override def run() = {
       val unp = MessagePack.DEFAULT.newUnpacker(socket.getInputStream)
