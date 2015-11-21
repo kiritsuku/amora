@@ -2,9 +2,9 @@
 set ruler
 
 " Nvim can't yet send any VimL events through its msgpack-rpc protocol.
-" But it is possible to send arbitrary events through the rpcnotiy function.
+" But it is possible to send arbitrary events through the rpcnotify function.
 " Therefore we receive any VimL events here and forward them to the client
-" through with help of rpcnotify.
+" with help of rpcnotify.
 function! SendWinEnter()
   let a:fname = expand("<afile>")
   let a:winId = winnr()
