@@ -97,7 +97,7 @@ object NvimHelper {
       case MsgpackString(str) =>
         sb.append(s"str($str)")
       case MsgpackExt(exttype, data) =>
-        sb.append(exttype).append(" : ").append(data.value.mkString("[", ", ", "]"))
+        sb.append(exttype).append(" : ").append(data.mkString("[", ", ", "]"))
     }
 
     loop(u, nest)

@@ -167,9 +167,9 @@ object Build extends sbt.Build {
     // https://github.com/ochrons/boopickle
     val boopickle       = "1.1.0"
     // https://github.com/msgpack4z/msgpack4z-core
-    val msgpack4zCore   = "0.1.6"
+    val msgpack4zCore   = "0.2.0"
     // https://github.com/msgpack4z/msgpack4z-java07
-    val msgpack4zJava07 = "0.1.6"
+    val msgpack4zJava07 = "0.2.0"
     // https://github.com/antonkulaga/codemirror-facade
     val codemirror      = "5.5-0.5"
     val jquery          = "0.8.0"

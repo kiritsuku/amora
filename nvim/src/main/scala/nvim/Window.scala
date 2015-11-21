@@ -33,7 +33,7 @@ case class Window(id: Int, connection: Connection) {
    */
   def buffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("window_get_buffer", int(id)) {
-      case MsgpackExt(Nvim.BufferId, MsgpackBinary(Array(bufId))) ⇒
+      case MsgpackExt(Nvim.BufferId, Array(bufId)) ⇒
         Buffer(bufId.toInt, connection)
     }
   }

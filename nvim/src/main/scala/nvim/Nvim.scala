@@ -55,7 +55,7 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
   def buffers(implicit ec: ExecutionContext): Future[Seq[Buffer]] = {
     connection.sendRequest("vim_get_buffers") {
       case MsgpackArray(xs) ⇒ xs map NvimHelper.parse {
-        case MsgpackExt(BufferId, MsgpackBinary(Array(bufId))) ⇒
+        case MsgpackExt(BufferId, Array(bufId)) ⇒
           Buffer(bufId.toInt, connection)
       }
     }
@@ -66,7 +66,7 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
    */
   def buffer(implicit ec: ExecutionContext): Future[Buffer] = {
     connection.sendRequest("vim_get_current_buffer") {
-      case MsgpackExt(BufferId, MsgpackBinary(Array(bufId))) ⇒
+      case MsgpackExt(BufferId, Array(bufId)) ⇒
         Buffer(bufId.toInt, connection)
     }
   }
@@ -87,7 +87,7 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
   def windows(implicit ec: ExecutionContext): Future[Seq[Window]] = {
     connection.sendRequest("vim_get_windows") {
       case MsgpackArray(xs) ⇒ xs map NvimHelper.parse {
-        case MsgpackExt(WindowId, MsgpackBinary(Array(winId))) ⇒
+        case MsgpackExt(WindowId, Array(winId)) ⇒
           Window(winId.toInt, connection)
       }
     }
@@ -98,7 +98,7 @@ final case class Nvim(connection: Connection) extends NoNvimProtocolFunctionalit
    */
   def window(implicit ec: ExecutionContext): Future[Window] = {
     connection.sendRequest("vim_get_current_window") {
-      case MsgpackExt(WindowId, MsgpackBinary(Array(winId))) ⇒
+      case MsgpackExt(WindowId, Array(winId)) ⇒
         Window(winId.toInt, connection)
     }
   }
