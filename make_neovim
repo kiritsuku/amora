@@ -2,7 +2,10 @@
 #
 # Downloads the sources of neovim and builds them.
 
-cd "target/"
+# Create target dir if it does not exist
+mkdir -p target
+
+cd "target"
 
 nvim_dir="`pwd`/neovim"
 
