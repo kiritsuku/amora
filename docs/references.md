@@ -13,13 +13,14 @@ This document contains a list of references, related projects, articles, blog po
 
 - Paul Phillips:
   - [Policy](https://news.ycombinator.com/item?id=8276565)
-  - [Suffuse: Usable Virtual Filesystems](https://www.youtube.com/watch?v=hV64zD9KxJc)
-    - https://github.com/suffuse/suffuse
+  - [Suffuse](https://github.com/suffuse/suffuse)
+    - [Suffuse: Usable Virtual Filesystems](https://www.youtube.com/watch?v=hV64zD9KxJc) (video)
+    - [The Virtual Filesystem: This Changes Everything](https://www.youtube.com/watch?v=X2Wd3EquUEE) (video)
 
 - Chris Granger:
   - [LightTable](https://github.com/LightTable/LightTable)
   - Aurora
-    - https://www.youtube.com/watch?v=L6iUm_Cqx2s
+    - [Demo](https://www.youtube.com/watch?v=L6iUm_Cqx2s) (video)
     - http://www.chris-granger.com/2014/03/27/toward-a-better-programming/
   - Eve
     - [Bibliography](https://github.com/witheve/Eve/blob/dev/design/bibliography.md)
