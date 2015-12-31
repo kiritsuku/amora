@@ -15,23 +15,24 @@ Unified Interface
 The universal idea is that there should exist only one tool. There shouldn't be a distinction in user area between IDEs, documentation tools, build tools, the command line compiler, the formatting tool, linting tools etc. Of course in developer area these tools should still be different but for users it is a good decision to not care about the differences.
 
 In the following there is an overview of the architecture:
-```
-+--------+   +--------------+   +---------+   +--------------+   +-------+
-| Editor |   | Command Line |   | Browser |   | IDE Frontend |   | <...> |             (presentation)
-+---+----+   +------+-------+   +----+----+   +------+-------+   +---+---+
-    |               |                |               |               |
-    +---------------+----------------+------+--------+---------------+                 (protocol)
-                                            |
-                                  +---------+--------+
-                                  | Tooling Platform |
-                                  +---------+--------+
-                                            |
-     +----------------+-----------------+---+----------------+----------------+        (protocol)
-     |                |                 |                    |                |
-+----+-----+   +------+------+   +------+-----+   +----------+--------+   +---+---+
-| Compiler |   | IDE Backend |   | Build Tool |   | Command Line Tool |   | <...> |    (backend)
-+----------+   +-------------+   +------------+   +-------------------+   +-------+
-```
+
+.. code::
+
+    +--------+   +--------------+   +---------+   +--------------+   +-------+
+    | Editor |   | Command Line |   | Browser |   | IDE Frontend |   | <...> |             (presentation)
+    +---+----+   +------+-------+   +----+----+   +------+-------+   +---+---+
+        |               |                |               |               |
+        +---------------+----------------+------+--------+---------------+                 (protocol)
+                                                |
+                                      +---------+--------+
+                                      | Tooling Platform |
+                                      +---------+--------+
+                                                |
+         +----------------+-----------------+---+----------------+----------------+        (protocol)
+         |                |                 |                    |                |
+    +----+-----+   +------+------+   +------+-----+   +----------+--------+   +---+---+
+    | Compiler |   | IDE Backend |   | Build Tool |   | Command Line Tool |   | <...> |    (backend)
+    +----------+   +-------------+   +------------+   +-------------------+   +-------+
 
 As one can see, all tools in the backend layer are hidden between an unified interface, which is used by different tools in the presentation layer. The presentation layer is meant to be lightweight. It should mostly provide rendering, displaying and user interaction logic. All the data should be stored in the backend layer, were it can easily be shared between multiple frontends.
 
@@ -76,30 +77,30 @@ If we look to web technologies, we can see that the web slowly moves away from u
 
 As an example, imagine that StackOverflow is written only with web components. The source code of a question could look like this:
 
-```html
-<body>
-  <question id="2987137">
-    <user id="9862364" />
-    <content>
-      content of the question
-    </content>
-    <tags>
-      <tag name="scala" />
-      <tag name="programming" />
-    </tags>
-  </question>
-  <answer id="2356345">
-    <user id="1097288" />
-    <content>
-      some text
-      <codeblock lang="scala">
-        val x = 0
-      </codeblock>
-    </content>
-  </answer>
-  <!-- more answers -->
-</body>
-```
+.. code:: html
+
+    <body>
+      <question id="2987137">
+        <user id="9862364" />
+        <content>
+          content of the question
+        </content>
+        <tags>
+          <tag name="scala" />
+          <tag name="programming" />
+        </tags>
+      </question>
+      <answer id="2356345">
+        <user id="1097288" />
+        <content>
+          some text
+          <codeblock lang="scala">
+            val x = 0
+          </codeblock>
+        </content>
+      </answer>
+      <!-- more answers -->
+    </body>
 
 Just by looking at the code we immediately know everything we need to know. A tool can extract the information that the users has a question about the programming language Scala. This means that the tools can enable Scala specific features directly on top of the website. There would be no need for the provider of the HTML code to implement their own syntax highlighting anymore for example - the tool that understands web components can do it. In case the web component are implemented in a library, it would also mean that new websites would take advantage of the provided functionality out of the box - in case they implement their own web components, the tools of course would first have to learn about them.
 
@@ -124,26 +125,25 @@ Nevertheless, these features don't come for free. If we would implement these fe
 
 In order that such a mapping can work at all, everything needs to be treated as an editor. Navigating through a text file or editing it should make no difference to navigating or editing a directory explorer or the history view of a VCS. By wiring the mapping functions, which convert from rendered content to internal one and vice versa, we could switch between an arbitrary number of representation on the presentation layer, without changing the representation of the internal data. This is depicted by the following picture:
 
-```
-         +------+   +-------------------+   +-------+   +-------+
-         | Text |   | Rendered Markdown |   | Graph |   | <...> |
-         +--+---+   +---------+---------+   +---+---+   +---+---+
-            |                 |                 |           |
-            +-----------------+---------+-------+-----------+
-                                        |
-                            +-----------+-------------+
-                            | Internal Data Structure |
-                            +-----------+-------------+
-                                        |
-    +-------------+-------------------+-+----------------+---------------+------------+
-    |             |                   |                  |               |            |
-+---+--+   +------+------+   +--------+-------+   +------+------+   +----+----+   +---+---+
-| File |   | Remote File |   | Multiple Files |   | Web Service |   | Process |   | <...> |
-+------+   +-------------+   +----------------+   +-------------+   +---------+   +-------+
-```
+.. code::
+
+             +------+   +-------------------+   +-------+   +-------+
+             | Text |   | Rendered Markdown |   | Graph |   | <...> |
+             +--+---+   +---------+---------+   +---+---+   +---+---+
+                |                 |                 |           |
+                +-----------------+---------+-------+-----------+
+                                            |
+                                +-----------+-------------+
+                                | Internal Data Structure |
+                                +-----------+-------------+
+                                            |
+        +-------------+-------------------+-+----------------+---------------+------------+
+        |             |                   |                  |               |            |
+    +---+--+   +------+------+   +--------+-------+   +------+------+   +----+----+   +---+---+
+    | File |   | Remote File |   | Multiple Files |   | Web Service |   | Process |   | <...> |
+    +------+   +-------------+   +----------------+   +-------------+   +---------+   +-------+
 
 As one can see, it doesn't matter how and where a file is stored. There is one single data structure that allows different representations to synchronize their state. It no longer matters if a text editor really represents text, it could also represent rendered HTML code or rendered Markdown code. With this model it is trivially possible to even render different parts of an editor in different ways. A string literal that contains a SQL query can be rendered with SQL highlighting, while the rest of the document are still highlighted by the host language. A doc comment could be converted to HTML and then directly displayed and edited in the editor - users no longer would have to learn and use the data representation that can be understood by the parser of the doc comment.
-
 
 Fuse Documentation Tools with IDE Functionality
 -----------------------------------------------
@@ -157,22 +157,22 @@ This point is a huge milestone and not easy to implement, but absolutely necessa
 
 TODO fix diagram
 
-```
-+---------+   +---------+   +---------+
-| User 11 |   | User 12 |   | User 1N |
-+---+-----+   +---+-----+   +---+-----+
-    |             |             |
-    +-+-----------+-------------+
-      |
-+-----+--+   +----- --+   +--------+   +--------+
-| Orga 1 |   | Orga 2 |   | User 1 |   | Orga N |
-+--------+   +--------+   +--------+   +--------+
+.. code::
 
-+---------------------------+
-| Central Interchange Point |
-+---------------------------+
+    +---------+   +---------+   +---------+
+    | User 11 |   | User 12 |   | User 1N |
+    +---+-----+   +---+-----+   +---+-----+
+        |             |             |
+        +-+-----------+-------------+
+          |
+    +-----+--+   +----- --+   +--------+   +--------+
+    | Orga 1 |   | Orga 2 |   | User 1 |   | Orga N |
+    +--------+   +--------+   +--------+   +--------+
 
-```
+    +---------------------------+
+    | Central Interchange Point |
+    +---------------------------+
+
 
 Very good and popular examples that show that such a central interchange point is an important feature are StackOverflow and Github. They both revolutionized how communities are organized and how they keep their data. In contrast to these examples, the central interchange point, which I suggest, should support a decentralized model because it need to be available locally, i.e. without Internet access, and may also be hidden behind organization structures, which is both difficult to do if there is only once single central point that keeps all the data. Instead, there should exist some last instance, which at least caches all the public data and some earlier instances, which act mostly as load distribution points but whose data needs to be synchronized with the most central node. This model is similar to how package management for most Linux distributions works, where everyone can contribute packages through third party hosts, but at least there exists a central system that keeps the nodes organized.
 
