@@ -375,7 +375,7 @@ class Ui {
           val row = div(`class` := "columns").render
           val win = div(
             id := s"window$winId",
-            `class` := "column column-c0",
+            `class` := "column column-c0 buffer borders",
             contenteditable := true,
             style := "white-space: pre-line;"
           ).render
