@@ -373,7 +373,12 @@ class Ui {
 
         case Window(winId) ⇒
           val row = div(`class` := "columns").render
-          val win = div(`class` := "column column-c0", id := s"window$winId").render
+          val win = div(
+            id := s"window$winId",
+            `class` := "column column-c0",
+            contenteditable := true,
+            style := "white-space: pre-line;"
+          ).render
           row appendChild win
           row
       }
