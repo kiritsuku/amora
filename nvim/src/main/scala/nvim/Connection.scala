@@ -1,7 +1,8 @@
 package nvim
 
 import java.net.Socket
-import java.util.concurrent.ConcurrentSkipListSet
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.concurrent.TrieMap
@@ -34,7 +35,7 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
   private val requests = TrieMap[Int, Response ⇒ Unit]()
   private val notificationHandlers: mutable.Set[Notification ⇒ Unit] = {
     import scala.collection.JavaConverters._
-    new ConcurrentSkipListSet().asScala
+    Collections.newSetFromMap(new ConcurrentHashMap[Notification ⇒ Unit, java.lang.Boolean]).asScala
   }
 
   private val gen = new IdGenerator
