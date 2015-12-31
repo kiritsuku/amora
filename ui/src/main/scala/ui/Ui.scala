@@ -85,7 +85,7 @@ class Ui {
   def setupUI3() = {
     import scalatags.JsDom.all._
 
-    val par = div(id := divs.parent).render
+    val par = div(id := divs.parent, `class` := "fullscreen").render
     $("body").append(par)
   }
 
