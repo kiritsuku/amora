@@ -99,7 +99,8 @@ class Ui {
     divIdsOfBufferId(bufferId) map dom.document.getElementById
 
   def createBufferContent(winId: Int, buf: Buffer): String = {
-    val d = dom.document.getElementById(s"window$winId").asInstanceOf[dom.html.Div]
+    val internalWinId = s"window$winId"
+    val d = dom.document.getElementById(internalWinId).asInstanceOf[dom.html.Div]
     val divs = divIdsOfBufferId(buf.ref.id)
     bufferDivIds += buf.ref.id → (divs + d.id)
 
@@ -180,7 +181,7 @@ class Ui {
     d.onblur = (_: FocusEvent) ⇒ keyMap = Set()
     d.onmouseup = handleMouseUp _
 
-    s"window$winId"
+    internalWinId
   }
 
   def setupDivs() = {
