@@ -20,6 +20,14 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   private var windows = Set[Int]()
 
   /**
+   * We need to track the active window here in order to avoid to tell nvim to update
+   * the active window to the very same window that is already active. In case we do
+   * this, nvim gets confused and no longer can no longer recognize events that
+   * belong together.
+   */
+  private var activeWinId = -1
+
+  /**
    * Whenever this is set to `true`, the next WinEnter event that is received by
    * `handler` needs to be ignored. This is necessary because in some cases we
    * know that we changed the active window and therefore there may not be a
@@ -126,8 +134,8 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleTextChange(change: TextChange, sender: String): Unit = {
     system.log.info(s"received: $change")
     val resp = for {
+      _ ← updateActiveWindow(change.winId)
       _ ← nvim.sendInput(change.text)
-      _ ← nvim.window = change.winId
       update ← winInfo(change.winId)
       mode ← nvim.activeMode
       s ← selection
@@ -143,7 +151,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
     val resp = for {
       w ← nvim.window
       _ = if (w.id != change.winId) ignoreNextWinEnter = true
-      win ← nvim.window = change.winId
+      win ← updateActiveWindow(change.winId)
       _ ← win.cursor = Position(change.cursorRow+1, change.cursorColumn)
       s ← selection
     } yield SelectionChangeAnswer(win.id, change.bufferId, s)
@@ -156,7 +164,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleControl(control: Control, sender: String): Unit = {
     system.log.info(s"received: $control")
     val resp = for {
-      _ ← nvim.window = control.winId
+      _ ← updateActiveWindow(control.winId)
       _ ← nvim.sendInput(control.controlSeq)
       update ← winInfo(control.winId)
       mode ← nvim.activeMode
@@ -167,6 +175,14 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
       resp ⇒ NvimSignal(sender, resp)
     }
   }
+
+  private def updateActiveWindow(winId: Int): Future[Window] =
+    if (activeWinId == winId)
+      winOf(activeWinId)
+    else {
+      activeWinId = winId
+      nvim.window = winId
+    }
 
   private def handle[A, B](f: Future[A], errMsg: String)(onSuccess: A ⇒ B): Unit = {
     f onComplete {
