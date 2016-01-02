@@ -98,11 +98,8 @@ class Ui {
   def divsOfBufferId(bufferId: Int): Set[Element] =
     divIdsOfBufferId(bufferId) map dom.document.getElementById
 
-  def createBufferContent(winId: Int, buf: Buffer): String = {
-    val internalWinId = s"window$winId"
+  def registerEventListeners(winId: Int, buf: Buffer, internalWinId: String) = {
     val d = dom.document.getElementById(internalWinId).asInstanceOf[dom.html.Div]
-    val divs = divIdsOfBufferId(buf.ref.id)
-    bufferDivIds += buf.ref.id → (divs + d.id)
 
     def handleKeyUpDown(e: KeyboardEvent): Unit = {
       println("keyUpDown: " + e.keyCode)
@@ -180,7 +177,14 @@ class Ui {
     d.onkeypress = handleKeyPress _
     d.onblur = (_: FocusEvent) ⇒ keyMap = Set()
     d.onmouseup = handleMouseUp _
+  }
 
+  def createBufferContent(winId: Int, buf: Buffer): String = {
+    val internalWinId = s"window$winId"
+    val d = dom.document.getElementById(internalWinId).asInstanceOf[dom.html.Div]
+    val divs = divIdsOfBufferId(buf.ref.id)
+
+    bufferDivIds += buf.ref.id → (divs + d.id)
     internalWinId
   }
 
@@ -322,6 +326,8 @@ class Ui {
               windows += winId → divId
             }
             updateBuffer(buf.ref.id, lines)
+            val divId = windows(winId)
+            registerEventListeners(winId, buf, divId)
           }
 
           activeWinId = windows(sel.winId)
