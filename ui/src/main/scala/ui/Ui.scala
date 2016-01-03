@@ -309,34 +309,45 @@ class Ui {
           calculateTime()
 
         case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
-          println(s"> received: $update")
-          winTree foreach { tree ⇒
-            val rows = mkWindowLayout(tree)
-            val par = dom.document.getElementById(divs.parent)
-            par.innerHTML = ""
-            par.appendChild(rows)
-          }
-
-          wins foreach { case WindowUpdate(winId, bufferId, lines, pos) ⇒
-            // TODO remove BufferRef creation here
-            val buf = bm.bufferOf(BufferRef(bufferId))
-
-            if (!windows.contains(winId)) {
-              val divId = createBufferContent(winId, buf)
-              windows += winId → divId
+          def updateDomStructure() = {
+            winTree foreach { tree ⇒
+              val rows = mkWindowLayout(tree)
+              val par = dom.document.getElementById(divs.parent)
+              par.innerHTML = ""
+              par.appendChild(rows)
             }
-            updateBuffer(buf.ref.id, lines)
-            val divId = windows(winId)
-            registerEventListeners(winId, buf, divId)
           }
 
-          activeWinId = windows(sel.winId)
-          selectActiveWindow()
+          def updateBuffers() = wins foreach {
+            case WindowUpdate(winId, bufferId, lines, pos) ⇒
+              // TODO remove BufferRef creation here
+              val buf = bm.bufferOf(BufferRef(bufferId))
 
-          // TODO remove BufferRef creation here
-          val buf = bm.bufferOf(BufferRef(sel.bufId))
+              if (!windows.contains(winId)) {
+                val divId = createBufferContent(winId, buf)
+                windows += winId → divId
+              }
+              updateBuffer(buf.ref.id, lines)
+              val divId = windows(winId)
+              registerEventListeners(winId, buf, divId)
+          }
 
-          buf.mode = mode
+          def updateActiveWindow() = {
+            activeWinId = windows(sel.winId)
+            selectActiveWindow()
+          }
+
+          def updateMode() = {
+            // TODO remove BufferRef creation here
+            val buf = bm.bufferOf(BufferRef(sel.bufId))
+            buf.mode = mode
+          }
+
+          println(s"> received: $update")
+          updateDomStructure()
+          updateBuffers()
+          updateActiveWindow()
+          updateMode()
           updateCursor(sel)
           calculateTime()
 
