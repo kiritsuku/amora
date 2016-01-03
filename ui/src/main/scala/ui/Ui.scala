@@ -136,7 +136,15 @@ class Ui {
       startTime = jsg.performance.now()
       val character = jsg.String.fromCharCode(e.jsg.which).toString
 
-      val input = TextChange(winId, buf.ref.id, character)
+      // Run `:help key-notation` in vim for a list of mappings
+      val vimText = character match {
+        case "<" ⇒ "<lt>"
+        case "\\" ⇒ "<bslash>"
+        case "|" ⇒ "<bar>"
+        case c ⇒ c
+      }
+
+      val input = TextChange(winId, buf.ref.id, vimText)
       send(input)
 
       false /* prevent default action */
