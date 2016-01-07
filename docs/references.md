@@ -38,9 +38,6 @@ This document contains a list of references, related projects, articles, blog po
 - Wikis:
   - https://twitter.com/ibdknox/status/642896687661318144
 
-- Marijn Haverbeke:
-  - [Prosemirror](https://github.com/ProseMirror/prosemirror)
-
 - Jan Paul Posma:
   - [Visualising program execution](https://www.youtube.com/watch?v=Ml6Dp3F4Inc)
   - [omniscient-debugging](https://github.com/janpaul123/omniscient-debugging)
@@ -58,6 +55,11 @@ This document contains a list of references, related projects, articles, blog po
   - [extractor](https://github.com/matanster/extractor) - sbt type relationships
   - [scaps](https://github.com/scala-search/scaps) - Hoogle for Scala
   - [Querying a graph database instead of using GHC-API?](https://github.com/haskell/haskell-ide-engine/issues/10)
+
+- Editors for contenteditable:
+  - [Prosemirror](https://github.com/ProseMirror/prosemirror)
+  - [medium-editor](https://github.com/yabwe/medium-editor)
+  - [Why ContentEditable is Terrible](https://medium.com/medium-eng/why-contenteditable-is-terrible-122d8a40e480)
 
 - Other interesting projects:
   - [Black-Screen](https://github.com/shockone/black-screen) (terminal emulator)
