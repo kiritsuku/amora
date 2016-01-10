@@ -51,8 +51,6 @@ class Ui {
   private var ws: WebSocket = _
   private var clientName: String = _
   private var keyMap = Set[Int]()
-  // winId → divId
-  private var windows = Map[Int, String]()
   // bufferId → Set[winId]
   private var bufferDivIds = Map[Int, Set[String]]()
   /** The window that has the selection. */
@@ -187,15 +185,6 @@ class Ui {
     d.onmouseup = handleMouseUp _
   }
 
-  def createBufferContent(winId: Int, buf: Buffer): String = {
-    val internalWinId = s"window$winId"
-    val d = dom.document.getElementById(internalWinId).asInstanceOf[dom.html.Div]
-    val divs = divIdsOfBufferId(buf.ref.id)
-
-    bufferDivIds += buf.ref.id → (divs + d.id)
-    internalWinId
-  }
-
   def setupDivs() = {
     import scalatags.JsDom.all._
     val par = div(id := divs.parent).render
@@ -317,6 +306,16 @@ class Ui {
           calculateTime()
 
         case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
+          def divWinId(winId: Int): String =
+            s"window$winId"
+          def updateBufferMap() = {
+            bufferDivIds = Map().withDefaultValue(Set())
+            wins foreach {
+              case WindowUpdate(winId, bufferId, _, _) ⇒
+                bufferDivIds += bufferId → (bufferDivIds(bufferId) + divWinId(winId))
+            }
+          }
+
           def updateDomStructure() = {
             winTree foreach { tree ⇒
               val rows = mkWindowLayout(tree)
@@ -330,18 +329,13 @@ class Ui {
             case WindowUpdate(winId, bufferId, lines, pos) ⇒
               // TODO remove BufferRef creation here
               val buf = bm.bufferOf(BufferRef(bufferId))
-
-              if (!windows.contains(winId)) {
-                val divId = createBufferContent(winId, buf)
-                windows += winId → divId
-              }
               updateBuffer(buf.ref.id, lines)
-              val divId = windows(winId)
+              val divId = divWinId(winId)
               registerEventListeners(winId, buf, divId)
           }
 
           def updateActiveWindow() = {
-            activeWinId = windows(sel.winId)
+            activeWinId = divWinId(sel.winId)
             selectActiveWindow()
           }
 
@@ -352,6 +346,7 @@ class Ui {
           }
 
           println(s"> received: $update")
+          updateBufferMap()
           updateDomStructure()
           updateBuffers()
           updateActiveWindow()
