@@ -272,209 +272,209 @@ class Ui {
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
       val bytes = toByteBuffer(e.data)
-      val resp = Unpickle[Response].fromBytes(bytes)
-      resp match {
-        case ConnectionSuccessful(name) ⇒
-          if (clientName != name) {
-            // TODO what to do when this happens? It is probably a bug on the server
-            dom.console.error(s"$clientName != $name")
-            println("connection failure")
-            clientName = null
-          }
-          else
-            println("connection successful")
-
-        case ConnectionFailure ⇒
-          println("connection failure")
-          // TODO what to do here?
-
-        case InterpretedResult(id, res) ⇒
-          val resultBuf = bm.resultBufOf(BufferRef(id.toInt)) // TODO remove BufferRef construction here
-          println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
-          $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
-          mkEditor()
-
-        case change @ TextChangeAnswer(winId, bufferId, lines, sel) ⇒
-          println(s"> received: $change")
-          updateBuffer(bufferId, lines)
-          updateCursor(sel)
-          calculateTime()
-
-        case change @ SelectionChangeAnswer(winId, bufferId, sel) ⇒
-          println(s"> received: $change")
-          updateCursor(sel)
-          calculateTime()
-
-        case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
-          def divWinId(winId: Int): String =
-            s"window$winId"
-          def updateBufferMap() = {
-            bufferDivIds = Map().withDefaultValue(Set())
-            wins foreach {
-              case WindowUpdate(winId, bufferId, _, _) ⇒
-                bufferDivIds += bufferId → (bufferDivIds(bufferId) + divWinId(winId))
-            }
-          }
-
-          def updateDomStructure() = {
-            winTree foreach { tree ⇒
-              val rows = mkWindowLayout(tree)
-              val par = dom.document.getElementById(divs.parent)
-              par.innerHTML = ""
-              par.appendChild(rows)
-            }
-          }
-
-          def updateBuffers() = wins foreach {
-            case WindowUpdate(winId, bufferId, lines, pos) ⇒
-              // TODO remove BufferRef creation here
-              val buf = bm.bufferOf(BufferRef(bufferId))
-              updateBuffer(buf.ref.id, lines)
-              val divId = divWinId(winId)
-              registerEventListeners(winId, buf, divId)
-          }
-
-          def updateActiveWindow() = {
-            activeWinId = divWinId(sel.winId)
-            selectActiveWindow()
-          }
-
-          def updateMode() = {
-            // TODO remove BufferRef creation here
-            val buf = bm.bufferOf(BufferRef(sel.bufId))
-            buf.mode = mode
-          }
-
-          println(s"> received: $update")
-          updateBufferMap()
-          updateDomStructure()
-          updateBuffers()
-          updateActiveWindow()
-          updateMode()
-          updateCursor(sel)
-          calculateTime()
-
-        case ev ⇒
-          dom.console.error(s"Unexpected response: $ev")
-      }
+      handleResponse(Unpickle[Response].fromBytes(bytes))
     }
-
-    def mkWindowLayout(tree: WindowTree): Element = {
-      import scalatags.JsDom.all._
-
-      def loop(tree: WindowTree): Element = tree match {
-        case Rows(rows) ⇒
-          val rowsLayout = div(`class` := "rows").render
-          val ret = rows map loop
-          ret foreach { row ⇒
-            rowsLayout appendChild row
-          }
-          rowsLayout
-
-        case Columns(cols) ⇒
-          val row = div(`class` := "columns").render
-          cols.zipWithIndex foreach { case (col, i) ⇒
-            col match {
-              case Window(winId) ⇒
-                val c = div(
-                  id := s"window$winId",
-                  `class` := s"column column-c$i buffer borders",
-                  tabindex := "1",
-                  contenteditable := true,
-                  style := "white-space: pre-line;"
-                ).render
-                row appendChild c
-              case _ ⇒
-                val e = loop(col)
-                val c = div(`class` := s"column column-c$i", e).render
-                row appendChild c
-            }
-          }
-          row
-
-        case Window(winId) ⇒
-          val row = div(`class` := "columns").render
-          val win = div(
-            id := s"window$winId",
-            `class` := "column column-c0 buffer borders",
-            contenteditable := true,
-            style := "white-space: pre-line;"
-          ).render
-          row appendChild win
-          row
-      }
-
-      val elem = loop(tree)
-      tree match {
-        case _: Rows ⇒
-          elem
-        case _ ⇒
-          val rowsLayout = div(`class` := "rows").render
-          rowsLayout appendChild elem
-          rowsLayout
-      }
-    }
-
-    def selectActiveWindow(): Unit = {
-      val div = activeWindowDiv
-      // TODO in case the window is empty we select the div. Actually, the cursor
-      // should be placed in the window, but I don't know how to do it for empty divs.
-      val textElem = if (div.childNodes.length != 0) div.childNodes(0) else div
-      val range = dom.document.createRange()
-      range.setStart(textElem, 0)
-
-      val sel = dom.document.getSelection()
-      sel.removeAllRanges()
-      sel.addRange(range)
-    }
-
-    def calculateTime(): Unit = {
-      val endTime = jsg.performance.now()
-      val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
-      println(s"update time: ${time}ms")
-    }
-
-    def vimPosToOffset(row: Int, col: Int): Int = {
-      val lines = activeWindowDiv.textContent.split("\n")
-      val nrOfCharsBeforeCursor =
-        if (row == 0)
-          0
-        else
-          lines.take(row).map(_.length).sum+row
-
-      nrOfCharsBeforeCursor+col
-    }
-
-    def updateCursor(sel: Selection): Unit = {
-      val offset = vimPosToOffset(sel.start.row, sel.start.col)
-      val winSel = dom.window.getSelection()
-      val range = winSel.getRangeAt(0)
-      val elem = range.startContainer
-      range.setStart(elem, offset)
-
-      if (sel.start.row != sel.end.row || sel.start.col != sel.end.col) {
-        val offset = vimPosToOffset(sel.end.row, sel.end.col)
-        range.setEnd(elem, offset)
-      }
-      else
-        range.setEnd(elem, offset)
-
-      winSel.removeAllRanges()
-      winSel.addRange(range)
-    }
-
-    def updateBuffer(bufferId: Int, lines: Seq[String]): Unit = {
-      val elems = divsOfBufferId(bufferId)
-      val content = lines.mkString("\n")
-      elems foreach (_.innerHTML = content)
-    }
-
     ws.onerror = (e: ErrorEvent) ⇒ {
       println(s"error from ws: $e")
     }
     ws.onclose = (e: Event) ⇒ {
       println(s"websocket closed")
     }
+  }
+
+  def handleResponse(response: Response) = response match {
+    case ConnectionSuccessful(name) ⇒
+      if (clientName != name) {
+        // TODO what to do when this happens? It is probably a bug on the server
+        dom.console.error(s"$clientName != $name")
+        println("connection failure")
+        clientName = null
+      }
+      else
+        println("connection successful")
+
+    case ConnectionFailure ⇒
+      println("connection failure")
+      // TODO what to do here?
+
+    case InterpretedResult(id, res) ⇒
+      val resultBuf = bm.resultBufOf(BufferRef(id.toInt)) // TODO remove BufferRef construction here
+      println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
+      $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
+      mkEditor()
+
+    case change @ TextChangeAnswer(winId, bufferId, lines, sel) ⇒
+      println(s"> received: $change")
+      updateBuffer(bufferId, lines)
+      updateCursor(sel)
+      calculateTime()
+
+    case change @ SelectionChangeAnswer(winId, bufferId, sel) ⇒
+      println(s"> received: $change")
+      updateCursor(sel)
+      calculateTime()
+
+    case update @ ClientUpdate(wins, mode, sel, winTree) ⇒
+      def divWinId(winId: Int): String =
+        s"window$winId"
+      def updateBufferMap() = {
+        bufferDivIds = Map().withDefaultValue(Set())
+        wins foreach {
+          case WindowUpdate(winId, bufferId, _, _) ⇒
+            bufferDivIds += bufferId → (bufferDivIds(bufferId) + divWinId(winId))
+        }
+      }
+
+      def updateDomStructure() = {
+        winTree foreach { tree ⇒
+          val rows = mkWindowLayout(tree)
+          val par = dom.document.getElementById(divs.parent)
+          par.innerHTML = ""
+          par.appendChild(rows)
+        }
+      }
+
+      def updateBuffers() = wins foreach {
+        case WindowUpdate(winId, bufferId, lines, pos) ⇒
+          // TODO remove BufferRef creation here
+          val buf = bm.bufferOf(BufferRef(bufferId))
+          updateBuffer(buf.ref.id, lines)
+          val divId = divWinId(winId)
+          registerEventListeners(winId, buf, divId)
+      }
+
+      def updateActiveWindow() = {
+        activeWinId = divWinId(sel.winId)
+        selectActiveWindow()
+      }
+
+      def updateMode() = {
+        // TODO remove BufferRef creation here
+        val buf = bm.bufferOf(BufferRef(sel.bufId))
+        buf.mode = mode
+      }
+
+      println(s"> received: $update")
+      updateBufferMap()
+      updateDomStructure()
+      updateBuffers()
+      updateActiveWindow()
+      updateMode()
+      updateCursor(sel)
+      calculateTime()
+
+    case ev ⇒
+      dom.console.error(s"Unexpected response: $ev")
+  }
+
+  def mkWindowLayout(tree: WindowTree): Element = {
+    import scalatags.JsDom.all._
+
+    def loop(tree: WindowTree): Element = tree match {
+      case Rows(rows) ⇒
+        val rowsLayout = div(`class` := "rows").render
+        val ret = rows map loop
+        ret foreach { row ⇒
+          rowsLayout appendChild row
+        }
+        rowsLayout
+
+      case Columns(cols) ⇒
+        val row = div(`class` := "columns").render
+        cols.zipWithIndex foreach { case (col, i) ⇒
+          col match {
+            case Window(winId) ⇒
+              val c = div(
+                id := s"window$winId",
+                `class` := s"column column-c$i buffer borders",
+                tabindex := "1",
+                contenteditable := true,
+                style := "white-space: pre-line;"
+              ).render
+              row appendChild c
+            case _ ⇒
+              val e = loop(col)
+              val c = div(`class` := s"column column-c$i", e).render
+              row appendChild c
+          }
+        }
+        row
+
+      case Window(winId) ⇒
+        val row = div(`class` := "columns").render
+        val win = div(
+          id := s"window$winId",
+          `class` := "column column-c0 buffer borders",
+          contenteditable := true,
+          style := "white-space: pre-line;"
+        ).render
+        row appendChild win
+        row
+    }
+
+    val elem = loop(tree)
+    tree match {
+      case _: Rows ⇒
+        elem
+      case _ ⇒
+        val rowsLayout = div(`class` := "rows").render
+        rowsLayout appendChild elem
+        rowsLayout
+    }
+  }
+
+  def selectActiveWindow(): Unit = {
+    val div = activeWindowDiv
+    // TODO in case the window is empty we select the div. Actually, the cursor
+    // should be placed in the window, but I don't know how to do it for empty divs.
+    val textElem = if (div.childNodes.length != 0) div.childNodes(0) else div
+    val range = dom.document.createRange()
+    range.setStart(textElem, 0)
+
+    val sel = dom.document.getSelection()
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }
+
+  def calculateTime(): Unit = {
+    val endTime = jsg.performance.now()
+    val time = endTime.asInstanceOf[Double]-startTime.asInstanceOf[Double]
+    println(s"update time: ${time}ms")
+  }
+
+  def vimPosToOffset(row: Int, col: Int): Int = {
+    val lines = activeWindowDiv.textContent.split("\n")
+    val nrOfCharsBeforeCursor =
+      if (row == 0)
+        0
+      else
+        lines.take(row).map(_.length).sum+row
+
+    nrOfCharsBeforeCursor+col
+  }
+
+  def updateCursor(sel: Selection): Unit = {
+    val offset = vimPosToOffset(sel.start.row, sel.start.col)
+    val winSel = dom.window.getSelection()
+    val range = winSel.getRangeAt(0)
+    val elem = range.startContainer
+    range.setStart(elem, offset)
+
+    if (sel.start.row != sel.end.row || sel.start.col != sel.end.col) {
+      val offset = vimPosToOffset(sel.end.row, sel.end.col)
+      range.setEnd(elem, offset)
+    }
+    else
+      range.setEnd(elem, offset)
+
+    winSel.removeAllRanges()
+    winSel.addRange(range)
+  }
+
+  def updateBuffer(bufferId: Int, lines: Seq[String]): Unit = {
+    val elems = divsOfBufferId(bufferId)
+    val content = lines.mkString("\n")
+    elems foreach (_.innerHTML = content)
   }
 
   private def toByteBuffer(data: Any): ByteBuffer = {
