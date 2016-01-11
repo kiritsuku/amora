@@ -84,3 +84,6 @@ This document contains a list of references, related projects, articles, blog po
   - [Incremental Lexer for IDE](http://blog.haskell-exists.com/yuras/posts/incremental-lexer.html)
   - [Lazy Functional Incremental Parsing](http://www.cse.chalmers.se/%7Ebernardy/FunctionalIncrementalParsing.pdf)
   - [The convergence of compilers, build systems and package managers](http://blog.ezyang.com/2015/12/the-convergence-of-compilers-build-systems-and-package-managers/)
+
+- User experience:
+  - [No, I Don't Want To Configure Your App!](http://robotlolita.me/2016/01/09/no-i-dont-want-to-configure-your-app.html)
