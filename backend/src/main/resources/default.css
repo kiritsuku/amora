@@ -30,11 +30,13 @@ html, body {
 .rows {
   display: flex;
   flex-flow: column;
+  height: 100vh;
 }
 
 .columns {
   display: flex;
   flex-flow: row;
+  height: 100vh;
 }
 
 .column {
