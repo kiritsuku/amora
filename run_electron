@@ -8,4 +8,4 @@ path="electron/target/scala-2.11"
 # Check if electron is installed
 command -v electron > /dev/null 2>&1 || { echo >&2 "error: command 'electron' does not exist. You have to install it first."; exit 1; }
 
-electron "$path"
+ELECTRON_ENABLE_LOGGING=1 electron "$path"

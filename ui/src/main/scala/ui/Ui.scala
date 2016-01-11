@@ -280,6 +280,10 @@ class Ui {
     ws.onclose = (e: Event) ⇒ {
       println(s"websocket closed")
     }
+    dom.window.jsg.onerror = js.Any.fromFunction5((msg: Event, file: String, line: Int, col: Int, error: Any) ⇒ {
+      // TODO See https://github.com/stacktracejs/stacktrace.js for a browser independent solution to log errors
+      println(error.jsg.stack)
+    })
   }
 
   def handleResponse(response: Response) = response match {
