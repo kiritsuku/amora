@@ -69,7 +69,7 @@ object Build extends sbt.Build {
         "main": "main.js",
         "repository": {
           "type": "git",
-          "url": "https://github.com/sschaef/ide-research"
+          "url": "https://github.com/sschaef/tooling-research"
         },
         "license": "MIT"
       }
