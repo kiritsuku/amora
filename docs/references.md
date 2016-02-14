@@ -87,3 +87,6 @@ This document contains a list of references, related projects, articles, blog po
 
 - User experience:
   - [No, I Don't Want To Configure Your App!](http://robotlolita.me/2016/01/09/no-i-dont-want-to-configure-your-app.html)
+
+- Package manager:
+  - [So you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.hn3lp7s5x)
