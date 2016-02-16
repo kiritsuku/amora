@@ -8,13 +8,13 @@ import protocol.ui.WindowTree
 object WindowTreeCreator {
 
   /**
-   * `id` is the window id, `x` and `y` the position in the coordination system,
+   * `id` is the window id, `x` and `y` the position in the coordinate system,
    * `w` is the width of the window and `h` is its height.
    */
   final case class WinInfo(id: Int, x: Int, y: Int, w: Int, h: Int)
   object WinInfo {
     /**
-     * This sorting algorithm is best described at an example:
+     * This sorting algorithm is best described by an example:
      * {{{
      * ---------
      * |1|2|   |
@@ -46,7 +46,7 @@ object WindowTreeCreator {
   }
 
   /**
-   * Takes a list of window informations, which is the id of the window, its
+   * Takes a list of window information, which is the id of the window, its
    * `x` and `y` axis and its width and height and creates a tree out of it,
    * which describes how the windows fit into a row and column model.
    */
@@ -71,7 +71,7 @@ object WindowTreeCreator {
       group(infos)((h, elem) ⇒ elem.y == h.y, (same, remaining) ⇒ {
         val h = remaining.head
         val (before, after) = same span (_.x != h.x)
-        Seq(before, after).filter(!_.isEmpty)
+        Seq(before, after).filter(_.nonEmpty)
       })
     }
 
