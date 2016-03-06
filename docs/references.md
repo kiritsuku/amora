@@ -6,6 +6,7 @@ This document contains a list of references, related projects, articles, blog po
 
 - Bret Victor:
   - [Inventing on Principle](https://www.youtube.com/watch?v=PUv66718DII)
+  - [Drawing Dynamic Visualizations](http://worrydream.com/DrawingDynamicVisualizationsTalkAddendum/)
 
 - Sean McDirmid:
   - [Programming with Managed Time](http://research.microsoft.com/en-us/people/smcdirm/managedtime.aspx)
