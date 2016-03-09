@@ -126,7 +126,7 @@ final class NvimAccessor(self: ActorRef)(implicit system: ActorSystem) {
   def handleClientJoined(sender: String): Unit = {
     val resp = clientUpdate
 
-    handle(resp, s"Failed to send an update to the client '$sender'.") {
+    handle(resp, s"Failed to send an update to the client `$sender`.") {
       resp ⇒ NvimSignal(sender, resp)
     }
   }
