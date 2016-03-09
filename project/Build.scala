@@ -32,7 +32,9 @@ object Build extends sbt.Build {
     EclipseKeys.withSource := true,
 
     incOptions := incOptions.value.withNameHashing(true),
-    updateOptions := updateOptions.value.withCachedResolution(true)
+    updateOptions := updateOptions.value.withCachedResolution(true),
+
+    cancelable := true
   )
 
   lazy val protocol = crossProject crossType CrossType.Pure in file("protocol") settings (
@@ -150,6 +152,15 @@ object Build extends sbt.Build {
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
   ) dependsOn (protocolJvm, nvim)
+
+  lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
+    name := "scalac-plugin",
+
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+
+    scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
+    scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}"
+  )
 
   object versions {
     // https://github.com/lihaoyi/scalatags

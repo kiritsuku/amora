@@ -1,0 +1,4 @@
+<plugin>
+  <name>GenInfoPlugin</name>
+  <classname>plugin.GenInfoPlugin</classname>
+</plugin>
