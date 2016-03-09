@@ -15,7 +15,6 @@ class GenInfoPlugin(override val global: Global) extends Plugin {
 }
 
 class GenInfoComponent(override val global: Global) extends PluginComponent {
-
   import global._
 
   override def newPhase(prev: Phase): Phase = new Phase(prev) {
@@ -44,11 +43,17 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
       tree match {
         case PackageDef(pid, stats)                          ⇒
         case ClassDef(mods, name, tparams, impl)             ⇒
+          idents += name.decoded
         case ModuleDef(mods, name, impl)                     ⇒
+          idents += name.decoded
         case ValDef(mods, name, tpt, rhs)                    ⇒
+          idents += name.decoded
         case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
+          idents += name.decoded
         case TypeDef(mods, name, tparams, rhs)               ⇒
+          idents += name.decoded
         case LabelDef(name, params, rhs)                     ⇒
+          idents += name.decoded
         case Import(expr, selectors)                         ⇒
         case DocDef(comment, definition)                     ⇒
         case Template(parents, self, body)                   ⇒
@@ -57,6 +62,7 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
         case Alternative(trees)                              ⇒
         case Star(elem)                                      ⇒
         case Bind(name, body)                                ⇒
+          idents += name.decoded
         case UnApply(fun, args)                              ⇒
         case ArrayValue(elemtpt, trees)                      ⇒
         case Function(vparams, body)                         ⇒
@@ -76,6 +82,7 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
         case This(qual)                                      ⇒
         case Select(qualifier, selector)                     ⇒
         case Ident(name)                                     ⇒
+          idents += name.decoded
         case Literal(value)                                  ⇒
         case TypeTree()                                      ⇒
         case Annotated(annot, arg)                           ⇒
