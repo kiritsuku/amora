@@ -8,5 +8,8 @@ Electron needs to be installed, a pre-built binary can be found [here](https://g
 
 [Neovim](https://github.com/neovim/neovim) needs to be installed too. It can be done by executing the `make_neovim` script.
 
-The application can be launched by starting sbt and typing `backend/preStart`. After that the `run_electron` executable can be run.
+Important sbt commands:
+
+- `backend/preStart` - Launches server application. After that the `run_electron` executable can be run.
+- `;scalacPlugin/clean;scalacPlugin/test` - Runs the scalac plugin.
 
