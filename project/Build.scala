@@ -156,7 +156,7 @@ object Build extends sbt.Build {
   lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
     name := "scalac-plugin",
 
-    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies ++= deps.scalacPlugin.value,
 
     scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
     scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}"
@@ -227,6 +227,11 @@ object Build extends sbt.Build {
       "org.webjars"                    % "d3js"                        % "3.5.5-1"                  / "d3.js",
       // https://github.com/fgnass/spin.js
       "org.webjars.bower"              % "spin.js"                     % "2.3.1"                    / "spin.js"
+    ))
+
+    lazy val scalacPlugin = Def.setting(Seq(
+      "org.scala-lang"                 % "scala-compiler"              % scalaVersion.value,
+      "org.apache.jena"                % "apache-jena-libs"            % "3.0.1"
     ))
   }
 }
