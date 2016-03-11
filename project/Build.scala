@@ -191,7 +191,7 @@ object Build extends sbt.Build {
 
   object deps {
     lazy val protocol = Def.setting(Seq(
-      "me.chrons" %%% "boopickle" % versions.boopickle
+      "me.chrons"                      %%% "boopickle"                  % versions.boopickle
     ))
 
     lazy val backend = Def.setting(Seq(
@@ -218,24 +218,24 @@ object Build extends sbt.Build {
     ))
 
     lazy val sjs = Def.setting(Seq(
-      "be.doeraene"                    %%% "scalajs-jquery"            % versions.jquery,
-      "org.denigma"                    %%% "codemirror-facade"         % versions.codemirror,
-      "com.lihaoyi"                    %%% "scalatags"                 % versions.scalatags
+      "be.doeraene"                    %%% "scalajs-jquery"             % versions.jquery,
+      "org.denigma"                    %%% "codemirror-facade"          % versions.codemirror,
+      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags
     ))
 
     lazy val webjars = Def.setting(Seq(
-      "org.webjars"                    % "codemirror"                  % "5.5"                      / "codemirror.js",
+      "org.webjars"                    %   "codemirror"                 % "5.5"                     / "codemirror.js",
       // https://github.com/chjj/marked
-      "org.webjars.bower"              % "marked"                      % "0.3.3"                    / "marked.js",
-      "org.webjars"                    % "d3js"                        % "3.5.5-1"                  / "d3.js",
+      "org.webjars.bower"              %   "marked"                     % "0.3.3"                   / "marked.js",
+      "org.webjars"                    %   "d3js"                       % "3.5.5-1"                 / "d3.js",
       // https://github.com/fgnass/spin.js
-      "org.webjars.bower"              % "spin.js"                     % "2.3.1"                    / "spin.js"
+      "org.webjars.bower"              %   "spin.js"                    % "2.3.1"                   / "spin.js"
     ))
 
     lazy val scalacPlugin = Def.setting(Seq(
-      "org.scala-lang"                 % "scala-compiler"              % scalaVersion.value,
-      "org.apache.jena"                % "apache-jena-libs"            % "3.0.1",
-      "junit"                          % "junit"                        % versions.junit            % "test"
+      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
+      "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1",
+      "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
   }
 }
