@@ -26,26 +26,56 @@ class IdentFinderTest {
     val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
     val idents = g ask { () ⇒ new ScalacConverter[g.type](g).findIdents(tree) }
 
-    idents.filterNot(Set("scala")).toList
+    idents.filterNot(Set("scala"))
   }
 
   @Test
   def single_class() = {
-    idents("package pkg; class X") === List("pkg", "pkg.X")
+    idents("package pkg; class X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_object() = {
-    idents("package pkg; object X") === List("pkg", "pkg.X")
+    idents("package pkg; object X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_trait() = {
-    idents("package pkg; trait X") === List("pkg", "pkg.X")
+    idents("package pkg; trait X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_abstract_class() = {
-    idents("package pkg; abstract class X") === List("pkg", "pkg.X")
+    idents("package pkg; abstract class X") === Set("pkg", "pkg.X")
+  }
+
+  @Test
+  def single_def() = {
+    idents("""
+      package pkg
+      class X {
+        def a = 0
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+  }
+
+  @Test
+  def single_val() = {
+    idents("""
+      package pkg
+      class X {
+        val a = 0
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+  }
+
+  @Test
+  def single_lazy_val() = {
+    idents("""
+      package pkg
+      class X {
+        lazy val a = 0
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
   }
 }
