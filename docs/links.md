@@ -51,3 +51,7 @@ Interesting specs for possible protocol/indexer implementations:
 - [RDF](https://en.wikipedia.org/wiki/Resource_Description_Framework)
 - [OWL](https://en.wikipedia.org/wiki/Web_Ontology_Language)
 - [Banana-rdf](https://github.com/banana-rdf/banana-rdf)
+
+Scalac compiler plugins:
+- [extractor](https://github.com/matanster/extractor)
+- [kind-projector](https://github.com/non/kind-projector)

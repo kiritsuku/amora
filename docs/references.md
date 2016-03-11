@@ -73,9 +73,13 @@ This document contains a list of references, related projects, articles, blog po
   - Eclipse Che:
     - [Reddit discussion](https://www.reddit.com/r/programming/comments/3v0bev/eclipse_che_next_generation_eclipse_ide/)
     - [HN discussion](https://news.ycombinator.com/item?id=10653258)
+    - [Eclipse: The Evolution and Future of IDEs](http://www.infoq.com/presentations/eclipse-che-eclipsecon-2016)
   - [Scaled](https://github.com/scaled/scaled) (editor)
   - [Nvim](https://github.com/neovim/neovim)
     - [NyaoVim](https://github.com/rhysd/NyaoVim)
+  - CORBA
+    - [Why has CORBA lost popularity?](http://stackoverflow.com/questions/3835785/why-has-corba-lost-popularity)
+    - [The Rise and Fall of CORBA](https://queue.acm.org/detail.cfm?id=1142044)
 
 - Discussions:
   - [Standard interface between a text editor and an IDE?](https://www.reddit.com/r/programming/comments/3o4o59/standard_interface_between_a_text_editor_and_an/)
