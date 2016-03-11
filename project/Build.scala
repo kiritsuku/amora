@@ -159,7 +159,10 @@ object Build extends sbt.Build {
     libraryDependencies ++= deps.scalacPlugin.value,
 
     scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
-    scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}"
+    scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}",
+
+    // show stack traces up to first sbt stak frame
+    traceLevel in Test := 0
   )
 
   object versions {
