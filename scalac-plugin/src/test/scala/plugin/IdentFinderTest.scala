@@ -88,4 +88,26 @@ class IdentFinderTest {
       }
     """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "scala.Int")
   }
+
+  @Test
+  def getter_and_setter() = {
+    idents("""
+      package pkg
+      class X {
+        def a = 0
+        def a_=(a: Int) = ()
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "pkg.X.a_=.a", "scala.Int", "scala.Unit")
+  }
+
+  @Test
+  def names_with_special_characters() = {
+    idents("""
+      package pkg
+      class X_? {
+        val !!! = 0
+        def ??? = 0
+      }
+    """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???", "scala.Int")
+  }
 }
