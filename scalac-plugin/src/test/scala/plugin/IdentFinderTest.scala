@@ -110,4 +110,15 @@ class IdentFinderTest {
       }
     """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???", "scala.Int")
   }
+
+  @Test
+  def backticks() = {
+    idents("""
+      package pkg
+      class `A B C` {
+        val `a b c` = 0
+        def `d e f` = 0
+      }
+    """) === Set("pkg", "scala.Int", "pkg.`A B C`", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`")
+  }
 }

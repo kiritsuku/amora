@@ -15,8 +15,15 @@ class ScalacConverter[G <: Global](val global: G) {
   private class IdentFinder extends Traverser {
     val idents = ListBuffer[String]()
 
-    def fullName(t: Tree) =
-      t.symbol.ownerChain.reverse.tail.map(_.nameString).mkString(".")
+    def fullName(t: Tree) = {
+      def decodedName(sym: Symbol) = {
+        val pos = sym.pos
+        val str = sym.nameString
+        val isBacktick = pos.isRange && pos.source.content(pos.point) == '`'
+        if (isBacktick) s"`$str`" else str
+      }
+      t.symbol.ownerChain.reverse.tail.map(decodedName).mkString(".")
+    }
 
     override def traverse(tree: Tree) = {
       tree match {
@@ -32,7 +39,7 @@ class ScalacConverter[G <: Global](val global: G) {
           val retName = tpt.tpe.typeSymbol.fullNameString
           idents += retName
           idents += fullName(tree)
-        case t: DefDef if t.name == nme.CONSTRUCTOR ⇒
+        case t: DefDef if t.name == nme.CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor ⇒
           // skip
         case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
           val argsNames = tpt.tpe.typeArguments.map(_.typeSymbol.fullNameString)
