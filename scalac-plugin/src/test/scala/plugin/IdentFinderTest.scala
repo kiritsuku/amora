@@ -78,4 +78,14 @@ class IdentFinderTest {
       }
     """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
   }
+
+  @Test
+  def single_var() = {
+    idents("""
+      package pkg
+      class X {
+        var a = 0
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "scala.Int")
+  }
 }

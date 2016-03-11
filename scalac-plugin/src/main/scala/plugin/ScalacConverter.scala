@@ -26,6 +26,8 @@ class ScalacConverter[G <: Global](val global: G) {
           idents += fullName(tree)
         case ModuleDef(mods, name, impl) ⇒
           idents += fullName(tree)
+        case t: ValDef if t.symbol.isSynthetic ⇒
+          // skip
         case ValDef(mods, name, tpt, rhs) ⇒
           val retName = tpt.tpe.typeSymbol.fullNameString
           idents += retName
@@ -35,8 +37,11 @@ class ScalacConverter[G <: Global](val global: G) {
         case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
           val argsNames = tpt.tpe.typeArguments.map(_.typeSymbol.fullNameString)
           idents ++= argsNames
-          val retName = tpt.tpe.typeSymbol.fullNameString
-          idents += retName
+          val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
+          if (!isGeneratedSetter) {
+            val retName = tpt.tpe.typeSymbol.fullNameString
+            idents += retName
+          }
           idents += fullName(tree)
         case TypeDef(mods, name, tparams, rhs) ⇒
           idents += fullName(tree)
@@ -69,6 +74,8 @@ class ScalacConverter[G <: Global](val global: G) {
         case Super(qual, mix)               ⇒
         case This(qual)                     ⇒
         case Select(qualifier, selector)    ⇒
+        case t: Ident if t.symbol.isSynthetic ⇒
+          // skip
         case Ident(name) ⇒
           idents += fullName(tree)
         case Literal(value)                                ⇒
