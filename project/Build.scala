@@ -234,7 +234,8 @@ object Build extends sbt.Build {
 
     lazy val scalacPlugin = Def.setting(Seq(
       "org.scala-lang"                 % "scala-compiler"              % scalaVersion.value,
-      "org.apache.jena"                % "apache-jena-libs"            % "3.0.1"
+      "org.apache.jena"                % "apache-jena-libs"            % "3.0.1",
+      "junit"                          % "junit"                        % versions.junit            % "test"
     ))
   }
 }
