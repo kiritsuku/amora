@@ -21,10 +21,8 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
     override def run() = {
       val u = currentRun.units.toList
 
-      def idents(t: Tree) = {
-        val trav = new IdentFinder
-        trav.traverse(t)
-        trav.idents.toList
+      def idents(t: global.Tree) = {
+        new ScalacConverter[global.type](global).findIdents(t)
       }
 
       println(u.map(_.body) map idents)
@@ -35,68 +33,4 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
   override val phaseName = "GenInfoComponent"
 
   override val runsAfter = List("typer")
-
-  class IdentFinder extends Traverser {
-    val idents = ListBuffer[String]()
-
-    override def traverse(tree: Tree) = {
-      tree match {
-        case PackageDef(pid, stats)                          ⇒
-        case ClassDef(mods, name, tparams, impl)             ⇒
-          idents += name.decoded
-        case ModuleDef(mods, name, impl)                     ⇒
-          idents += name.decoded
-        case ValDef(mods, name, tpt, rhs)                    ⇒
-          idents += name.decoded
-        case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
-          idents += name.decoded
-        case TypeDef(mods, name, tparams, rhs)               ⇒
-          idents += name.decoded
-        case LabelDef(name, params, rhs)                     ⇒
-          idents += name.decoded
-        case Import(expr, selectors)                         ⇒
-        case DocDef(comment, definition)                     ⇒
-        case Template(parents, self, body)                   ⇒
-        case Block(stats, expr)                              ⇒
-        case CaseDef(pat, guard, body)                       ⇒
-        case Alternative(trees)                              ⇒
-        case Star(elem)                                      ⇒
-        case Bind(name, body)                                ⇒
-          idents += name.decoded
-        case UnApply(fun, args)                              ⇒
-        case ArrayValue(elemtpt, trees)                      ⇒
-        case Function(vparams, body)                         ⇒
-        case Assign(lhs, rhs)                                ⇒
-        case AssignOrNamedArg(lhs, rhs)                      ⇒
-        case If(cond, thenp, elsep)                          ⇒
-        case Match(selector, cases)                          ⇒
-        case Return(expr)                                    ⇒
-        case Try(block, catches, finalizer)                  ⇒
-        case Throw(expr)                                     ⇒
-        case New(tpt)                                        ⇒
-        case Typed(expr, tpt)                                ⇒
-        case TypeApply(fun, args)                            ⇒
-        case Apply(fun, args)                                ⇒
-        case ApplyDynamic(qual, args)                        ⇒
-        case Super(qual, mix)                                ⇒
-        case This(qual)                                      ⇒
-        case Select(qualifier, selector)                     ⇒
-        case Ident(name)                                     ⇒
-          idents += name.decoded
-        case Literal(value)                                  ⇒
-        case TypeTree()                                      ⇒
-        case Annotated(annot, arg)                           ⇒
-        case SingletonTypeTree(ref)                          ⇒
-        case SelectFromTypeTree(qualifier, selector)         ⇒
-        case CompoundTypeTree(templ)                         ⇒
-        case AppliedTypeTree(tpt, args)                      ⇒
-        case TypeBoundsTree(lo, hi)                          ⇒
-        case ExistentialTypeTree(tpt, whereClauses)          ⇒
-        case SelectFromArray(qualifier, selector, erasure)   ⇒
-        case EmptyTree                                       ⇒
-      }
-      super.traverse(tree)
-    }
-  }
-
 }
