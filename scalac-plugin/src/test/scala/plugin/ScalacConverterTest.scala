@@ -132,13 +132,16 @@ class ScalacConverterTest {
       class X {
         def a = {
           def b = {
-            val c = 0
+            val c = {
+              val d = 0
+              d
+            }
             c
           }
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.Int")
   }
 
   @Test
