@@ -55,3 +55,4 @@ Interesting specs for possible protocol/indexer implementations:
 Scalac compiler plugins:
 - [extractor](https://github.com/matanster/extractor)
 - [kind-projector](https://github.com/non/kind-projector)
+- [tasty](https://github.com/VladimirNik/tasty)
