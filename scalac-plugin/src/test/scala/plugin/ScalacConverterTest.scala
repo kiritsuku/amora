@@ -124,4 +124,46 @@ class ScalacConverterTest {
       }
     """) === Set("pkg", "scala.Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`", "pkg.`A B C`.`type`")
   }
+
+  @Test
+  def nested_members() = {
+    idents("""
+      package pkg
+      class X {
+        def a = {
+          def b = {
+            val c = 0
+            c
+          }
+          b
+        }
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.Int")
+  }
+
+  @Test
+  def nested_in_trait() = {
+    idents("""
+      package pkg
+      trait X {
+        object Y
+        class Z
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Z")
+  }
+
+  @Test
+  def nested_classes() = {
+    idents("""
+      package pkg
+      class X {
+        trait Y {
+          object Z {
+            val a = 0
+            def b = 0
+          }
+        }
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b", "scala.Int")
+  }
 }

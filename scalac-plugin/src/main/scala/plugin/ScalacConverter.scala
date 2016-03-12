@@ -48,7 +48,7 @@ class ScalacConverter[G <: Global](val global: G) {
           val retName = tpt.tpe.typeSymbol.fullNameString
           idents += retName
           idents += fullName(tree)
-        case t: DefDef if t.name == nme.CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor ⇒
+        case t: DefDef if t.name == nme.CONSTRUCTOR || t.name == nme.MIXIN_CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor ⇒
           // skip
         case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
           val argsNames = tpt.tpe.typeArguments.map(_.typeSymbol.fullNameString)
