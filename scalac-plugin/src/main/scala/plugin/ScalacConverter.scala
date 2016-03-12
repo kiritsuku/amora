@@ -1,6 +1,7 @@
 package plugin
 
 import scala.collection.mutable.ListBuffer
+import scala.reflect.internal.Chars
 import scala.tools.nsc.Global
 
 class ScalacConverter[G <: Global](val global: G) {
@@ -17,10 +18,18 @@ class ScalacConverter[G <: Global](val global: G) {
 
     def fullName(t: Tree) = {
       def decodedName(sym: Symbol) = {
-        val pos = sym.pos
-        val str = sym.nameString
-        val isBacktick = pos.isRange && pos.source.content(pos.point) == '`'
-        if (isBacktick) s"`$str`" else str
+        def addBackquotes(str: String) = {
+          val (ident, op) = str.span(Chars.isScalaLetter)
+          val needsBackticks =
+            if (op.isEmpty)
+              nme.keywords(sym.name.toTermName)
+            else if (!ident.isEmpty && ident.last != '_')
+              true
+            else
+              !op.tail.forall(Chars.isOperatorPart)
+          if (needsBackticks) s"`$str`" else str
+        }
+        addBackquotes(sym.nameString)
       }
       t.symbol.ownerChain.reverse.tail.map(decodedName).mkString(".")
     }

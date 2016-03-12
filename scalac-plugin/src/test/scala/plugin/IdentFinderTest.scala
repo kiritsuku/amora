@@ -116,9 +116,12 @@ class IdentFinderTest {
     idents("""
       package pkg
       class `A B C` {
+        val _ = 0
+        val a_b_c = 0
         val `a b c` = 0
         def `d e f` = 0
+        def `type` = 0
       }
-    """) === Set("pkg", "scala.Int", "pkg.`A B C`", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`")
+    """) === Set("pkg", "scala.Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`", "pkg.`A B C`.`type`")
   }
 }
