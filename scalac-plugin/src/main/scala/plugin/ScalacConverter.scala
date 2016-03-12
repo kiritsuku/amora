@@ -34,7 +34,7 @@ class ScalacConverter[G <: Global](val global: G) {
       t.symbol.ownerChain.reverse.tail.map(decodedName).mkString(".")
     }
 
-    override def traverse(tree: Tree) = {
+    override def traverse(tree: Tree): Unit = {
       tree match {
         case PackageDef(pid, stats) ⇒
           idents += fullName(tree)
@@ -43,13 +43,13 @@ class ScalacConverter[G <: Global](val global: G) {
         case ModuleDef(mods, name, impl) ⇒
           idents += fullName(tree)
         case t: ValDef if t.symbol.isSynthetic ⇒
-          // skip
+          return
         case ValDef(mods, name, tpt, rhs) ⇒
           val retName = tpt.tpe.typeSymbol.fullNameString
           idents += retName
           idents += fullName(tree)
         case t: DefDef if t.name == nme.CONSTRUCTOR || t.name == nme.MIXIN_CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor ⇒
-          // skip
+          return
         case DefDef(mods, name, tparams, vparamss, tpt, rhs) ⇒
           val argsNames = tpt.tpe.typeArguments.map(_.typeSymbol.fullNameString)
           idents ++= argsNames
@@ -89,9 +89,15 @@ class ScalacConverter[G <: Global](val global: G) {
         case ApplyDynamic(qual, args)       ⇒
         case Super(qual, mix)               ⇒
         case This(qual)                     ⇒
+        case t: Select if t.name == nme.CONSTRUCTOR    ⇒
+          return
         case Select(qualifier, selector)    ⇒
+          val reference = fullName(qualifier) + "." + selector.decoded.trim
+          idents += reference
+          val referencedDecl = fullName(tree)
+          idents += referencedDecl
         case t: Ident if t.symbol.isSynthetic ⇒
-          // skip
+          return
         case Ident(name) ⇒
           idents += fullName(tree)
         case Literal(value)                                ⇒

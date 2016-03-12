@@ -26,7 +26,7 @@ class ScalacConverterTest {
     val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
     val idents = g ask { () ⇒ new ScalacConverter[g.type](g).findIdents(tree) }
 
-    idents.filterNot(Set("scala"))
+    idents.filterNot(Set("scala", "scala.AnyRef"))
   }
 
   @Test
@@ -165,5 +165,15 @@ class ScalacConverterTest {
         }
       }
     """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b", "scala.Int")
+  }
+
+  @Test
+  def simple_ref() = {
+    idents("""
+      package pkg
+      class X {
+        toString
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.toString", "java.lang.Object.toString")
   }
 }
