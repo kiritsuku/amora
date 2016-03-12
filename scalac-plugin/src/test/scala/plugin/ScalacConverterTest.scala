@@ -7,7 +7,7 @@ import scala.tools.nsc.reporters.ConsoleReporter
 import org.junit.ComparisonFailure
 import org.junit.Test
 
-class IdentFinderTest {
+class ScalacConverterTest {
 
   import TestUtils._
 
