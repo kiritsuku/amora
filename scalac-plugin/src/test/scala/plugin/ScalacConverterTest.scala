@@ -332,4 +332,13 @@ class ScalacConverterTest {
       }
     """) === Set("X", "scala.util")
   }
+
+  @Test
+  def new_object() = {
+    convert("""
+      class X {
+        val x = new Object
+      }
+    """) === Set("X", "X.x", "java.lang.Object")
+  }
 }

@@ -92,6 +92,8 @@ class ScalacConverter[G <: Global](val global: G) {
       args foreach (expr(m, _))
     case t: TypeTree ⇒
       typeRef(m, t)
+    case Select(New(tpt), _) ⇒
+      found += mkImportRef(tpt.symbol.owner, tpt.symbol.name)
     case Select(qualifier, name) ⇒
       found += mkImportRef(qualifier.symbol, name)
     case _ ⇒
