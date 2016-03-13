@@ -182,7 +182,7 @@ class ScalacConverterTest {
       class X {
         toString
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.toString", "java.lang.Object.toString")
+    """) === Set("pkg", "pkg.X", "java.lang.Object.toString")
   }
 
   @Test
@@ -192,7 +192,7 @@ class ScalacConverterTest {
       class X {
         toString.toString.toString.toString
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.toString", "pkg.X.toString.toString", "pkg.X.toString.toString.toString", "pkg.X.toString.toString.toString.toString", "java.lang.Object.toString", "java.lang.String.toString")
+    """) === Set("pkg", "pkg.X", "java.lang.Object.toString", "java.lang.String.toString")
   }
 
   @Test

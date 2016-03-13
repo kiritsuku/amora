@@ -47,6 +47,9 @@ class ScalacConverter[G <: Global](val global: G) {
     h.TypeRef(usage, cls)
   }
 
+  // TODO handle commented references correctly
+  // ignores some found references since we do want to add them as attachment to
+  // other references instead of letting them live by themselves.
   private def mkTermRef(d: h.Class, t: Tree): h.TermRef = t match {
     case Apply(fun, args) ⇒
       args foreach (expr(d, _))
@@ -55,13 +58,13 @@ class ScalacConverter[G <: Global](val global: G) {
       val ret = qualifier match {
         case This(qual) ⇒
           val ref = h.ThisRef(d)
-          found += ref
+          // found += ref
           ref
         case _ ⇒
           mkTermRef(d, qualifier)
       }
       val ref = h.TermRef(decodedName(selector), ret)
-      found += ref
+      // found += ref
       found += h.TermRef(decodedName(t.symbol.name), mkTypeRef(ref, t.symbol.owner))
       ref
   }
@@ -148,7 +151,9 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: ValDef ⇒
         valDef(c, tree)
       case tree: Apply ⇒
-        found += mkTermRef(c, tree)
+        mkTermRef(c, tree)
+        // TODO see comment at mkTermRef
+        // found += mkTermRef(c, tree)
       case Select(qualifier, selector) ⇒
         found += mkImportRef(qualifier.symbol, selector)
       case EmptyTree ⇒
