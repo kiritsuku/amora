@@ -18,10 +18,10 @@ sealed trait Hierarchy {
         name
       else
         s"$outer.$name"
-    case TypeRef(name, _) ⇒
-      s"$name"
+    case TypeRef(_, decl) ⇒
+      decl.toString
     case ThisRef(cls) ⇒
-      s"$cls.this"
+      cls.toString
     case Root ⇒
       "_root_"
   }
@@ -39,7 +39,8 @@ sealed trait Reference extends Hierarchy
 
 final case class TermRef(name: String, outer: Reference) extends Reference
 
-final case class TypeRef(name: String, decl: Declaration) extends Reference
+/** `usage` is the location where the type is used, `decl` is the type that is used. */
+final case class TypeRef(usage: Hierarchy, decl: Declaration) extends Reference
 
 final case class ThisRef(cls: Class) extends Reference
 

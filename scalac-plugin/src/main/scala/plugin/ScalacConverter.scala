@@ -34,9 +34,9 @@ class ScalacConverter[G <: Global](val global: G) {
     sym.ownerChain.reverse.tail.map(s ⇒ decodedName(s.name)).mkString(".")
   }
 
-  private def termRef(outer: h.Reference, t: Tree): h.Reference = t match {
+  private def termRef(t: Tree): h.Reference = t match {
     case Apply(fun, args) ⇒
-      termRef(outer, fun)
+      termRef(fun)
     case Select(qualifier, selector) ⇒
       val ret = qualifier match {
         case This(qual) ⇒
@@ -45,18 +45,22 @@ class ScalacConverter[G <: Global](val global: G) {
           found += ref
           ref
         case _ ⇒
-          termRef(outer, qualifier)
+          termRef(qualifier)
       }
       val ref = h.TermRef(decodedName(selector), ret)
       found += ref
-      val referencedDecl = fullName(t.symbol)
-      found += h.TermRef(referencedDecl, outer)
+      val pkg = h.Package(fullName(t.symbol.owner.owner).split('.'))
+      val cls = h.Class(pkg, decodedName(t.symbol.owner.name))
+      val tpe = h.TypeRef(ref, cls)
+      found += h.TermRef(decodedName(t.symbol.name), tpe)
       ref
   }
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
     case TypeTree() ⇒
-      found += h.TypeRef(fullName(t.symbol), d)
+      val pkg = h.Package(fullName(t.symbol.owner).split('.'))
+      val cls = h.Class(pkg, decodedName(t.symbol.name))
+      found += h.TypeRef(d, cls)
   }
 
   private def body(m: h.Member, tree: Tree): Unit = tree match {
@@ -67,8 +71,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case Block(stats, expr) ⇒
       stats foreach (body(m, _))
       body(m, expr)
-    case Ident(name) ⇒
-      found += h.TypeRef(fullName(tree.symbol), m)
+    case _: Ident   ⇒
     case EmptyTree  ⇒
     case _: Literal ⇒
     case _: Assign  ⇒
@@ -108,7 +111,7 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: ValDef ⇒
         valDef(c, tree)
       case tree: Apply ⇒
-        found += termRef(h.Root, tree)
+        found += termRef(tree)
     }
   }
 
