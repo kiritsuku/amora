@@ -284,11 +284,23 @@ class ScalacConverterTest {
   def method_with_arguments() = {
     idents("""
       class X {
-        def f(a: Int, b: String) = {
-          def g(c: Int) = 0
+        def f(i: Int, s: String) = {
+          def g(i: Int) = 0
           0
         }
       }
-    """) === Set("X", "X.f", "X.f.a", "X.f.b", "X.f.g", "X.f.g.c", "scala.Int", "java.lang.String")
+    """) === Set("X", "X.f", "X.f.i", "X.f.s", "X.f.g", "X.f.g.i", "scala.Int", "java.lang.String")
+  }
+
+  @Test
+  def call_method_with_arguments() = {
+    idents("""
+      class X {
+        val v = 0
+        def f(i: Int) = i
+        f(v)
+        f(Int.MinValue)
+      }
+    """) === Set("X", "X.v", "X.f", "X.f.i", "scala.Int", "scala.Int.MinValue")
   }
 }
