@@ -370,4 +370,15 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.meth", "X.meth.f", "scala.Function0", "scala.Int")
   }
+
+  @Test
+  def create_simple_lambda() = {
+    convert("""
+      class X {
+        def meth(f: Int ⇒ Int) = 0
+        meth(v ⇒ v)
+      }
+    """) === Set("X", "X.meth", "X.meth.f", "X.v", "scala.Function1", "scala.Int")
+  }
+
 }

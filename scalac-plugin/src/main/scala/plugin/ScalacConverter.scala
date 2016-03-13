@@ -102,6 +102,9 @@ class ScalacConverter[G <: Global](val global: G) {
       found += mkImportRef(tpt.symbol.owner, tpt.symbol.name)
     case Select(qualifier, name) ⇒
       found += mkImportRef(t.symbol.owner, name)
+    case Function(vparams, body) ⇒
+      vparams foreach (valDef(m, _))
+      expr(m, body)
     case _ ⇒
   }
 
