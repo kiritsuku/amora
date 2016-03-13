@@ -216,4 +216,14 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.x", "scala.Int")
   }
+
+  @Test
+  def single_import() = {
+    idents("""
+      import scala.collection.mutable.ListBuffer
+      class X {
+        ListBuffer
+      }
+    """) === Set("X", "scala.collection.mutable.ListBuffer")
+  }
 }
