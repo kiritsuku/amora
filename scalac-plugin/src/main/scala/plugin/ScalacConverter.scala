@@ -66,8 +66,13 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
-    case TypeTree() ⇒
+    case t: TypeTree ⇒
       found += mkTypeRef(d, t.symbol)
+      t.original match {
+        case AppliedTypeTree(tpt, args) ⇒
+          args foreach (typeRef(d, _))
+        case _ ⇒
+      }
   }
 
   private def body(m: h.Member, tree: Tree): Unit = tree match {

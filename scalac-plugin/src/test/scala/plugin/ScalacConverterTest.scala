@@ -236,4 +236,29 @@ class ScalacConverterTest {
       class X
     """) === Set("X", "scala.collection.mutable.Buffer", "scala.collection.mutable.ListBuffer", "java.io.File")
   }
+
+  @Test
+  def type_parameter_at_classes() = {
+    idents("""
+      class X[A, B]
+    """) === Set("X", "X.A", "X.B")
+  }
+
+  @Test
+  def type_parameter_at_methods() = {
+    idents("""
+      class X {
+        def f[A, B] = 0
+      }
+    """) === Set("X", "X.f", "X.f.A", "X.f.B", "scala.Int")
+  }
+
+  @Test
+  def type_parameter_at_type_ascriptions() = {
+    idents("""
+      class X {
+        def f: Option[Int] = null
+      }
+    """) === Set("X", "X.f", "scala.Option", "scala.Int")
+  }
 }
