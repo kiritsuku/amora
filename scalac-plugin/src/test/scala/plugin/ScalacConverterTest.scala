@@ -189,4 +189,13 @@ class ScalacConverterTest {
       }
     """) === Set("pkg", "pkg.X", "pkg.X.toString", "pkg.X.toString.toString", "pkg.X.toString.toString.toString", "pkg.X.toString.toString.toString.toString", "java.lang.Object.toString", "java.lang.String.toString")
   }
+
+  @Test
+  def nested_package() = {
+    idents("""
+      package a.b.c.d
+      class X
+    """) === Set("a.b.c.d", "a.b.c.d.X")
+  }
+
 }

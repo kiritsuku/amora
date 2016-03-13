@@ -137,7 +137,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def traverse(tree: Tree) = tree match {
     case PackageDef(pid, stats) ⇒
-      val pkg = h.Package(decodedName(pid.name).split('.'))
+      val pkg = h.Package(fullName(pid.symbol).split('.'))
       found += pkg
       stats foreach (implDef(pkg, _))
     case LabelDef(name, params, rhs)                   ⇒
