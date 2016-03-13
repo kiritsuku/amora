@@ -105,7 +105,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case Function(vparams, body) ⇒
       vparams foreach (valDef(m, _))
       expr(m, body)
-    case _ ⇒
+    case _: Literal ⇒
+    case _: Ident ⇒
   }
 
   private def body(m: h.Member, tree: Tree): Unit = tree match {
