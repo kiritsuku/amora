@@ -315,4 +315,12 @@ class ScalacConverterTest {
       class C {}
     """) === Set("C")
   }
+
+  @Test
+  def wildcard_import() = {
+    convert("""
+      import scala.util._
+      class X
+    """) === Set("X", "scala.util")
+  }
 }

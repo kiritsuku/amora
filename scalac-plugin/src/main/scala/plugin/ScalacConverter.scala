@@ -173,7 +173,10 @@ class ScalacConverter[G <: Global](val global: G) {
       template(c, impl)
     case Import(expr, selectors) ⇒
       selectors foreach { sel ⇒
-        found += mkImportRef(expr.symbol, sel.name)
+        if (sel.name == nme.WILDCARD)
+          this.expr(decl, expr)
+        else
+          found += mkImportRef(expr.symbol, sel.name)
       }
   }
 
