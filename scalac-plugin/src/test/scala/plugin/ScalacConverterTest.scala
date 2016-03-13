@@ -308,4 +308,11 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.v", "X.f", "X.f.i", "scala.Int", "scala.Int.MinValue")
   }
+
+  @Test
+  def empty_class_body() = {
+    convert("""
+      class C {}
+    """) === Set("C")
+  }
 }
