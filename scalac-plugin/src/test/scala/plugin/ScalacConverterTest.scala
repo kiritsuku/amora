@@ -11,7 +11,7 @@ class ScalacConverterTest {
 
   import TestUtils._
 
-  def idents(src: String) = {
+  def convert(src: String) = {
     val s = new Settings
     val r = new ConsoleReporter(s)
     val g = new Global(s, r)
@@ -24,34 +24,34 @@ class ScalacConverterTest {
 
     val sf = g.newSourceFile(src, "<memory>")
     val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
-    val idents = g ask { () ⇒ new ScalacConverter[g.type](g).findIdents(tree) }
+    val idents = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
 
     idents.filterNot(Set("scala", "scala.AnyRef", ""))
   }
 
   @Test
   def single_class() = {
-    idents("package pkg; class X") === Set("pkg", "pkg.X")
+    convert("package pkg; class X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_object() = {
-    idents("package pkg; object X") === Set("pkg", "pkg.X")
+    convert("package pkg; object X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_trait() = {
-    idents("package pkg; trait X") === Set("pkg", "pkg.X")
+    convert("package pkg; trait X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_abstract_class() = {
-    idents("package pkg; abstract class X") === Set("pkg", "pkg.X")
+    convert("package pkg; abstract class X") === Set("pkg", "pkg.X")
   }
 
   @Test
   def single_def() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         def a = 0
@@ -61,7 +61,7 @@ class ScalacConverterTest {
 
   @Test
   def single_val() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         val a = 0
@@ -71,7 +71,7 @@ class ScalacConverterTest {
 
   @Test
   def single_lazy_val() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         lazy val a = 0
@@ -81,7 +81,7 @@ class ScalacConverterTest {
 
   @Test
   def single_var() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         var a = 0
@@ -91,7 +91,7 @@ class ScalacConverterTest {
 
   @Test
   def getter_and_setter() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         def a = 0
@@ -102,7 +102,7 @@ class ScalacConverterTest {
 
   @Test
   def names_with_special_characters() = {
-    idents("""
+    convert("""
       package pkg
       class X_? {
         val !!! = 0
@@ -113,7 +113,7 @@ class ScalacConverterTest {
 
   @Test
   def backticks() = {
-    idents("""
+    convert("""
       package pkg
       class `A B C` {
         val _ = 0
@@ -127,7 +127,7 @@ class ScalacConverterTest {
 
   @Test
   def nested_members() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         def a = {
@@ -146,7 +146,7 @@ class ScalacConverterTest {
 
   @Test
   def nested_in_trait() = {
-    idents("""
+    convert("""
       package pkg
       trait X {
         object Y
@@ -157,7 +157,7 @@ class ScalacConverterTest {
 
   @Test
   def nested_classes() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         trait Y {
@@ -172,7 +172,7 @@ class ScalacConverterTest {
 
   @Test
   def simple_ref() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         toString
@@ -182,7 +182,7 @@ class ScalacConverterTest {
 
   @Test
   def chained_ref() = {
-    idents("""
+    convert("""
       package pkg
       class X {
         toString.toString.toString.toString
@@ -192,7 +192,7 @@ class ScalacConverterTest {
 
   @Test
   def nested_package() = {
-    idents("""
+    convert("""
       package a.b.c.d
       class X
     """) === Set("a.b.c.d", "a.b.c.d.X")
@@ -200,7 +200,7 @@ class ScalacConverterTest {
 
   @Test
   def declaration_in_nested_package() = {
-    idents("""
+    convert("""
       package a.b.c.d
       class X {
         def x = 0
@@ -210,7 +210,7 @@ class ScalacConverterTest {
 
   @Test
   def empty_package() = {
-    idents("""
+    convert("""
       class X {
         def x = 0
       }
@@ -219,7 +219,7 @@ class ScalacConverterTest {
 
   @Test
   def single_import() = {
-    idents("""
+    convert("""
       import scala.collection.mutable.ListBuffer
       class X {
         ListBuffer
@@ -229,7 +229,7 @@ class ScalacConverterTest {
 
   @Test
   def multiple_imports() = {
-    idents("""
+    convert("""
       import java.io.File
       import scala.collection.mutable.Buffer
       import scala.collection.mutable.ListBuffer
@@ -239,14 +239,14 @@ class ScalacConverterTest {
 
   @Test
   def type_parameter_at_classes() = {
-    idents("""
+    convert("""
       class X[A, B]
     """) === Set("X", "X.A", "X.B")
   }
 
   @Test
   def type_parameter_at_methods() = {
-    idents("""
+    convert("""
       class X {
         def f[A, B] = 0
       }
@@ -255,7 +255,7 @@ class ScalacConverterTest {
 
   @Test
   def type_parameter_at_type_ascriptions() = {
-    idents("""
+    convert("""
       class X {
         def f: Option[Int] = null
       }
@@ -264,7 +264,7 @@ class ScalacConverterTest {
 
   @Test
   def apply_method_implicitly() = {
-    idents("""
+    convert("""
       class X {
         def f = Option(1)
       }
@@ -273,7 +273,7 @@ class ScalacConverterTest {
 
   @Test
   def apply_method_explicitly() = {
-    idents("""
+    convert("""
       class X {
         def f = Option.apply(1)
       }
@@ -282,7 +282,7 @@ class ScalacConverterTest {
 
   @Test
   def method_with_arguments() = {
-    idents("""
+    convert("""
       class X {
         def f(i: Int, s: String) = {
           def g(i: Int) = 0
@@ -294,7 +294,7 @@ class ScalacConverterTest {
 
   @Test
   def call_method_with_arguments() = {
-    idents("""
+    convert("""
       class X {
         val v = 0
         def f(i: Int) = i

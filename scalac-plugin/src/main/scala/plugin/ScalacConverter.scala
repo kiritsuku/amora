@@ -8,9 +8,10 @@ class ScalacConverter[G <: Global](val global: G) {
   import global._
   import indexer.{ hierarchy ⇒ h }
 
-  val found = ListBuffer[h.Hierarchy]()
+  private val found = ListBuffer[h.Hierarchy]()
 
-  def findIdents(tree: Tree): Set[String] = {
+  def convert(tree: Tree): Set[String] = {
+    found.clear()
     traverse(tree)
     found.map(_.toString).toSet
   }
