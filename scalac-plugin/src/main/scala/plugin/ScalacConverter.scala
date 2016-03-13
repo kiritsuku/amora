@@ -47,15 +47,14 @@ class ScalacConverter[G <: Global](val global: G) {
     h.TypeRef(usage, cls)
   }
 
-  private def mkTermRef(d: h.Declaration, t: Tree): h.TermRef = t match {
+  private def mkTermRef(d: h.Class, t: Tree): h.TermRef = t match {
     case Apply(fun, args) ⇒
       args foreach (expr(d, _))
       mkTermRef(d, fun)
     case Select(qualifier, selector) ⇒
       val ret = qualifier match {
         case This(qual) ⇒
-          val pkg = h.Package(fullName(qualifier.symbol).init)
-          val ref = h.ThisRef(h.Class(pkg, decodedName(qual)))
+          val ref = h.ThisRef(d)
           found += ref
           ref
         case _ ⇒
@@ -95,7 +94,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case Select(New(tpt), _) ⇒
       found += mkImportRef(tpt.symbol.owner, tpt.symbol.name)
     case Select(qualifier, name) ⇒
-      found += mkImportRef(qualifier.symbol, name)
+      found += mkImportRef(t.symbol.owner, name)
     case _ ⇒
   }
 

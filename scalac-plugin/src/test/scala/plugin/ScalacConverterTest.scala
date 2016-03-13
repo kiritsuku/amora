@@ -341,4 +341,15 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.x", "java.lang.Object")
   }
+
+  @Test
+  def method_call_in_body() = {
+    convert("""
+      class X {
+        def f = {
+          toString
+        }
+      }
+    """) === Set("X", "X.f", "java.lang.Object.toString", "java.lang.String")
+  }
 }
