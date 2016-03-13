@@ -10,10 +10,14 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private val found = ListBuffer[h.Hierarchy]()
 
-  def convert(tree: Tree): Set[String] = {
+  def convert(tree: Tree): util.Try[Set[String]] = {
     found.clear()
-    traverse(tree)
-    found.map(_.toString).toSet
+    util.Try(traverse(tree)) match {
+      case util.Success(_) ⇒
+        util.Try(found.map(_.toString).toSet)
+      case util.Failure(f) ⇒
+        util.Failure(new RuntimeException(s"Conversion of file `${tree.pos.source.file.absolute}` failed. See underlying issue for more information.", f))
+    }
   }
 
   private def decodedName(name: Name) = {

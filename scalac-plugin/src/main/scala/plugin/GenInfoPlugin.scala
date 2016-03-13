@@ -22,7 +22,13 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
       val u = currentRun.units.toList
 
       def idents(t: global.Tree) = {
-        new ScalacConverter[global.type](global).convert(t)
+        new ScalacConverter[global.type](global).convert(t) match {
+          case util.Success(res) ⇒
+            res
+          case util.Failure(f) ⇒
+            f.printStackTrace()
+            Nil
+        }
       }
 
       println(u.map(_.body) map idents)

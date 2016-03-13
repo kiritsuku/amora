@@ -24,9 +24,14 @@ class ScalacConverterTest {
 
     val sf = g.newSourceFile(src, "<memory>")
     val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
-    val idents = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
+    val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
 
-    idents.filterNot(Set("scala", "scala.AnyRef", ""))
+    res match {
+      case util.Success(res) ⇒
+        res.filterNot(Set("scala", "scala.AnyRef", ""))
+      case util.Failure(f) ⇒
+        throw f
+    }
   }
 
   @Test
