@@ -30,21 +30,33 @@ class ScalacConverter[G <: Global](val global: G) {
     addBackquotes(name.decoded.trim)
   }
 
-  private def fullName(t: Tree) = {
-    t.symbol.ownerChain.reverse.tail.map(s ⇒ decodedName(s.name)).mkString(".")
+  private def fullName(sym: Symbol) = {
+    sym.ownerChain.reverse.tail.map(s ⇒ decodedName(s.name)).mkString(".")
   }
 
-  private def termRef(outer: h.Reference, t: Tree) = t match {
+  private def termRef(outer: h.Reference, t: Tree): h.Reference = t match {
+    case Apply(fun, args) ⇒
+      termRef(outer, fun)
     case Select(qualifier, selector) ⇒
-      val reference = fullName(qualifier)+"."+decodedName(selector)
-      found += h.TermRef(reference, outer)
-      val referencedDecl = fullName(t)
+      val ret = qualifier match {
+        case This(qual) ⇒
+          val pkg = h.Package(fullName(qualifier.symbol).split('.').init)
+          val ref = h.ThisRef(h.Class(pkg, decodedName(qual)))
+          found += ref
+          ref
+        case _ ⇒
+          termRef(outer, qualifier)
+      }
+      val ref = h.TermRef(decodedName(selector), ret)
+      found += ref
+      val referencedDecl = fullName(t.symbol)
       found += h.TermRef(referencedDecl, outer)
+      ref
   }
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
     case TypeTree() ⇒
-      found += h.TypeRef(fullName(t), d)
+      found += h.TypeRef(fullName(t.symbol), d)
   }
 
   private def body(m: h.Member, tree: Tree): Unit = tree match {
@@ -56,7 +68,7 @@ class ScalacConverter[G <: Global](val global: G) {
       stats foreach (body(m, _))
       body(m, expr)
     case Ident(name) ⇒
-      found += h.TypeRef(fullName(tree), m)
+      found += h.TypeRef(fullName(tree.symbol), m)
     case EmptyTree  ⇒
     case _: Literal ⇒
     case _: Assign  ⇒
@@ -86,7 +98,7 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def template(c: h.Class, tree: Template) = {
+  private def template(c: h.Class, tree: Template): Unit = {
     val Template(_, _, body) = tree
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef) ⇒
@@ -95,8 +107,8 @@ class ScalacConverter[G <: Global](val global: G) {
         defDef(c, tree)
       case tree: ValDef ⇒
         valDef(c, tree)
-      case Apply(fun, args) ⇒
-        termRef(h.Root, fun)
+      case tree: Apply ⇒
+        found += termRef(h.Root, tree)
     }
   }
 

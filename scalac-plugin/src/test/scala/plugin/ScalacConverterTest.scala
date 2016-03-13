@@ -179,4 +179,14 @@ class ScalacConverterTest {
       }
     """) === Set("pkg", "pkg.X", "pkg.X.toString", "java.lang.Object.toString")
   }
+
+  @Test
+  def chained_ref() = {
+    idents("""
+      package pkg
+      class X {
+        toString.toString.toString.toString
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.toString", "pkg.X.toString.toString", "pkg.X.toString.toString.toString", "pkg.X.toString.toString.toString.toString", "java.lang.Object.toString", "java.lang.String.toString")
+  }
 }
