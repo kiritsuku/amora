@@ -226,4 +226,14 @@ class ScalacConverterTest {
       }
     """) === Set("X", "scala.collection.mutable.ListBuffer")
   }
+
+  @Test
+  def multiple_imports() = {
+    idents("""
+      import java.io.File
+      import scala.collection.mutable.Buffer
+      import scala.collection.mutable.ListBuffer
+      class X
+    """) === Set("X", "scala.collection.mutable.Buffer", "scala.collection.mutable.ListBuffer", "java.io.File")
+  }
 }
