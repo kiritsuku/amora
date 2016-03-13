@@ -30,12 +30,14 @@ class ScalacConverter[G <: Global](val global: G) {
     addBackquotes(name.decoded.trim)
   }
 
-  private def fullName(sym: Symbol) = {
-    sym.ownerChain.reverse.tail.map(s ⇒ decodedName(s.name)).mkString(".")
+  private def fullName(sym: Symbol): Seq[String] = {
+    val noRootSymbol = sym.ownerChain.reverse.tail
+    val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
+    noEmptyPkgSymbol.map(s ⇒ decodedName(s.name))
   }
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
-    val pkg = h.Package(fullName(sym.owner).split('.'))
+    val pkg = h.Package(fullName(sym.owner))
     val cls = h.Class(pkg, decodedName(sym.name))
     h.TypeRef(usage, cls)
   }
@@ -46,7 +48,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case Select(qualifier, selector) ⇒
       val ret = qualifier match {
         case This(qual) ⇒
-          val pkg = h.Package(fullName(qualifier.symbol).split('.').init)
+          val pkg = h.Package(fullName(qualifier.symbol).init)
           val ref = h.ThisRef(h.Class(pkg, decodedName(qual)))
           found += ref
           ref
@@ -60,7 +62,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
-    val pkg = h.Package(fullName(qualifier).split('.'))
+    val pkg = h.Package(fullName(qualifier))
     val decl = h.Class(pkg, decodedName(selector))
     h.TypeRef(pkg, decl)
   }
@@ -168,7 +170,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def traverse(tree: Tree) = tree match {
     case PackageDef(pid, stats) ⇒
-      val pkg = h.Package(if (pid.name == nme.EMPTY_PACKAGE_NAME) Nil else fullName(pid.symbol).split('.'))
+      val pkg = h.Package(fullName(pid.symbol))
       found += pkg
       stats foreach (implDef(pkg, _))
     case LabelDef(name, params, rhs)                   ⇒
