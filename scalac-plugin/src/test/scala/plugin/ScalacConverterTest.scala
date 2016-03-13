@@ -361,4 +361,13 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.meth", "X.meth.f", "scala.Function1", "scala.Int")
   }
+
+  @Test
+  def call_by_name_param() = {
+    convert("""
+      class X {
+        def meth(f: ⇒ Int) = 0
+      }
+    """) === Set("X", "X.meth", "X.meth.f", "scala.Function0", "scala.Int")
+  }
 }
