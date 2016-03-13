@@ -261,4 +261,22 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.f", "scala.Option", "scala.Int")
   }
+
+  @Test
+  def apply_method_implicitly() = {
+    idents("""
+      class X {
+        def f = Option(1)
+      }
+    """) === Set("X", "X.f", "scala.Option", "scala.Option.apply", "scala.Int")
+  }
+
+  @Test
+  def apply_method_explicitly() = {
+    idents("""
+      class X {
+        def f = Option.apply(1)
+      }
+    """) === Set("X", "X.f", "scala.Option", "scala.Option.apply", "scala.Int")
+  }
 }

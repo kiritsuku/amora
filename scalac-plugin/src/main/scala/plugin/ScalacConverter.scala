@@ -75,6 +75,18 @@ class ScalacConverter[G <: Global](val global: G) {
       }
   }
 
+  private def expr(m: h.Member, t: Tree): Unit = t match {
+    case Apply(fun, args) ⇒
+      expr(m, fun)
+      args foreach (expr(m, _))
+    case TypeApply(fun, args) ⇒
+      found += mkTypeRef(m, fun.symbol)
+      args foreach (expr(m, _))
+    case t: TypeTree ⇒
+      typeRef(m, t)
+    case _ ⇒
+  }
+
   private def body(m: h.Member, tree: Tree): Unit = tree match {
     case tree: DefDef ⇒
       defDef(m, tree)
@@ -87,6 +99,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case EmptyTree  ⇒
     case _: Literal ⇒
     case _: Assign  ⇒
+    case tree: Apply ⇒
+      expr(m, tree)
   }
 
   private def valDef(d: h.Declaration, t: ValDef): Unit = {
