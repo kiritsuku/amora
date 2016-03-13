@@ -151,6 +151,8 @@ class ScalacConverter[G <: Global](val global: G) {
       case Select(qualifier, selector) ⇒
         found += mkImportRef(qualifier.symbol, selector)
       case EmptyTree ⇒
+      case tree: Import ⇒
+        implDef(c, tree)
     }
   }
 
