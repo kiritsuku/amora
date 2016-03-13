@@ -279,4 +279,16 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.f", "scala.Option", "scala.Option.apply", "scala.Int")
   }
+
+  @Test
+  def method_with_arguments() = {
+    idents("""
+      class X {
+        def f(a: Int, b: String) = {
+          def g(c: Int) = 0
+          0
+        }
+      }
+    """) === Set("X", "X.f", "X.f.a", "X.f.b", "X.f.g", "X.f.g.c", "scala.Int", "java.lang.String")
+  }
 }
