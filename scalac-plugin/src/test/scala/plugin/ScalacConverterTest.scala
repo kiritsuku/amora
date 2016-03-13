@@ -26,7 +26,7 @@ class ScalacConverterTest {
     val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
     val idents = g ask { () ⇒ new ScalacConverter[g.type](g).findIdents(tree) }
 
-    idents.filterNot(Set("scala", "scala.AnyRef"))
+    idents.filterNot(Set("scala", "scala.AnyRef", ""))
   }
 
   @Test
@@ -198,4 +198,22 @@ class ScalacConverterTest {
     """) === Set("a.b.c.d", "a.b.c.d.X")
   }
 
+  @Test
+  def declaration_in_nested_package() = {
+    idents("""
+      package a.b.c.d
+      class X {
+        def x = 0
+      }
+    """) === Set("a.b.c.d", "a.b.c.d.X", "a.b.c.d.X.x", "scala.Int")
+  }
+
+  @Test
+  def empty_package() = {
+    idents("""
+      class X {
+        def x = 0
+      }
+    """) === Set("X", "X.x", "scala.Int")
+  }
 }
