@@ -22,7 +22,11 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def decodedName(name: Name) = {
     def addBackquotes(str: String) = {
-      val (ident, op) = str.span(Chars.isScalaLetter)
+      val (ident, op) =
+        if (Chars.isIdentifierStart(str.head))
+          str.span(Chars.isIdentifierPart)
+        else
+          ("", str)
       val needsBackticks =
         if (op.isEmpty)
           nme.keywords(name.toTermName)
