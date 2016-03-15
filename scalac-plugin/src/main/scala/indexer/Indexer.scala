@@ -72,17 +72,18 @@ object Indexer extends App with LoggerConfig {
   }
 
   def add(modelName: String, data: Seq[Hierarchy])(model: Model) = {
-    val data = s"""
-      @prefix :<$modelName> .
-      @prefix foaf:<http://xmlns.com/foaf/0.1/> .
-
-      :helloWorld
-        a foaf:String;
-        foaf:name "helloWorld";
-        .
-    """
+    val data = s"""{
+        "@context": {
+          "c": "$modelName",
+          "foaf": "http://xmlns.com/foaf/0.1/",
+          "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+        },
+        "@id": "c:test",
+        "@type": "foaf:String",
+        "foaf:name": "test"
+    }"""
     val in = new ByteArrayInputStream(data.getBytes)
-    model.read(in, /* base = */ null, "TURTLE")
+    model.read(in, /* base = */ null, "JSON-LD")
   }
 
   def withSparqlService(endpoint: String, query: String) = {
