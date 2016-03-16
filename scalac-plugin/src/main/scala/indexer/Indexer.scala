@@ -20,7 +20,7 @@ import org.apache.log4j.Level
 import org.apache.log4j.LogManager
 import org.apache.log4j.PatternLayout
 
-import indexer.hierarchy.Hierarchy
+import indexer.hierarchy._
 
 object Indexer extends App with LoggerConfig {
 
@@ -58,29 +58,41 @@ object Indexer extends App with LoggerConfig {
   def httpRequest() = {
     val endpoint = new URL("http://dbpedia.org/sparql")
     val query = """
-      PREFIX ont: <http://dbpedia.org/ontology/>
-      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dbo: <http://dbpedia.org/ontology/>
+      PREFIX dbp: <http://dbpedia.org/property/>
       SELECT DISTINCT ?language ?p ?o WHERE {
-       ?language a ont:ProgrammingLanguage .
-       ?language ont:name ?name .
-       ?name rdfs:label "Scala" .
+       ?language a dbo:ProgrammingLanguage .
+       ?language dbp:name ?name .
+       FILTER(STR(?name) = "Scala") .
        ?language ?p ?o .
       } LIMIT 100
     """
+
     val r = withSparqlService(endpoint.toString(), query)
     ResultSetFormatter.out(System.out, r)
   }
 
   def add(modelName: String, data: Seq[Hierarchy])(model: Model) = {
-    val data = s"""{
+    val data = s"""
+      {
         "@context": {
           "c": "$modelName",
           "s": "http://schema.org/"
         },
-        "@id": "c:test",
-        "@type": "s:Text",
-        "s:name": "test"
-    }"""
+        "@graph": [
+          {
+            "@id": "c:x0",
+            "@type": "s:Text",
+            "s:name": "x0"
+          },
+          {
+            "@id": "c:x1",
+            "@type": "s:Text",
+            "s:name": "x1"
+          }
+        ]
+      }
+    """
     val in = new ByteArrayInputStream(data.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
