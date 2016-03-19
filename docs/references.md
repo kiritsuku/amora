@@ -95,3 +95,7 @@ This document contains a list of references, related projects, articles, blog po
 
 - Package manager:
   - [So you want to write a package manager](https://medium.com/@sdboyer/so-you-want-to-write-a-package-manager-4ae9c17d9527#.hn3lp7s5x)
+
+- Web technologies:
+  - [SPARQL](https://www.w3.org/TR/rdf-sparql-query/)
+  - [JSON-LD](https://www.w3.org/TR/json-ld/)
