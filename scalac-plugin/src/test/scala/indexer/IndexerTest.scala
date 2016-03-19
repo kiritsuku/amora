@@ -58,9 +58,9 @@ class IndexerTest {
     val filename = "<memory>"
     val data = convert(filename, """
       package a.b.c
-      class X
-      class Y
-      class Z
+      class C1
+      class C2
+      class C3
     """)
 
     val result = ask(filename, data, s"""
@@ -70,9 +70,39 @@ class IndexerTest {
       }
     """)
     result === Seq(
-        Data("class", s"${modelName}_root_/a/b/c/X"),
-        Data("class", s"${modelName}_root_/a/b/c/Y"),
-        Data("class", s"${modelName}_root_/a/b/c/Z")
+        Data("class", s"${modelName}_root_/a/b/c/C1"),
+        Data("class", s"${modelName}_root_/a/b/c/C2"),
+        Data("class", s"${modelName}_root_/a/b/c/C3")
+    )
+  }
+
+  @Test
+  def find_methods_in_top_level_classes() = {
+    implicit val modelName = "http://test.model/"
+    val filename = "<memory>"
+    val data = convert(filename, """
+      package a.b.c
+      class C1 {
+        def m1 = 0
+      }
+      class C2 {
+        def m2 = 0
+      }
+      class C3 {
+        def m3 = 0
+      }
+    """)
+
+    val result = ask(filename, data, s"""
+      PREFIX c:<$modelName>
+      SELECT * WHERE {
+        ?member c:tpe "member" .
+      }
+    """)
+    result === Seq(
+        Data("member", s"${modelName}_root_/a/b/c/C1/m1"),
+        Data("member", s"${modelName}_root_/a/b/c/C2/m2"),
+        Data("member", s"${modelName}_root_/a/b/c/C3/m3")
     )
   }
 }
