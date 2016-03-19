@@ -163,13 +163,13 @@ object Indexer extends App with LoggerConfig {
       val parentEntry = mkModel(filename)(parent)
       Seq(memberEntry, parentEntry).mkString(",\n")
     case TermRef(name, outer) ⇒
-      ""
+      "[]"
     case TypeRef(_, decl) ⇒
-      ""
+      "[]"
     case ThisRef(cls) ⇒
-      ""
+      "[]"
     case Root ⇒
-      ""
+      "[]"
   }
 
   def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model) = {
