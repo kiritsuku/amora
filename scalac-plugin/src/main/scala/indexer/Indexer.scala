@@ -89,7 +89,7 @@ object Indexer extends App with LoggerConfig {
     ResultSetFormatter.out(System.out, r)
   }
 
-  private def mkString(filename: String)(h: Hierarchy): String = h match {
+  private def mkModel(filename: String)(h: Hierarchy): String = h match {
     case Package(pkgs) ⇒
       def pkgEntry(pkgs: Seq[String]) = s"""
         {
@@ -116,11 +116,23 @@ object Indexer extends App with LoggerConfig {
           "c:declaration": "c:$path"
         }
       """
-      val declEntry = mkString(filename)(decl)
+      val declEntry = mkModel(filename)(decl)
       Seq(classEntry, declEntry).mkString(",\n")
 
     case Member(parent, name) ⇒
-      ""
+      val path = s"_root_/${parent.toString.replace('.', '/')}"
+      val memberEntry = s"""
+        {
+          "@id": "c:$path/$name",
+          "@type": "s:Text",
+          "s:name": "$name",
+          "c:tpe": "member",
+          "c:file": "$filename",
+          "c:parent": "c:$path"
+        }
+      """
+      val parentEntry = mkModel(filename)(parent)
+      Seq(memberEntry, parentEntry).mkString(",\n")
     case TermRef(name, outer) ⇒
       ""
     case TypeRef(_, decl) ⇒
@@ -140,10 +152,14 @@ object Indexer extends App with LoggerConfig {
           "c:declaration": {
             "@id": "c:declaration",
             "@type": "@id"
+          },
+          "c:parent": {
+            "@id": "c:parent",
+            "@type": "@id"
           }
         },
         "@graph": [
-          ${data map mkString(filename) mkString ",\n"}
+          ${data map mkModel(filename) mkString ",\n"}
         ]
       }
     """
