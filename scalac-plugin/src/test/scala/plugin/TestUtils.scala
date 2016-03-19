@@ -1,6 +1,12 @@
 package plugin
 
+import scala.tools.nsc.Settings
+import scala.tools.nsc.interactive.Global
+import scala.tools.nsc.reporters.ConsoleReporter
+
 import org.junit.ComparisonFailure
+
+import indexer.hierarchy.Hierarchy
 
 object TestUtils {
   final implicit class Assert_===[A](private val actual: A) extends AnyVal {
@@ -21,4 +27,28 @@ object TestUtils {
       }
     }
   }
+
+  def convertToHierarchy(filename: String, src: String): Seq[Hierarchy] = {
+    val s = new Settings
+    val r = new ConsoleReporter(s)
+    val g = new Global(s, r)
+
+    def withResponse[A](f: g.Response[A] ⇒ Unit) = {
+      val r = new g.Response[A]
+      f(r)
+      r
+    }
+
+    val sf = g.newSourceFile(src, filename)
+    val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
+    val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
+
+    res match {
+      case util.Success(res) ⇒
+        res
+      case util.Failure(f) ⇒
+        throw f
+    }
+  }
+
 }

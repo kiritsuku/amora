@@ -1,41 +1,13 @@
 package indexer
 
-import scala.tools.nsc.Settings
-import scala.tools.nsc.interactive.Global
-import scala.tools.nsc.reporters.ConsoleReporter
-
 import org.junit.Test
 
 import indexer.hierarchy.Hierarchy
-import plugin.ScalacConverter
 import plugin.TestUtils
 
 class IndexerTest {
 
   import TestUtils._
-
-  def convert(filename: String, src: String) = {
-    val s = new Settings
-    val r = new ConsoleReporter(s)
-    val g = new Global(s, r)
-
-    def withResponse[A](f: g.Response[A] ⇒ Unit) = {
-      val r = new g.Response[A]
-      f(r)
-      r
-    }
-
-    val sf = g.newSourceFile(src, filename)
-    val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
-    val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
-
-    res match {
-      case util.Success(res) ⇒
-        res
-      case util.Failure(f) ⇒
-        throw f
-    }
-  }
 
   case class Data(varName: String, value: String)
 
@@ -56,7 +28,7 @@ class IndexerTest {
   def find_top_level_classes() = {
     implicit val modelName = "http://test.model/"
     val filename = "<memory>"
-    val data = convert(filename, """
+    val data = convertToHierarchy(filename, """
       package a.b.c
       class C1
       class C2
@@ -80,7 +52,7 @@ class IndexerTest {
   def find_methods_in_top_level_classes() = {
     implicit val modelName = "http://test.model/"
     val filename = "<memory>"
-    val data = convert(filename, """
+    val data = convertToHierarchy(filename, """
       package a.b.c
       class C1 {
         def m1 = 0
@@ -110,7 +82,7 @@ class IndexerTest {
   def find_all_methods_of_single_class() = {
     implicit val modelName = "http://test.model/"
     val filename = "<memory>"
-    val data = convert(filename, """
+    val data = convertToHierarchy(filename, """
       package a.b.c
       class C1 {
         def m11 = 0
