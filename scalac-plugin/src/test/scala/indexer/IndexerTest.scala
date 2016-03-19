@@ -11,7 +11,7 @@ class IndexerTest {
 
   case class Data(varName: String, value: String)
 
-  def ask(data: Seq[(String, Seq[Hierarchy])], query: String)(implicit modelName: String): Seq[Data] = {
+  def ask(modelName: String, data: Seq[(String, Seq[Hierarchy])], query: String): Seq[Data] = {
     Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
         data foreach {
@@ -29,118 +29,102 @@ class IndexerTest {
 
   @Test
   def find_top_level_classes() = {
-    implicit val modelName = "http://test.model/"
-    val filename = "<memory>"
-    val data = convertToHierarchy(filename → """
-      package a.b.c
-      class C1
-      class C2
-      class C3
-    """)
-
-    val result = ask(data, s"""
-      PREFIX c:<$modelName>
-      SELECT * WHERE {
-        ?class c:tpe "class" .
-      }
-    """)
-    result === Seq(
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package a.b.c
+        class C1
+        class C2
+        class C3
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT * WHERE {
+          ?class c:tpe "class" .
+        }
+      """) === Seq(
         Data("class", s"${modelName}_root_/a/b/c/C1"),
         Data("class", s"${modelName}_root_/a/b/c/C2"),
-        Data("class", s"${modelName}_root_/a/b/c/C3")
-    )
-  }
+        Data("class", s"${modelName}_root_/a/b/c/C3"))
+    }
 
   @Test
   def find_methods_in_top_level_classes() = {
-    implicit val modelName = "http://test.model/"
-    val filename = "<memory>"
-    val data = convertToHierarchy(filename → """
-      package a.b.c
-      class C1 {
-        def m1 = 0
-      }
-      class C2 {
-        def m2 = 0
-      }
-      class C3 {
-        def m3 = 0
-      }
-    """)
-
-    val result = ask(data, s"""
-      PREFIX c:<$modelName>
-      SELECT * WHERE {
-        ?member c:tpe "member" .
-      }
-    """)
-    result === Seq(
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package a.b.c
+        class C1 {
+          def m1 = 0
+        }
+        class C2 {
+          def m2 = 0
+        }
+        class C3 {
+          def m3 = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT * WHERE {
+          ?member c:tpe "member" .
+        }
+      """) === Seq(
         Data("member", s"${modelName}_root_/a/b/c/C1/m1"),
         Data("member", s"${modelName}_root_/a/b/c/C2/m2"),
-        Data("member", s"${modelName}_root_/a/b/c/C3/m3")
-    )
+        Data("member", s"${modelName}_root_/a/b/c/C3/m3"))
   }
 
   @Test
   def find_all_methods_of_single_class() = {
-    implicit val modelName = "http://test.model/"
-    val filename = "<memory>"
-    val data = convertToHierarchy(filename → """
-      package a.b.c
-      class C1 {
-        def m11 = 0
-        def m12 = 0
-      }
-      class C2 {
-        def m2 = 0
-      }
-      class C3 {
-        def m3 = 0
-      }
-    """)
-
-    val result = ask(data, s"""
-      PREFIX c:<$modelName>
-      PREFIX s:<http://schema.org/>
-      SELECT ?member WHERE {
-        ?class c:tpe "class" .
-        ?class s:name ?className .
-        FILTER (str(?className) = "C1") .
-        ?member c:parent ?class .
-      }
-    """)
-    result === Seq(
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package a.b.c
+        class C1 {
+          def m11 = 0
+          def m12 = 0
+        }
+        class C2 {
+          def m2 = 0
+        }
+        class C3 {
+          def m3 = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        PREFIX s:<http://schema.org/>
+        SELECT ?member WHERE {
+          ?class c:tpe "class" .
+          ?class s:name ?className .
+          FILTER (str(?className) = "C1") .
+          ?member c:parent ?class .
+        }
+      """) === Seq(
         Data("member", s"${modelName}_root_/a/b/c/C1/m11"),
-        Data("member", s"${modelName}_root_/a/b/c/C1/m12")
-    )
+        Data("member", s"${modelName}_root_/a/b/c/C1/m12"))
   }
 
   @Test
   def find_classes_of_single_file() = {
-    implicit val modelName = "http://test.model/"
-    val data = convertToHierarchy(
-    "f1.scala" → """
-      package a.b.c
-      class C1
-      class C2
-    """,
-    "f2.scala" → """
-      package d.e.f
-      class D1
-      class D2
-    """)
-
-    val result = ask(data, s"""
-      PREFIX c:<$modelName>
-      PREFIX s:<http://schema.org/>
-      SELECT ?class WHERE {
-        ?class c:tpe "class" .
-        ?class c:file "f1.scala" .
-      }
-    """)
-    result === Seq(
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "f1.scala" → """
+        package a.b.c
+        class C1
+        class C2
+      """,
+      "f2.scala" → """
+        package d.e.f
+        class D1
+        class D2
+      """), s"""
+        PREFIX c:<$modelName>
+        PREFIX s:<http://schema.org/>
+        SELECT ?class WHERE {
+          ?class c:tpe "class" .
+          ?class c:file "f1.scala" .
+        }
+      """) === Seq(
         Data("class", s"${modelName}_root_/a/b/c/C1"),
-        Data("class", s"${modelName}_root_/a/b/c/C2")
-    )
+        Data("class", s"${modelName}_root_/a/b/c/C2"))
   }
 }
