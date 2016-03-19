@@ -47,18 +47,6 @@ object Indexer extends App with LoggerConfig {
       withModel(dataset, modelName)(testShow(modelName))
     }
   }
-
-  private def findAllMethodsOfMathedClasses(modelName: String)(regex: String) = s"""
-    PREFIX c:<$modelName>
-    PREFIX s:<http://schema.org/>
-    SELECT * WHERE {
-      ?class c:tpe "class" .
-      ?class s:name ?className .
-      FILTER regex(str(?className), "$regex") .
-      ?member c:parent ?class .
-    }
-  """
-
   private def findClass(modelName: String) = s"""
     PREFIX c:<$modelName>
     PREFIX s:<http://schema.org/>
@@ -79,7 +67,7 @@ object Indexer extends App with LoggerConfig {
   """
 
   private def testShow(modelName: String)(model: Model) = {
-    val q = findAllMethodsOfMathedClasses(modelName)(".*Class.*")
+    val q = findClass(modelName)
     println(queryResultAsString(modelName, q, model))
   }
 
@@ -90,7 +78,7 @@ object Indexer extends App with LoggerConfig {
     val s = new ByteArrayOutputStream
 
     ResultSetFormatter.out(s, r)
-    new String(s.toByteArray())
+    new String(s.toByteArray(), "UTF-8")
   }
 
   def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {

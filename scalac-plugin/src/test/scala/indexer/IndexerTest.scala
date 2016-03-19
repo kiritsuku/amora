@@ -105,4 +105,38 @@ class IndexerTest {
         Data("member", s"${modelName}_root_/a/b/c/C3/m3")
     )
   }
+
+  @Test
+  def find_all_methods_of_single_class() = {
+    implicit val modelName = "http://test.model/"
+    val filename = "<memory>"
+    val data = convert(filename, """
+      package a.b.c
+      class C1 {
+        def m11 = 0
+        def m12 = 0
+      }
+      class C2 {
+        def m2 = 0
+      }
+      class C3 {
+        def m3 = 0
+      }
+    """)
+
+    val result = ask(filename, data, s"""
+      PREFIX c:<$modelName>
+      PREFIX s:<http://schema.org/>
+      SELECT ?member WHERE {
+        ?class c:tpe "class" .
+        ?class s:name ?className .
+        FILTER (str(?className) = "C1") .
+        ?member c:parent ?class .
+      }
+    """)
+    result === Seq(
+        Data("member", s"${modelName}_root_/a/b/c/C1/m11"),
+        Data("member", s"${modelName}_root_/a/b/c/C1/m12")
+    )
+  }
 }
