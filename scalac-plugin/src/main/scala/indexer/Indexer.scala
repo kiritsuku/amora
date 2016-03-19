@@ -91,48 +91,38 @@ object Indexer extends App with LoggerConfig {
 
   private def mkString(filename: String)(h: Hierarchy): String = h match {
     case Package(pkgs) ⇒
-      def x(pkg: String) = s"""
+      def pkgEntry(pkgs: Seq[String]) = s"""
         {
-          "@id": "c:hierarchy",
+          "@id": "c:${pkgs.mkString("/")}",
           "@type": "s:Text",
-          "s:name": "$pkg",
+          "s:name": "${pkgs.last}",
           "c:tpe": "package",
-          "c:file": "$filename"
+          "c:file": "$filename",
+          "c:declaration": "c:${pkgs.init.mkString("/")}"
         }
       """
-      s"""
-        {
-        "@graph": [
-        ${pkgs map x mkString ",\n"}
-        ]
-        }
-      """
+      val entries = ("_root_" +: pkgs).inits.toList.init map pkgEntry
+      entries.mkString(",\n")
+
     case Class(decl, name) ⇒
-      s"""
+      val path = s"_root_/${decl.toString.replace('.', '/')}"
+      val classEntry = s"""
         {
-          "@id": "c:hierarchy",
+          "@id": "c:$path/$name",
           "@type": "s:Text",
           "s:name": "$name",
           "c:tpe": "class",
-          "c:file": "$filename"
+          "c:file": "$filename",
+          "c:declaration": "c:$path"
         }
       """
+      val declEntry = mkString(filename)(decl)
+      Seq(classEntry, declEntry).mkString(",\n")
+
     case Member(parent, name) ⇒
-      s"""
-        {
-          "@id": "c:$filename",
-          "@type": "s:Text",
-          "s:name": "$name"
-        }
-      """
+      ""
     case TermRef(name, outer) ⇒
-      s"""
-        {
-          "@id": "c:$filename",
-          "@type": "s:Text",
-          "s:name": "$name"
-        }
-      """
+      ""
     case TypeRef(_, decl) ⇒
       ""
     case ThisRef(cls) ⇒
@@ -146,17 +136,6 @@ object Indexer extends App with LoggerConfig {
       {
         "@context": {
           "c": "$modelName",
-          "s": "http://schema.org/"
-        },
-        "@graph": [
-        ${data map mkString(filename) mkString ",\n"}
-        ]
-      }
-    """
-    val str2 = s"""
-      {
-        "@context": {
-          "c": "$modelName",
           "s": "http://schema.org/",
           "c:declaration": {
             "@id": "c:declaration",
@@ -164,66 +143,11 @@ object Indexer extends App with LoggerConfig {
           }
         },
         "@graph": [
-          {
-            "@id": "c:_root_/a/b/c/SomeClass",
-            "@type": "s:Text",
-            "s:name": "SomeClass",
-            "c:tpe": "class",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_/a/b/c"
-          },
-          {
-            "@id": "c:_root_/a/b/c/AnotherClass",
-            "@type": "s:Text",
-            "s:name": "AnotherClass",
-            "c:tpe": "class",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_/a/b/c"
-          },
-          {
-            "@id": "c:_root_/d/SomeClass",
-            "@type": "s:Text",
-            "s:name": "SomeClass",
-            "c:tpe": "class",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_/d"
-          },
-          {
-            "@id": "c:_root_/a/b/c",
-            "@type": "s:Text",
-            "s:name": "c",
-            "c:tpe": "package",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_/a/b"
-          },
-          {
-            "@id": "c:_root_/a/b",
-            "@type": "s:Text",
-            "s:name": "b",
-            "c:tpe": "package",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_/a"
-          },
-          {
-            "@id": "c:_root_/a",
-            "@type": "s:Text",
-            "s:name": "a",
-            "c:tpe": "package",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_"
-          },
-          {
-            "@id": "c:_root_/d",
-            "@type": "s:Text",
-            "s:name": "d",
-            "c:tpe": "package",
-            "c:file": "$filename",
-            "c:declaration": "c:_root_"
-          }
+          ${data map mkString(filename) mkString ",\n"}
         ]
       }
     """
-    val in = new ByteArrayInputStream(str2.getBytes)
+    val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
