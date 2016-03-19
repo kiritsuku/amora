@@ -45,6 +45,24 @@ object Indexer extends App with LoggerConfig {
     }
   }
 
+  private def findAllMethodsOfMathedClasses(modelName: String)(regex: String) = s"""
+    PREFIX c:<$modelName>
+    PREFIX s:<http://schema.org/>
+    SELECT * WHERE {
+      ?class c:tpe "class" .
+      ?class s:name ?className .
+      FILTER regex(str(?className), "$regex") .
+      ?member c:parent ?class .
+    }
+  """
+
+  private def findAllClasses(modelName: String) = s"""
+    PREFIX c:<$modelName>
+    SELECT * WHERE {
+      ?class c:tpe "class" .
+    }
+  """
+
   private def findClass(modelName: String) = s"""
     PREFIX c:<$modelName>
     PREFIX s:<http://schema.org/>
