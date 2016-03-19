@@ -36,19 +36,36 @@ object Indexer extends App with LoggerConfig {
     p.substring(0, i+projectName.length)
   }
 
-  def addData(data: Seq[Hierarchy]) = {
+  def addData(filename: String, data: Seq[Hierarchy]) = {
     val modelName = "http://test.model/"
 
     withDataset(s"$storageLocation/dataset") { dataset ⇒
-      withModel(dataset, modelName)(add(modelName, data))
-      withModel(dataset, modelName)(show)
+      withModel(dataset, modelName)(add(modelName, filename, data))
+      withModel(dataset, modelName)(show(modelName))
     }
   }
 
-  def show(model: Model) = {
-    val q = s"""
-      select * { ?s ?p ?o }
-    """
+  private def findClass(modelName: String) = s"""
+    PREFIX c:<$modelName>
+    PREFIX s:<http://schema.org/>
+    SELECT ?elem ?p ?o WHERE {
+      ?elem s:name ?name .
+      FILTER (str(?name) = "SomeClass") .
+      ?elem c:tpe "class" .
+      ?elem c:declaration ?decl .
+      FILTER regex(str(?decl), "_root_/.*/c") .
+      ?elem ?p ?o .
+    }
+  """
+
+  private def selectAll(modelName: String) = s"""
+    SELECT * WHERE {
+      ?s ?p ?o .
+    }
+  """
+
+  def show(modelName: String)(model: Model) = {
+    val q = findClass(modelName)
     val qexec = QueryExecutionFactory.create(QueryFactory.create(q), model)
     val r = ResultSetFactory.makeRewindable(qexec.execSelect())
 
@@ -72,28 +89,141 @@ object Indexer extends App with LoggerConfig {
     ResultSetFormatter.out(System.out, r)
   }
 
-  def add(modelName: String, data: Seq[Hierarchy])(model: Model) = {
-    val data = s"""
+  private def mkString(filename: String)(h: Hierarchy): String = h match {
+    case Package(pkgs) ⇒
+      def x(pkg: String) = s"""
+        {
+          "@id": "c:hierarchy",
+          "@type": "s:Text",
+          "s:name": "$pkg",
+          "c:tpe": "package",
+          "c:file": "$filename"
+        }
+      """
+      s"""
+        {
+        "@graph": [
+        ${pkgs map x mkString ",\n"}
+        ]
+        }
+      """
+    case Class(decl, name) ⇒
+      s"""
+        {
+          "@id": "c:hierarchy",
+          "@type": "s:Text",
+          "s:name": "$name",
+          "c:tpe": "class",
+          "c:file": "$filename"
+        }
+      """
+    case Member(parent, name) ⇒
+      s"""
+        {
+          "@id": "c:$filename",
+          "@type": "s:Text",
+          "s:name": "$name"
+        }
+      """
+    case TermRef(name, outer) ⇒
+      s"""
+        {
+          "@id": "c:$filename",
+          "@type": "s:Text",
+          "s:name": "$name"
+        }
+      """
+    case TypeRef(_, decl) ⇒
+      ""
+    case ThisRef(cls) ⇒
+      ""
+    case Root ⇒
+      ""
+  }
+
+  def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model) = {
+    val str = s"""
       {
         "@context": {
           "c": "$modelName",
           "s": "http://schema.org/"
         },
         "@graph": [
+        ${data map mkString(filename) mkString ",\n"}
+        ]
+      }
+    """
+    val str2 = s"""
+      {
+        "@context": {
+          "c": "$modelName",
+          "s": "http://schema.org/",
+          "c:declaration": {
+            "@id": "c:declaration",
+            "@type": "@id"
+          }
+        },
+        "@graph": [
           {
-            "@id": "c:x0",
+            "@id": "c:_root_/a/b/c/SomeClass",
             "@type": "s:Text",
-            "s:name": "x0"
+            "s:name": "SomeClass",
+            "c:tpe": "class",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_/a/b/c"
           },
           {
-            "@id": "c:x1",
+            "@id": "c:_root_/a/b/c/AnotherClass",
             "@type": "s:Text",
-            "s:name": "x1"
+            "s:name": "AnotherClass",
+            "c:tpe": "class",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_/a/b/c"
+          },
+          {
+            "@id": "c:_root_/d/SomeClass",
+            "@type": "s:Text",
+            "s:name": "SomeClass",
+            "c:tpe": "class",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_/d"
+          },
+          {
+            "@id": "c:_root_/a/b/c",
+            "@type": "s:Text",
+            "s:name": "c",
+            "c:tpe": "package",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_/a/b"
+          },
+          {
+            "@id": "c:_root_/a/b",
+            "@type": "s:Text",
+            "s:name": "b",
+            "c:tpe": "package",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_/a"
+          },
+          {
+            "@id": "c:_root_/a",
+            "@type": "s:Text",
+            "s:name": "a",
+            "c:tpe": "package",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_"
+          },
+          {
+            "@id": "c:_root_/d",
+            "@type": "s:Text",
+            "s:name": "d",
+            "c:tpe": "package",
+            "c:file": "$filename",
+            "c:declaration": "c:_root_"
           }
         ]
       }
     """
-    val in = new ByteArrayInputStream(data.getBytes)
+    val in = new ByteArrayInputStream(str2.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
