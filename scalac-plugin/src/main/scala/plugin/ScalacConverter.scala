@@ -10,11 +10,11 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private val found = ListBuffer[h.Hierarchy]()
 
-  def convert(tree: Tree): util.Try[Set[String]] = {
+  def convert(tree: Tree): util.Try[Seq[h.Hierarchy]] = {
     found.clear()
     util.Try(traverse(tree)) match {
       case util.Success(_) ⇒
-        util.Try(found.map(_.toString).toSet)
+        util.Success(found.toList)
       case util.Failure(f) ⇒
         util.Failure(new RuntimeException(s"Conversion of file `${tree.pos.source.file.absolute}` failed. See underlying issue for more information.", f))
     }

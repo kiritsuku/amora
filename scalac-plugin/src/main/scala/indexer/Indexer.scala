@@ -1,6 +1,7 @@
 package indexer
 
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.net.URL
 
 import scala.util.Failure
@@ -10,9 +11,11 @@ import scala.util.Try
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.QueryExecutionFactory
 import org.apache.jena.query.QueryFactory
+import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ReadWrite
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
+import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
 import org.apache.log4j.ConsoleAppender
@@ -41,7 +44,7 @@ object Indexer extends App with LoggerConfig {
 
     withDataset(s"$storageLocation/dataset") { dataset ⇒
       withModel(dataset, modelName)(add(modelName, filename, data))
-      withModel(dataset, modelName)(show(modelName))
+      withModel(dataset, modelName)(testShow(modelName))
     }
   }
 
@@ -82,12 +85,27 @@ object Indexer extends App with LoggerConfig {
     }
   """
 
-  def show(modelName: String)(model: Model) = {
-    val q = findClass(modelName)
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(q), model)
-    val r = ResultSetFactory.makeRewindable(qexec.execSelect())
+  private def testShow(modelName: String)(model: Model) = {
+    val q = findAllMethodsOfMathedClasses(modelName)(".*Class.*")
+    println(queryResultAsString(modelName, q, model))
+  }
 
-    ResultSetFormatter.out(System.out, r)
+  def queryResultAsString(modelName: String, query: String, model: Model): String = {
+    val r = withQueryService(modelName, query)(model)
+    println(r.getResultVars)
+    println(r.next().get("class"))
+    val s = new ByteArrayOutputStream
+
+    ResultSetFormatter.out(s, r)
+    new String(s.toByteArray())
+  }
+
+  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
+    import scala.collection.JavaConverters._
+    val r = withQueryService(modelName, query)(model)
+    val vars = r.getResultVars.asScala.toSeq
+
+    for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
   }
 
   def httpRequest() = {
@@ -185,12 +203,31 @@ object Indexer extends App with LoggerConfig {
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
-  def withSparqlService(endpoint: String, query: String) = {
+  def withQueryService(modelName: String, query: String)(model: Model): ResultSetRewindable = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+    ResultSetFactory.makeRewindable(qexec.execSelect())
+  }
+
+  def withSparqlService(endpoint: String, query: String): ResultSetRewindable = {
     val qe = QueryExecutionFactory.sparqlService(endpoint, query)
     ResultSetFactory.makeRewindable(qe.execSelect())
   }
 
-  def withDataset(location: String)(f: Dataset ⇒ Unit) = {
+  def withInMemoryDataset(f: Dataset ⇒ Unit): Unit = {
+    val dataset = TDBFactory.createDataset()
+    dataset.begin(ReadWrite.WRITE)
+    Try(f(dataset)) match {
+      case Success(v) ⇒
+        dataset.commit()
+      case Failure(f) ⇒
+        f.printStackTrace()
+        dataset.abort()
+    }
+    dataset.end()
+    dataset.close()
+  }
+
+  def withDataset(location: String)(f: Dataset ⇒ Unit): Unit = {
     val dataset = TDBFactory.createDataset(location)
     dataset.begin(ReadWrite.WRITE)
     Try(f(dataset)) match {
@@ -204,7 +241,7 @@ object Indexer extends App with LoggerConfig {
     dataset.close()
   }
 
-  def withModel(dataset: Dataset, name: String)(f: Model ⇒ Unit) = {
+  def withModel(dataset: Dataset, name: String)(f: Model ⇒ Unit): Unit = {
     val model = dataset.getNamedModel(name)
     model.begin()
     Try(f(model)) match {

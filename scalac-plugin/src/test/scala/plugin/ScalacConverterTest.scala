@@ -28,7 +28,8 @@ class ScalacConverterTest {
 
     res match {
       case util.Success(res) ⇒
-        res.filterNot(Set("scala", "scala.AnyRef", ""))
+        val h = res.map(_.toString).toSet
+        h.filterNot(Set("scala", "scala.AnyRef", ""))
       case util.Failure(f) ⇒
         throw f
     }
