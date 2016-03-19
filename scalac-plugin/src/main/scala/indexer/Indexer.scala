@@ -44,9 +44,13 @@ object Indexer extends App with LoggerConfig {
 
     withDataset(s"$storageLocation/dataset") { dataset ⇒
       withModel(dataset, modelName)(add(modelName, filename, data))
-      withModel(dataset, modelName)(testShow(modelName))
+      withModel(dataset, modelName) { model ⇒
+        val q = findClass(modelName)
+        println(queryResultAsString(modelName, q, model))
+      }
     }
   }
+
   private def findClass(modelName: String) = s"""
     PREFIX c:<$modelName>
     PREFIX s:<http://schema.org/>
@@ -66,15 +70,8 @@ object Indexer extends App with LoggerConfig {
     }
   """
 
-  private def testShow(modelName: String)(model: Model) = {
-    val q = findClass(modelName)
-    println(queryResultAsString(modelName, q, model))
-  }
-
   def queryResultAsString(modelName: String, query: String, model: Model): String = {
     val r = withQueryService(modelName, query)(model)
-    println(r.getResultVars)
-    println(r.next().get("class"))
     val s = new ByteArrayOutputStream
 
     ResultSetFormatter.out(s, r)
