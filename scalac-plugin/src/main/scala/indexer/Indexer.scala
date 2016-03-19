@@ -59,13 +59,6 @@ object Indexer extends App with LoggerConfig {
     }
   """
 
-  private def findAllClasses(modelName: String) = s"""
-    PREFIX c:<$modelName>
-    SELECT * WHERE {
-      ?class c:tpe "class" .
-    }
-  """
-
   private def findClass(modelName: String) = s"""
     PREFIX c:<$modelName>
     PREFIX s:<http://schema.org/>
