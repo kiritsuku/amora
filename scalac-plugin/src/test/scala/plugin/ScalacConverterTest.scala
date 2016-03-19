@@ -7,7 +7,7 @@ class ScalacConverterTest {
   import TestUtils._
 
   def convert(src: String) = {
-    val res = convertToHierarchy("<memory", src)
+    val res = convertToHierarchy("<memory" → src).head._2
     val h = res.map(_.toString).toSet
     h.filterNot(Set("scala", "scala.AnyRef", ""))
   }

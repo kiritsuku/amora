@@ -28,7 +28,8 @@ object TestUtils {
     }
   }
 
-  def convertToHierarchy(filename: String, src: String): Seq[Hierarchy] = {
+  /** `data` is a sequence of `(filename, src)` */
+  def convertToHierarchy(data: (String, String)*): Seq[(String, Seq[Hierarchy])] = {
     val s = new Settings
     val r = new ConsoleReporter(s)
     val g = new Global(s, r)
@@ -39,15 +40,22 @@ object TestUtils {
       r
     }
 
-    val sf = g.newSourceFile(src, filename)
-    val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
-    val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
+    val sfs = data map {
+      case (filename, src) ⇒
+        val sf = g.newSourceFile(src, filename)
+        filename → sf
+    }
+    sfs map {
+      case (filename, sf) ⇒
+        val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
+        val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
 
-    res match {
-      case util.Success(res) ⇒
-        res
-      case util.Failure(f) ⇒
-        throw f
+        res match {
+          case util.Success(res) ⇒
+            filename → res
+          case util.Failure(f) ⇒
+            throw f
+        }
     }
   }
 
