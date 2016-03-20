@@ -1,6 +1,9 @@
 package indexer.hierarchy
 
 sealed trait Hierarchy {
+
+  private var as = Set[Attachment]()
+
   final def asString: String = this match {
     case Decl(name, Root) ⇒
       name
@@ -26,6 +29,12 @@ sealed trait Hierarchy {
   }
 
   def position: Position = NoPosition
+
+  def attachments: Set[Attachment] = as
+
+  def addAttachments(as: Attachment*): Unit = {
+    as foreach (this.as += _)
+  }
 }
 
 sealed trait Declaration extends Hierarchy

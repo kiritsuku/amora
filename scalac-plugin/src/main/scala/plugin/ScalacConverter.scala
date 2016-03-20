@@ -203,8 +203,10 @@ class ScalacConverter[G <: Global](val global: G) {
     fullName(sym) match {
       case head +: tail ⇒
         val decl = h.Decl(head, h.Root)
+        decl.addAttachments(h.PackageDecl)
         Some(tail.foldLeft(decl) { (parent, name) ⇒
           val decl = h.Decl(name, parent)
+          decl.addAttachments(h.PackageDecl)
           decl
         })
       case _ ⇒

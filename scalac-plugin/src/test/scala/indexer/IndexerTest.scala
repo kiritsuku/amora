@@ -175,7 +175,7 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         SELECT ?s WHERE {
-          ?s c:tpe "declaration" .
+          ?s c:attachment "package" .
         }
       """) === Seq(
         Data("s", s"${modelName}_root_/a"),

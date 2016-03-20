@@ -39,26 +39,33 @@ object Indexer {
     }
   }
 
+  private def attachments(h: Hierarchy): String = {
+    val as = h.attachments.map(a ⇒ s""""c:attachment": "${a.asString}"""").mkString(",\n")
+    if (as.isEmpty) "" else s"$as,"
+  }
+
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
-    case Decl(name, Root) ⇒
+    case decl @ Decl(name, Root) ⇒
       s"""
         {
           "@id": "c:_root_/$name",
           "@type": "s:Text",
           "s:name": "$name",
+          ${attachments(decl)}
           "c:tpe": "declaration",
           "c:file": "$filename",
           "c:parent": "c:_root_"
         }
       """
 
-    case Decl(name, parent) ⇒
+    case decl @ Decl(name, parent) ⇒
       val path = s"_root_/${parent.asString.replace('.', '/')}"
       val classEntry = s"""
         {
           "@id": "c:$path/$name",
           "@type": "s:Text",
           "s:name": "$name",
+          ${attachments(decl)}
           "c:tpe": "declaration",
           "c:file": "$filename",
           "c:parent": "c:$path"
@@ -136,6 +143,9 @@ object Indexer {
           "c:usage": {
             "@id": "c:usage",
             "@type": "@id"
+          },
+          "c:attachment": {
+            "@id": "c:attachment"
           },
           "c:reference": {
             "@id": "c:reference",
