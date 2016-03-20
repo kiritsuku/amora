@@ -1,5 +1,8 @@
 package plugin
 
+import java.io.PrintWriter
+import java.io.StringWriter
+
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.ConsoleReporter
@@ -35,8 +38,9 @@ object TestUtils extends AnyRef with LoggerConfig {
   /** `data` is a sequence of `(filename, src)` */
   def convertToHierarchy(data: (String, String)*): Seq[(String, Seq[Hierarchy])] = {
     val s = new Settings
-    val r = new ConsoleReporter(s)
-    val g = new Global(s, r)
+    val writer = new StringWriter
+    val reporter = new ConsoleReporter(s, Console.in, new PrintWriter(writer, /* autoFlush */true))
+    val g = new Global(s, reporter)
 
     def withResponse[A](f: g.Response[A] ⇒ Unit) = {
       val r = new g.Response[A]
@@ -52,6 +56,10 @@ object TestUtils extends AnyRef with LoggerConfig {
     sfs map {
       case (filename, sf) ⇒
         val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
+
+        if (reporter.hasErrors || reporter.hasWarnings)
+          throw new IllegalStateException(s"Errors occurred during compilation of file `$filename`:\n$writer")
+
         val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
 
         res match {
