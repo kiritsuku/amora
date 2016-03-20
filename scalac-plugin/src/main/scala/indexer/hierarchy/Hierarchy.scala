@@ -25,6 +25,8 @@ sealed trait Hierarchy {
     case Root ⇒
       "_root_"
   }
+
+  def position: Position = NoPosition
 }
 
 sealed trait Declaration extends Hierarchy
