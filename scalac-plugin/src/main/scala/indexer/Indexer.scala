@@ -85,8 +85,21 @@ object Indexer {
       Seq(memberEntry, parentEntry).mkString(",\n")
     case TermRef(name, outer) ⇒
       "[]"
-    case TypeRef(_, decl) ⇒
-      "[]"
+    case ref @ TypeRef(usage, decl) ⇒
+      val path = s"_root_/${decl.asString.replace('.', '/')}"
+      val f = URLEncoder.encode(filename, "UTF-8")
+      val h = ref.hashCode
+      val u = s"_root_/${usage.asString.replace('.', '/')}"
+      s"""
+        {
+          "@id": "c:$path/$f/$h",
+          "@type": "s:Text",
+          "c:tpe": "typeref",
+          "c:file": "$filename",
+          "c:reference": "c:$path",
+          "c:usage": "c:$u"
+        }
+      """
     case ThisRef(cls) ⇒
       "[]"
     case Root ⇒
@@ -105,6 +118,14 @@ object Indexer {
           },
           "c:parent": {
             "@id": "c:parent",
+            "@type": "@id"
+          },
+          "c:usage": {
+            "@id": "c:usage",
+            "@type": "@id"
+          },
+          "c:reference": {
+            "@id": "c:reference",
             "@type": "@id"
           }
         },

@@ -127,7 +127,6 @@ class IndexerTest {
         class D2
       """), s"""
         PREFIX c:<$modelName>
-        PREFIX s:<http://schema.org/>
         SELECT ?class WHERE {
           ?class c:tpe "class" .
           ?class c:file "f1.scala" .
@@ -135,5 +134,34 @@ class IndexerTest {
       """) === Seq(
         Data("class", s"${modelName}_root_/a/b/c/C1"),
         Data("class", s"${modelName}_root_/a/b/c/C2"))
+  }
+
+  @Test
+  def find_usages() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "f1.scala" → """
+        package a.b.c
+        import d.e.f.Y
+        class X {
+          def m: Y = null
+        }
+      """,
+      "f2.scala" → """
+        package d.e.f
+        class Y
+      """), s"""
+        PREFIX c:<$modelName>
+        PREFIX s:<http://schema.org/>
+        SELECT ?usage WHERE {
+          ?class c:tpe "class" .
+          ?class s:name ?className .
+          FILTER (str(?className) = "Y") .
+          ?ref c:reference ?class .
+          ?ref c:usage ?usage .
+        }
+      """) === Seq(
+        Data("usage", s"${modelName}_root_/a/b/c/X/m"),
+        Data("usage", s"${modelName}_root_/d/e/f"))
   }
 }
