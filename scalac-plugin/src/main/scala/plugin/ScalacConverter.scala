@@ -3,20 +3,23 @@ package plugin
 import scala.collection.mutable.ListBuffer
 import scala.reflect.internal.Chars
 import scala.tools.nsc.Global
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 class ScalacConverter[G <: Global](val global: G) {
-  import global._
+  import global.{Try ⇒ TTry, _}
   import indexer.{ hierarchy ⇒ h }
 
   private val found = ListBuffer[h.Hierarchy]()
 
-  def convert(tree: Tree): util.Try[Seq[h.Hierarchy]] = {
+  def convert(tree: Tree): Try[Seq[h.Hierarchy]] = {
     found.clear()
-    util.Try(traverse(tree)) match {
-      case util.Success(_) ⇒
-        util.Success(found.toList)
-      case util.Failure(f) ⇒
-        util.Failure(new RuntimeException(s"Conversion of file `${tree.pos.source.file.absolute}` failed. See underlying issue for more information.", f))
+    Try(traverse(tree)) match {
+      case Success(_) ⇒
+        Success(found.toList)
+      case Failure(f) ⇒
+        Failure(new RuntimeException(s"Conversion of file `${tree.pos.source.file.absolute}` failed. See underlying issue for more information.", f))
     }
   }
 
@@ -216,7 +219,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case If(cond, thenp, elsep)                        ⇒
     case Match(selector, cases)                        ⇒
     case Return(expr)                                  ⇒
-    case Try(block, catches, finalizer)                ⇒
+    case TTry(block, catches, finalizer)                ⇒
     case Throw(expr)                                   ⇒
     case New(tpt)                                      ⇒
     case Typed(expr, tpt)                              ⇒

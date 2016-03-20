@@ -3,12 +3,16 @@ package plugin
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.ConsoleReporter
+import scala.util.Failure
+import scala.util.Success
 
 import org.junit.ComparisonFailure
 
 import indexer.hierarchy.Hierarchy
+import util.LoggerConfig
 
-object TestUtils {
+object TestUtils extends AnyRef with LoggerConfig {
+
   final implicit class Assert_===[A](private val actual: A) extends AnyVal {
     def ===(expected: A): Unit = {
       if (actual != expected) {
@@ -51,9 +55,9 @@ object TestUtils {
         val res = g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) }
 
         res match {
-          case util.Success(res) ⇒
+          case Success(res) ⇒
             filename → res
-          case util.Failure(f) ⇒
+          case Failure(f) ⇒
             throw f
         }
     }
