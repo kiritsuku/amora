@@ -1,27 +1,27 @@
 package indexer.hierarchy
 
 sealed trait Hierarchy {
-  override def toString = this match {
+  final def asString: String = this match {
     case Package(pkgs) ⇒
       pkgs mkString "."
     case Class(pkg: Package, name) ⇒
       if (pkg.pkgs.isEmpty)
         name
       else
-        s"$pkg.$name"
+        s"${pkg.asString}.$name"
     case Class(decl, name) ⇒
-      s"$decl.$name"
+      s"${decl.asString}.$name"
     case Member(parent, name) ⇒
-      s"$parent.$name"
+      s"${parent.asString}.$name"
     case TermRef(name, outer) ⇒
       if (outer == Root)
         name
       else
-        s"$outer.$name"
+        s"${outer.asString}.$name"
     case TypeRef(_, decl) ⇒
-      decl.toString
+      decl.asString
     case ThisRef(cls) ⇒
-      cls.toString
+      cls.asString
     case Root ⇒
       "_root_"
   }

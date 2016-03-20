@@ -122,7 +122,7 @@ object Indexer extends App with LoggerConfig {
       entries.mkString(",\n")
 
     case Class(decl, name) ⇒
-      val path = s"_root_/${decl.toString.replace('.', '/')}"
+      val path = s"_root_/${decl.asString.replace('.', '/')}"
       val classEntry = s"""
         {
           "@id": "c:$path/$name",
@@ -137,7 +137,7 @@ object Indexer extends App with LoggerConfig {
       Seq(classEntry, declEntry).mkString(",\n")
 
     case Member(parent, name) ⇒
-      val path = s"_root_/${parent.toString.replace('.', '/')}"
+      val path = s"_root_/${parent.asString.replace('.', '/')}"
       val memberEntry = s"""
         {
           "@id": "c:$path/$name",
