@@ -53,6 +53,7 @@ object TestUtils extends AnyRef with LoggerConfig {
         val sf = g.newSourceFile(src, filename)
         filename → sf
     }
+    withResponse[Unit] { g.askReload(sfs.map(_._2).toList, _) }.get
     sfs map {
       case (filename, sf) ⇒
         val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get

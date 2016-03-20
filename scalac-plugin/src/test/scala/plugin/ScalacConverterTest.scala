@@ -12,6 +12,12 @@ class ScalacConverterTest {
     h.filterNot(Set("scala", "scala.AnyRef", ""))
   }
 
+  def convert(data: (String, String)*) = {
+    val res = convertToHierarchy(data: _*).flatMap(_._2)
+    val h = res.map(_.asString).toSet
+    h.filterNot(Set("scala", "scala.AnyRef", ""))
+  }
+
   @Test
   def single_class() = {
     convert("package pkg; class X") === Set("pkg", "pkg.X")
@@ -357,6 +363,22 @@ class ScalacConverterTest {
         meth(v ⇒ v)
       }
     """) === Set("X", "X.meth", "X.meth.f", "X.v", "scala.Function1", "scala.Int")
+  }
+
+  @Test
+  def reference_across_multiple_files() = {
+    convert(
+    "f1.scala" → """
+      package a
+      import b.Y
+      class X {
+        def m: Y = null
+      }
+    """,
+    "f2.scala" → """
+      package b
+      class Y
+    """) === Set("a", "a.X", "a.X.m", "b", "b.Y")
   }
 
 }
