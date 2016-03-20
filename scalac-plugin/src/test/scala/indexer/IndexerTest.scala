@@ -1,5 +1,7 @@
 package indexer
 
+import scala.util._
+
 import org.junit.Test
 
 import indexer.hierarchy.Hierarchy
@@ -12,19 +14,26 @@ class IndexerTest {
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, data: Seq[(String, Seq[Hierarchy])], query: String): Seq[Data] = {
-    Indexer.withInMemoryDataset { dataset ⇒
+    val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
         data foreach {
           case (filename, data) ⇒
             Indexer.add(modelName, filename, data)(model)
         }
-        val res = Indexer.queryResult(modelName, query, model) { (v, q) ⇒
-          Data(v, q.get(v).toString)
+        Indexer.queryResult(modelName, query, model) { (v, q) ⇒
+          val res = q.get(v)
+          require(res != null, s"The variable `$v` does not exist in the result set.")
+          Data(v, res.toString)
         }
-        return res.sortBy(d ⇒ (d.varName, d.value))
-      }
+      }.flatten
+    }.flatten
+
+    res match {
+      case Success(res) ⇒
+        res.sortBy(d ⇒ (d.varName, d.value))
+      case Failure(f) ⇒
+        throw new RuntimeException("An error happened during the test.", f)
     }
-    throw new RuntimeException("An error happened during the test. See previous error message.")
   }
 
   @Test

@@ -39,7 +39,7 @@ object Indexer extends App with LoggerConfig {
     p.substring(0, i+projectName.length)
   }
 
-  def addData(filename: String, data: Seq[Hierarchy]) = {
+  private def addData(filename: String, data: Seq[Hierarchy]) = {
     val modelName = "http://test.model/"
 
     withDataset(s"$storageLocation/dataset") { dataset ⇒
@@ -70,23 +70,25 @@ object Indexer extends App with LoggerConfig {
     }
   """
 
-  def queryResultAsString(modelName: String, query: String, model: Model): String = {
-    val r = withQueryService(modelName, query)(model)
-    val s = new ByteArrayOutputStream
+  def queryResultAsString(modelName: String, query: String, model: Model): Try[String] = {
+    withQueryService(modelName, query)(model) map { r ⇒
+      val s = new ByteArrayOutputStream
 
-    ResultSetFormatter.out(s, r)
-    new String(s.toByteArray(), "UTF-8")
+      ResultSetFormatter.out(s, r)
+      new String(s.toByteArray(), "UTF-8")
+    }
   }
 
-  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
+  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
     import scala.collection.JavaConverters._
-    val r = withQueryService(modelName, query)(model)
-    val vars = r.getResultVars.asScala.toSeq
+     withQueryService(modelName, query)(model) map { r ⇒
+      val vars = r.getResultVars.asScala.toSeq
 
-    for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
+      for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
+    }
   }
 
-  def httpRequest() = {
+  private def httpRequest() = {
     val endpoint = new URL("http://dbpedia.org/sparql")
     val query = """
       PREFIX dbo: <http://dbpedia.org/ontology/>
@@ -99,8 +101,9 @@ object Indexer extends App with LoggerConfig {
       } LIMIT 100
     """
 
-    val r = withSparqlService(endpoint.toString(), query)
-    ResultSetFormatter.out(System.out, r)
+    withSparqlService(endpoint.toString(), query) map { r ⇒
+      ResultSetFormatter.out(System.out, r)
+    }
   }
 
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
@@ -157,7 +160,7 @@ object Indexer extends App with LoggerConfig {
       "[]"
   }
 
-  def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model) = {
+  def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model): Try[Unit] = Try {
     val str = s"""
       {
         "@context": {
@@ -181,56 +184,41 @@ object Indexer extends App with LoggerConfig {
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
-  def withQueryService(modelName: String, query: String)(model: Model): ResultSetRewindable = {
+  def withQueryService(modelName: String, query: String)(model: Model): Try[ResultSetRewindable] = Try {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     ResultSetFactory.makeRewindable(qexec.execSelect())
   }
 
-  def withSparqlService(endpoint: String, query: String): ResultSetRewindable = {
+  def withSparqlService(endpoint: String, query: String): Try[ResultSetRewindable] = Try {
     val qe = QueryExecutionFactory.sparqlService(endpoint, query)
     ResultSetFactory.makeRewindable(qe.execSelect())
   }
 
-  def withInMemoryDataset(f: Dataset ⇒ Unit): Unit = {
+  def withInMemoryDataset[A](f: Dataset ⇒ A): Try[A] = {
     val dataset = TDBFactory.createDataset()
-    dataset.begin(ReadWrite.WRITE)
-    Try(f(dataset)) match {
-      case Success(v) ⇒
-        dataset.commit()
-      case Failure(f) ⇒
-        f.printStackTrace()
-        dataset.abort()
-    }
-    dataset.end()
-    dataset.close()
+    internalWithDataset(dataset)(f)
   }
 
-  def withDataset(location: String)(f: Dataset ⇒ Unit): Unit = {
+  def withDataset[A](location: String)(f: Dataset ⇒ A): Try[A] = {
     val dataset = TDBFactory.createDataset(location)
-    dataset.begin(ReadWrite.WRITE)
-    Try(f(dataset)) match {
-      case Success(v) ⇒
-        dataset.commit()
-      case Failure(f) ⇒
-        f.printStackTrace()
-        dataset.abort()
-    }
-    dataset.end()
-    dataset.close()
+    internalWithDataset(dataset)(f)
   }
 
-  def withModel(dataset: Dataset, name: String)(f: Model ⇒ Unit): Unit = {
+  def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): Try[A] = {
     val model = dataset.getNamedModel(name)
-    model.begin()
-    Try(f(model)) match {
-      case Success(v) ⇒
-        model.commit()
-      case Failure(f) ⇒
-        f.printStackTrace()
-        // doesn't seem to be supported
-        // model.abort()
-    }
-    model.close()
+    Try(model.begin())
+      .map { _ ⇒ f(model) }
+      .map { res ⇒ model.commit(); res }
+      .map { res ⇒ model.close(); res }
+  }
+
+  private def internalWithDataset[A](dataset: Dataset)(f: Dataset ⇒ A): Try[A] = {
+    Try(dataset.begin(ReadWrite.WRITE))
+      .map { _ ⇒ f(dataset) }
+      .map { res ⇒ dataset.commit(); res }
+      .map { res ⇒ dataset.end(); res }
+      .map { res ⇒ dataset.close(); res }
+      .recover { case f ⇒ dataset.abort(); throw f }
   }
 }
 
