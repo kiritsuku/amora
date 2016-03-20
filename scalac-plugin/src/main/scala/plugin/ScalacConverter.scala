@@ -49,7 +49,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
-    val pkg = h.Package(fullName(sym.owner))
+    val pkg = mkPackageDecl(sym.owner).getOrElse(h.Root)
     val cls = h.Class(pkg, if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name))
     h.TypeRef(usage, cls)
   }
@@ -77,7 +77,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
-    val pkg = h.Package(fullName(qualifier))
+    val pkg = mkPackageDecl(qualifier).getOrElse(h.Root)
     val decl = h.Class(pkg, decodedName(selector))
     h.TypeRef(pkg, decl)
   }

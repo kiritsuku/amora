@@ -67,20 +67,6 @@ object Indexer {
       val declEntry = mkModel(filename)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
-    case Package(pkgs) ⇒
-      def pkgEntry(pkgs: Seq[String]) = s"""
-        {
-          "@id": "c:${pkgs.mkString("/")}",
-          "@type": "s:Text",
-          "s:name": "${pkgs.last}",
-          "c:tpe": "package",
-          "c:file": "$filename",
-          "c:declaration": "c:${pkgs.init.mkString("/")}"
-        }
-      """
-      val entries = ("_root_" +: pkgs).inits.toList.init map pkgEntry
-      entries.mkString(",\n")
-
     case Class(decl, name) ⇒
       val path = s"_root_/${decl.asString.replace('.', '/')}"
       val classEntry = s"""

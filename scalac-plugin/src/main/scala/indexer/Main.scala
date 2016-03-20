@@ -11,18 +11,18 @@ object Main extends App with LoggerConfig {
 
   import Indexer._
 
-  val m = Member(Class(Package(Seq("a", "b", "c")), "SomeClass"), "method")
-  val c = Class(Package(Seq("d", "e", "f")), "SomeType")
+  val m = Member(Class(Decl("c", Decl("b", Decl("a", Root))), "SomeClass"), "method")
+  val c = Class(Decl("f", Decl("e", Decl("d", Root))), "SomeType")
   val data = Seq(
-      Class(Package(Seq("a", "b", "c")), "TestClass"),
-      Class(Package(Seq("a", "b", "c")), "SomeClass"),
-      Class(Package(Seq("a", "b", "c")), "AnotherClass"),
+//      Class(Package(Seq("a", "b", "c")), "TestClass"),
+//      Class(Package(Seq("a", "b", "c")), "SomeClass"),
+//      Class(Package(Seq("a", "b", "c")), "AnotherClass"),
       c,
-      Class(Package(Seq("d", "e", "f")), "SomeClass"),
+//      Class(Package(Seq("d", "e", "f")), "SomeClass"),
       m,
-      Member(Class(Package(Seq("d", "e", "f")), "SomeClass"), "toList"),
-      Member(Class(Package(Seq("d", "e", "f")), "SomeType"), "someFunc"),
-      Member(Class(Package(Seq("a", "b", "c")), "AnotherClass"), "anotherMethod"),
+//      Member(Class(Package(Seq("d", "e", "f")), "SomeClass"), "toList"),
+//      Member(Class(Package(Seq("d", "e", "f")), "SomeType"), "someFunc"),
+//      Member(Class(Package(Seq("a", "b", "c")), "AnotherClass"), "anotherMethod"),
       TypeRef(m, c)
   )
   addData("testfile.scala", data)

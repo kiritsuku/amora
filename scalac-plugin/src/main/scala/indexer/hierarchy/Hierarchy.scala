@@ -6,15 +6,8 @@ sealed trait Hierarchy {
       name
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
-    case Package(pkgs) ⇒
-      pkgs mkString "."
     case Class(Root, name) ⇒
       name
-    case Class(pkg: Package, name) ⇒
-      if (pkg.pkgs.isEmpty)
-        name
-      else
-        s"${pkg.asString}.$name"
     case Class(decl, name) ⇒
       s"${decl.asString}.$name"
     case Member(parent, name) ⇒
@@ -37,7 +30,6 @@ sealed trait Hierarchy {
 
 sealed trait Declaration extends Hierarchy
 
-final case class Package(pkgs: Seq[String]) extends Declaration
 final case class Decl(name: String, parent: Declaration) extends Declaration
 
 final case class Class(decl: Declaration, name: String) extends Declaration
