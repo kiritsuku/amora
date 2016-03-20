@@ -164,4 +164,22 @@ class IndexerTest {
         Data("usage", s"${modelName}_root_/a/b/c/X/m"),
         Data("usage", s"${modelName}_root_/d/e/f"))
   }
+
+  @Test
+  def find_package_declarations() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package a.b.c
+        class X
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:tpe "declaration" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/a"),
+        Data("s", s"${modelName}_root_/a/b"),
+        Data("s", s"${modelName}_root_/a/b/c"))
+    }
 }

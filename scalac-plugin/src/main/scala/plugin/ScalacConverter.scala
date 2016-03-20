@@ -199,11 +199,24 @@ class ScalacConverter[G <: Global](val global: G) {
       }
   }
 
+  private def mkPackageDecl(sym: Symbol): Option[h.Decl] = {
+    fullName(sym) match {
+      case head +: tail ⇒
+        val decl = h.Decl(head, h.Root)
+        Some(tail.foldLeft(decl) { (parent, name) ⇒
+          val decl = h.Decl(name, parent)
+          decl
+        })
+      case _ ⇒
+        None
+    }
+  }
+
   private def traverse(tree: Tree) = tree match {
     case PackageDef(pid, stats) ⇒
-      val pkg = h.Package(fullName(pid.symbol))
-      found += pkg
-      stats foreach (implDef(pkg, _))
+      val pkg = mkPackageDecl(pid.symbol)
+      pkg foreach (found += _)
+      stats foreach (implDef(pkg.getOrElse(h.Root), _))
     case LabelDef(name, params, rhs)                   ⇒
     case Import(expr, selectors)                       ⇒
     case DocDef(comment, definition)                   ⇒

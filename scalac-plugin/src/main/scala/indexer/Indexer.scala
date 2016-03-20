@@ -40,6 +40,33 @@ object Indexer {
   }
 
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
+    case Decl(name, Root) ⇒
+      s"""
+        {
+          "@id": "c:_root_/$name",
+          "@type": "s:Text",
+          "s:name": "$name",
+          "c:tpe": "declaration",
+          "c:file": "$filename",
+          "c:parent": "c:_root_"
+        }
+      """
+
+    case Decl(name, parent) ⇒
+      val path = s"_root_/${parent.asString.replace('.', '/')}"
+      val classEntry = s"""
+        {
+          "@id": "c:$path/$name",
+          "@type": "s:Text",
+          "s:name": "$name",
+          "c:tpe": "declaration",
+          "c:file": "$filename",
+          "c:parent": "c:$path"
+        }
+      """
+      val declEntry = mkModel(filename)(parent)
+      Seq(classEntry, declEntry).mkString(",\n")
+
     case Package(pkgs) ⇒
       def pkgEntry(pkgs: Seq[String]) = s"""
         {

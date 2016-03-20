@@ -2,8 +2,14 @@ package indexer.hierarchy
 
 sealed trait Hierarchy {
   final def asString: String = this match {
+    case Decl(name, Root) ⇒
+      name
+    case Decl(name, parent) ⇒
+      s"${parent.asString}.$name"
     case Package(pkgs) ⇒
       pkgs mkString "."
+    case Class(Root, name) ⇒
+      name
     case Class(pkg: Package, name) ⇒
       if (pkg.pkgs.isEmpty)
         name
@@ -32,6 +38,7 @@ sealed trait Hierarchy {
 sealed trait Declaration extends Hierarchy
 
 final case class Package(pkgs: Seq[String]) extends Declaration
+final case class Decl(name: String, parent: Declaration) extends Declaration
 
 final case class Class(decl: Declaration, name: String) extends Declaration
 
@@ -46,4 +53,4 @@ final case class TypeRef(usage: Hierarchy, decl: Declaration) extends Reference
 
 final case class ThisRef(cls: Class) extends Reference
 
-final case object Root extends Reference
+final case object Root extends Reference with Declaration
