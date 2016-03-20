@@ -74,20 +74,6 @@ object Indexer {
       val declEntry = mkModel(filename)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
-    case Member(parent, name) ⇒
-      val path = s"_root_/${parent.asString.replace('.', '/')}"
-      val memberEntry = s"""
-        {
-          "@id": "c:$path/$name",
-          "@type": "s:Text",
-          "s:name": "$name",
-          "c:tpe": "member",
-          "c:file": "$filename",
-          "c:parent": "c:$path"
-        }
-      """
-      val parentEntry = mkModel(filename)(parent)
-      Seq(memberEntry, parentEntry).mkString(",\n")
     case TermRef(name, outer) ⇒
       "[]"
     case ref @ TypeRef(usage, decl) ⇒

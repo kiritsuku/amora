@@ -9,8 +9,6 @@ sealed trait Hierarchy {
       name
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
-    case Member(parent, name) ⇒
-      s"${parent.asString}.$name"
     case TermRef(name, outer) ⇒
       if (outer == Root)
         name
@@ -36,8 +34,6 @@ sealed trait Hierarchy {
 sealed trait Declaration extends Hierarchy
 
 final case class Decl(name: String, parent: Declaration) extends Declaration
-
-final case class Member(parent: Declaration, name: String) extends Declaration
 
 sealed trait Reference extends Hierarchy
 

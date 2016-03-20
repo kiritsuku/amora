@@ -74,12 +74,12 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         SELECT * WHERE {
-          ?member c:tpe "member" .
+          ?def c:attachment "def" .
         }
       """) === Seq(
-        Data("member", s"${modelName}_root_/a/b/c/C1/m1"),
-        Data("member", s"${modelName}_root_/a/b/c/C2/m2"),
-        Data("member", s"${modelName}_root_/a/b/c/C3/m3"))
+        Data("def", s"${modelName}_root_/a/b/c/C1/m1"),
+        Data("def", s"${modelName}_root_/a/b/c/C2/m2"),
+        Data("def", s"${modelName}_root_/a/b/c/C3/m3"))
   }
 
   @Test

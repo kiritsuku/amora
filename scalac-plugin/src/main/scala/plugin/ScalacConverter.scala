@@ -114,7 +114,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
   }
 
-  private def body(m: h.Member, tree: Tree): Unit = tree match {
+  private def body(m: h.Decl, tree: Tree): Unit = tree match {
     case tree: DefDef ⇒
       defDef(m, tree)
     case tree: ValDef ⇒
@@ -134,7 +134,8 @@ class ScalacConverter[G <: Global](val global: G) {
     val ValDef(_, name, tpt, rhs) = t
     if (t.symbol.isSynthetic)
       return
-    val m = h.Member(d, decodedName(name))
+    val m = h.Decl(decodedName(name), d)
+    m.addAttachments(h.ValDecl)
     found += m
     typeRef(m, tpt)
     body(m, rhs)
@@ -144,9 +145,10 @@ class ScalacConverter[G <: Global](val global: G) {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
     if (t.name == nme.CONSTRUCTOR || t.name == nme.MIXIN_CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor)
       return
-    val m = h.Member(c, decodedName(name))
+    val m = h.Decl(decodedName(name), c)
+    m.addAttachments(h.DefDecl)
     found += m
-    tparams foreach (typeDef(m, _))
+    tparams foreach (typeParamDef(m, _))
     vparamss foreach (_ foreach (valDef(m, _)))
     val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
     if (!isGeneratedSetter)
@@ -175,11 +177,12 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def typeDef(d: h.Declaration, tree: TypeDef): Unit = {
+  private def typeParamDef(d: h.Declaration, tree: TypeDef): Unit = {
     val TypeDef(_, name, tparams, _) = tree
-    val m = h.Member(d, decodedName(name))
+    val m = h.Decl(decodedName(name), d)
+    m.addAttachments(h.TypeParamDecl)
     found += m
-    tparams foreach (typeDef(m, _))
+    tparams foreach (typeParamDef(m, _))
   }
 
   private def implDef(decl: h.Declaration, tree: Tree): Unit = tree match {
@@ -187,7 +190,7 @@ class ScalacConverter[G <: Global](val global: G) {
       val c = h.Decl(decodedName(name), decl)
       c.addAttachments(h.ClassDecl)
       found += c
-      tparams foreach (typeDef(c, _))
+      tparams foreach (typeParamDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
       val c = h.Decl(decodedName(name), decl)
