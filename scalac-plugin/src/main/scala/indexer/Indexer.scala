@@ -74,21 +74,6 @@ object Indexer {
       val declEntry = mkModel(filename)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
-    case Class(decl, name) ⇒
-      val path = s"_root_/${decl.asString.replace('.', '/')}"
-      val classEntry = s"""
-        {
-          "@id": "c:$path/$name",
-          "@type": "s:Text",
-          "s:name": "$name",
-          "c:tpe": "class",
-          "c:file": "$filename",
-          "c:declaration": "c:$path"
-        }
-      """
-      val declEntry = mkModel(filename)(decl)
-      Seq(classEntry, declEntry).mkString(",\n")
-
     case Member(parent, name) ⇒
       val path = s"_root_/${parent.asString.replace('.', '/')}"
       val memberEntry = s"""

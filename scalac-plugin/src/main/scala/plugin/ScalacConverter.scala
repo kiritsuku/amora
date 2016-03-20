@@ -50,14 +50,15 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
     val pkg = mkPackageDecl(sym.owner).getOrElse(h.Root)
-    val cls = h.Class(pkg, if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name))
+    val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name), pkg)
+    cls.addAttachments(h.ClassDecl)
     h.TypeRef(usage, cls)
   }
 
   // TODO handle commented references correctly
   // ignores some found references since we do want to add them as attachment to
   // other references instead of letting them live by themselves.
-  private def mkTermRef(d: h.Class, t: Tree): h.TermRef = t match {
+  private def mkTermRef(d: h.Decl, t: Tree): h.TermRef = t match {
     case Apply(fun, args) ⇒
       args foreach (expr(d, _))
       mkTermRef(d, fun)
@@ -78,7 +79,8 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
     val pkg = mkPackageDecl(qualifier).getOrElse(h.Root)
-    val decl = h.Class(pkg, decodedName(selector))
+    val decl = h.Decl(decodedName(selector), pkg)
+    decl.addAttachments(h.ClassDecl)
     h.TypeRef(pkg, decl)
   }
 
@@ -152,7 +154,7 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def template(c: h.Class, tree: Template): Unit = {
+  private def template(c: h.Decl, tree: Template): Unit = {
     val Template(_, _, body) = tree
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef) ⇒
@@ -182,12 +184,14 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def implDef(decl: h.Declaration, tree: Tree): Unit = tree match {
     case ClassDef(mods, name, tparams, impl) ⇒
-      val c = h.Class(decl, decodedName(name))
+      val c = h.Decl(decodedName(name), decl)
+      c.addAttachments(h.ClassDecl)
       found += c
       tparams foreach (typeDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
-      val c = h.Class(decl, decodedName(name))
+      val c = h.Decl(decodedName(name), decl)
+      c.addAttachments(h.ClassDecl)
       found += c
       template(c, impl)
     case Import(expr, selectors) ⇒

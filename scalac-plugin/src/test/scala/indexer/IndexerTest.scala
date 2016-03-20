@@ -48,7 +48,7 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         SELECT * WHERE {
-          ?class c:tpe "class" .
+          ?class c:attachment "class" .
         }
       """) === Seq(
         Data("class", s"${modelName}_root_/a/b/c/C1"),
@@ -102,7 +102,7 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT ?member WHERE {
-          ?class c:tpe "class" .
+          ?class c:attachment "class" .
           ?class s:name ?className .
           FILTER (str(?className) = "C1") .
           ?member c:parent ?class .
@@ -128,7 +128,7 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         SELECT ?class WHERE {
-          ?class c:tpe "class" .
+          ?class c:attachment "class" .
           ?class c:file "f1.scala" .
         }
       """) === Seq(
@@ -154,7 +154,7 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT ?usage WHERE {
-          ?class c:tpe "class" .
+          ?class c:attachment "class" .
           ?class s:name ?className .
           FILTER (str(?className) = "Y") .
           ?ref c:reference ?class .

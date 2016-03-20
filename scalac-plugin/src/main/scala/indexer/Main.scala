@@ -11,21 +11,21 @@ object Main extends App with LoggerConfig {
 
   import Indexer._
 
-  val m = Member(Class(Decl("c", Decl("b", Decl("a", Root))), "SomeClass"), "method")
-  val c = Class(Decl("f", Decl("e", Decl("d", Root))), "SomeType")
-  val data = Seq(
+//  val m = Member(Class(Decl("c", Decl("b", Decl("a", Root))), "SomeClass"), "method")
+//  val c = Class(Decl("f", Decl("e", Decl("d", Root))), "SomeType")
+//  val data = Seq(
 //      Class(Package(Seq("a", "b", "c")), "TestClass"),
 //      Class(Package(Seq("a", "b", "c")), "SomeClass"),
 //      Class(Package(Seq("a", "b", "c")), "AnotherClass"),
-      c,
+//      c,
 //      Class(Package(Seq("d", "e", "f")), "SomeClass"),
-      m,
+//      m,
 //      Member(Class(Package(Seq("d", "e", "f")), "SomeClass"), "toList"),
 //      Member(Class(Package(Seq("d", "e", "f")), "SomeType"), "someFunc"),
 //      Member(Class(Package(Seq("a", "b", "c")), "AnotherClass"), "anotherMethod"),
-      TypeRef(m, c)
-  )
-  addData("testfile.scala", data)
+//      TypeRef(m, c)
+//  )
+//  addData("testfile.scala", data)
 //  httpRequest()
 
   /**
