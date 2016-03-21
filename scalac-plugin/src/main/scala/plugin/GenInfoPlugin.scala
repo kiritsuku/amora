@@ -1,10 +1,11 @@
 package plugin
 
-import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.Global
 import scala.tools.nsc.Phase
 import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
+import scala.util.Failure
+import scala.util.Success
 
 class GenInfoPlugin(override val global: Global) extends Plugin {
   override val name = "GenInfoPlugin"
@@ -23,9 +24,9 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
 
       def idents(t: global.Tree) = {
         new ScalacConverter[global.type](global).convert(t) match {
-          case util.Success(res) ⇒
+          case Success(res) ⇒
             res
-          case util.Failure(f) ⇒
+          case Failure(f) ⇒
             f.printStackTrace()
             Nil
         }
