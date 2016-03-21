@@ -182,4 +182,96 @@ class IndexerTest {
         Data("s", s"${modelName}_root_/a/b"),
         Data("s", s"${modelName}_root_/a/b/c"))
     }
+
+  @Test
+  def find_vals_and_lazy_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "val" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/X/b"),
+        Data("s", s"${modelName}_root_/pkg/X/e"))
+    }
+
+  @Test
+  def find_lazy_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "lazy", "val" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/X/e"))
+    }
+
+  @Test
+  def find_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "val" .
+          FILTER NOT EXISTS {
+            ?s c:attachment "lazy" .
+          }
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/X/b"))
+    }
+
+  @Test
+  def find_vars() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "var" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/X/d"))
+    }
 }

@@ -135,7 +135,9 @@ class ScalacConverter[G <: Global](val global: G) {
     if (t.symbol.isSynthetic)
       return
     val m = h.Decl(decodedName(name), d)
-    m.addAttachments(h.ValDecl)
+    m.addAttachments(if (t.symbol.isVar) h.VarDecl else h.ValDecl)
+    if (t.symbol.isLazy)
+      m.addAttachments(h.LazyDecl)
     found += m
     typeRef(m, tpt)
     body(m, rhs)
