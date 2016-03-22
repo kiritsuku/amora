@@ -190,13 +190,19 @@ class ScalacConverter[G <: Global](val global: G) {
   private def implDef(decl: h.Declaration, tree: Tree): Unit = tree match {
     case ClassDef(mods, name, tparams, impl) ⇒
       val c = h.Decl(decodedName(name), decl)
-      c.addAttachments(h.ClassDecl)
+      if (tree.symbol.isTrait)
+        c.addAttachments(h.TraitDecl)
+      else {
+        c.addAttachments(h.ClassDecl)
+        if (tree.symbol.isAbstract)
+          c.addAttachments(h.AbstractDecl)
+      }
       found += c
       tparams foreach (typeParamDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
       val c = h.Decl(decodedName(name), decl)
-      c.addAttachments(h.ClassDecl)
+      c.addAttachments(h.ObjectDecl)
       found += c
       template(c, impl)
     case Import(expr, selectors) ⇒

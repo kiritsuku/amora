@@ -297,4 +297,84 @@ class IndexerTest {
         Data("s", s"${modelName}_root_/pkg/X/a"),
         Data("s", s"${modelName}_root_/pkg/X/c"))
     }
+
+  @Test
+  def find_classes() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "class" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/A"),
+        Data("s", s"${modelName}_root_/pkg/B"))
+    }
+
+  @Test
+  def find_classes_but_not_abstract_ones() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "class" .
+          FILTER NOT EXISTS {
+            ?s c:attachment "abstract" .
+          }
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/A"))
+    }
+
+  @Test
+  def find_traits() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "trait" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/C"))
+    }
+
+  @Test
+  def find_objects() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "object" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/D"))
+    }
 }
