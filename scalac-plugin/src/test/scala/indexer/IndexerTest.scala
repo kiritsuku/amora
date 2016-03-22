@@ -274,4 +274,27 @@ class IndexerTest {
       """) === Seq(
         Data("s", s"${modelName}_root_/pkg/X/d"))
     }
+
+  @Test
+  def find_methods() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "def" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/pkg/X/a"),
+        Data("s", s"${modelName}_root_/pkg/X/c"))
+    }
 }

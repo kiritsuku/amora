@@ -145,7 +145,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def defDef(c: h.Declaration, t: DefDef): Unit = {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
-    if (t.name == nme.CONSTRUCTOR || t.name == nme.MIXIN_CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor)
+    if (t.name == nme.CONSTRUCTOR || t.name == nme.MIXIN_CONSTRUCTOR || t.symbol.isGetter && t.symbol.isAccessor || t.symbol.isSetter)
       return
     val m = h.Decl(decodedName(name), c)
     m.addAttachments(h.DefDecl)
