@@ -49,11 +49,14 @@ object Indexer {
       ""
   }
 
+  private def encode(str: String): String =
+    URLEncoder.encode(str, "UTF-8")
+
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
     case decl @ Decl(name, Root) ⇒
       s"""
         {
-          "@id": "c:_root_/$name",
+          "@id": "c:_root_/${encode(name)}",
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}
@@ -65,10 +68,10 @@ object Indexer {
       """
 
     case decl @ Decl(name, parent) ⇒
-      val path = s"_root_/${parent.asString.replace('.', '/')}"
+      val path = s"_root_/${encode(parent.asString).replace('.', '/')}"
       val classEntry = s"""
         {
-          "@id": "c:$path/$name",
+          "@id": "c:$path/${encode(name)}",
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}
@@ -83,11 +86,12 @@ object Indexer {
 
     case TermRef(name, outer) ⇒
       "[]"
+
     case ref @ TypeRef(usage, decl) ⇒
-      val path = s"_root_/${decl.asString.replace('.', '/')}"
-      val f = URLEncoder.encode(filename, "UTF-8")
+      val path = s"_root_/${encode(decl.asString).replace('.', '/')}"
+      val f = encode(filename)
       val h = ref.hashCode
-      val u = s"_root_/${usage.asString.replace('.', '/')}"
+      val u = s"_root_/${encode(usage.asString).replace('.', '/')}"
       s"""
         {
           "@id": "c:$path/$f/$h",

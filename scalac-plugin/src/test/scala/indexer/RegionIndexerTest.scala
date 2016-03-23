@@ -69,7 +69,7 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def x() = {
+  def classes() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
@@ -82,6 +82,7 @@ class RegionIndexerTest {
         class [[A]]
         class [[B_?]]
         class [[!!!]]
+        class [[`hello world`]]
         object O
       """)
   }
