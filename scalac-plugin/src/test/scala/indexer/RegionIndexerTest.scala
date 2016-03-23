@@ -182,4 +182,26 @@ class RegionIndexerTest {
         class A
       """)
   }
+
+  @Test
+  def methods() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "def"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class A {
+          def [[meth]] = 0
+          def [[meth2]] = {
+            def [[meth3]] = {
+              def [[meth4]] = 0
+              meth4
+            }
+          }
+        }
+      """)
+  }
 }

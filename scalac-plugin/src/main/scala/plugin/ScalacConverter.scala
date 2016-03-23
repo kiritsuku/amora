@@ -149,6 +149,7 @@ class ScalacConverter[G <: Global](val global: G) {
       return
     val m = h.Decl(decodedName(name), c)
     m.addAttachments(h.DefDecl)
+    m.position = h.RangePosition(t.pos.point, t.pos.point+m.name.length)
     found += m
     tparams foreach (typeParamDef(m, _))
     vparamss foreach (_ foreach (valDef(m, _)))
