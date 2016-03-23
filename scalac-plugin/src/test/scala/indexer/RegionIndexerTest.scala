@@ -163,4 +163,19 @@ class RegionIndexerTest {
         trait B
       """)
   }
+
+  @Test
+  def packages() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "package"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        package [[a]].[[b]].[[c]]
+        class A
+      """)
+  }
 }

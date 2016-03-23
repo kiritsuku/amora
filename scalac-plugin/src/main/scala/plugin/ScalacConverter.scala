@@ -49,7 +49,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
-    val pkg = mkPackageDecl(sym.owner).getOrElse(h.Root)
+    val pkg = asPackageDecl(sym.owner)
     val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name), pkg)
     cls.addAttachments(h.ClassDecl)
     h.TypeRef(usage, cls)
@@ -78,7 +78,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
-    val pkg = mkPackageDecl(qualifier).getOrElse(h.Root)
+    val pkg = asPackageDecl(qualifier)
     val decl = h.Decl(decodedName(selector), pkg)
     decl.addAttachments(h.ClassDecl)
     h.TypeRef(pkg, decl)
@@ -216,26 +216,42 @@ class ScalacConverter[G <: Global](val global: G) {
       }
   }
 
-  private def mkPackageDecl(sym: Symbol): Option[h.Decl] = {
+  private def mkPackageDecl(t: Tree): h.Declaration = t match {
+    case Select(qualifier, name) ⇒
+      val decl = h.Decl(decodedName(name), mkPackageDecl(qualifier))
+      decl.addAttachments(h.PackageDecl)
+      decl.position = h.RangePosition(t.pos.point, t.pos.point+decl.name.length)
+      decl
+    case Ident(name) if name == nme.EMPTY_PACKAGE_NAME ⇒
+      h.Root
+    case Ident(name) ⇒
+      val decl = h.Decl(decodedName(name), h.Root)
+      decl.addAttachments(h.PackageDecl)
+      decl.position = h.RangePosition(t.pos.point, t.pos.point+decl.name.length)
+      decl
+  }
+
+  private def asPackageDecl(sym: Symbol): h.Declaration = {
     fullName(sym) match {
       case head +: tail ⇒
         val decl = h.Decl(head, h.Root)
         decl.addAttachments(h.PackageDecl)
-        Some(tail.foldLeft(decl) { (parent, name) ⇒
+        tail.foldLeft(decl) { (parent, name) ⇒
           val decl = h.Decl(name, parent)
           decl.addAttachments(h.PackageDecl)
           decl
-        })
+        }
       case _ ⇒
-        None
+        h.Root
     }
   }
 
   private def traverse(tree: Tree) = tree match {
     case PackageDef(pid, stats) ⇒
-      val pkg = mkPackageDecl(pid.symbol)
-      pkg foreach (found += _)
-      stats foreach (implDef(pkg.getOrElse(h.Root), _))
+      val pkg = mkPackageDecl(pid)
+      if (pkg != h.Root)
+        found += pkg
+      stats foreach (implDef(pkg, _))
     case LabelDef(name, params, rhs)                   ⇒
     case Import(expr, selectors)                       ⇒
     case DocDef(comment, definition)                   ⇒
