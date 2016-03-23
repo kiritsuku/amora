@@ -184,7 +184,7 @@ class RegionIndexerTest {
   }
 
   @Test
-  def methods() = {
+  def defs() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
@@ -199,6 +199,50 @@ class RegionIndexerTest {
             def [[meth3]] = {
               def [[meth4]] = 0
               meth4
+            }
+          }
+        }
+      """)
+  }
+
+  @Test
+  def vals() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "val"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class A {
+          val [[v1]] = 0
+          val [[v2]] = {
+            val [[v3]] = {
+              val [[v4]] = 0
+              v4
+            }
+          }
+        }
+      """)
+  }
+
+  @Test
+  def vars() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "var"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class A {
+          var [[v1]] = 0
+          var [[v2]] = {
+            var [[v3]] = {
+              var [[v4]] = 0
+              v4
             }
           }
         }
