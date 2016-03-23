@@ -149,7 +149,7 @@ class ScalacConverter[G <: Global](val global: G) {
       return
     val m = h.Decl(decodedName(name), c)
     m.addAttachments(h.DefDecl)
-    m.position = h.RangePosition(t.pos.point, t.pos.point+m.name.length)
+    setPosition(m, t.pos)
     found += m
     tparams foreach (typeParamDef(m, _))
     vparamss foreach (_ foreach (valDef(m, _)))
@@ -198,14 +198,14 @@ class ScalacConverter[G <: Global](val global: G) {
         if (tree.symbol.isAbstract)
           c.addAttachments(h.AbstractDecl)
       }
-      c.position = h.RangePosition(tree.pos.point, tree.pos.point+c.name.length)
+      setPosition(c, tree.pos)
       found += c
       tparams foreach (typeParamDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
       val c = h.Decl(decodedName(name), decl)
       c.addAttachments(h.ObjectDecl)
-      c.position = h.RangePosition(tree.pos.point, tree.pos.point+c.name.length)
+      setPosition(c, tree.pos)
       found += c
       template(c, impl)
     case Import(expr, selectors) ⇒
@@ -221,14 +221,14 @@ class ScalacConverter[G <: Global](val global: G) {
     case Select(qualifier, name) ⇒
       val decl = h.Decl(decodedName(name), mkPackageDecl(qualifier))
       decl.addAttachments(h.PackageDecl)
-      decl.position = h.RangePosition(t.pos.point, t.pos.point+decl.name.length)
+      setPosition(decl, t.pos)
       decl
     case Ident(name) if name == nme.EMPTY_PACKAGE_NAME ⇒
       h.Root
     case Ident(name) ⇒
       val decl = h.Decl(decodedName(name), h.Root)
       decl.addAttachments(h.PackageDecl)
-      decl.position = h.RangePosition(t.pos.point, t.pos.point+decl.name.length)
+      setPosition(decl, t.pos)
       decl
   }
 
@@ -287,4 +287,9 @@ class ScalacConverter[G <: Global](val global: G) {
     case SelectFromArray(qualifier, selector, erasure) ⇒
     case EmptyTree                                     ⇒
   }
+
+  private def setPosition(d: h.Decl, pos: Position) = {
+    d.position = h.RangePosition(pos.point, pos.point+d.name.length)
+  }
+
 }
