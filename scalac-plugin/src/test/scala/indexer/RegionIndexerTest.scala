@@ -86,4 +86,26 @@ class RegionIndexerTest {
         object O
       """)
   }
+
+  @Test
+  def classes_with_body() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "class"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        package a.b.c
+        class [[A]] {}
+        class [[B_?]] {
+          def f = 0
+        }
+        class [[!!!]] { /* comment*/ }
+        class [[`hello world`]] {
+          def g = 0
+        }
+      """)
+  }
 }
