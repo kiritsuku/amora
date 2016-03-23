@@ -20,6 +20,10 @@ class IndexerTest {
           case (filename, data) ⇒
             Indexer.add(modelName, filename, data)(model)
         }
+        if (debugTests) {
+          Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+          Indexer.queryResultAsString(modelName, query, model) foreach println
+        }
         Indexer.queryResult(modelName, query, model) { (v, q) ⇒
           val res = q.get(v)
           require(res != null, s"The variable `$v` does not exist in the result set.")

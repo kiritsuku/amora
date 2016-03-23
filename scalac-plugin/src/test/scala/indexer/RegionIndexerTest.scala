@@ -41,6 +41,10 @@ class RegionIndexerTest {
           case (filename, data) ⇒
             Indexer.add(modelName, filename, data)(model)
         }
+        if (debugTests) {
+          Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+          Indexer.queryResultAsString(modelName, query, model) foreach println
+        }
         Indexer.withQueryService(modelName, query)(model).map { r ⇒
           import scala.collection.JavaConverters._
           r.asScala.toSeq.map { row ⇒

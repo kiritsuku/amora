@@ -16,6 +16,8 @@ import util.LoggerConfig
 
 object TestUtils extends AnyRef with LoggerConfig {
 
+  var debugTests: Boolean = false
+
   final implicit class Assert_===[A](private val actual: A) extends AnyVal {
     def ===(expected: A): Unit = {
       if (actual != expected) {
