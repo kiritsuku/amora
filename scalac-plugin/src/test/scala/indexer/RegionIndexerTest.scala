@@ -84,6 +84,7 @@ class RegionIndexerTest {
         class [[!!!]]
         class [[`hello world`]]
         object O
+        abstract class [[AC]]
       """)
   }
 
@@ -124,6 +125,41 @@ class RegionIndexerTest {
         object [[`x y`]] {
           def g = 0
         }
+        trait B
+      """)
+  }
+
+  @Test
+  def traits() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "trait"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        package a.b.c
+        class A
+        object O
+        trait [[B]] {}
+      """)
+  }
+
+  @Test
+  def abstract_classes() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "class", "abstract"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        package a.b.c
+        abstract class [[AC]] {}
+        class A {}
+        object O
         trait B
       """)
   }
