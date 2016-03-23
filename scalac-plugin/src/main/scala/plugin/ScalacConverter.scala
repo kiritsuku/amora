@@ -92,6 +92,9 @@ class ScalacConverter[G <: Global](val global: G) {
           args foreach (typeRef(d, _))
         case _ ⇒
       }
+    case Select(_, name) ⇒
+      found += mkImportRef(t.symbol.owner, name)
+    case _: Ident ⇒
   }
 
   private def expr(m: h.Declaration, t: Tree): Unit = t match {
@@ -105,7 +108,7 @@ class ScalacConverter[G <: Global](val global: G) {
       typeRef(m, t)
     case Select(New(tpt), _) ⇒
       found += mkImportRef(tpt.symbol.owner, tpt.symbol.name)
-    case Select(qualifier, name) ⇒
+    case Select(_, name) ⇒
       found += mkImportRef(t.symbol.owner, name)
     case Function(vparams, body) ⇒
       vparams foreach (valDef(m, _))
@@ -179,7 +182,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def template(c: h.Decl, tree: Template): Unit = {
-    val Template(_, _, body) = tree
+    val Template(parents, _, body) = tree
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef) ⇒
         implDef(c, tree)
@@ -197,6 +200,7 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: Import ⇒
         implDef(c, tree)
     }
+    parents foreach (typeRef(c, _))
   }
 
   private def typeParamDef(d: h.Declaration, tree: TypeDef): Unit = {

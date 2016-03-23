@@ -400,4 +400,33 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.meth", "X.meth.f", "X.a", "X.b", "X.c", "scala.Function1", "scala.Int")
   }
+
+  @Test
+  def simple_inheritance_in_single_file() = {
+    convert("""
+      class X
+      class Y extends X
+    """) === Set("X", "Y")
+  }
+
+  @Test
+  def simple_inheritance_in_multiple_files() = {
+    convert(
+    "f1.scala" → """
+      package a
+      import b.Y
+      class X extends Y
+    """,
+    "f2.scala" → """
+      package b
+      class Y
+    """) === Set("a", "a.X", "b", "b.Y")
+  }
+
+  @Test
+  def simple_inheritance_from_stdlib_class() = {
+    convert("""
+      trait X extends scala.collection.mutable.AbstractSet[Int]
+    """) === Set("X", "scala.collection.mutable.AbstractSet", "scala.Int")
+  }
 }
