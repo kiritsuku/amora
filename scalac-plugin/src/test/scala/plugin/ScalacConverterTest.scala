@@ -381,4 +381,23 @@ class ScalacConverterTest {
     """) === Set("a", "a.X", "a.X.m", "b", "b.Y")
   }
 
+  @Test
+  def lambda_with_multiple_parameters() = {
+    convert("""
+      class X {
+        def meth(f: (Int, Int, Int) ⇒ Int) = 0
+        meth((a, b, c) ⇒ 0)
+      }
+    """) === Set("X", "X.meth", "X.meth.f", "X.a", "X.b", "X.c", "scala.Function3", "scala.Int")
+  }
+
+  @Test
+  def chained_lambda() = {
+    convert("""
+      class X {
+        def meth(f: Int ⇒ Int ⇒ Int ⇒ Int) = 0
+        meth(a ⇒ b ⇒ c ⇒ 0)
+      }
+    """) === Set("X", "X.meth", "X.meth.f", "X.a", "X.b", "X.c", "scala.Function1", "scala.Int")
+  }
 }
