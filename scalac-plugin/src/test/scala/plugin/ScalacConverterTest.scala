@@ -429,4 +429,13 @@ class ScalacConverterTest {
       trait X extends scala.collection.mutable.AbstractSet[Int]
     """) === Set("X", "scala.collection.mutable.AbstractSet", "scala.Int")
   }
+
+  @Test
+  def simple_inheritance_from_multiple_stdlib_classes() = {
+    convert("""
+      trait X extends collection.SeqLike[Int, Int]
+        with collection.IterableLike[Int, Int]
+        with collection.GenSeqLike[Int, Int]
+    """) === Set("X", "scala.collection.SeqLike", "scala.collection.IterableLike", "scala.collection.GenSeqLike", "scala.Int")
+  }
 }

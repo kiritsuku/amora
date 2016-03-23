@@ -86,7 +86,9 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
     case t: TypeTree ⇒
-      found += mkTypeRef(d, t.symbol)
+      // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
+      val isAnyRef = t.tpe =:= typeOf[AnyRef]
+      found += (if (isAnyRef) anyRefDecl else mkTypeRef(d, t.symbol))
       t.original match {
         case AppliedTypeTree(tpt, args) ⇒
           args foreach (typeRef(d, _))
@@ -315,4 +317,5 @@ class ScalacConverter[G <: Global](val global: G) {
     d.position = h.RangePosition(pos.point, pos.point+d.name.length)
   }
 
+  private def anyRefDecl = h.Decl("AnyRef", h.Decl("scala", h.Root))
 }
