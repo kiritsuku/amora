@@ -251,4 +251,27 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def lazy_vals() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "lazy", "val"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class A {
+          lazy val [[v1]] = 0
+          lazy val [[v2]] = {
+            lazy val [[v3]] = {
+              lazy val [[v4]] = 0
+              v4
+            }
+            v3
+          }
+        }
+      """)
+  }
 }

@@ -125,9 +125,12 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Ident   ⇒
     case EmptyTree  ⇒
     case _: Literal ⇒
-    case _: Assign  ⇒
+    case Assign(lhs, rhs)  ⇒
+      body(m, lhs)
+      body(m, rhs)
     case tree: Apply ⇒
       expr(m, tree)
+    case _: Select ⇒
   }
 
   private def valDef(d: h.Declaration, t: ValDef): Unit = {
@@ -144,23 +147,35 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def defDef(c: h.Declaration, t: DefDef): Unit = {
+  private def defDef(c: h.Decl, t: DefDef): Unit = {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
-    if (t.name == nme.CONSTRUCTOR
-        || t.name == nme.MIXIN_CONSTRUCTOR
-        || t.symbol.isGetter && t.symbol.isAccessor
-        || t.symbol.isSetter)
-      return
-    val m = h.Decl(decodedName(name), c)
-    m.addAttachments(h.DefDecl)
-    setPosition(m, t.pos)
-    found += m
-    tparams foreach (typeParamDef(m, _))
-    vparamss foreach (_ foreach (valDef(m, _)))
-    val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
-    if (!isGeneratedSetter)
-      typeRef(m, tpt)
-    body(m, rhs)
+
+    def normalDefDef() = {
+      val m = h.Decl(decodedName(name), c)
+      m.addAttachments(h.DefDecl)
+      setPosition(m, t.pos)
+      found += m
+      tparams foreach (typeParamDef(m, _))
+      vparamss foreach (_ foreach (valDef(m, _)))
+      val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
+      if (!isGeneratedSetter)
+        typeRef(m, tpt)
+      body(m, rhs)
+    }
+
+    def lazyDefDef() = {
+      body(c, rhs)
+    }
+
+    if (t.symbol.isLazy)
+      lazyDefDef
+    else if (t.name == nme.CONSTRUCTOR
+          || t.name == nme.MIXIN_CONSTRUCTOR
+          || t.symbol.isGetter && t.symbol.isAccessor
+          || t.symbol.isSetter)
+      ()
+    else
+      normalDefDef
   }
 
   private def template(c: h.Decl, tree: Template): Unit = {
