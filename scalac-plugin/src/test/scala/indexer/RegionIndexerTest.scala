@@ -200,6 +200,7 @@ class RegionIndexerTest {
               def [[meth4]] = 0
               meth4
             }
+            meth3
           }
         }
       """)
@@ -222,6 +223,7 @@ class RegionIndexerTest {
               val [[v4]] = 0
               v4
             }
+            v3
           }
         }
       """)
@@ -244,6 +246,7 @@ class RegionIndexerTest {
               var [[v4]] = 0
               v4
             }
+            v3
           }
         }
       """)
