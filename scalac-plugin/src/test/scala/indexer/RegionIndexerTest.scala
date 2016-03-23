@@ -125,11 +125,9 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         package a.b.c
-        class A
         object [[`x y`]] {
           def g = 0
         }
-        trait B
       """)
   }
 
@@ -144,8 +142,6 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         package a.b.c
-        class A
-        object O
         trait [[B]] {}
       """)
   }
@@ -162,9 +158,6 @@ class RegionIndexerTest {
       "<memory>" → """
         package a.b.c
         abstract class [[AC]] {}
-        class A {}
-        object O
-        trait B
       """)
   }
 
