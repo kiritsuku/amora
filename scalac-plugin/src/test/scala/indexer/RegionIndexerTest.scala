@@ -108,4 +108,23 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def objects() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "object"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        package a.b.c
+        class A
+        object [[`x y`]] {
+          def g = 0
+        }
+        trait B
+      """)
+  }
 }

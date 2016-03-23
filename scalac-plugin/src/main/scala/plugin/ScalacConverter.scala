@@ -204,6 +204,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case ModuleDef(mods, name, impl) ⇒
       val c = h.Decl(decodedName(name), decl)
       c.addAttachments(h.ObjectDecl)
+      c.position = h.RangePosition(tree.pos.point, tree.pos.point+c.name.length)
       found += c
       template(c, impl)
     case Import(expr, selectors) ⇒
