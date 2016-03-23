@@ -4,6 +4,8 @@ sealed trait Hierarchy {
 
   private var as = Set[Attachment]()
 
+  final var position: Position = NoPosition
+
   final def asString: String = this match {
     case Decl(name, Root) ⇒
       name
@@ -21,8 +23,6 @@ sealed trait Hierarchy {
     case Root ⇒
       "_root_"
   }
-
-  def position: Position = NoPosition
 
   def attachments: Set[Attachment] = as
 

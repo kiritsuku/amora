@@ -54,7 +54,7 @@ class IndexerTest {
         Data("class", s"${modelName}_root_/a/b/c/C1"),
         Data("class", s"${modelName}_root_/a/b/c/C2"),
         Data("class", s"${modelName}_root_/a/b/c/C3"))
-    }
+  }
 
   @Test
   def find_methods_in_top_level_classes() = {

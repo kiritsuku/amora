@@ -32,7 +32,7 @@ object Indexer {
 
   def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
     import scala.collection.JavaConverters._
-     withQueryService(modelName, query)(model) map { r ⇒
+    withQueryService(modelName, query)(model) map { r ⇒
       val vars = r.getResultVars.asScala.toSeq
 
       for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
@@ -41,6 +41,13 @@ object Indexer {
 
   private def attachments(h: Hierarchy): String =
     h.attachments.map(_.asString).mkString("\"c:attachment\": [\"", "\", \"", "\"],")
+
+  private def position(pos: Position) = pos match {
+    case RangePosition(start, end) ⇒
+      s""""c:start": $start, "c:end": $end,"""
+    case _ ⇒
+      ""
+  }
 
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
     case decl @ Decl(name, Root) ⇒
@@ -51,6 +58,7 @@ object Indexer {
           "s:name": "$name",
           ${attachments(decl)}
           "c:tpe": "declaration",
+          ${position(decl.position)}
           "c:file": "$filename",
           "c:parent": "c:_root_"
         }
@@ -65,6 +73,7 @@ object Indexer {
           "s:name": "$name",
           ${attachments(decl)}
           "c:tpe": "declaration",
+          ${position(decl.position)}
           "c:file": "$filename",
           "c:parent": "c:$path"
         }
@@ -119,6 +128,12 @@ object Indexer {
           "c:reference": {
             "@id": "c:reference",
             "@type": "@id"
+          },
+          "c:start": {
+            "@id": "c:start"
+          },
+          "c:end": {
+            "@id": "c:end"
           }
         },
         "@graph": [

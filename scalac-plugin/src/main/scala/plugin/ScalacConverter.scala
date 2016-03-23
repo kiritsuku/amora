@@ -197,6 +197,7 @@ class ScalacConverter[G <: Global](val global: G) {
         if (tree.symbol.isAbstract)
           c.addAttachments(h.AbstractDecl)
       }
+      c.position = h.RangePosition(tree.pos.point, tree.pos.end)
       found += c
       tparams foreach (typeParamDef(c, _))
       template(c, impl)
