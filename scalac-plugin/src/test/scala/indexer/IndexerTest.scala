@@ -453,4 +453,39 @@ class IndexerTest {
         Data("s", s"${modelName}_root_/X/j"),
         Data("s", s"${modelName}_root_/X/k"))
     }
+
+  @Test
+  def class_parameters_can_be_vars() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X(val i: Int, var j: String) {
+          val k = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "var" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/j"))
+    }
+
+  @Test
+  def method_parameters_are_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X {
+          def f(i: Int, j: String) = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "val" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/f/i"),
+        Data("s", s"${modelName}_root_/X/f/j"))
+    }
 }

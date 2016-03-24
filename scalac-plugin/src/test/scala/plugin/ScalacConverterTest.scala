@@ -522,4 +522,29 @@ class ScalacConverterTest {
       class X(val i: Int, val j: String)
     """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
   }
+
+  @Test
+  def class_parameter_with_multiple_argument_lists() = {
+    convert("""
+      class X(i: Int)(j: String)(k: Int)
+    """) === Set("X", "X.i", "X.j", "X.k", "java.lang.String", "scala.Int")
+  }
+
+  @Test
+  def method_parameter() = {
+    convert("""
+      class X {
+        def f(i: Int, j: String) = 0
+      }
+    """) === Set("X", "X.f", "X.f.i", "X.f.j", "java.lang.String", "scala.Int")
+  }
+
+  @Test
+  def method_parameter_with_multiple_argument_lists() = {
+    convert("""
+      class X {
+        def f(i: Int)(j: String)(k: Int) = 0
+      }
+    """) === Set("X", "X.f", "X.f.i", "X.f.j", "X.f.k", "java.lang.String", "scala.Int")
+  }
 }
