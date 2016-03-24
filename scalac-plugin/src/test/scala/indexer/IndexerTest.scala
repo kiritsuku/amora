@@ -381,4 +381,20 @@ class IndexerTest {
       """) === Seq(
         Data("s", s"${modelName}_root_/pkg/D"))
     }
+
+  @Test
+  def find_private_class_parameters() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X(i: Int, j: String)
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "parameter" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/i"),
+        Data("s", s"${modelName}_root_/X/j"))
+    }
 }

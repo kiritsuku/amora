@@ -13,4 +13,5 @@ final case object DefDecl extends Attachment { override def asString = "def" }
 final case object ValDecl extends Attachment { override def asString = "val" }
 final case object VarDecl extends Attachment { override def asString = "var" }
 final case object LazyDecl extends Attachment { override def asString = "lazy" }
-final case object TypeParamDecl extends Attachment { override def asString = "type-param" }
+final case object TypeParamDecl extends Attachment { override def asString = "tparameter" }
+final case object ParamDecl extends Attachment { override def asString = "parameter" }

@@ -180,6 +180,8 @@ class ScalacConverter[G <: Global](val global: G) {
     m.addAttachments(if (t.symbol.isVar) h.VarDecl else h.ValDecl)
     if (t.symbol.isLazy)
       m.addAttachments(h.LazyDecl)
+    if (t.symbol.isParamAccessor)
+      m.addAttachments(h.ParamDecl)
     setPosition(m, t.pos)
     found += m
     typeRef(m, tpt)

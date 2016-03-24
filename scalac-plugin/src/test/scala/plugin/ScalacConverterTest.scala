@@ -508,4 +508,11 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.c", "scala.Predef.classOf", "scala.Int", "java.lang.Class")
   }
+
+  @Test
+  def private_class_parameter() = {
+    convert("""
+      class X(i: Int, j: String)
+    """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
+  }
 }
