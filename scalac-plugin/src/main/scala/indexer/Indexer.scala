@@ -97,7 +97,10 @@ object Indexer {
           "@id": "c:$path/$f/$h",
           "@type": "s:Text",
           "c:tpe": "typeref",
+          "s:name": "${ref.name}",
+          ${attachments(ref)}
           "c:file": "$filename",
+          ${position(ref.position)}
           "c:reference": "c:$path",
           "c:usage": "c:$u"
         }

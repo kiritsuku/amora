@@ -29,19 +29,30 @@ sealed trait Hierarchy {
   def addAttachments(as: Attachment*): Unit = {
     as foreach (this.as += _)
   }
+
+  def name: String
 }
 
 sealed trait Declaration extends Hierarchy
 
-final case class Decl(name: String, parent: Declaration) extends Declaration
+final case class Decl(override val name: String, parent: Declaration) extends Declaration
 
 sealed trait Reference extends Hierarchy
 
-final case class TermRef(name: String, outer: Reference) extends Reference
+final case class TermRef(override val name: String, outer: Reference) extends Reference
 
 /** `usage` is the location where the type is used, `decl` is the type that is used. */
-final case class TypeRef(usage: Hierarchy, decl: Declaration) extends Reference
+final case class TypeRef(usage: Hierarchy, decl: Declaration) extends Reference {
+  override def name = decl match {
+    case Decl(name, _) ⇒ name
+    case d ⇒ throw new UnsupportedOperationException(s"`$d` does not have a name.")
+  }
+}
 
-final case class ThisRef(cls: Decl) extends Reference
+final case class ThisRef(cls: Decl) extends Reference {
+  override def name = throw new UnsupportedOperationException(s"`$this` does not have a name.")
+}
 
-final case object Root extends Reference with Declaration
+final case object Root extends Reference with Declaration {
+  override def name = throw new UnsupportedOperationException(s"`$this` does not have a name.")
+}

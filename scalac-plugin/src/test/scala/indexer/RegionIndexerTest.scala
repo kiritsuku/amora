@@ -297,4 +297,20 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def val_return_type() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          val v: [[Int]] = 0
+        }
+      """)
+  }
 }
