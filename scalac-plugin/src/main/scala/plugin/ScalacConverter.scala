@@ -92,8 +92,11 @@ class ScalacConverter[G <: Global](val global: G) {
     case t: TypeTree ⇒
       val sym = t.symbol
 
+      def findTypes(t: Type): Seq[Type] =
+        t +: t.typeArgs.flatMap(findTypes)
+
       def selfRefTypes() = {
-        val syms = sym.info.parents.flatMap(t ⇒ t +: t.typeArgs).map(_.typeSymbol)
+        val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
         val refs = syms.map(mkTypeRef(d, _))
         refs foreach (found += _)
       }

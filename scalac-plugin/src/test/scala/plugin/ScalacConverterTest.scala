@@ -448,4 +448,16 @@ class ScalacConverterTest {
     """) === Set("X", "X.self", "scala.collection.mutable.AbstractSet", "scala.Int")
   }
 
+  @Test
+  def self_type_with_nested_types() = {
+    convert("""
+      trait X {
+        self: scala.collection.mutable.AbstractMap[List[Map[Int, Set[Int]]], Map[Int, String]] ⇒
+      }
+    """) === Set(
+        "X", "X.self", "scala.collection.mutable.AbstractMap",
+        "scala.collection.immutable.List", "scala.collection.immutable.Map",
+        "scala.collection.immutable.Set", "scala.Int", "java.lang.String")
+  }
+
 }
