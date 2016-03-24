@@ -460,4 +460,17 @@ class ScalacConverterTest {
         "scala.collection.immutable.Set", "scala.Int", "java.lang.String")
   }
 
+  @Test
+  def complex_self_type() = {
+    convert("""
+      trait X {
+        self: collection.SeqLike[List[Int], List[Int]]
+          with collection.IterableLike[List[Int], List[Int]]
+          with collection.GenSeqLike[List[Int], List[Int]] ⇒
+      }
+    """) === Set(
+        "X", "X.self", "scala.collection.SeqLike", "scala.collection.IterableLike",
+        "scala.collection.GenSeqLike", "scala.collection.immutable.List", "scala.Int")
+  }
+
 }

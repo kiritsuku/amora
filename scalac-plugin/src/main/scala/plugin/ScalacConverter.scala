@@ -93,7 +93,10 @@ class ScalacConverter[G <: Global](val global: G) {
       val sym = t.symbol
 
       def findTypes(t: Type): Seq[Type] =
-        t +: t.typeArgs.flatMap(findTypes)
+        if (t.typeSymbol.isRefinementClass)
+          t.typeSymbol.info.parents.flatMap(findTypes)
+        else
+          t +: t.typeArgs.flatMap(findTypes)
 
       def selfRefTypes() = {
         val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
