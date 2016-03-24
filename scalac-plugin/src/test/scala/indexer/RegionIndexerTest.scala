@@ -299,7 +299,7 @@ class RegionIndexerTest {
   }
 
   @Test
-  def val_return_type() = {
+  def return_type_at_members() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
@@ -309,7 +309,10 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          val v: [[Int]] = 0
+          val a: [[Int]] = 0
+          var b: [[Int]] = 0
+          def c: [[Int]] = 0
+          lazy val d: [[Int]] = 0
         }
       """)
   }
