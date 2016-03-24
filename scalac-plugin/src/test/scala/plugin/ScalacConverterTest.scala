@@ -438,4 +438,14 @@ class ScalacConverterTest {
         with collection.GenSeqLike[Int, Int]
     """) === Set("X", "scala.collection.SeqLike", "scala.collection.IterableLike", "scala.collection.GenSeqLike", "scala.Int")
   }
+
+  @Test
+  def simple_self_type_to_stdlib_class() = {
+    convert("""
+      trait X {
+        self: scala.collection.mutable.AbstractSet[Int] ⇒
+      }
+    """) === Set("X", "X.self", "scala.collection.mutable.AbstractSet", "scala.Int")
+  }
+
 }

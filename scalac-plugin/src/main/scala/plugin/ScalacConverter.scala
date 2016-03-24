@@ -43,9 +43,13 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def fullName(sym: Symbol): Seq[String] = {
-    val noRootSymbol = sym.ownerChain.reverse.tail
-    val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
-    noEmptyPkgSymbol.map(s ⇒ decodedName(s.name))
+    if (sym.name.toTermName == nme.ROOT)
+      Nil
+    else {
+      val noRootSymbol = sym.ownerChain.reverse.tail
+      val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
+      noEmptyPkgSymbol.map(s ⇒ decodedName(s.name))
+    }
   }
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
@@ -86,14 +90,26 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
     case t: TypeTree ⇒
-      // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
-      val isAnyRef = t.tpe =:= typeOf[AnyRef]
-      found += (if (isAnyRef) anyRefDecl else mkTypeRef(d, t.symbol))
-      t.original match {
-        case AppliedTypeTree(tpt, args) ⇒
-          args foreach (typeRef(d, _))
-        case _ ⇒
+      val sym = t.symbol
+
+      def selfRefTypes() = {
+        val syms = sym.info.parents.flatMap(t ⇒ t +: t.typeArgs).map(_.typeSymbol)
+        val refs = syms.map(mkTypeRef(d, _))
+        refs foreach (found += _)
       }
+
+      def otherTypes() = {
+        // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
+        val isAnyRef = t.tpe =:= typeOf[AnyRef]
+        found += (if (isAnyRef) anyRefDecl else mkTypeRef(d, sym))
+        t.original match {
+          case AppliedTypeTree(tpt, args) ⇒
+            args foreach (typeRef(d, _))
+          case _ ⇒
+        }
+      }
+
+      if (sym.isRefinementClass) selfRefTypes else otherTypes
     case Select(_, name) ⇒
       found += mkImportRef(t.symbol.owner, name)
     case _: Ident ⇒
@@ -152,6 +168,17 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
+  private def selfRef(d: h.Declaration, t: ValDef): Unit = {
+    if (t == noSelfType)
+      return
+    val ValDef(_, name, tpt, _) = t
+    val m = h.Decl(decodedName(name), d)
+    m.addAttachments(h.ValDecl)
+    setPosition(m, t.pos)
+    found += m
+    typeRef(m, tpt)
+  }
+
   private def defDef(c: h.Decl, t: DefDef): Unit = {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
 
@@ -184,7 +211,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def template(c: h.Decl, tree: Template): Unit = {
-    val Template(parents, _, body) = tree
+    val Template(parents, self, body) = tree
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef) ⇒
         implDef(c, tree)
@@ -203,6 +230,7 @@ class ScalacConverter[G <: Global](val global: G) {
         implDef(c, tree)
     }
     parents foreach (typeRef(c, _))
+    selfRef(c, self)
   }
 
   private def typeParamDef(d: h.Declaration, tree: TypeDef): Unit = {
