@@ -515,4 +515,11 @@ class ScalacConverterTest {
       class X(i: Int, j: String)
     """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
   }
+
+  @Test
+  def public_class_parameter() = {
+    convert("""
+      class X(val i: Int, val j: String)
+    """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
+  }
 }

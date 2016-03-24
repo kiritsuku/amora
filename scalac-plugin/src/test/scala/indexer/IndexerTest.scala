@@ -397,4 +397,60 @@ class IndexerTest {
         Data("s", s"${modelName}_root_/X/i"),
         Data("s", s"${modelName}_root_/X/j"))
     }
+
+  @Test
+  def find_public_class_parameters() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X(val i: Int, val j: String) {
+          val k = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "parameter" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/i"),
+        Data("s", s"${modelName}_root_/X/j"))
+    }
+
+  @Test
+  def public_class_parameters_are_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X(val i: Int, val j: String) {
+          val k = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "val" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/i"),
+        Data("s", s"${modelName}_root_/X/j"),
+        Data("s", s"${modelName}_root_/X/k"))
+    }
+
+  @Test
+  def private_class_parameters_are_vals() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X(i: Int, j: String) {
+          val k = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "val" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/i"),
+        Data("s", s"${modelName}_root_/X/j"),
+        Data("s", s"${modelName}_root_/X/k"))
+    }
 }
