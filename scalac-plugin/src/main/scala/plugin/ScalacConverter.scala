@@ -188,6 +188,16 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
+  private def defParamDef(d: h.Declaration, t: ValDef): Unit = {
+    val ValDef(_, name, tpt, rhs) = t
+    val m = h.Decl(decodedName(name), d)
+    m.addAttachments(h.ValDecl, h.ParamDecl)
+    setPosition(m, t.pos)
+    found += m
+    typeRef(m, tpt)
+    body(m, rhs)
+  }
+
   private def selfRef(d: h.Declaration, t: ValDef): Unit = {
     if (t == noSelfType)
       return
@@ -208,7 +218,7 @@ class ScalacConverter[G <: Global](val global: G) {
       setPosition(m, t.pos)
       found += m
       tparams foreach (typeParamDef(m, _))
-      vparamss foreach (_ foreach (valDef(m, _)))
+      vparamss foreach (_ foreach (defParamDef(m, _)))
       val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
       if (!isGeneratedSetter)
         typeRef(m, tpt)

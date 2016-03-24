@@ -488,4 +488,22 @@ class IndexerTest {
         Data("s", s"${modelName}_root_/X/f/i"),
         Data("s", s"${modelName}_root_/X/f/j"))
     }
+
+  @Test
+  def method_parameters() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X {
+          def f(i: Int, j: String) = 0
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        SELECT ?s WHERE {
+          ?s c:attachment "parameter" .
+        }
+      """) === Seq(
+        Data("s", s"${modelName}_root_/X/f/i"),
+        Data("s", s"${modelName}_root_/X/f/j"))
+    }
 }

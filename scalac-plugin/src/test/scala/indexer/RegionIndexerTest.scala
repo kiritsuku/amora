@@ -281,4 +281,20 @@ class RegionIndexerTest {
         class A([[value1]]: Int, [[`second val`]]: String)
       """)
   }
+
+  @Test
+  def method_parameters() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "parameter"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f([[param1]]: Int)([[`p a r a m`]]: String)([[p]]: Int) = 0
+        }
+      """)
+  }
 }
