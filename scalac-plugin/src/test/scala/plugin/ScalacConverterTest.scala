@@ -499,4 +499,13 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.f", "X.f.t", "scala.Int", "java.lang.String", "scala.Tuple2")
   }
+
+  @Test
+  def classOf_reference() = {
+    convert("""
+      class X {
+        val c = classOf[Int]
+      }
+    """) === Set("X", "X.c", "scala.Predef.classOf", "scala.Int", "java.lang.Class")
+  }
 }

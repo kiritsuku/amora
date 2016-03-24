@@ -141,6 +141,17 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
   }
 
+  private def classOfConst(d: h.Decl, t: Literal) = t.tpe match {
+    case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
+      val ref = mkTypeRef(d, tpe.value.typeValue.typeSymbol)
+      found += ref
+
+      val predef = h.Decl("Predef", h.Decl("scala", h.Root))
+      val decl = h.TermRef("classOf", h.TypeRef(d, predef))
+      found += decl
+    case _ ⇒
+  }
+
   private def body(m: h.Decl, tree: Tree): Unit = tree match {
     case tree: DefDef ⇒
       defDef(m, tree)
@@ -151,7 +162,8 @@ class ScalacConverter[G <: Global](val global: G) {
       body(m, expr)
     case _: Ident   ⇒
     case EmptyTree  ⇒
-    case _: Literal ⇒
+    case tree: Literal ⇒
+      classOfConst(m, tree)
     case Assign(lhs, rhs)  ⇒
       body(m, lhs)
       body(m, rhs)
