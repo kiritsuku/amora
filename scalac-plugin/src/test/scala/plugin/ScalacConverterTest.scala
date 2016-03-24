@@ -473,4 +473,30 @@ class ScalacConverterTest {
         "scala.collection.GenSeqLike", "scala.collection.immutable.List", "scala.Int")
   }
 
+  @Test
+  def tuple_as_value() = {
+    convert("""
+      class X {
+        val t = (0, "")
+      }
+    """) === Set("X", "X.t", "scala.Int", "java.lang.String", "scala.Tuple2", "scala.Tuple2.apply")
+  }
+
+  @Test
+  def tuple_as_parameter_type() = {
+    convert("""
+      class X {
+        def f(t: (Int, String)) = t
+      }
+    """) === Set("X", "X.f", "X.f.t", "scala.Int", "java.lang.String", "scala.Tuple2")
+  }
+
+  @Test
+  def tuple_type_without_syntactic_sugar() = {
+    convert("""
+      class X {
+        def f(t: Tuple2[Int, String]) = t
+      }
+    """) === Set("X", "X.f", "X.f.t", "scala.Int", "java.lang.String", "scala.Tuple2")
+  }
 }
