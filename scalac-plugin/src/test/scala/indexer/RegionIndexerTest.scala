@@ -316,4 +316,34 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def return_type_at_nested_members() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def x: [[Int]] = {
+            val a: [[Int]] = {
+              val a: [[Int]] = 0
+              a
+            }
+            var b: [[Int]] = {
+              var a: [[Int]] = 0
+              a
+            }
+            def c: [[Int]] = {
+              def a: [[Int]] = 0
+              a
+            }
+            a
+          }
+        }
+      """)
+  }
 }
