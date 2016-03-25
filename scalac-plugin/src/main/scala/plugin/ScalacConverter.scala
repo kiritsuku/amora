@@ -24,7 +24,22 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def decodedName(name: Name) = {
+  /**
+   * Decodes a `Name` to its Scala source representation. This is a necessary
+   * operation because a `Name` does not represent the name of the Scala
+   * identifier where it belongs to. Instead it represents the name as it is
+   * seen by the compiler, which may include compiler artifacts. This function
+   * takes care of these artifacts and gives back the name as it was written in
+   * the Scala source.
+   *
+   * @param name
+   *        The name that should be decoded.
+   * @param nameSym
+   *        The symbol where the name belongs to. Usually one wants to call this
+   *        function as `decodedName(sym.name, symbol)` but in case no symbol
+   *        exists, it can be called with `decodedName(name, NoSymbol)`.
+   */
+  private def decodedName(name: Name, nameSym: Symbol) = {
     def addBackquotes(str: String) = {
       val (ident, op) =
         if (Chars.isIdentifierStart(str.head))
@@ -40,7 +55,12 @@ class ScalacConverter[G <: Global](val global: G) {
           !op.tail.forall(Chars.isOperatorPart)
       if (needsBackticks) s"`$str`" else str
     }
-    addBackquotes(name.decoded.trim)
+
+    val decodedName = name.decoded.trim
+    if (nameSym.isLazyAccessor && nameSym.isArtifact)
+      addBackquotes(decodedName.dropRight(nme.LAZY_LOCAL.length))
+    else
+      addBackquotes(decodedName)
   }
 
   private def fullName(sym: Symbol): Seq[String] = {
@@ -49,13 +69,13 @@ class ScalacConverter[G <: Global](val global: G) {
     else {
       val noRootSymbol = sym.ownerChain.reverse.tail
       val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
-      noEmptyPkgSymbol.map(s ⇒ decodedName(s.name))
+      noEmptyPkgSymbol.map(s ⇒ decodedName(s.name, s))
     }
   }
 
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
     val pkg = asPackageDecl(sym.owner)
-    val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name), pkg)
+    val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
     cls.addAttachments(a.Class)
     h.TypeRef(usage, cls)
   }
@@ -76,15 +96,15 @@ class ScalacConverter[G <: Global](val global: G) {
         case _ ⇒
           mkTermRef(d, qualifier)
       }
-      val ref = h.TermRef(decodedName(selector), ret)
+      val ref = h.TermRef(decodedName(selector, NoSymbol), ret)
       // found += ref
-      found += h.TermRef(decodedName(t.symbol.name), mkTypeRef(ref, t.symbol.owner))
+      found += h.TermRef(decodedName(t.symbol.name, t.symbol), mkTypeRef(ref, t.symbol.owner))
       ref
   }
 
   private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
     val pkg = asPackageDecl(qualifier)
-    val decl = h.Decl(decodedName(selector), pkg)
+    val decl = h.Decl(decodedName(selector, NoSymbol), pkg)
     decl.addAttachments(a.Class)
     h.TypeRef(pkg, decl)
   }
@@ -170,7 +190,8 @@ class ScalacConverter[G <: Global](val global: G) {
       classOfConst(m, tree)
     case Assign(lhs, rhs)  ⇒
       body(m, lhs)
-      body(m, rhs)
+      val decl = h.Decl(decodedName(lhs.symbol.name, lhs.symbol), m)
+      body(decl, rhs)
     case tree: Apply ⇒
       expr(m, tree)
     case _: Select ⇒
@@ -180,7 +201,7 @@ class ScalacConverter[G <: Global](val global: G) {
     val ValDef(_, name, tpt, rhs) = t
     if (t.symbol.isSynthetic)
       return
-    val m = h.Decl(decodedName(name), d)
+    val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
     if (t.symbol.isLazy)
       m.addAttachments(a.Lazy)
@@ -194,7 +215,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def defParamDef(d: h.Declaration, t: ValDef): Unit = {
     val ValDef(_, name, tpt, rhs) = t
-    val m = h.Decl(decodedName(name), d)
+    val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(a.Val, a.Param)
     setPosition(m, t.pos)
     found += m
@@ -206,7 +227,7 @@ class ScalacConverter[G <: Global](val global: G) {
     if (t == noSelfType)
       return
     val ValDef(_, name, tpt, _) = t
-    val m = h.Decl(decodedName(name), d)
+    val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(a.Val)
     setPosition(m, t.pos)
     found += m
@@ -217,7 +238,7 @@ class ScalacConverter[G <: Global](val global: G) {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
-      val m = h.Decl(decodedName(name), c)
+      val m = h.Decl(decodedName(name, NoSymbol), c)
       m.addAttachments(a.Def)
       setPosition(m, t.pos)
       found += m
@@ -269,7 +290,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def typeParamDef(d: h.Declaration, tree: TypeDef): Unit = {
     val TypeDef(_, name, tparams, _) = tree
-    val m = h.Decl(decodedName(name), d)
+    val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(a.TypeParam)
     found += m
     tparams foreach (typeParamDef(m, _))
@@ -277,7 +298,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def implDef(decl: h.Declaration, tree: Tree): Unit = tree match {
     case ClassDef(mods, name, tparams, impl) ⇒
-      val c = h.Decl(decodedName(name), decl)
+      val c = h.Decl(decodedName(name, NoSymbol), decl)
       if (tree.symbol.isTrait)
         c.addAttachments(a.Trait)
       else {
@@ -290,7 +311,7 @@ class ScalacConverter[G <: Global](val global: G) {
       tparams foreach (typeParamDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
-      val c = h.Decl(decodedName(name), decl)
+      val c = h.Decl(decodedName(name, NoSymbol), decl)
       c.addAttachments(a.Object)
       setPosition(c, tree.pos)
       found += c
@@ -306,14 +327,14 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def mkPackageDecl(t: Tree): h.Declaration = t match {
     case Select(qualifier, name) ⇒
-      val decl = h.Decl(decodedName(name), mkPackageDecl(qualifier))
+      val decl = h.Decl(decodedName(name, NoSymbol), mkPackageDecl(qualifier))
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl
     case Ident(name) if name == nme.EMPTY_PACKAGE_NAME ⇒
       h.Root
     case Ident(name) ⇒
-      val decl = h.Decl(decodedName(name), h.Root)
+      val decl = h.Decl(decodedName(name, NoSymbol), h.Root)
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl

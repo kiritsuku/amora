@@ -547,4 +547,21 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.f", "X.f.i", "X.f.j", "X.f.k", "java.lang.String", "scala.Int")
   }
+
+  @Test
+  def nested_lazy_val() = {
+    convert("""
+      package pkg
+      class X {
+        lazy val a = {
+          lazy val b = {
+            lazy val c = 0
+            c
+          }
+          b
+        }
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.Int")
+  }
+
 }
