@@ -346,4 +346,26 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def return_type_at_nested_lazy_vals() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          lazy val a: [[Int]] = {
+            lazy val a: [[Int]] = {
+              lazy val a: [[Int]] = 0
+              a
+            }
+            a
+          }
+        }
+      """)
+  }
 }

@@ -49,6 +49,13 @@ object Indexer {
       ""
   }
 
+  private def uniqueRef(pos: Position) = pos match {
+    case RangePosition(start, _) ⇒
+      s"/$start"
+    case _ ⇒
+      ""
+  }
+
   private def encode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 
@@ -90,11 +97,11 @@ object Indexer {
     case ref @ TypeRef(usage, decl) ⇒
       val path = s"_root_/${encode(decl.asString).replace('.', '/')}"
       val f = encode(filename)
-      val h = ref.hashCode
+      val h = uniqueRef(ref.position)
       val u = s"_root_/${encode(usage.asString).replace('.', '/')}"
       s"""
         {
-          "@id": "c:$path/$f/$h",
+          "@id": "c:$path/$f$h",
           "@type": "s:Text",
           "c:tpe": "typeref",
           "s:name": "${ref.name}",
