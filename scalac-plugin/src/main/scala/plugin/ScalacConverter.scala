@@ -82,8 +82,9 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def mkRef(d: h.Decl, t: Tree): h.Ref = t match {
     case Apply(fun, args) ⇒
-      args foreach (expr(d, _))
-      mkRef(d, fun)
+      val ref = mkRef(d, fun)
+      args foreach (expr(ref, _))
+      ref
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This ⇒

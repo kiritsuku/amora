@@ -361,7 +361,7 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int) = 0
         meth(v ⇒ v)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.v", "scala.!Function1", "scala.!Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.v", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -387,7 +387,7 @@ class ScalacConverterTest {
         def meth(f: (Int, Int, Int) ⇒ Int) = 0
         meth((a, b, c) ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.a", "X.b", "X.c", "scala.!Function3", "scala.!Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function3", "scala.!Int")
   }
 
   @Test
@@ -397,7 +397,7 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int ⇒ Int ⇒ Int) = 0
         meth(a ⇒ b ⇒ c ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.a", "X.b", "X.c", "scala.!Function1", "scala.!Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function1", "scala.!Int")
   }
 
   @Test
