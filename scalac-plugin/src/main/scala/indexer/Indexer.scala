@@ -109,8 +109,7 @@ object Indexer {
           "c:usage": "c:$u"
         }
       """
-    case ThisRef(cls) ⇒
-      "[]"
+
     case Root ⇒
       "[]"
   }

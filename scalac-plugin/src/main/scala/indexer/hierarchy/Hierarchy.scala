@@ -11,8 +11,6 @@ sealed trait Hierarchy {
       name
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
-    case ThisRef(cls) ⇒
-      cls.asString
     case Ref(name, _, _, calledOn) ⇒
       if (calledOn == Root)
         name
@@ -38,10 +36,6 @@ final case class Decl(override val name: String, owner: Declaration) extends Dec
 sealed trait Reference extends Hierarchy
 
 final case class Ref(override val name: String, refToDecl: Declaration, owner: Declaration, calledOn: Declaration) extends Reference
-
-final case class ThisRef(cls: Decl) extends Reference {
-  override def name = throw new UnsupportedOperationException(s"`$this` does not have a name.")
-}
 
 final case object Root extends Reference with Declaration {
   override def name = throw new UnsupportedOperationException(s"`$this` does not have a name.")
