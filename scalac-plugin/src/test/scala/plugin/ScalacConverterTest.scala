@@ -572,4 +572,14 @@ class ScalacConverterTest {
     """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.!Int")
   }
 
+  @Test
+  def ref_to_name_with_exclamation_marks() = {
+    convert("""
+      class X {
+        def !!(i: Int) = i
+        !!(0)
+      }
+    """) === Set("X", "X.!!", "X.!!.i", "X.!!!", "scala.!Int")
+  }
+
 }
