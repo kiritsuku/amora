@@ -2,36 +2,49 @@ package indexer.hierarchy
 
 sealed trait Hierarchy {
 
-  private var as = Set[Attachment]()
+  private var _attachments = Set[Attachment]()
 
   final var position: Position = NoPosition
 
   final def asString: String = this match {
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
-    case Ref(name, _, _, calledOn) ⇒
-      s"${calledOn.asString}.$name"
+    case Ref(name, _, _, qualifier) ⇒
+      s"${qualifier.asString}.$name"
     case Root ⇒
       name
   }
 
-  def attachments: Set[Attachment] = as
+  def attachments: Set[Attachment] = _attachments
 
   def addAttachments(as: Attachment*): Unit = {
-    as foreach (this.as += _)
+    as foreach (this._attachments += _)
   }
 
   def name: String
 }
 
-sealed trait Declaration extends Hierarchy
+/**
+ * Specifies a declaration.
+ *
+ * `name` is the name of the declaration, `owner` is the scope of `name`, i.e.
+ * another declaration in which `name` has been defined and where it can be
+ * accessed.
+ */
+final case class Decl(override val name: String, owner: Hierarchy) extends Hierarchy
 
-final case class Decl(override val name: String, owner: Declaration) extends Declaration
+/**
+ * Specifies a reference to a declaration.
+ *
+ * `name` is the name of the reference. `refToDecl` is the declaration to which
+ * this reference points to. `owner` is the declaration, which contains `name`.
+ * `qualifier` specifies how `name` refers to `refToDecl`.
+ */
+final case class Ref(override val name: String, refToDecl: Hierarchy, owner: Hierarchy, qualifier: Hierarchy) extends Hierarchy
 
-sealed trait Reference extends Hierarchy
-
-final case class Ref(override val name: String, refToDecl: Declaration, owner: Declaration, calledOn: Declaration) extends Reference
-
-final case object Root extends Reference with Declaration {
+/**
+ * The root or bottom of the hierarchy. It does have a name but not an owner.
+ */
+final case object Root extends Hierarchy {
   override def name = "_root_"
 }

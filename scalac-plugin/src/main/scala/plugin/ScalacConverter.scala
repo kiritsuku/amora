@@ -63,31 +63,21 @@ class ScalacConverter[G <: Global](val global: G) {
       addBackquotes(decodedName)
   }
 
-  private def fullName(sym: Symbol): Seq[String] = {
-    if (sym.name.toTermName == nme.ROOT)
-      Nil
-    else {
-      val noRootSymbol = sym.ownerChain.reverse.tail
-      val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
-      noEmptyPkgSymbol.map(s ⇒ decodedName(s.name, s))
-    }
-  }
-
-  private def declFromSymbol(sym: Symbol): h.Declaration = {
+  private def declFromSymbol(sym: Symbol): h.Hierarchy = {
     if (sym.name.toTermName == nme.ROOT)
       h.Root
     else {
       val noRootSymbol = sym.ownerChain.reverse.tail
       val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
       val names = noEmptyPkgSymbol.map(s ⇒ decodedName(s.name, s))
-      names.foldLeft(h.Root: h.Declaration) { (owner, name) ⇒ h.Decl(name, owner) }
+      names.foldLeft(h.Root: h.Hierarchy) { (owner, name) ⇒ h.Decl(name, owner) }
     }
   }
 
-  private def refFromSymbol(d: h.Declaration, sym: Symbol): h.Ref = {
+  private def refFromSymbol(d: h.Hierarchy, sym: Symbol): h.Ref = {
     val pkg = declFromSymbol(sym.owner)
     val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-    h.Ref(cls.name, cls, d, cls.owner)
+    h.Ref(cls.name, cls, d, pkg)
   }
 
   private def mkRef(d: h.Decl, t: Tree): h.Ref = t match {
@@ -114,7 +104,7 @@ class ScalacConverter[G <: Global](val global: G) {
     h.Ref(decl.name, decl, pkg, pkg)
   }
 
-  private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
+  private def typeRef(d: h.Hierarchy, t: Tree): Unit = t match {
     case t: TypeTree ⇒
       val sym = t.symbol
 
@@ -150,7 +140,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
   }
 
-  private def expr(m: h.Declaration, t: Tree): Unit = t match {
+  private def expr(m: h.Hierarchy, t: Tree): Unit = t match {
     case Apply(fun, args) ⇒
       expr(m, fun)
       args foreach (expr(m, _))
@@ -204,7 +194,7 @@ class ScalacConverter[G <: Global](val global: G) {
       //mkRef(m, tree)
   }
 
-  private def valDef(d: h.Declaration, t: ValDef): Unit = {
+  private def valDef(d: h.Hierarchy, t: ValDef): Unit = {
     val ValDef(_, name, tpt, rhs) = t
     if (t.symbol.isSynthetic)
       return
@@ -220,7 +210,7 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def defParamDef(d: h.Declaration, t: ValDef): Unit = {
+  private def defParamDef(d: h.Hierarchy, t: ValDef): Unit = {
     val ValDef(_, name, tpt, rhs) = t
     val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(a.Val, a.Param)
@@ -230,7 +220,7 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def selfRef(d: h.Declaration, t: ValDef): Unit = {
+  private def selfRef(d: h.Hierarchy, t: ValDef): Unit = {
     if (t == noSelfType)
       return
     val ValDef(_, name, tpt, _) = t
@@ -293,7 +283,7 @@ class ScalacConverter[G <: Global](val global: G) {
     selfRef(c, self)
   }
 
-  private def typeParamDef(d: h.Declaration, tree: TypeDef): Unit = {
+  private def typeParamDef(d: h.Hierarchy, tree: TypeDef): Unit = {
     val TypeDef(_, name, tparams, _) = tree
     val m = h.Decl(decodedName(name, NoSymbol), d)
     m.addAttachments(a.TypeParam)
@@ -301,7 +291,7 @@ class ScalacConverter[G <: Global](val global: G) {
     tparams foreach (typeParamDef(m, _))
   }
 
-  private def implDef(decl: h.Declaration, tree: Tree): Unit = tree match {
+  private def implDef(decl: h.Hierarchy, tree: Tree): Unit = tree match {
     case ClassDef(mods, name, tparams, impl) ⇒
       val c = h.Decl(decodedName(name, NoSymbol), decl)
       if (tree.symbol.isTrait)
@@ -330,7 +320,7 @@ class ScalacConverter[G <: Global](val global: G) {
       }
   }
 
-  private def mkPackageDecl(t: Tree): h.Declaration = t match {
+  private def mkPackageDecl(t: Tree): h.Hierarchy = t match {
     case Select(qualifier, name) ⇒
       val decl = h.Decl(decodedName(name, NoSymbol), mkPackageDecl(qualifier))
       decl.addAttachments(a.Package)
@@ -343,21 +333,6 @@ class ScalacConverter[G <: Global](val global: G) {
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl
-  }
-
-  private def asPackageDecl(sym: Symbol): h.Declaration = {
-    fullName(sym) match {
-      case head +: tail ⇒
-        val decl = h.Decl(head, h.Root)
-        decl.addAttachments(a.Package)
-        tail.foldLeft(decl) { (parent, name) ⇒
-          val decl = h.Decl(name, parent)
-          decl.addAttachments(a.Package)
-          decl
-        }
-      case _ ⇒
-        h.Root
-    }
   }
 
   private def traverse(tree: Tree) = tree match {
@@ -405,5 +380,5 @@ class ScalacConverter[G <: Global](val global: G) {
     d.position = h.RangePosition(pos.point, pos.point+d.name.length)
   }
 
-  private def anyRefDecl(d: h.Declaration) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
+  private def anyRefDecl(d: h.Hierarchy) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
 }

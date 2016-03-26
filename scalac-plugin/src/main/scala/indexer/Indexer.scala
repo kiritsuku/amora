@@ -77,7 +77,9 @@ object Indexer {
       val declEntry = mkModel(filename)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
-    case ref @ Ref(name, refToDecl, owner, calledOn) ⇒
+    case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
+      // TODO do not use replace function here, it is not safe since Scala
+      // identifiers can contain dots.
       val path = encode(refToDecl.asString).replace('.', '/')
       val f = encode(filename)
       val h = uniqueRef(ref.position)
