@@ -582,4 +582,34 @@ class ScalacConverterTest {
     """) === Set("X", "X.!!", "X.!!.i", "X.!!!", "scala.!Int")
   }
 
+  @Test
+  def ref_on_rhs_of_val() = {
+    convert("""
+      class X {
+        val a = 0
+        val b = a
+      }
+    """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
+  }
+
+  @Test
+  def ref_on_rhs_of_var() = {
+    convert("""
+      class X {
+        var a = 0
+        var b = a
+      }
+    """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
+  }
+
+  @Test
+  def ref_on_rhs_of_def() = {
+    convert("""
+      class X {
+        def a = 0
+        def b = a
+      }
+    """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
+  }
+
 }

@@ -192,7 +192,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case tree: Apply ⇒
       expr(m, tree)
     case _: Select ⇒
-      //mkRef(m, tree)
+      if (!tree.symbol.isLazy)
+        mkRef(m, tree)
   }
 
   private def valDef(d: h.Hierarchy, t: ValDef): Unit = {
