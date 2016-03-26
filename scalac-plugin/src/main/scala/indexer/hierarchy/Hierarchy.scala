@@ -7,17 +7,12 @@ sealed trait Hierarchy {
   final var position: Position = NoPosition
 
   final def asString: String = this match {
-    case Decl(name, Root) ⇒
-      name
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
     case Ref(name, _, _, calledOn) ⇒
-      if (calledOn == Root)
-        name
-      else
-        s"${calledOn.asString}.$name"
+      s"${calledOn.asString}.$name"
     case Root ⇒
-      "_root_"
+      name
   }
 
   def attachments: Set[Attachment] = as
@@ -38,5 +33,5 @@ sealed trait Reference extends Hierarchy
 final case class Ref(override val name: String, refToDecl: Declaration, owner: Declaration, calledOn: Declaration) extends Reference
 
 final case object Root extends Reference with Declaration {
-  override def name = throw new UnsupportedOperationException(s"`$this` does not have a name.")
+  override def name = "_root_"
 }

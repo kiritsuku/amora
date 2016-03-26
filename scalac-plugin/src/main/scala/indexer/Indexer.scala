@@ -60,22 +60,8 @@ object Indexer {
     URLEncoder.encode(str, "UTF-8")
 
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
-    case decl @ Decl(name, Root) ⇒
-      s"""
-        {
-          "@id": "c:_root_/${encode(name)}",
-          "@type": "s:Text",
-          "s:name": "$name",
-          ${attachments(decl)}
-          "c:tpe": "declaration",
-          ${position(decl.position)}
-          "c:file": "$filename",
-          "c:parent": "c:_root_"
-        }
-      """
-
     case decl @ Decl(name, parent) ⇒
-      val path = s"_root_/${encode(parent.asString).replace('.', '/')}"
+      val path = encode(parent.asString).replace('.', '/')
       val classEntry = s"""
         {
           "@id": "c:$path/${encode(name)}",
@@ -92,10 +78,10 @@ object Indexer {
       Seq(classEntry, declEntry).mkString(",\n")
 
     case ref @ Ref(name, refToDecl, owner, calledOn) ⇒
-      val path = s"_root_/${encode(refToDecl.asString).replace('.', '/')}"
+      val path = encode(refToDecl.asString).replace('.', '/')
       val f = encode(filename)
       val h = uniqueRef(ref.position)
-      val u = s"_root_/${encode(owner.asString).replace('.', '/')}"
+      val u = encode(owner.asString).replace('.', '/')
       s"""
         {
           "@id": "c:$path/$f$h",
