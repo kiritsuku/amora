@@ -56,3 +56,6 @@ Scalac compiler plugins:
 - [extractor](https://github.com/matanster/extractor)
 - [kind-projector](https://github.com/non/kind-projector)
 - [tasty](https://github.com/VladimirNik/tasty)
+
+OWL/RDF libraries for Scala:
+- [scowl](https://github.com/phenoscape/scowl)
