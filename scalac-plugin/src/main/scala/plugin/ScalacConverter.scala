@@ -73,6 +73,17 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
+  private def declFromSymbol(sym: Symbol): h.Declaration = {
+    if (sym.name.toTermName == nme.ROOT)
+      h.Root
+    else {
+      val noRootSymbol = sym.ownerChain.reverse.tail
+      val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
+      val names = noEmptyPkgSymbol.map(s ⇒ decodedName(s.name, s))
+      names.foldLeft(h.Root: h.Declaration) { (owner, name) ⇒ h.Decl(name, owner) }
+    }
+  }
+
   private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
     val pkg = asPackageDecl(sym.owner)
     val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
@@ -80,25 +91,20 @@ class ScalacConverter[G <: Global](val global: G) {
     h.TypeRef(usage, cls)
   }
 
-  // TODO handle commented references correctly
-  // ignores some found references since we do want to add them as attachment to
-  // other references instead of letting them live by themselves.
-  private def mkTermRef(d: h.Decl, t: Tree): h.TermRef = t match {
+  private def mkRef(d: h.Decl, t: Tree): h.Ref = t match {
     case Apply(fun, args) ⇒
       args foreach (expr(d, _))
-      mkTermRef(d, fun)
-    case Select(qualifier, selector) ⇒
-      val ret = qualifier match {
-        case This(qual) ⇒
-          val ref = h.ThisRef(d)
-          // found += ref
-          ref
+      mkRef(d, fun)
+    case Select(qualifier, name) ⇒
+      qualifier match {
+        case _: This ⇒
         case _ ⇒
-          mkTermRef(d, qualifier)
+          mkRef(d, qualifier)
       }
-      val ref = h.TermRef(decodedName(selector, NoSymbol), ret)
-      // found += ref
-      found += h.TermRef(decodedName(t.symbol.name, t.symbol), mkTypeRef(ref, t.symbol.owner))
+      val calledOn = declFromSymbol(t.symbol.owner)
+      val refToDecl = calledOn
+      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
+      found += ref
       ref
   }
 
@@ -165,14 +171,15 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
   }
 
+  /** Handles `classOf[X]` constructs. */
   private def classOfConst(d: h.Decl, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val ref = mkTypeRef(d, tpe.value.typeValue.typeSymbol)
       found += ref
 
       val predef = h.Decl("Predef", h.Decl("scala", h.Root))
-      val decl = h.TermRef("classOf", h.TypeRef(d, predef))
-      found += decl
+      val classOfRef = h.Ref("classOf", d, d, predef)
+      found += classOfRef
     case _ ⇒
   }
 
@@ -195,6 +202,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case tree: Apply ⇒
       expr(m, tree)
     case _: Select ⇒
+      //mkRef(m, tree)
   }
 
   private def valDef(d: h.Declaration, t: ValDef): Unit = {
@@ -275,9 +283,7 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: ValDef ⇒
         valDef(c, tree)
       case tree: Apply ⇒
-        mkTermRef(c, tree)
-        // TODO see comment at mkTermRef
-        // found += mkTermRef(c, tree)
+        mkRef(c, tree)
       case Select(qualifier, selector) ⇒
         found += mkImportRef(qualifier.symbol, selector)
       case EmptyTree ⇒

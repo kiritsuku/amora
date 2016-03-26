@@ -11,15 +11,15 @@ sealed trait Hierarchy {
       name
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
-    case TermRef(name, outer) ⇒
-      if (outer == Root)
-        name
-      else
-        s"${outer.asString}.$name"
     case TypeRef(_, decl) ⇒
       decl.asString
     case ThisRef(cls) ⇒
       cls.asString
+    case Ref(name, _, _, calledOn) ⇒
+      if (calledOn == Root)
+        name
+      else
+        s"${calledOn.asString}.$name"
     case Root ⇒
       "_root_"
   }
@@ -35,11 +35,11 @@ sealed trait Hierarchy {
 
 sealed trait Declaration extends Hierarchy
 
-final case class Decl(override val name: String, parent: Declaration) extends Declaration
+final case class Decl(override val name: String, owner: Declaration) extends Declaration
 
 sealed trait Reference extends Hierarchy
 
-final case class TermRef(override val name: String, outer: Reference) extends Reference
+final case class Ref(override val name: String, refToDecl: Declaration, owner: Decl, calledOn: Declaration) extends Reference
 
 /** `usage` is the location where the type is used, `decl` is the type that is used. */
 final case class TypeRef(usage: Hierarchy, decl: Declaration) extends Reference {
