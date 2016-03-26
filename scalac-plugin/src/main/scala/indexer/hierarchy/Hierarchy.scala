@@ -10,7 +10,7 @@ sealed trait Hierarchy {
     case Decl(name, parent) ⇒
       s"${parent.asString}.$name"
     case Ref(name, _, _, qualifier) ⇒
-      s"${qualifier.asString}.$name"
+      s"${qualifier.asString}.!$name"
     case Root ⇒
       name
   }

@@ -14,7 +14,7 @@ class ScalacConverterTest {
   def convert(data: (String, String)*): Set[String] = {
     val res = convertToHierarchy(data: _*).flatMap(_._2)
     val h = res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
-    h.filterNot(Set("scala", "scala.AnyRef", ""))
+    h.filterNot(Set("scala", "scala.!AnyRef", ""))
   }
 
   @Test
@@ -44,7 +44,7 @@ class ScalacConverterTest {
       class X {
         def a = 0
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.!Int")
   }
 
   @Test
@@ -54,7 +54,7 @@ class ScalacConverterTest {
       class X {
         val a = 0
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.!Int")
   }
 
   @Test
@@ -64,7 +64,7 @@ class ScalacConverterTest {
       class X {
         lazy val a = 0
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.!Int")
   }
 
   @Test
@@ -74,7 +74,7 @@ class ScalacConverterTest {
       class X {
         var a = 0
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.!Int")
   }
 
   @Test
@@ -85,7 +85,7 @@ class ScalacConverterTest {
         def a = 0
         def a_=(a: Int) = ()
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "pkg.X.a_=.a", "scala.Int", "scala.Unit")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "pkg.X.a_=.a", "scala.!Int", "scala.!Unit")
   }
 
   @Test
@@ -96,7 +96,7 @@ class ScalacConverterTest {
         val !!! = 0
         def ??? = 0
       }
-    """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???", "scala.Int")
+    """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???", "scala.!Int")
   }
 
   @Test
@@ -110,7 +110,7 @@ class ScalacConverterTest {
         def `d e f` = 0
         def `type` = 0
       }
-    """) === Set("pkg", "scala.Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`", "pkg.`A B C`.`type`")
+    """) === Set("pkg", "scala.!Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`", "pkg.`A B C`.`type`")
   }
 
   @Test
@@ -129,7 +129,7 @@ class ScalacConverterTest {
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.!Int")
   }
 
   @Test
@@ -155,7 +155,7 @@ class ScalacConverterTest {
           }
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b", "scala.!Int")
   }
 
   @Test
@@ -165,7 +165,7 @@ class ScalacConverterTest {
       class X {
         toString
       }
-    """) === Set("pkg", "pkg.X", "java.lang.Object.toString")
+    """) === Set("pkg", "pkg.X", "java.lang.Object.!toString")
   }
 
   @Test
@@ -175,7 +175,7 @@ class ScalacConverterTest {
       class X {
         toString.toString.toString.toString
       }
-    """) === Set("pkg", "pkg.X", "java.lang.Object.toString", "java.lang.String.toString")
+    """) === Set("pkg", "pkg.X", "java.lang.Object.!toString", "java.lang.String.!toString")
   }
 
   @Test
@@ -193,7 +193,7 @@ class ScalacConverterTest {
       class X {
         def x = 0
       }
-    """) === Set("a.b.c.d", "a.b.c.d.X", "a.b.c.d.X.x", "scala.Int")
+    """) === Set("a.b.c.d", "a.b.c.d.X", "a.b.c.d.X.x", "scala.!Int")
   }
 
   @Test
@@ -202,7 +202,7 @@ class ScalacConverterTest {
       class X {
         def x = 0
       }
-    """) === Set("X", "X.x", "scala.Int")
+    """) === Set("X", "X.x", "scala.!Int")
   }
 
   @Test
@@ -212,7 +212,7 @@ class ScalacConverterTest {
       class X {
         ListBuffer
       }
-    """) === Set("X", "scala.collection.mutable.ListBuffer")
+    """) === Set("X", "scala.collection.mutable.!ListBuffer")
   }
 
   @Test
@@ -222,7 +222,7 @@ class ScalacConverterTest {
       import scala.collection.mutable.Buffer
       import scala.collection.mutable.ListBuffer
       class X
-    """) === Set("X", "scala.collection.mutable.Buffer", "scala.collection.mutable.ListBuffer", "java.io.File")
+    """) === Set("X", "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer", "java.io.!File")
   }
 
   @Test
@@ -238,7 +238,7 @@ class ScalacConverterTest {
       class X {
         def f[A, B] = 0
       }
-    """) === Set("X", "X.f", "X.f.A", "X.f.B", "scala.Int")
+    """) === Set("X", "X.f", "X.f.A", "X.f.B", "scala.!Int")
   }
 
   @Test
@@ -247,7 +247,7 @@ class ScalacConverterTest {
       class X {
         def f: Option[Int] = null
       }
-    """) === Set("X", "X.f", "scala.Option", "scala.Int")
+    """) === Set("X", "X.f", "scala.!Option", "scala.!Int")
   }
 
   @Test
@@ -256,7 +256,7 @@ class ScalacConverterTest {
       class X {
         def f = Option(1)
       }
-    """) === Set("X", "X.f", "scala.Option", "scala.Option.apply", "scala.Int")
+    """) === Set("X", "X.f", "scala.!Option", "scala.Option.!apply", "scala.!Int")
   }
 
   @Test
@@ -265,7 +265,7 @@ class ScalacConverterTest {
       class X {
         def f = Option.apply(1)
       }
-    """) === Set("X", "X.f", "scala.Option", "scala.Option.apply", "scala.Int")
+    """) === Set("X", "X.f", "scala.!Option", "scala.Option.!apply", "scala.!Int")
   }
 
   @Test
@@ -277,7 +277,7 @@ class ScalacConverterTest {
           0
         }
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.s", "X.f.g", "X.f.g.i", "scala.Int", "java.lang.String")
+    """) === Set("X", "X.f", "X.f.i", "X.f.s", "X.f.g", "X.f.g.i", "scala.!Int", "java.lang.!String")
   }
 
   @Test
@@ -289,7 +289,7 @@ class ScalacConverterTest {
         f(v)
         f(Int.MinValue)
       }
-    """) === Set("X", "X.v", "X.f", "X.f.i", "scala.Int", "scala.Int.MinValue")
+    """) === Set("X", "X.v", "X.f", "X.f.i", "X.!f", "X.!v", "scala.!Int", "scala.Int.!MinValue")
   }
 
   @Test
@@ -304,7 +304,7 @@ class ScalacConverterTest {
     convert("""
       import scala.util._
       class X
-    """) === Set("X", "scala.util")
+    """) === Set("X", "scala.!util")
   }
 
   @Test
@@ -313,7 +313,7 @@ class ScalacConverterTest {
       class X {
         import scala.util._
       }
-    """) === Set("X", "scala.util")
+    """) === Set("X", "scala.!util")
   }
 
   @Test
@@ -322,7 +322,7 @@ class ScalacConverterTest {
       class X {
         val x = new Object
       }
-    """) === Set("X", "X.x", "java.lang.Object")
+    """) === Set("X", "X.x", "java.lang.!Object")
   }
 
   @Test
@@ -333,7 +333,7 @@ class ScalacConverterTest {
           toString
         }
       }
-    """) === Set("X", "X.f", "java.lang.Object.toString", "java.lang.String")
+    """) === Set("X", "X.f", "java.lang.Object.!toString", "java.lang.!String")
   }
 
   @Test
@@ -342,7 +342,7 @@ class ScalacConverterTest {
       class X {
         def meth(f: Int ⇒ Int) = 0
       }
-    """) === Set("X", "X.meth", "X.meth.f", "scala.Function1", "scala.Int")
+    """) === Set("X", "X.meth", "X.meth.f", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -351,7 +351,7 @@ class ScalacConverterTest {
       class X {
         def meth(f: ⇒ Int) = 0
       }
-    """) === Set("X", "X.meth", "X.meth.f", "scala.Function0", "scala.Int")
+    """) === Set("X", "X.meth", "X.meth.f", "scala.!Function0", "scala.!Int")
   }
 
   @Test
@@ -361,7 +361,7 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int) = 0
         meth(v ⇒ v)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.v", "scala.Function1", "scala.Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.v", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -377,7 +377,7 @@ class ScalacConverterTest {
     "f2.scala" → """
       package b
       class Y
-    """) === Set("a", "a.X", "a.X.m", "b", "b.Y")
+    """) === Set("a", "a.X", "a.X.m", "b", "b.Y", "b.!Y")
   }
 
   @Test
@@ -387,7 +387,7 @@ class ScalacConverterTest {
         def meth(f: (Int, Int, Int) ⇒ Int) = 0
         meth((a, b, c) ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.a", "X.b", "X.c", "scala.Function3", "scala.Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.a", "X.b", "X.c", "scala.!Function3", "scala.!Int")
   }
 
   @Test
@@ -397,7 +397,7 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int ⇒ Int ⇒ Int) = 0
         meth(a ⇒ b ⇒ c ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.a", "X.b", "X.c", "scala.Function1", "scala.Int")
+    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.a", "X.b", "X.c", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -419,14 +419,14 @@ class ScalacConverterTest {
     "f2.scala" → """
       package b
       class Y
-    """) === Set("a", "a.X", "b", "b.Y")
+    """) === Set("a", "a.X", "b", "b.Y", "b.!Y")
   }
 
   @Test
   def simple_inheritance_from_stdlib_class() = {
     convert("""
       trait X extends scala.collection.mutable.AbstractSet[Int]
-    """) === Set("X", "scala.collection.mutable.AbstractSet", "scala.Int")
+    """) === Set("X", "scala.collection.mutable.!AbstractSet", "scala.!Int")
   }
 
   @Test
@@ -435,7 +435,16 @@ class ScalacConverterTest {
       trait X extends collection.SeqLike[Int, Int]
         with collection.IterableLike[Int, Int]
         with collection.GenSeqLike[Int, Int]
-    """) === Set("X", "scala.collection.SeqLike", "scala.collection.IterableLike", "scala.collection.GenSeqLike", "scala.Int")
+    """) === Set("X", "scala.collection.!SeqLike", "scala.collection.!IterableLike", "scala.collection.!GenSeqLike", "scala.!Int")
+  }
+
+  @Test
+  def simple_self_type() = {
+    convert("""
+      trait X {
+        self ⇒
+      }
+    """) === Set("X", "X.self", "!X")
   }
 
   @Test
@@ -444,7 +453,7 @@ class ScalacConverterTest {
       trait X {
         self: scala.collection.mutable.AbstractSet[Int] ⇒
       }
-    """) === Set("X", "X.self", "scala.collection.mutable.AbstractSet", "scala.Int")
+    """) === Set("X", "X.self", "!X", "scala.collection.mutable.!AbstractSet", "scala.!Int")
   }
 
   @Test
@@ -454,9 +463,9 @@ class ScalacConverterTest {
         self: scala.collection.mutable.AbstractMap[List[Map[Int, Set[Int]]], Map[Int, String]] ⇒
       }
     """) === Set(
-        "X", "X.self", "scala.collection.mutable.AbstractMap",
-        "scala.collection.immutable.List", "scala.collection.immutable.Map",
-        "scala.collection.immutable.Set", "scala.Int", "java.lang.String")
+        "X", "X.self", "!X", "scala.collection.mutable.!AbstractMap",
+        "scala.collection.immutable.!List", "scala.collection.immutable.!Map",
+        "scala.collection.immutable.!Set", "scala.!Int", "java.lang.!String")
   }
 
   @Test
@@ -468,8 +477,8 @@ class ScalacConverterTest {
           with collection.GenSeqLike[List[Int], List[Int]] ⇒
       }
     """) === Set(
-        "X", "X.self", "scala.collection.SeqLike", "scala.collection.IterableLike",
-        "scala.collection.GenSeqLike", "scala.collection.immutable.List", "scala.Int")
+        "X", "X.self", "!X", "scala.collection.!SeqLike", "scala.collection.!IterableLike",
+        "scala.collection.!GenSeqLike", "scala.collection.immutable.!List", "scala.!Int")
   }
 
   @Test
@@ -478,7 +487,7 @@ class ScalacConverterTest {
       class X {
         val t = (0, "")
       }
-    """) === Set("X", "X.t", "scala.Int", "java.lang.String", "scala.Tuple2", "scala.Tuple2.apply")
+    """) === Set("X", "X.t", "scala.!Int", "java.lang.!String", "scala.!Tuple2", "scala.Tuple2.!apply")
   }
 
   @Test
@@ -487,7 +496,7 @@ class ScalacConverterTest {
       class X {
         def f(t: (Int, String)) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "scala.Int", "java.lang.String", "scala.Tuple2")
+    """) === Set("X", "X.f", "X.f.t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -496,7 +505,7 @@ class ScalacConverterTest {
       class X {
         def f(t: Tuple2[Int, String]) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "scala.Int", "java.lang.String", "scala.Tuple2")
+    """) === Set("X", "X.f", "X.f.t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -505,28 +514,28 @@ class ScalacConverterTest {
       class X {
         val c = classOf[Int]
       }
-    """) === Set("X", "X.c", "scala.Predef.classOf", "scala.Int", "java.lang.Class")
+    """) === Set("X", "X.c", "scala.Predef.!classOf", "scala.!Int", "java.lang.!Class")
   }
 
   @Test
   def private_class_parameter() = {
     convert("""
       class X(i: Int, j: String)
-    """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
+    """) === Set("X", "X.i", "X.j", "java.lang.!String", "scala.!Int")
   }
 
   @Test
   def public_class_parameter() = {
     convert("""
       class X(val i: Int, val j: String)
-    """) === Set("X", "X.i", "X.j", "java.lang.String", "scala.Int")
+    """) === Set("X", "X.i", "X.j", "java.lang.!String", "scala.!Int")
   }
 
   @Test
   def class_parameter_with_multiple_argument_lists() = {
     convert("""
       class X(i: Int)(j: String)(k: Int)
-    """) === Set("X", "X.i", "X.j", "X.k", "java.lang.String", "scala.Int")
+    """) === Set("X", "X.i", "X.j", "X.k", "java.lang.!String", "scala.!Int")
   }
 
   @Test
@@ -535,7 +544,7 @@ class ScalacConverterTest {
       class X {
         def f(i: Int, j: String) = 0
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.j", "java.lang.String", "scala.Int")
+    """) === Set("X", "X.f", "X.f.i", "X.f.j", "java.lang.!String", "scala.!Int")
   }
 
   @Test
@@ -544,7 +553,7 @@ class ScalacConverterTest {
       class X {
         def f(i: Int)(j: String)(k: Int) = 0
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.j", "X.f.k", "java.lang.String", "scala.Int")
+    """) === Set("X", "X.f", "X.f.i", "X.f.j", "X.f.k", "java.lang.!String", "scala.!Int")
   }
 
   @Test
@@ -560,7 +569,7 @@ class ScalacConverterTest {
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.!Int")
   }
 
 }
