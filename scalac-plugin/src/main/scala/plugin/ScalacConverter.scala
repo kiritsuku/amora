@@ -192,7 +192,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case tree: Apply ⇒
       expr(m, tree)
     case _: Select ⇒
-      if (!tree.symbol.isLazy)
+      if (!(tree.symbol.isLazy && tree.symbol.isLazyAccessor))
         mkRef(m, tree)
   }
 

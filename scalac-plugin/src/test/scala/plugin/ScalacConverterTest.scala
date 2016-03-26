@@ -612,4 +612,14 @@ class ScalacConverterTest {
     """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
   }
 
+  @Test
+  def ref_on_rhs_of_lazy_val() = {
+    convert("""
+      class X {
+        lazy val a = 0
+        lazy val b = a
+      }
+    """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
+  }
+
 }
