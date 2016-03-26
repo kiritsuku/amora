@@ -84,11 +84,10 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def mkTypeRef(usage: h.Hierarchy, sym: Symbol): h.TypeRef = {
-    val pkg = asPackageDecl(sym.owner)
+  private def refFromSymbol(d: h.Declaration, sym: Symbol): h.Ref = {
+    val pkg = declFromSymbol(sym.owner)
     val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-    cls.addAttachments(a.Class)
-    h.TypeRef(usage, cls)
+    h.Ref(cls.name, cls, d, cls.owner)
   }
 
   private def mkRef(d: h.Decl, t: Tree): h.Ref = t match {
@@ -108,11 +107,11 @@ class ScalacConverter[G <: Global](val global: G) {
       ref
   }
 
-  private def mkImportRef(qualifier: Symbol, selector: Name): h.TypeRef = {
-    val pkg = asPackageDecl(qualifier)
-    val decl = h.Decl(decodedName(selector, NoSymbol), pkg)
+  private def refFromSelect(qualifier: Symbol, name: Name): h.Ref = {
+    val pkg = declFromSymbol(qualifier)
+    val decl = h.Decl(decodedName(name, NoSymbol), pkg)
     decl.addAttachments(a.Class)
-    h.TypeRef(pkg, decl)
+    h.Ref(decl.name, decl, pkg, pkg)
   }
 
   private def typeRef(d: h.Declaration, t: Tree): Unit = t match {
@@ -127,14 +126,14 @@ class ScalacConverter[G <: Global](val global: G) {
 
       def selfRefTypes() = {
         val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
-        val refs = syms.map(mkTypeRef(d, _))
+        val refs = syms.map(refFromSymbol(d, _))
         refs foreach (found += _)
       }
 
       def otherTypes() = {
         // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
         val isAnyRef = t.tpe =:= typeOf[AnyRef]
-        val decl = (if (isAnyRef) h.TypeRef(d, anyRefDecl) else mkTypeRef(d, sym))
+        val decl = (if (isAnyRef) anyRefDecl(d) else refFromSymbol(d, sym))
         decl.addAttachments(a.TypeRef)
         setPosition(decl, t.pos)
         found += decl
@@ -147,7 +146,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
       if (sym.isRefinementClass) selfRefTypes else otherTypes
     case Select(_, name) ⇒
-      found += mkImportRef(t.symbol.owner, name)
+      found += refFromSelect(t.symbol.owner, name)
     case _: Ident ⇒
   }
 
@@ -156,14 +155,14 @@ class ScalacConverter[G <: Global](val global: G) {
       expr(m, fun)
       args foreach (expr(m, _))
     case TypeApply(fun, args) ⇒
-      found += mkTypeRef(m, fun.symbol)
+      found += refFromSymbol(m, fun.symbol)
       args foreach (expr(m, _))
     case t: TypeTree ⇒
       typeRef(m, t)
     case Select(New(tpt), _) ⇒
-      found += mkImportRef(tpt.symbol.owner, tpt.symbol.name)
+      found += refFromSelect(tpt.symbol.owner, tpt.symbol.name)
     case Select(_, name) ⇒
-      found += mkImportRef(t.symbol.owner, name)
+      found += refFromSelect(t.symbol.owner, name)
     case Function(vparams, body) ⇒
       vparams foreach (valDef(m, _))
       expr(m, body)
@@ -174,7 +173,7 @@ class ScalacConverter[G <: Global](val global: G) {
   /** Handles `classOf[X]` constructs. */
   private def classOfConst(d: h.Decl, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
-      val ref = mkTypeRef(d, tpe.value.typeValue.typeSymbol)
+      val ref = refFromSymbol(d, tpe.value.typeValue.typeSymbol)
       found += ref
 
       val predef = h.Decl("Predef", h.Decl("scala", h.Root))
@@ -285,7 +284,7 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: Apply ⇒
         mkRef(c, tree)
       case Select(qualifier, selector) ⇒
-        found += mkImportRef(qualifier.symbol, selector)
+        found += refFromSelect(qualifier.symbol, selector)
       case EmptyTree ⇒
       case tree: Import ⇒
         implDef(c, tree)
@@ -327,7 +326,7 @@ class ScalacConverter[G <: Global](val global: G) {
         if (sel.name == nme.WILDCARD)
           this.expr(decl, expr)
         else
-          found += mkImportRef(expr.symbol, sel.name)
+          found += refFromSelect(expr.symbol, sel.name)
       }
   }
 
@@ -406,5 +405,5 @@ class ScalacConverter[G <: Global](val global: G) {
     d.position = h.RangePosition(pos.point, pos.point+d.name.length)
   }
 
-  private def anyRefDecl = h.Decl("AnyRef", h.Decl("scala", h.Root))
+  private def anyRefDecl(d: h.Declaration) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
 }

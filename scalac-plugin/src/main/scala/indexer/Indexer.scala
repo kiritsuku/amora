@@ -91,11 +91,11 @@ object Indexer {
       val declEntry = mkModel(filename)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
-    case ref @ TypeRef(usage, decl) ⇒
-      val path = s"_root_/${encode(decl.asString).replace('.', '/')}"
+    case ref @ Ref(name, refToDecl, owner, calledOn) ⇒
+      val path = s"_root_/${encode(refToDecl.asString).replace('.', '/')}"
       val f = encode(filename)
       val h = uniqueRef(ref.position)
-      val u = s"_root_/${encode(usage.asString).replace('.', '/')}"
+      val u = s"_root_/${encode(owner.asString).replace('.', '/')}"
       s"""
         {
           "@id": "c:$path/$f$h",
@@ -109,9 +109,6 @@ object Indexer {
           "c:usage": "c:$u"
         }
       """
-
-    case _: Ref ⇒
-      "[]"
     case ThisRef(cls) ⇒
       "[]"
     case Root ⇒
