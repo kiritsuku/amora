@@ -157,16 +157,16 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
-        SELECT ?usage WHERE {
+        SELECT ?owner WHERE {
           ?class c:attachment "class" .
           ?class s:name ?className .
           FILTER (str(?className) = "Y") .
           ?ref c:reference ?class .
-          ?ref c:usage ?usage .
+          ?ref c:owner ?owner .
         }
       """) === Seq(
-        Data("usage", s"${modelName}_root_/a/b/c/X/m"),
-        Data("usage", s"${modelName}_root_/d/e/f"))
+        Data("owner", s"${modelName}_root_/a/b/c/X/m"),
+        Data("owner", s"${modelName}_root_/d/e/f"))
   }
 
   @Test

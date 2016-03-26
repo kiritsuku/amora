@@ -94,7 +94,7 @@ object Indexer {
           "c:file": "$filename",
           ${position(ref.position)}
           "c:reference": "c:$path",
-          "c:usage": "c:$u"
+          "c:owner": "c:$u"
         }
       """
 
@@ -116,8 +116,8 @@ object Indexer {
             "@id": "c:parent",
             "@type": "@id"
           },
-          "c:usage": {
-            "@id": "c:usage",
+          "c:owner": {
+            "@id": "c:owner",
             "@type": "@id"
           },
           "c:attachment": {
