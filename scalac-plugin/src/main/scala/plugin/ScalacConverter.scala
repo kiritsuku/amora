@@ -107,7 +107,9 @@ class ScalacConverter[G <: Global](val global: G) {
     val pkg = declFromSymbol(qualifier)
     val decl = h.Decl(decodedName(name, NoSymbol), pkg)
     decl.addAttachments(a.Class)
-    h.Ref(decl.name, decl, pkg, pkg)
+    val ref = h.Ref(decl.name, decl, pkg, pkg)
+    ref.addAttachments(a.Ref)
+    ref
   }
 
   private def typeRef(d: h.Hierarchy, t: Tree): Unit = t match {
@@ -289,8 +291,10 @@ class ScalacConverter[G <: Global](val global: G) {
         valDef(c, tree)
       case tree: Apply ⇒
         mkRef(c, tree)
-      case Select(qualifier, selector) ⇒
-        found += refFromSelect(qualifier.symbol, selector)
+      case t @ Select(qualifier, selector) ⇒
+        val ref = refFromSelect(qualifier.symbol, selector)
+        setPosition(ref, t.pos)
+        found += ref
       case EmptyTree ⇒
       case tree: Import ⇒
         implDef(c, tree)
@@ -331,8 +335,11 @@ class ScalacConverter[G <: Global](val global: G) {
       selectors foreach { sel ⇒
         if (sel.name == nme.WILDCARD)
           this.expr(decl, expr)
-        else
-          found += refFromSelect(expr.symbol, sel.name)
+        else {
+          val ref = refFromSelect(expr.symbol, sel.name)
+          ref.position = h.RangePosition(sel.namePos, sel.namePos+ref.name.length)
+          found += ref
+        }
       }
   }
 
