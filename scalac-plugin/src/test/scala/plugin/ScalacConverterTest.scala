@@ -429,7 +429,7 @@ class ScalacConverterTest {
   def simple_inheritance_from_stdlib_class() = {
     convert("""
       trait X extends scala.collection.mutable.AbstractSet[Int]
-    """) === Set("X", "scala.collection.mutable.!AbstractSet", "scala.!Int")
+    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!AbstractSet", "scala.!Int")
   }
 
   @Test
@@ -438,7 +438,7 @@ class ScalacConverterTest {
       trait X extends collection.SeqLike[Int, Int]
         with collection.IterableLike[Int, Int]
         with collection.GenSeqLike[Int, Int]
-    """) === Set("X", "scala.collection.!SeqLike", "scala.collection.!IterableLike", "scala.collection.!GenSeqLike", "scala.!Int")
+    """) === Set("X", "scala.!collection", "scala.collection.!SeqLike", "scala.collection.!IterableLike", "scala.collection.!GenSeqLike", "scala.!Int")
   }
 
   @Test
@@ -456,7 +456,20 @@ class ScalacConverterTest {
       trait X {
         self: scala.collection.mutable.AbstractSet[Int] ⇒
       }
-    """) === Set("X", "X.self", "!X", "scala.collection.mutable.!AbstractSet", "scala.!Int")
+    """) === Set(
+        "X", "X.self", "!X", "!scala", "scala.!collection", "scala.collection.!mutable",
+        "scala.collection.mutable.!AbstractSet", "scala.!Int")
+  }
+
+  @Test
+  def simple_self_type_to_stdlib_class_with_full_path_type_argument() = {
+    convert("""
+      trait X {
+        self: scala.collection.mutable.AbstractSet[java.io.File] ⇒
+      }
+    """) === Set(
+        "X", "X.self", "!X", "!scala", "scala.!collection", "scala.collection.!mutable",
+        "scala.collection.mutable.!AbstractSet", "!java", "java.!io", "java.io.!File")
   }
 
   @Test
@@ -466,7 +479,7 @@ class ScalacConverterTest {
         self: scala.collection.mutable.AbstractMap[List[Map[Int, Set[Int]]], Map[Int, String]] ⇒
       }
     """) === Set(
-        "X", "X.self", "!X", "scala.collection.mutable.!AbstractMap",
+        "X", "X.self", "!X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!AbstractMap",
         "scala.collection.immutable.!List", "scala.collection.immutable.!Map",
         "scala.collection.immutable.!Set", "scala.!Int", "java.lang.!String")
   }

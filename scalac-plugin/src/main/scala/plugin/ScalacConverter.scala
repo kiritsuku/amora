@@ -91,6 +91,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This ⇒
+        case Ident(name) if name == nme.ROOTPKG ⇒
         case _ ⇒
           mkRef(d, qualifier)
       }
@@ -99,7 +100,8 @@ class ScalacConverter[G <: Global](val global: G) {
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
-      found += ref
+      if (t.pos.isRange)
+        found += ref
       ref
     case Ident(name) ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
@@ -107,7 +109,8 @@ class ScalacConverter[G <: Global](val global: G) {
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
-      found += ref
+      if (t.pos.isRange)
+        found += ref
       ref
   }
 
@@ -124,13 +127,13 @@ class ScalacConverter[G <: Global](val global: G) {
     case t: TypeTree ⇒
       val sym = t.symbol
 
-      def findTypes(t: Type): Seq[Type] =
-        if (t.typeSymbol.isRefinementClass)
-          t.typeSymbol.info.parents.flatMap(findTypes)
-        else
-          t +: t.typeArgs.flatMap(findTypes)
-
       def selfRefTypes() = {
+        def findTypes(t: Type): Seq[Type] =
+          if (t.typeSymbol.isRefinementClass)
+            t.typeSymbol.info.parents.flatMap(findTypes)
+          else
+            t +: t.typeArgs.flatMap(findTypes)
+
         val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
         val refs = syms.map(refFromSymbol(d, _))
         refs foreach (found += _)
@@ -143,16 +146,24 @@ class ScalacConverter[G <: Global](val global: G) {
         decl.addAttachments(a.Ref)
         setPosition(decl, t.pos)
         found += decl
-        t.original match {
-          case AppliedTypeTree(tpt, args) ⇒
-            args foreach (typeRef(d, _))
-          case _ ⇒
-        }
       }
 
-      if (sym.isRefinementClass) selfRefTypes else otherTypes
+      if (sym.isRefinementClass)
+        selfRefTypes
+      else
+        otherTypes
+
+      t.original match {
+        case AppliedTypeTree(tpt, args) ⇒
+          typeRef(d, t.original)
+        case _ ⇒
+      }
+    case AppliedTypeTree(tpt, args) ⇒
+      if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
+        typeRef(d, tpt)
+      args foreach (typeRef(d, _))
     case Select(_, name) ⇒
-      found += refFromSelect(t.symbol.owner, name)
+      mkRef(d, t)
     case _: Ident ⇒
   }
 
@@ -177,7 +188,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   /** Handles `classOf[X]` constructs. */
-  private def classOfConst(d: h.Decl, t: Literal) = t.tpe match {
+  private def classOfConst(d: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val ref = refFromSymbol(d, tpe.value.typeValue.typeSymbol)
       ref.addAttachments(a.Ref)
@@ -192,7 +203,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case _ ⇒
   }
 
-  private def body(m: h.Decl, tree: Tree): Unit = tree match {
+  private def body(m: h.Hierarchy, tree: Tree): Unit = tree match {
     case tree: DefDef ⇒
       defDef(m, tree)
     case tree: ValDef ⇒
@@ -254,7 +265,7 @@ class ScalacConverter[G <: Global](val global: G) {
     typeRef(m, tpt)
   }
 
-  private def defDef(c: h.Decl, t: DefDef): Unit = {
+  private def defDef(c: h.Hierarchy, t: DefDef): Unit = {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
@@ -290,7 +301,7 @@ class ScalacConverter[G <: Global](val global: G) {
       normalDefDef
   }
 
-  private def template(c: h.Decl, tree: Template): Unit = {
+  private def template(c: h.Hierarchy, tree: Template): Unit = {
     val Template(parents, self, body) = tree
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef | _: Import) ⇒
