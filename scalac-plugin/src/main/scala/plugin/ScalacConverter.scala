@@ -83,7 +83,7 @@ class ScalacConverter[G <: Global](val global: G) {
     h.Ref(cls.name, cls, d, pkg)
   }
 
-  private def mkRef(d: h.Decl, t: Tree): h.Ref = t match {
+  private def mkRef(d: h.Hierarchy, t: Tree): h.Ref = t match {
     case Apply(fun, args) ⇒
       val ref = mkRef(d, fun)
       args foreach (expr(ref, _))
@@ -340,6 +340,7 @@ class ScalacConverter[G <: Global](val global: G) {
       found += c
       template(c, impl)
     case Import(expr, selectors) ⇒
+      mkRef(decl, expr)
       selectors foreach { sel ⇒
         if (sel.name == nme.WILDCARD)
           this.expr(decl, expr)

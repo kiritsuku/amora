@@ -414,8 +414,8 @@ class RegionIndexerTest {
         }
       """,
       "<memory>" → """
-        import scala.collection.mutable.[[Buffer]]
-        import scala.collection.mutable.[[ListBuffer]]
+        import [[scala]].[[collection]].[[mutable]].[[Buffer]]
+        import [[scala]].[[collection]].[[mutable]].[[ListBuffer]]
         class X {
           [[Buffer]]
           [[ListBuffer]]
@@ -433,7 +433,7 @@ class RegionIndexerTest {
         }
       """,
       "<memory>" → """
-        import scala.collection.mutable.{ [[Buffer]] ⇒ [[B]], [[ListBuffer]] }
+        import [[scala]].[[collection]].[[mutable]].{ [[Buffer]] ⇒ [[B]], [[ListBuffer]] }
         class X {
           [[B]]
           [[ListBuffer]]

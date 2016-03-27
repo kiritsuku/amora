@@ -212,7 +212,7 @@ class ScalacConverterTest {
       class X {
         ListBuffer
       }
-    """) === Set("X", "scala.collection.mutable.!ListBuffer")
+    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!ListBuffer")
   }
 
   @Test
@@ -222,7 +222,10 @@ class ScalacConverterTest {
       import scala.collection.mutable.Buffer
       import scala.collection.mutable.ListBuffer
       class X
-    """) === Set("X", "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer", "java.io.!File")
+    """) === Set(
+        "X", "!scala", "scala.!collection", "scala.collection.!mutable",
+        "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer",
+        "!java", "java.!io", "java.io.!File")
   }
 
   @Test
@@ -304,7 +307,7 @@ class ScalacConverterTest {
     convert("""
       import scala.util._
       class X
-    """) === Set("X", "scala.!util")
+    """) === Set("X", "!scala", "scala.!util")
   }
 
   @Test
@@ -313,7 +316,7 @@ class ScalacConverterTest {
       class X {
         import scala.util._
       }
-    """) === Set("X", "scala.!util")
+    """) === Set("X", "!scala", "scala.!util")
   }
 
   @Test
@@ -377,7 +380,7 @@ class ScalacConverterTest {
     "f2.scala" → """
       package b
       class Y
-    """) === Set("a", "a.X", "a.X.m", "b", "b.Y", "b.!Y")
+    """) === Set("a", "a.X", "a.X.m", "b", "b.Y", "!b", "b.!Y")
   }
 
   @Test
@@ -419,7 +422,7 @@ class ScalacConverterTest {
     "f2.scala" → """
       package b
       class Y
-    """) === Set("a", "a.X", "b", "b.Y", "b.!Y")
+    """) === Set("a", "a.X", "b", "b.Y", "!b", "b.!Y")
   }
 
   @Test
@@ -629,7 +632,7 @@ class ScalacConverterTest {
       class X {
         B
       }
-    """) === Set("X", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
   }
 
   @Test
@@ -640,7 +643,7 @@ class ScalacConverterTest {
         B
         ListBuffer
       }
-    """) === Set("X", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer")
+    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer")
   }
 
   @Test
@@ -650,7 +653,7 @@ class ScalacConverterTest {
         import scala.collection.mutable.{Buffer ⇒ B}
         B
       }
-    """) === Set("X", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
   }
 
   @Test
