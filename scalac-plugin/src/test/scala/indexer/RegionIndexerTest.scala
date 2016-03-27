@@ -399,7 +399,7 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          val a = [[classOf]][Int]
+          val a = [[classOf]][ /* Int */ [[Int]] ]
         }
       """)
   }

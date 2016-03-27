@@ -3,6 +3,9 @@ package plugin
 import scala.collection.mutable.ListBuffer
 import scala.reflect.internal.Chars
 import scala.tools.nsc.Global
+import scala.tools.refactoring.util.SourceWithMarker
+import scala.tools.refactoring.util.SourceWithMarker.Movement
+import scala.tools.refactoring.util.SourceWithMarker.Movements
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
@@ -167,6 +170,8 @@ class ScalacConverter[G <: Global](val global: G) {
   private def classOfConst(d: h.Decl, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val ref = refFromSymbol(d, tpe.value.typeValue.typeSymbol)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
       val predef = h.Decl("Predef", h.Decl("scala", h.Root))
@@ -387,9 +392,16 @@ class ScalacConverter[G <: Global](val global: G) {
     case EmptyTree                                     ⇒
   }
 
-  private def setPosition(d: h.Hierarchy, pos: Position) = {
-    if (pos.isRange)
-      d.position = h.RangePosition(pos.point, pos.point+d.name.length)
+  private def setPosition(d: h.Hierarchy, pos: Position, skipping: Movement = Movements.none) = {
+    if (pos.isRange) {
+      import Movements._
+      val mvnt = until(id, skipping)
+      mvnt(SourceWithMarker(pos.source.content, pos.point)) match {
+        case Some(start) ⇒
+          d.position = h.RangePosition(start, start+d.name.length)
+        case _ ⇒
+      }
+    }
   }
 
   private def anyRefDecl(d: h.Hierarchy) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
