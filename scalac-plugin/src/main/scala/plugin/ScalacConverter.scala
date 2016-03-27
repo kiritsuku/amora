@@ -101,6 +101,14 @@ class ScalacConverter[G <: Global](val global: G) {
       setPosition(ref, t.pos)
       found += ref
       ref
+    case Ident(name) ⇒
+      val calledOn = declFromSymbol(t.symbol.owner)
+      val refToDecl = declFromSymbol(t.symbol)
+      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos)
+      found += ref
+      ref
   }
 
   private def refFromSelect(qualifier: Symbol, name: Name): h.Ref = {
@@ -205,6 +213,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Select ⇒
       if (!(tree.symbol.isLazy && tree.symbol.isLazyAccessor))
         mkRef(m, tree)
+    case _: Import ⇒
+      implDef(m, tree)
   }
 
   private def valDef(d: h.Hierarchy, t: ValDef): Unit = {
@@ -283,7 +293,7 @@ class ScalacConverter[G <: Global](val global: G) {
   private def template(c: h.Decl, tree: Template): Unit = {
     val Template(parents, self, body) = tree
     body foreach {
-      case tree @ (_: ClassDef | _: ModuleDef) ⇒
+      case tree @ (_: ClassDef | _: ModuleDef | _: Import) ⇒
         implDef(c, tree)
       case tree: DefDef ⇒
         defDef(c, tree)
@@ -296,8 +306,6 @@ class ScalacConverter[G <: Global](val global: G) {
         setPosition(ref, t.pos)
         found += ref
       case EmptyTree ⇒
-      case tree: Import ⇒
-        implDef(c, tree)
     }
     parents foreach (typeRef(c, _))
     selfRef(c, self)

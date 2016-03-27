@@ -643,4 +643,25 @@ class ScalacConverterTest {
     """) === Set("X", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer", "scala.collection.mutable.!ListBuffer")
   }
 
+  @Test
+  def class_local_rename_import() = {
+    convert("""
+      class X {
+        import scala.collection.mutable.{Buffer ⇒ B}
+        B
+      }
+    """) === Set("X", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+  }
+
+  @Test
+  def local_rename_import() = {
+    convert("""
+      class X {
+        def f = {
+          import scala.collection.mutable.{Buffer ⇒ B}
+          B
+        }
+      }
+    """) === Set("X", "X.f", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+  }
 }
