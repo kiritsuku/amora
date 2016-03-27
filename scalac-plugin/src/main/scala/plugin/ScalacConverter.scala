@@ -127,7 +127,7 @@ class ScalacConverter[G <: Global](val global: G) {
         // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
         val isAnyRef = t.tpe =:= typeOf[AnyRef]
         val decl = (if (isAnyRef) anyRefDecl(d) else refFromSymbol(d, sym))
-        decl.addAttachments(a.TypeRef)
+        decl.addAttachments(a.Ref)
         setPosition(decl, t.pos)
         found += decl
         t.original match {

@@ -304,7 +304,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -323,7 +323,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -353,7 +353,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "typeref"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """

@@ -15,7 +15,5 @@ object Attachment {
   case object Lazy extends Attachment { override def asString = "lazy" }
   case object TypeParam extends Attachment { override def asString = "tparameter" }
   case object Param extends Attachment { override def asString = "parameter" }
-  case object TermRef extends Attachment { override def asString = "termref" }
-  case object TypeRef extends Attachment { override def asString = "typeref" }
   case object Ref extends Attachment { override def asString = "reference" }
 }
