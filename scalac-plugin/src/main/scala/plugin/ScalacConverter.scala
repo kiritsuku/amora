@@ -171,6 +171,8 @@ class ScalacConverter[G <: Global](val global: G) {
 
       val predef = h.Decl("Predef", h.Decl("scala", h.Root))
       val classOfRef = h.Ref("classOf", d, d, predef)
+      classOfRef.addAttachments(a.Ref)
+      classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
     case _ ⇒
   }

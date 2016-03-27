@@ -387,4 +387,20 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def classOf_ref() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          val a = [[classOf]][Int]
+        }
+      """)
+  }
 }
