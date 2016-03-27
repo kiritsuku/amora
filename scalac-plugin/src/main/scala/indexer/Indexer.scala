@@ -40,7 +40,10 @@ object Indexer {
   }
 
   private def attachments(h: Hierarchy): String =
-    h.attachments.map(_.asString).mkString("\"c:attachment\": [\"", "\", \"", "\"],")
+    if (h.attachments.isEmpty)
+      ""
+    else
+      h.attachments.map(_.asString).mkString("\"c:attachment\": [\"", "\", \"", "\"],")
 
   private def position(pos: Position) = pos match {
     case RangePosition(start, end) ⇒
