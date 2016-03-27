@@ -422,4 +422,22 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_rename_imports() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        import scala.collection.mutable.{ [[Buffer]] ⇒ [[B]], [[ListBuffer]] }
+        class X {
+          [[B]]
+          [[ListBuffer]]
+        }
+      """)
+  }
 }

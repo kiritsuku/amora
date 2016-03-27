@@ -339,6 +339,12 @@ class ScalacConverter[G <: Global](val global: G) {
           val ref = refFromSelect(expr.symbol, sel.name)
           ref.position = h.RangePosition(sel.namePos, sel.namePos+ref.name.length)
           found += ref
+
+          if (sel.name != sel.rename) {
+            val rename = refFromSelect(expr.symbol, sel.rename)
+            rename.position = h.RangePosition(sel.renamePos, sel.renamePos+rename.name.length)
+            found += rename
+          }
         }
       }
   }
