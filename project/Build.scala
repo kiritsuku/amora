@@ -157,6 +157,7 @@ object Build extends sbt.Build {
     name := "scalac-plugin",
 
     libraryDependencies ++= deps.scalacPlugin.value,
+    resolvers += Resolver.sonatypeRepo("snapshots"),
 
     scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
     scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}",
@@ -235,6 +236,7 @@ object Build extends sbt.Build {
     lazy val scalacPlugin = Def.setting(Seq(
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1",
+      "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT",
       "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
   }
