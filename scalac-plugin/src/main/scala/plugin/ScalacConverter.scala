@@ -92,8 +92,10 @@ class ScalacConverter[G <: Global](val global: G) {
           mkRef(d, qualifier)
       }
       val calledOn = declFromSymbol(t.symbol.owner)
-      val refToDecl = calledOn
+      val refToDecl = declFromSymbol(t.symbol)
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos)
       found += ref
       ref
   }
@@ -250,6 +252,11 @@ class ScalacConverter[G <: Global](val global: G) {
     }
 
     def lazyDefDef() = {
+      val m = h.Decl(decodedName(name, NoSymbol), c)
+      m.addAttachments(a.Lazy, a.Val)
+      setPosition(m, t.pos)
+      found += m
+      typeRef(c, tpt)
       body(c, rhs)
     }
 
@@ -379,7 +386,8 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def setPosition(d: h.Hierarchy, pos: Position) = {
-    d.position = h.RangePosition(pos.point, pos.point+d.name.length)
+    if (pos.isRange)
+      d.position = h.RangePosition(pos.point, pos.point+d.name.length)
   }
 
   private def anyRefDecl(d: h.Hierarchy) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))

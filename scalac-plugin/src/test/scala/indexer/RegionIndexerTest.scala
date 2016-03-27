@@ -368,4 +368,23 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def member_ref() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          val a = 0
+          def b = [[a]]
+          var c = [[b]]
+          lazy val d = [[c]]
+        }
+      """)
+  }
 }
