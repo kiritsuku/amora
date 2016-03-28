@@ -313,9 +313,7 @@ class ScalacConverter[G <: Global](val global: G) {
       case tree: Apply ⇒
         mkRef(c, tree)
       case t @ Select(qualifier, selector) ⇒
-        val ref = refFromSelect(qualifier.symbol, selector)
-        setPosition(ref, t.pos)
-        found += ref
+        mkRef(c, t)
       case EmptyTree ⇒
     }
     parents foreach (typeRef(c, _))
