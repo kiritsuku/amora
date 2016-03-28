@@ -77,12 +77,6 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def refFromSymbol(d: h.Hierarchy, sym: Symbol): h.Ref = {
-    val pkg = declFromSymbol(sym.owner)
-    val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-    h.Ref(cls.name, cls, d, pkg)
-  }
-
   private def mkRef(d: h.Hierarchy, t: Tree): h.Ref = t match {
     case Apply(fun, args) ⇒
       val ref = mkRef(d, fun)
@@ -136,6 +130,12 @@ class ScalacConverter[G <: Global](val global: G) {
     case t: TypeTree ⇒
       val sym = t.symbol
 
+      def refFromSymbol(sym: Symbol): h.Ref = {
+        val pkg = declFromSymbol(sym.owner)
+        val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
+        h.Ref(cls.name, cls, d, pkg)
+      }
+
       def selfRefTypes() = {
         def findTypes(t: Type): Seq[Type] =
           if (t.typeSymbol.isRefinementClass)
@@ -144,17 +144,21 @@ class ScalacConverter[G <: Global](val global: G) {
             t +: t.typeArgs.flatMap(findTypes)
 
         val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
-        val refs = syms.map(refFromSymbol(d, _))
+        val refs = syms.map(refFromSymbol)
         refs foreach (found += _)
       }
 
       def otherTypes() = {
         // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
         val isAnyRef = t.tpe =:= typeOf[AnyRef]
-        val decl = (if (isAnyRef) anyRefDecl(d) else refFromSymbol(d, sym))
-        decl.addAttachments(a.Ref)
-        setPosition(decl, t.pos)
-        found += decl
+        val ref =
+          if (isAnyRef)
+            h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
+          else
+            refFromSymbol(sym)
+        ref.addAttachments(a.Ref)
+        setPosition(ref, t.pos)
+        found += ref
       }
 
       if (sym.isRefinementClass)
@@ -445,6 +449,4 @@ class ScalacConverter[G <: Global](val global: G) {
       }
     }
   }
-
-  private def anyRefDecl(d: h.Hierarchy) = h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
 }
