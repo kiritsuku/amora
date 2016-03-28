@@ -126,51 +126,55 @@ class ScalacConverter[G <: Global](val global: G) {
       ref
   }
 
+  private def typeTree(owner: h.Hierarchy, t: TypeTree): Unit = {
+    val sym = t.symbol
+
+    def refFromSymbol(sym: Symbol): h.Ref = {
+      val pkg = declFromSymbol(sym.owner)
+      val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
+      h.Ref(cls.name, cls, owner, pkg)
+    }
+
+    def selfRefTypes() = {
+      def findTypes(t: Type): Seq[Type] =
+        if (t.typeSymbol.isRefinementClass)
+          t.typeSymbol.info.parents.flatMap(findTypes)
+        else
+          t +: t.typeArgs.flatMap(findTypes)
+
+      val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
+      val refs = syms.map(refFromSymbol)
+      refs foreach (found += _)
+    }
+
+    def otherTypes() = {
+      // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
+      val isAnyRef = t.tpe =:= typeOf[AnyRef]
+      val ref =
+        if (isAnyRef)
+          h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), owner, h.Decl("scala", h.Root))
+        else
+          refFromSymbol(sym)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos)
+      found += ref
+    }
+
+    if (sym.isRefinementClass)
+      selfRefTypes
+    else
+      otherTypes
+
+    t.original match {
+      case AppliedTypeTree(tpt, args) ⇒
+        typeRef(owner, t.original)
+      case _ ⇒
+    }
+  }
+
   private def typeRef(owner: h.Hierarchy, t: Tree): Unit = t match {
     case t: TypeTree ⇒
-      val sym = t.symbol
-
-      def refFromSymbol(sym: Symbol): h.Ref = {
-        val pkg = declFromSymbol(sym.owner)
-        val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-        h.Ref(cls.name, cls, owner, pkg)
-      }
-
-      def selfRefTypes() = {
-        def findTypes(t: Type): Seq[Type] =
-          if (t.typeSymbol.isRefinementClass)
-            t.typeSymbol.info.parents.flatMap(findTypes)
-          else
-            t +: t.typeArgs.flatMap(findTypes)
-
-        val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
-        val refs = syms.map(refFromSymbol)
-        refs foreach (found += _)
-      }
-
-      def otherTypes() = {
-        // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
-        val isAnyRef = t.tpe =:= typeOf[AnyRef]
-        val ref =
-          if (isAnyRef)
-            h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), owner, h.Decl("scala", h.Root))
-          else
-            refFromSymbol(sym)
-        ref.addAttachments(a.Ref)
-        setPosition(ref, t.pos)
-        found += ref
-      }
-
-      if (sym.isRefinementClass)
-        selfRefTypes
-      else
-        otherTypes
-
-      t.original match {
-        case AppliedTypeTree(tpt, args) ⇒
-          typeRef(owner, t.original)
-        case _ ⇒
-      }
+      typeTree(owner, t)
     case AppliedTypeTree(tpt, args) ⇒
       if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
         typeRef(owner, tpt)
