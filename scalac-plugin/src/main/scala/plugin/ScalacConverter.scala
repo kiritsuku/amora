@@ -19,7 +19,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   def convert(tree: Tree): Try[Seq[h.Hierarchy]] = {
     found.clear()
-    Try(traverse(tree)) match {
+    Try(packageDef(tree)) match {
       case Success(_) ⇒
         Success(found.toList)
       case Failure(f) ⇒
@@ -77,24 +77,24 @@ class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def mkRef(d: h.Hierarchy, t: Tree): h.Ref = t match {
+  private def mkRef(owner: h.Hierarchy, t: Tree): h.Ref = t match {
     case Apply(fun, args) ⇒
-      val ref = mkRef(d, fun)
+      val ref = mkRef(owner, fun)
       args foreach (expr(ref, _))
       ref
     case TypeApply(fun, args) ⇒
       val sym = fun.symbol
       val cls = h.Decl(decodedName(sym.name, sym), declFromSymbol(sym.owner))
-      val ref = h.Ref(cls.name, cls, d, cls.owner)
+      val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       found += ref
-      args foreach (expr(d, _))
+      args foreach (expr(owner, _))
       ref
     case Select(New(t), _) ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
-      val ref = h.Ref(refToDecl.name, refToDecl, d, calledOn)
+      val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       if (t.pos.isRange)
@@ -105,11 +105,11 @@ class ScalacConverter[G <: Global](val global: G) {
         case _: This ⇒
         case Ident(name) if name == nme.ROOTPKG ⇒
         case _ ⇒
-          mkRef(d, qualifier)
+          mkRef(owner, qualifier)
       }
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
-      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
+      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       if (t.pos.isRange)
@@ -118,7 +118,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case Ident(name) ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
-      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, d, calledOn)
+      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       if (t.pos.isRange)
@@ -126,14 +126,14 @@ class ScalacConverter[G <: Global](val global: G) {
       ref
   }
 
-  private def typeRef(d: h.Hierarchy, t: Tree): Unit = t match {
+  private def typeRef(owner: h.Hierarchy, t: Tree): Unit = t match {
     case t: TypeTree ⇒
       val sym = t.symbol
 
       def refFromSymbol(sym: Symbol): h.Ref = {
         val pkg = declFromSymbol(sym.owner)
         val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-        h.Ref(cls.name, cls, d, pkg)
+        h.Ref(cls.name, cls, owner, pkg)
       }
 
       def selfRefTypes() = {
@@ -153,7 +153,7 @@ class ScalacConverter[G <: Global](val global: G) {
         val isAnyRef = t.tpe =:= typeOf[AnyRef]
         val ref =
           if (isAnyRef)
-            h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), d, h.Decl("scala", h.Root))
+            h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), owner, h.Decl("scala", h.Root))
           else
             refFromSymbol(sym)
         ref.addAttachments(a.Ref)
@@ -168,83 +168,83 @@ class ScalacConverter[G <: Global](val global: G) {
 
       t.original match {
         case AppliedTypeTree(tpt, args) ⇒
-          typeRef(d, t.original)
+          typeRef(owner, t.original)
         case _ ⇒
       }
     case AppliedTypeTree(tpt, args) ⇒
       if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
-        typeRef(d, tpt)
-      args foreach (typeRef(d, _))
+        typeRef(owner, tpt)
+      args foreach (typeRef(owner, _))
     case _: Select ⇒
-      mkRef(d, t)
+      mkRef(owner, t)
     case _: Ident ⇒
   }
 
-  private def expr(m: h.Hierarchy, t: Tree): Unit = t match {
+  private def expr(owner: h.Hierarchy, t: Tree): Unit = t match {
     case Apply(fun, args) ⇒
-      expr(m, fun)
-      args foreach (expr(m, _))
+      expr(owner, fun)
+      args foreach (expr(owner, _))
     case _: TypeApply ⇒
-      mkRef(m, t)
+      mkRef(owner, t)
     case t: TypeTree ⇒
-      typeRef(m, t)
+      typeRef(owner, t)
     case _: Select ⇒
-      mkRef(m, t)
+      mkRef(owner, t)
     case Function(vparams, body) ⇒
-      vparams foreach (valDef(m, _))
-      expr(m, body)
+      vparams foreach (valDef(owner, _))
+      expr(owner, body)
     case _: Literal ⇒
     case _: Ident ⇒
   }
 
   /** Handles `classOf[X]` constructs. */
-  private def classOfConst(d: h.Hierarchy, t: Literal) = t.tpe match {
+  private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
       val cls = h.Decl(decodedName(sym.name, sym), declFromSymbol(sym.owner))
-      val ref = h.Ref(cls.name, cls, d, cls.owner)
+      val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
       val predef = h.Decl("Predef", h.Decl("scala", h.Root))
-      val classOfRef = h.Ref("classOf", d, d, predef)
+      val classOfRef = h.Ref("classOf", owner, owner, predef)
       classOfRef.addAttachments(a.Ref)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
     case _ ⇒
   }
 
-  private def body(m: h.Hierarchy, tree: Tree): Unit = tree match {
+  private def body(owner: h.Hierarchy, t: Tree): Unit = t match {
     case tree: DefDef ⇒
-      defDef(m, tree)
+      defDef(owner, tree)
     case tree: ValDef ⇒
-      valDef(m, tree)
+      valDef(owner, tree)
     case Block(stats, expr) ⇒
-      stats foreach (body(m, _))
-      body(m, expr)
+      stats foreach (body(owner, _))
+      body(owner, expr)
     case _: Ident   ⇒
     case EmptyTree  ⇒
     case tree: Literal ⇒
-      classOfConst(m, tree)
+      classOfConst(owner, tree)
     case Assign(lhs, rhs)  ⇒
-      body(m, lhs)
-      val decl = h.Decl(decodedName(lhs.symbol.name, lhs.symbol), m)
+      body(owner, lhs)
+      val decl = h.Decl(decodedName(lhs.symbol.name, lhs.symbol), owner)
       body(decl, rhs)
     case tree: Apply ⇒
-      expr(m, tree)
+      expr(owner, tree)
     case _: Select ⇒
-      if (!(tree.symbol.isLazy && tree.symbol.isLazyAccessor))
-        mkRef(m, tree)
+      if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
+        mkRef(owner, t)
     case _: Import ⇒
-      implDef(m, tree)
+      implDef(owner, t)
   }
 
-  private def valDef(d: h.Hierarchy, t: ValDef): Unit = {
-    val ValDef(_, name, tpt, rhs) = t
+  private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
     if (t.symbol.isSynthetic)
       return
-    val m = h.Decl(decodedName(name, NoSymbol), d)
+    val ValDef(_, name, tpt, rhs) = t
+    val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
     if (t.symbol.isLazy)
       m.addAttachments(a.Lazy)
@@ -256,9 +256,9 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def defParamDef(d: h.Hierarchy, t: ValDef): Unit = {
+  private def defParamDef(owner: h.Hierarchy, t: ValDef): Unit = {
     val ValDef(_, name, tpt, rhs) = t
-    val m = h.Decl(decodedName(name, NoSymbol), d)
+    val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(a.Val, a.Param)
     setPosition(m, t.pos)
     found += m
@@ -266,22 +266,22 @@ class ScalacConverter[G <: Global](val global: G) {
     body(m, rhs)
   }
 
-  private def selfRef(d: h.Hierarchy, t: ValDef): Unit = {
+  private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
     if (t == noSelfType)
       return
     val ValDef(_, name, tpt, _) = t
-    val m = h.Decl(decodedName(name, NoSymbol), d)
+    val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(a.Val)
     setPosition(m, t.pos)
     found += m
     typeRef(m, tpt)
   }
 
-  private def defDef(c: h.Hierarchy, t: DefDef): Unit = {
+  private def defDef(owner: h.Hierarchy, t: DefDef): Unit = {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
-      val m = h.Decl(decodedName(name, NoSymbol), c)
+      val m = h.Decl(decodedName(name, NoSymbol), owner)
       m.addAttachments(a.Def)
       setPosition(m, t.pos)
       found += m
@@ -294,12 +294,12 @@ class ScalacConverter[G <: Global](val global: G) {
     }
 
     def lazyDefDef() = {
-      val m = h.Decl(decodedName(name, NoSymbol), c)
+      val m = h.Decl(decodedName(name, NoSymbol), owner)
       m.addAttachments(a.Lazy, a.Val)
       setPosition(m, t.pos)
       found += m
-      typeRef(c, tpt)
-      body(c, rhs)
+      typeRef(owner, tpt)
+      body(owner, rhs)
     }
 
     if (t.symbol.isLazy)
@@ -313,58 +313,58 @@ class ScalacConverter[G <: Global](val global: G) {
       normalDefDef
   }
 
-  private def template(c: h.Hierarchy, tree: Template): Unit = {
-    val Template(parents, self, body) = tree
+  private def template(owner: h.Hierarchy, t: Template): Unit = {
+    val Template(parents, self, body) = t
     body foreach {
       case tree @ (_: ClassDef | _: ModuleDef | _: Import) ⇒
-        implDef(c, tree)
+        implDef(owner, tree)
       case tree: DefDef ⇒
-        defDef(c, tree)
+        defDef(owner, tree)
       case tree: ValDef ⇒
-        valDef(c, tree)
+        valDef(owner, tree)
       case tree: Apply ⇒
-        mkRef(c, tree)
+        mkRef(owner, tree)
       case t @ Select(qualifier, selector) ⇒
-        mkRef(c, t)
+        mkRef(owner, t)
       case EmptyTree ⇒
     }
-    parents foreach (typeRef(c, _))
-    selfRef(c, self)
+    parents foreach (typeRef(owner, _))
+    selfRef(owner, self)
   }
 
-  private def typeParamDef(d: h.Hierarchy, tree: TypeDef): Unit = {
-    val TypeDef(_, name, tparams, _) = tree
-    val m = h.Decl(decodedName(name, NoSymbol), d)
+  private def typeParamDef(owner: h.Hierarchy, t: TypeDef): Unit = {
+    val TypeDef(_, name, tparams, _) = t
+    val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(a.TypeParam)
     found += m
     tparams foreach (typeParamDef(m, _))
   }
 
-  private def implDef(decl: h.Hierarchy, tree: Tree): Unit = tree match {
+  private def implDef(owner: h.Hierarchy, t: Tree): Unit = t match {
     case ClassDef(mods, name, tparams, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), decl)
-      if (tree.symbol.isTrait)
+      val c = h.Decl(decodedName(name, NoSymbol), owner)
+      if (t.symbol.isTrait)
         c.addAttachments(a.Trait)
       else {
         c.addAttachments(a.Class)
-        if (tree.symbol.isAbstract)
+        if (t.symbol.isAbstract)
           c.addAttachments(a.Abstract)
       }
-      setPosition(c, tree.pos)
+      setPosition(c, t.pos)
       found += c
       tparams foreach (typeParamDef(c, _))
       template(c, impl)
     case ModuleDef(mods, name, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), decl)
+      val c = h.Decl(decodedName(name, NoSymbol), owner)
       c.addAttachments(a.Object)
-      setPosition(c, tree.pos)
+      setPosition(c, t.pos)
       found += c
       template(c, impl)
     case Import(qualifier, selectors) ⇒
-      mkRef(decl, qualifier)
+      mkRef(owner, qualifier)
       selectors foreach { sel ⇒
         if (sel.name == nme.WILDCARD)
-          this.expr(decl, qualifier)
+          this.expr(owner, qualifier)
         else {
           found += refFromImport(qualifier.symbol, sel.name, sel.namePos)
 
@@ -397,7 +397,7 @@ class ScalacConverter[G <: Global](val global: G) {
       decl
   }
 
-  private def traverse(tree: Tree) = tree match {
+  private def packageDef(t: Tree) = t match {
     case PackageDef(pid, stats) ⇒
       val pkg = mkPackageDecl(pid)
       if (pkg != h.Root)
