@@ -88,6 +88,15 @@ class ScalacConverter[G <: Global](val global: G) {
       val ref = mkRef(d, fun)
       args foreach (expr(ref, _))
       ref
+    case Select(New(t), _) ⇒
+      val calledOn = declFromSymbol(t.symbol.owner)
+      val refToDecl = declFromSymbol(t.symbol)
+      val ref = h.Ref(refToDecl.name, refToDecl, d, calledOn)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos)
+      if (t.pos.isRange)
+        found += ref
+      ref
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This ⇒
@@ -162,7 +171,7 @@ class ScalacConverter[G <: Global](val global: G) {
       if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
         typeRef(d, tpt)
       args foreach (typeRef(d, _))
-    case Select(_, name) ⇒
+    case _: Select ⇒
       mkRef(d, t)
     case _: Ident ⇒
   }
@@ -176,10 +185,8 @@ class ScalacConverter[G <: Global](val global: G) {
       args foreach (expr(m, _))
     case t: TypeTree ⇒
       typeRef(m, t)
-    case Select(New(tpt), _) ⇒
-      found += refFromSelect(tpt.symbol.owner, tpt.symbol.name)
-    case Select(_, name) ⇒
-      found += refFromSelect(t.symbol.owner, name)
+    case _: Select ⇒
+      mkRef(m, t)
     case Function(vparams, body) ⇒
       vparams foreach (valDef(m, _))
       expr(m, body)
