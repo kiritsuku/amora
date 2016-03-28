@@ -123,15 +123,6 @@ class ScalacConverter[G <: Global](val global: G) {
       ref
   }
 
-  private def refFromSelect(qualifier: Symbol, name: Name): h.Ref = {
-    val pkg = declFromSymbol(qualifier)
-    val decl = h.Decl(decodedName(name, NoSymbol), pkg)
-    decl.addAttachments(a.Class)
-    val ref = h.Ref(decl.name, decl, pkg, pkg)
-    ref.addAttachments(a.Ref)
-    ref
-  }
-
   private def typeRef(d: h.Hierarchy, t: Tree): Unit = t match {
     case t: TypeTree ⇒
       val sym = t.symbol
@@ -355,23 +346,26 @@ class ScalacConverter[G <: Global](val global: G) {
       setPosition(c, tree.pos)
       found += c
       template(c, impl)
-    case Import(expr, selectors) ⇒
-      mkRef(decl, expr)
+    case Import(qualifier, selectors) ⇒
+      mkRef(decl, qualifier)
       selectors foreach { sel ⇒
         if (sel.name == nme.WILDCARD)
-          this.expr(decl, expr)
+          this.expr(decl, qualifier)
         else {
-          val ref = refFromSelect(expr.symbol, sel.name)
-          ref.position = h.RangePosition(sel.namePos, sel.namePos+ref.name.length)
-          found += ref
+          found += refFromImport(qualifier.symbol, sel.name, sel.namePos)
 
-          if (sel.name != sel.rename) {
-            val rename = refFromSelect(expr.symbol, sel.rename)
-            rename.position = h.RangePosition(sel.renamePos, sel.renamePos+rename.name.length)
-            found += rename
-          }
+          if (sel.name != sel.rename)
+            found += refFromImport(qualifier.symbol, sel.rename, sel.renamePos)
         }
       }
+  }
+
+  private def refFromImport(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
+    val decl = h.Decl(decodedName(name, NoSymbol), declFromSymbol(qualifier))
+    val ref = h.Ref(decl.name, decl, decl.owner, decl.owner)
+    ref.addAttachments(a.Ref)
+    ref.position = h.RangePosition(pos, pos+ref.name.length)
+    ref
   }
 
   private def mkPackageDecl(t: Tree): h.Hierarchy = t match {
