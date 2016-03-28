@@ -88,6 +88,15 @@ class ScalacConverter[G <: Global](val global: G) {
       val ref = mkRef(d, fun)
       args foreach (expr(ref, _))
       ref
+    case TypeApply(fun, args) ⇒
+      val sym = fun.symbol
+      val cls = h.Decl(decodedName(sym.name, sym), declFromSymbol(sym.owner))
+      val ref = h.Ref(cls.name, cls, d, cls.owner)
+      ref.addAttachments(a.Ref)
+      setPosition(ref, t.pos)
+      found += ref
+      args foreach (expr(d, _))
+      ref
     case Select(New(t), _) ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
@@ -171,9 +180,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case Apply(fun, args) ⇒
       expr(m, fun)
       args foreach (expr(m, _))
-    case TypeApply(fun, args) ⇒
-      found += refFromSymbol(m, fun.symbol)
-      args foreach (expr(m, _))
+    case _: TypeApply ⇒
+      mkRef(m, t)
     case t: TypeTree ⇒
       typeRef(m, t)
     case _: Select ⇒
@@ -188,7 +196,9 @@ class ScalacConverter[G <: Global](val global: G) {
   /** Handles `classOf[X]` constructs. */
   private def classOfConst(d: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
-      val ref = refFromSymbol(d, tpe.value.typeValue.typeSymbol)
+      val sym = tpe.value.typeValue.typeSymbol
+      val cls = h.Decl(decodedName(sym.name, sym), declFromSymbol(sym.owner))
+      val ref = h.Ref(cls.name, cls, d, cls.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
