@@ -408,7 +408,7 @@ class ScalacConverterTest {
     convert("""
       class X
       class Y extends X
-    """) === Set("X", "Y")
+    """) === Set("X", "Y", "!X")
   }
 
   @Test

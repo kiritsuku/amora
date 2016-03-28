@@ -174,10 +174,11 @@ class ScalacConverter[G <: Global](val global: G) {
     case AppliedTypeTree(tpt, args) ⇒
       if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
         typeRef(owner, tpt)
-      args foreach (typeRef(owner, _))
+      args.filter(_.symbol != NoSymbol) foreach (typeRef(owner, _))
     case _: Select ⇒
       mkRef(owner, t)
     case _: Ident ⇒
+      mkRef(owner, t)
   }
 
   private def expr(owner: h.Hierarchy, t: Tree): Unit = t match {
