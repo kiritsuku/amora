@@ -246,6 +246,7 @@ class ScalacConverter[G <: Global](val global: G) {
     case t: Import ⇒
       importDef(owner, t)
     case _: Ident ⇒
+      mkRef(owner, t)
     case EmptyTree ⇒
   }
 

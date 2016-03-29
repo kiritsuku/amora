@@ -331,17 +331,17 @@ class RegionIndexerTest {
           def x: [[Int]] = {
             val a: [[Int]] = {
               val a: [[Int]] = 0
-              a
+              [[a]]
             }
             var b: [[Int]] = {
               var a: [[Int]] = 0
-              a
+              [[a]]
             }
             def c: [[Int]] = {
               def a: [[Int]] = 0
-              a
+              [[a]]
             }
-            a
+            [[a]]
           }
         }
       """)
@@ -361,9 +361,9 @@ class RegionIndexerTest {
           lazy val a: [[Int]] = {
             lazy val a: [[Int]] = {
               lazy val a: [[Int]] = 0
-              a
+              [[a]]
             }
-            a
+            [[a]]
           }
         }
       """)

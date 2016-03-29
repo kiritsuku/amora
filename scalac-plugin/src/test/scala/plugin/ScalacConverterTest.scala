@@ -129,7 +129,7 @@ class ScalacConverterTest {
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.!Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.!Int", "pkg.X.a.!b", "pkg.X.a.b.!c", "pkg.X.a.b.c.!d")
   }
 
   @Test
@@ -292,7 +292,7 @@ class ScalacConverterTest {
         f(v)
         f(Int.MinValue)
       }
-    """) === Set("X", "X.v", "X.f", "X.f.i", "X.!f", "X.!v", "scala.!Int", "scala.Int.!MinValue")
+    """) === Set("X", "X.v", "X.f", "X.f.i", "X.!f", "X.f.!i", "X.!v", "scala.!Int", "scala.Int.!MinValue")
   }
 
   @Test
@@ -512,7 +512,7 @@ class ScalacConverterTest {
       class X {
         def f(t: (Int, String)) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+    """) === Set("X", "X.f", "X.f.t", "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -521,7 +521,7 @@ class ScalacConverterTest {
       class X {
         def f(t: Tuple2[Int, String]) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+    """) === Set("X", "X.f", "X.f.t", "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -585,7 +585,7 @@ class ScalacConverterTest {
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.!Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "scala.!Int", "pkg.X.a.!b", "pkg.X.a.b.!c")
   }
 
   @Test
@@ -595,7 +595,7 @@ class ScalacConverterTest {
         def !!(i: Int) = i
         !!(0)
       }
-    """) === Set("X", "X.!!", "X.!!.i", "X.!!!", "scala.!Int")
+    """) === Set("X", "X.!!", "X.!!.i", "X.!!!", "X.!!.!i", "scala.!Int")
   }
 
   @Test
