@@ -148,16 +148,13 @@ class ScalacConverter[G <: Global](val global: G) {
     }
 
     def otherTypes() = {
-      // AnyRef is de-aliased to java.lang.Object but we prefer to keep the reference to AnyRef
-      val isAnyRef = t.tpe =:= typeOf[AnyRef]
-      val ref =
-        if (isAnyRef)
-          h.Ref("AnyRef", h.Decl("AnyRef", h.Decl("scala", h.Root)), owner, h.Decl("scala", h.Root))
-        else
-          refFromSymbol(sym)
+      val ref = refFromSymbol(sym)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
-      found += ref
+      // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
+      val isImplicitAnyRef = t.tpe =:= typeOf[AnyRef] && !t.pos.isRange
+      if (!isImplicitAnyRef)
+        found += ref
     }
 
     if (sym.isRefinementClass)

@@ -13,8 +13,7 @@ class ScalacConverterTest {
 
   def convert(data: (String, String)*): Set[String] = {
     val res = convertToHierarchy(data: _*).flatMap(_._2)
-    val h = res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
-    h.filterNot(Set("scala", "scala.!AnyRef", ""))
+    res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
   }
 
   @Test
@@ -679,5 +678,12 @@ class ScalacConverterTest {
         }
       }
     """) === Set("X", "X.f", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+  }
+
+  @Test
+  def explicit_inheritance_to_anyref() = {
+    convert("""
+      class X extends AnyRef
+    """) === Set("X", "scala.!AnyRef")
   }
 }
