@@ -286,9 +286,7 @@ class ScalacConverter[G <: Global](val global: G) {
     val Import(qualifier, selectors) = t
     mkRef(owner, qualifier)
     selectors foreach { sel ⇒
-      if (sel.name == nme.WILDCARD)
-        this.expr(owner, qualifier)
-      else {
+      if (sel.name != nme.WILDCARD) {
         found += ref(qualifier.symbol, sel.name, sel.namePos)
 
         if (sel.name != sel.rename)
