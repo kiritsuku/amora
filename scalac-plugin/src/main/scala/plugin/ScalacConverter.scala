@@ -221,57 +221,80 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def body(owner: h.Hierarchy, t: Tree): Unit = t match {
-    case tree: DefDef ⇒
-      defDef(owner, tree)
-    case tree: ValDef ⇒
-      valDef(owner, tree)
+    case t: DefDef ⇒
+      defDef(owner, t)
+    case t: ValDef ⇒
+      valDef(owner, t)
     case Block(stats, expr) ⇒
       stats foreach (body(owner, _))
       body(owner, expr)
-    case _: Ident   ⇒
-    case EmptyTree  ⇒
-    case tree: Literal ⇒
-      classOfConst(owner, tree)
-    case Assign(lhs, rhs)  ⇒
+    case t: Literal ⇒
+      classOfConst(owner, t)
+    case Assign(lhs, rhs) ⇒
       body(owner, lhs)
       val decl = h.Decl(decodedName(lhs.symbol.name, lhs.symbol), owner)
       body(decl, rhs)
-    case tree: Apply ⇒
-      mkRef(owner, tree)
-    case _: Select ⇒
+    case t: Apply ⇒
+      mkRef(owner, t)
+    case t: Select ⇒
       if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
         mkRef(owner, t)
-    case ClassDef(mods, name, tparams, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), owner)
-      if (t.symbol.isTrait)
-        c.addAttachments(a.Trait)
-      else {
-        c.addAttachments(a.Class)
-        if (t.symbol.isAbstract)
-          c.addAttachments(a.Abstract)
-      }
-      setPosition(c, t.pos)
-      found += c
-      tparams foreach (typeParamDef(c, _))
-      template(c, impl)
-    case ModuleDef(mods, name, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), owner)
-      c.addAttachments(a.Object)
-      setPosition(c, t.pos)
-      found += c
-      template(c, impl)
-    case Import(qualifier, selectors) ⇒
-      mkRef(owner, qualifier)
-      selectors foreach { sel ⇒
-        if (sel.name == nme.WILDCARD)
-          this.expr(owner, qualifier)
-        else {
-          found += refFromImport(qualifier.symbol, sel.name, sel.namePos)
+    case t: ClassDef ⇒
+      classDef(owner, t)
+    case t: ModuleDef ⇒
+      moduleDef(owner, t)
+    case t: Import ⇒
+      importDef(owner, t)
+    case _: Ident ⇒
+    case EmptyTree ⇒
+  }
 
-          if (sel.name != sel.rename)
-            found += refFromImport(qualifier.symbol, sel.rename, sel.renamePos)
-        }
+  private def classDef(owner: h.Hierarchy, t: ClassDef): Unit = {
+    val ClassDef(_, name, tparams, impl) = t
+    val c = h.Decl(decodedName(name, NoSymbol), owner)
+    if (t.symbol.isTrait)
+      c.addAttachments(a.Trait)
+    else {
+      c.addAttachments(a.Class)
+      if (t.symbol.isAbstract)
+        c.addAttachments(a.Abstract)
+    }
+    setPosition(c, t.pos)
+    found += c
+    tparams foreach (typeParamDef(c, _))
+    template(c, impl)
+  }
+
+  private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
+    val ModuleDef(_, name, impl) = t
+    val c = h.Decl(decodedName(name, NoSymbol), owner)
+    c.addAttachments(a.Object)
+    setPosition(c, t.pos)
+    found += c
+    template(c, impl)
+  }
+
+  private def importDef(owner: h.Hierarchy, t: Import): Unit = {
+    def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
+      val decl = h.Decl(decodedName(name, NoSymbol), declFromSymbol(qualifier))
+      val ref = h.Ref(decl.name, decl, decl.owner, decl.owner)
+      ref.addAttachments(a.Ref)
+      ref.position = h.RangePosition(pos, pos+ref.name.length)
+      ref
+    }
+
+    val Import(qualifier, selectors) = t
+    mkRef(owner, qualifier)
+    selectors foreach { sel ⇒
+      if (sel.name == nme.WILDCARD)
+        this.expr(owner, qualifier)
+      else {
+        found += ref(qualifier.symbol, sel.name, sel.namePos)
+
+        if (sel.name != sel.rename)
+          found += ref(qualifier.symbol, sel.rename, sel.renamePos)
       }
+    }
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
@@ -360,14 +383,6 @@ class ScalacConverter[G <: Global](val global: G) {
     m.addAttachments(a.TypeParam)
     found += m
     tparams foreach (typeParamDef(m, _))
-  }
-
-  private def refFromImport(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
-    val decl = h.Decl(decodedName(name, NoSymbol), declFromSymbol(qualifier))
-    val ref = h.Ref(decl.name, decl, decl.owner, decl.owner)
-    ref.addAttachments(a.Ref)
-    ref.position = h.RangePosition(pos, pos+ref.name.length)
-    ref
   }
 
   private def mkPackageDecl(t: Tree): h.Hierarchy = t match {
