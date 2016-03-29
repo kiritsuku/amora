@@ -686,4 +686,16 @@ class ScalacConverterTest {
       class X extends AnyRef
     """) === Set("X", "scala.!AnyRef")
   }
+
+  @Test
+  def if_expr() = {
+    convert("""
+      class X {
+        val b1 = true
+        val b2 = true
+        val b3 = true
+        def f = if (b1) b2 else b3
+      }
+    """) === Set("X", "X.b1", "X.b2", "X.b3", "X.f", "X.!b1", "X.!b2", "X.!b3", "scala.!Boolean")
+  }
 }

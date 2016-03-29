@@ -505,5 +505,26 @@ class IndexerTest {
       """) === Seq(
         Data("s", s"${modelName}_root_/X/f/i"),
         Data("s", s"${modelName}_root_/X/f/j"))
-    }
+  }
+
+  @Test
+  def owner_of_refs_in_if_expr() = {
+    val modelName = "http://test.model/"
+    ask(modelName, convertToHierarchy(
+      "<memory>" → """
+        class X {
+          val b1 = true
+          val b2 = true
+          val b3 = true
+          def f = if (b1) b2 else b3
+        }
+      """), s"""
+        PREFIX c:<$modelName>
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          ?def s:name "f" .
+          [c:owner ?def] s:name ?name .
+        }
+      """) === Seq("Boolean", "b1", "b2", "b3").map(Data("name", _))
+  }
 }

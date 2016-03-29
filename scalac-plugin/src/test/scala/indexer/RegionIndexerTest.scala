@@ -440,4 +440,23 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def refs_in_if_expr() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          val b1 = true
+          val b2 = true
+          val b3 = true
+          def f = if ([[b1]]) [[b2]] else [[b3]]
+        }
+      """)
+  }
 }
