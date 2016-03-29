@@ -442,6 +442,22 @@ class RegionIndexerTest {
   }
 
   @Test
+  def self_ref_with_fully_qualified_name() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        trait X {
+          self: [[scala]].[[collection]].[[mutable]].[[AbstractSet]][ [[java]].[[io]].[[File]] ] ⇒
+        }
+      """)
+  }
+
+  @Test
   def refs_in_if_expr() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
