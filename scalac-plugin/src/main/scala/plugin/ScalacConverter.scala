@@ -237,12 +237,41 @@ class ScalacConverter[G <: Global](val global: G) {
       val decl = h.Decl(decodedName(lhs.symbol.name, lhs.symbol), owner)
       body(decl, rhs)
     case tree: Apply ⇒
-      expr(owner, tree)
+      mkRef(owner, tree)
     case _: Select ⇒
       if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
         mkRef(owner, t)
-    case _: Import ⇒
-      implDef(owner, t)
+    case ClassDef(mods, name, tparams, impl) ⇒
+      val c = h.Decl(decodedName(name, NoSymbol), owner)
+      if (t.symbol.isTrait)
+        c.addAttachments(a.Trait)
+      else {
+        c.addAttachments(a.Class)
+        if (t.symbol.isAbstract)
+          c.addAttachments(a.Abstract)
+      }
+      setPosition(c, t.pos)
+      found += c
+      tparams foreach (typeParamDef(c, _))
+      template(c, impl)
+    case ModuleDef(mods, name, impl) ⇒
+      val c = h.Decl(decodedName(name, NoSymbol), owner)
+      c.addAttachments(a.Object)
+      setPosition(c, t.pos)
+      found += c
+      template(c, impl)
+    case Import(qualifier, selectors) ⇒
+      mkRef(owner, qualifier)
+      selectors foreach { sel ⇒
+        if (sel.name == nme.WILDCARD)
+          this.expr(owner, qualifier)
+        else {
+          found += refFromImport(qualifier.symbol, sel.name, sel.namePos)
+
+          if (sel.name != sel.rename)
+            found += refFromImport(qualifier.symbol, sel.rename, sel.renamePos)
+        }
+      }
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
@@ -320,19 +349,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def template(owner: h.Hierarchy, t: Template): Unit = {
     val Template(parents, self, body) = t
-    body foreach {
-      case tree @ (_: ClassDef | _: ModuleDef | _: Import) ⇒
-        implDef(owner, tree)
-      case tree: DefDef ⇒
-        defDef(owner, tree)
-      case tree: ValDef ⇒
-        valDef(owner, tree)
-      case tree: Apply ⇒
-        mkRef(owner, tree)
-      case t @ Select(qualifier, selector) ⇒
-        mkRef(owner, t)
-      case EmptyTree ⇒
-    }
+    body foreach (this.body(owner, _))
     parents foreach (typeRef(owner, _))
     selfRef(owner, self)
   }
@@ -343,40 +360,6 @@ class ScalacConverter[G <: Global](val global: G) {
     m.addAttachments(a.TypeParam)
     found += m
     tparams foreach (typeParamDef(m, _))
-  }
-
-  private def implDef(owner: h.Hierarchy, t: Tree): Unit = t match {
-    case ClassDef(mods, name, tparams, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), owner)
-      if (t.symbol.isTrait)
-        c.addAttachments(a.Trait)
-      else {
-        c.addAttachments(a.Class)
-        if (t.symbol.isAbstract)
-          c.addAttachments(a.Abstract)
-      }
-      setPosition(c, t.pos)
-      found += c
-      tparams foreach (typeParamDef(c, _))
-      template(c, impl)
-    case ModuleDef(mods, name, impl) ⇒
-      val c = h.Decl(decodedName(name, NoSymbol), owner)
-      c.addAttachments(a.Object)
-      setPosition(c, t.pos)
-      found += c
-      template(c, impl)
-    case Import(qualifier, selectors) ⇒
-      mkRef(owner, qualifier)
-      selectors foreach { sel ⇒
-        if (sel.name == nme.WILDCARD)
-          this.expr(owner, qualifier)
-        else {
-          found += refFromImport(qualifier.symbol, sel.name, sel.namePos)
-
-          if (sel.name != sel.rename)
-            found += refFromImport(qualifier.symbol, sel.rename, sel.renamePos)
-        }
-      }
   }
 
   private def refFromImport(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
@@ -407,7 +390,7 @@ class ScalacConverter[G <: Global](val global: G) {
       val pkg = mkPackageDecl(pid)
       if (pkg != h.Root)
         found += pkg
-      stats foreach (implDef(pkg, _))
+      stats foreach (body(pkg, _))
     case LabelDef(name, params, rhs)                   ⇒
     case Import(expr, selectors)                       ⇒
     case DocDef(comment, definition)                   ⇒
