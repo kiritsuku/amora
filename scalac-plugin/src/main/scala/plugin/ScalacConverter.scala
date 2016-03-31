@@ -93,6 +93,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def declFromSymbol(sym: Symbol): h.Hierarchy = {
+    require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, make sure that everything with a NoSymbol does not survive long enough to get here.")
     if (sym.name.toTermName == nme.ROOT)
       h.Root
     else {
