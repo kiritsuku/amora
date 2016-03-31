@@ -698,4 +698,26 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.b1", "X.b2", "X.b3", "X.f", "X.!b1", "X.!b2", "X.!b3", "scala.!Boolean")
   }
+
+  @Test
+  def match_expr() = {
+    convert("""
+      class X {
+        val b1 = true
+        val b2 = true
+        val b3 = true
+        val b4 = true
+        def f = {
+          b1 match {
+            case x: Boolean if x == b2 ⇒
+              b3
+            case _ ⇒
+              b4
+          }
+        }
+      }
+    """) === Set(
+        "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f", "X.f.x",
+        "X.!b1", "X.!b2", "X.!b3", "X.!b4", "X.f.!x", "scala.!Boolean", "scala.Boolean.!==")
+  }
 }

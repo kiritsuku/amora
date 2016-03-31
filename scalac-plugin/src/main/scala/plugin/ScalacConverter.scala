@@ -195,6 +195,14 @@ class ScalacConverter[G <: Global](val global: G) {
     case Function(vparams, body) ⇒
       vparams foreach (valDef(owner, _))
       expr(owner, body)
+    case Bind(name, body) ⇒
+      val decl = h.Decl(decodedName(name, NoSymbol), owner)
+      setPosition(decl, t.pos)
+      found += decl
+      expr(owner, body)
+    case Typed(expr, tpt) ⇒
+      this.expr(owner, expr)
+      typeRef(owner, tpt)
     case _: Literal ⇒
     case _: Ident ⇒
   }
@@ -248,6 +256,14 @@ class ScalacConverter[G <: Global](val global: G) {
       body(owner, cond)
       body(owner, thenp)
       body(owner, elsep)
+    case Match(selector, cases) ⇒
+      body(owner, selector)
+      // TODO we need to put the case expressions into a new owner to make variable definitions unique
+      cases foreach (body(owner, _))
+    case CaseDef(pat, guard, body) ⇒
+      expr(owner, pat)
+      this.body(owner, guard)
+      this.body(owner, body)
     case EmptyTree ⇒
   }
 
