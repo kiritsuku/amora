@@ -8,7 +8,10 @@ sealed trait Hierarchy {
 
   final def asString: String = this match {
     case Decl(name, parent) ⇒
-      s"${parent.asString}.$name"
+      val sig = attachments.collectFirst {
+        case Attachment.JvmSignature(signature) ⇒ signature
+      }.getOrElse("")
+      s"${parent.asString}.$name$sig"
     case Ref(name, _, _, qualifier) ⇒
       s"${qualifier.asString}.!$name"
     case Root ⇒

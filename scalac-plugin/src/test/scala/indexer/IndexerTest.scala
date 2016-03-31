@@ -77,13 +77,14 @@ class IndexerTest {
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT * WHERE {
-          ?def c:attachment "def" .
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          [c:attachment "def"] s:name ?name .
         }
       """) === Seq(
-        Data("def", s"${modelName}_root_/a/b/c/C1/m1"),
-        Data("def", s"${modelName}_root_/a/b/c/C2/m2"),
-        Data("def", s"${modelName}_root_/a/b/c/C3/m3"))
+        Data("name", "m1"),
+        Data("name", "m2"),
+        Data("name", "m3"))
   }
 
   @Test
@@ -105,15 +106,16 @@ class IndexerTest {
       """), s"""
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
-        SELECT ?member WHERE {
+        SELECT ?name WHERE {
           ?class c:attachment "class" .
           ?class s:name ?className .
           FILTER (str(?className) = "C1") .
           ?member c:parent ?class .
+          ?member s:name ?name .
         }
       """) === Seq(
-        Data("member", s"${modelName}_root_/a/b/c/C1/m11"),
-        Data("member", s"${modelName}_root_/a/b/c/C1/m12"))
+        Data("name", "m11"),
+        Data("name", "m12"))
   }
 
   @Test
@@ -165,7 +167,7 @@ class IndexerTest {
           ?ref c:owner ?owner .
         }
       """) === Seq(
-        Data("owner", s"${modelName}_root_/a/b/c/X/m"),
+        Data("owner", s"${modelName}_root_/a/b/c/X/m%28%29Ld%2Fe%2Ff%2FY%3B"),
         Data("owner", s"${modelName}_root_/d/e/f"))
   }
 
@@ -294,12 +296,13 @@ class IndexerTest {
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "def" .
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          [c:attachment "def"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/X/a"),
-        Data("s", s"${modelName}_root_/pkg/X/c"))
+        Data("name", "a"),
+        Data("name", "c"))
     }
 
   @Test
@@ -481,12 +484,13 @@ class IndexerTest {
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "val" .
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          [c:attachment "val"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/X/f/i"),
-        Data("s", s"${modelName}_root_/X/f/j"))
+        Data("name", "i"),
+        Data("name", "j"))
     }
 
   @Test
@@ -503,8 +507,8 @@ class IndexerTest {
           ?s c:attachment "parameter" .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/X/f/i"),
-        Data("s", s"${modelName}_root_/X/f/j"))
+        Data("s", s"${modelName}_root_/X/f%28ILjava%2Flang%2FString%3B%29I/i"),
+        Data("s", s"${modelName}_root_/X/f%28ILjava%2Flang%2FString%3B%29I/j"))
   }
 
   @Test

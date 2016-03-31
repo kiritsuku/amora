@@ -65,9 +65,13 @@ object Indexer {
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
     case decl @ Decl(name, parent) ⇒
       val path = encode(parent.asString).replace('.', '/')
+      val n = encode(name)
+      val sig = decl.attachments.collectFirst {
+        case Attachment.JvmSignature(signature) ⇒ encode(signature)
+      }.getOrElse("")
       val classEntry = s"""
         {
-          "@id": "c:$path/${encode(name)}",
+          "@id": "c:$path/$n$sig",
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}

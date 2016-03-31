@@ -43,7 +43,7 @@ class ScalacConverterTest {
       class X {
         def a = 0
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "scala.!Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.a()I", "scala.!Int")
   }
 
   @Test
@@ -84,7 +84,7 @@ class ScalacConverterTest {
         def a = 0
         def a_=(a: Int) = ()
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a_=", "pkg.X.a_=.a", "scala.!Int", "scala.!Unit")
+    """) === Set("pkg", "pkg.X", "pkg.X.a()I", "pkg.X.a_=(I)V", "pkg.X.a_=(I)V.a", "scala.!Int", "scala.!Unit")
   }
 
   @Test
@@ -95,7 +95,7 @@ class ScalacConverterTest {
         val !!! = 0
         def ??? = 0
       }
-    """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???", "scala.!Int")
+    """) === Set("pkg", "pkg.X_?", "pkg.X_?.!!!", "pkg.X_?.???()I", "scala.!Int")
   }
 
   @Test
@@ -109,7 +109,9 @@ class ScalacConverterTest {
         def `d e f` = 0
         def `type` = 0
       }
-    """) === Set("pkg", "scala.!Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c", "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`", "pkg.`A B C`.`type`")
+    """) === Set(
+        "pkg", "scala.!Int", "pkg.`A B C`", "pkg.`A B C`._", "pkg.`A B C`.a_b_c",
+        "pkg.`A B C`.`a b c`", "pkg.`A B C`.`d e f`()I", "pkg.`A B C`.`type`()I")
   }
 
   @Test
@@ -128,7 +130,9 @@ class ScalacConverterTest {
           b
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.a", "pkg.X.a.b", "pkg.X.a.b.c", "pkg.X.a.b.c.d", "scala.!Int", "pkg.X.a.!b", "pkg.X.a.b.!c", "pkg.X.a.b.c.!d")
+    """) === Set(
+        "pkg", "pkg.X", "pkg.X.a()I", "pkg.X.a()I.b()I", "pkg.X.a()I.b()I.c",
+        "pkg.X.a()I.b()I.c.d", "scala.!Int", "pkg.X.a.!b", "pkg.X.a.b.!c", "pkg.X.a.b.c.!d")
   }
 
   @Test
@@ -154,7 +158,7 @@ class ScalacConverterTest {
           }
         }
       }
-    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b", "scala.!Int")
+    """) === Set("pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b()I", "scala.!Int")
   }
 
   @Test
@@ -192,7 +196,7 @@ class ScalacConverterTest {
       class X {
         def x = 0
       }
-    """) === Set("a.b.c.d", "a.b.c.d.X", "a.b.c.d.X.x", "scala.!Int")
+    """) === Set("a.b.c.d", "a.b.c.d.X", "a.b.c.d.X.x()I", "scala.!Int")
   }
 
   @Test
@@ -201,7 +205,7 @@ class ScalacConverterTest {
       class X {
         def x = 0
       }
-    """) === Set("X", "X.x", "scala.!Int")
+    """) === Set("X", "X.x()I", "scala.!Int")
   }
 
   @Test
@@ -240,7 +244,7 @@ class ScalacConverterTest {
       class X {
         def f[A, B] = 0
       }
-    """) === Set("X", "X.f", "X.f.A", "X.f.B", "scala.!Int")
+    """) === Set("X", "X.f()I", "X.f()I.A", "X.f()I.B", "scala.!Int")
   }
 
   @Test
@@ -249,7 +253,7 @@ class ScalacConverterTest {
       class X {
         def f: Option[Int] = null
       }
-    """) === Set("X", "X.f", "scala.!Option", "scala.!Int")
+    """) === Set("X", "X.f()Lscala/Option;", "scala.!Option", "scala.!Int")
   }
 
   @Test
@@ -258,7 +262,7 @@ class ScalacConverterTest {
       class X {
         def f = Option(1)
       }
-    """) === Set("X", "X.f", "scala.!Option", "scala.Option.!apply", "scala.!Int")
+    """) === Set("X", "X.f()Lscala/Option;", "scala.!Option", "scala.Option.!apply", "scala.!Int")
   }
 
   @Test
@@ -267,7 +271,7 @@ class ScalacConverterTest {
       class X {
         def f = Option.apply(1)
       }
-    """) === Set("X", "X.f", "scala.!Option", "scala.Option.!apply", "scala.!Int")
+    """) === Set("X", "X.f()Lscala/Option;", "scala.!Option", "scala.Option.!apply", "scala.!Int")
   }
 
   @Test
@@ -279,7 +283,10 @@ class ScalacConverterTest {
           0
         }
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.s", "X.f.g", "X.f.g.i", "scala.!Int", "java.lang.!String")
+    """) === Set(
+        "X", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.i",
+        "X.f(ILjava/lang/String;)I.s", "X.f(ILjava/lang/String;)I.g(I)I",
+        "X.f(ILjava/lang/String;)I.g(I)I.i", "scala.!Int", "java.lang.!String")
   }
 
   @Test
@@ -291,7 +298,7 @@ class ScalacConverterTest {
         f(v)
         f(Int.MinValue)
       }
-    """) === Set("X", "X.v", "X.f", "X.f.i", "X.!f", "X.f.!i", "X.!v", "scala.!Int", "scala.Int.!MinValue")
+    """) === Set("X", "X.v", "X.f(I)I", "X.f(I)I.i", "X.!f", "X.f.!i", "X.!v", "scala.!Int", "scala.Int.!MinValue")
   }
 
   @Test
@@ -335,7 +342,7 @@ class ScalacConverterTest {
           toString
         }
       }
-    """) === Set("X", "X.f", "java.lang.Object.!toString", "java.lang.!String")
+    """) === Set("X", "X.f()Ljava/lang/String;", "java.lang.Object.!toString", "java.lang.!String")
   }
 
   @Test
@@ -344,7 +351,9 @@ class ScalacConverterTest {
       class X {
         def meth(f: Int ⇒ Int) = 0
       }
-    """) === Set("X", "X.meth", "X.meth.f", "scala.!Function1", "scala.!Int")
+    """) === Set(
+        "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.f",
+        "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -353,7 +362,7 @@ class ScalacConverterTest {
       class X {
         def meth(f: ⇒ Int) = 0
       }
-    """) === Set("X", "X.meth", "X.meth.f", "scala.!Function0", "scala.!Int")
+    """) === Set("X", "X.meth(Lscala/Function0;)I", "X.meth(Lscala/Function0;)I.f", "scala.!Function0", "scala.!Int")
   }
 
   @Test
@@ -363,7 +372,9 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int) = 0
         meth(v ⇒ v)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.v", "scala.!Function1", "scala.!Int")
+    """) === Set(
+        "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.f",
+        "X.!meth", "X.!meth.v", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -379,7 +390,7 @@ class ScalacConverterTest {
     "f2.scala" → """
       package b
       class Y
-    """) === Set("a", "a.X", "a.X.m", "b", "b.Y", "!b", "b.!Y")
+    """) === Set("a", "a.X", "a.X.m()Lb/Y;", "b", "b.Y", "!b", "b.!Y")
   }
 
   @Test
@@ -389,7 +400,9 @@ class ScalacConverterTest {
         def meth(f: (Int, Int, Int) ⇒ Int) = 0
         meth((a, b, c) ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function3", "scala.!Int")
+    """) === Set(
+        "X", "X.meth(Lscala/Function3;)I", "X.meth(Lscala/Function3;)I.f",
+        "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function3", "scala.!Int")
   }
 
   @Test
@@ -399,7 +412,7 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int ⇒ Int ⇒ Int) = 0
         meth(a ⇒ b ⇒ c ⇒ 0)
       }
-    """) === Set("X", "X.meth", "X.meth.f", "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function1", "scala.!Int")
+    """) === Set("X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.f", "X.!meth", "X.!meth.a", "X.!meth.b", "X.!meth.c", "scala.!Function1", "scala.!Int")
   }
 
   @Test
@@ -511,7 +524,9 @@ class ScalacConverterTest {
       class X {
         def f(t: (Int, String)) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+    """) === Set(
+        "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.t",
+        "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -520,7 +535,9 @@ class ScalacConverterTest {
       class X {
         def f(t: Tuple2[Int, String]) = t
       }
-    """) === Set("X", "X.f", "X.f.t", "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+    """) === Set(
+        "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.t",
+        "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -559,7 +576,9 @@ class ScalacConverterTest {
       class X {
         def f(i: Int, j: String) = 0
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.j", "java.lang.!String", "scala.!Int")
+    """) === Set(
+        "X", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.i",
+        "X.f(ILjava/lang/String;)I.j", "java.lang.!String", "scala.!Int")
   }
 
   @Test
@@ -568,7 +587,10 @@ class ScalacConverterTest {
       class X {
         def f(i: Int)(j: String)(k: Int) = 0
       }
-    """) === Set("X", "X.f", "X.f.i", "X.f.j", "X.f.k", "java.lang.!String", "scala.!Int")
+    """) === Set(
+        "X", "X.f(ILjava/lang/String;I)I", "X.f(ILjava/lang/String;I)I.i",
+        "X.f(ILjava/lang/String;I)I.j", "X.f(ILjava/lang/String;I)I.k",
+        "java.lang.!String", "scala.!Int")
   }
 
   @Test
@@ -594,7 +616,7 @@ class ScalacConverterTest {
         def !!(i: Int) = i
         !!(0)
       }
-    """) === Set("X", "X.!!", "X.!!.i", "X.!!!", "X.!!.!i", "scala.!Int")
+    """) === Set("X", "X.!!(I)I", "X.!!(I)I.i", "X.!!!", "X.!!.!i", "scala.!Int")
   }
 
   @Test
@@ -624,7 +646,7 @@ class ScalacConverterTest {
         def a = 0
         def b = a
       }
-    """) === Set("X", "X.a", "X.b", "X.!a", "scala.!Int")
+    """) === Set("X", "X.a()I", "X.b()I", "X.!a", "scala.!Int")
   }
 
   @Test
@@ -665,7 +687,9 @@ class ScalacConverterTest {
         import scala.collection.mutable.{Buffer ⇒ B}
         B
       }
-    """) === Set("X", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+    """) === Set(
+        "X", "!scala", "scala.!collection", "scala.collection.!mutable",
+        "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
   }
 
   @Test
@@ -677,7 +701,9 @@ class ScalacConverterTest {
           B
         }
       }
-    """) === Set("X", "X.f", "!scala", "scala.!collection", "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
+    """) === Set(
+        "X", "X.f()Lscala/collection/mutable/Buffer;", "!scala", "scala.!collection",
+        "scala.collection.!mutable", "scala.collection.mutable.!B", "scala.collection.mutable.!Buffer")
   }
 
   @Test
@@ -696,7 +722,19 @@ class ScalacConverterTest {
         val b3 = true
         def f = if (b1) b2 else b3
       }
-    """) === Set("X", "X.b1", "X.b2", "X.b3", "X.f", "X.!b1", "X.!b2", "X.!b3", "scala.!Boolean")
+    """) === Set("X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.!b1", "X.!b2", "X.!b3", "scala.!Boolean")
+  }
+
+  @Test
+  def overloaded_methods() = {
+    convert("""
+      class X {
+        def f(i: Int) = 0
+        def f(i: Int, s: String) = 0
+      }
+    """) === Set(
+        "X", "X.f(I)I", "X.f(I)I.i", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.i",
+        "X.f(ILjava/lang/String;)I.s", "scala.!Int", "java.lang.!String")
   }
 
   @Test
@@ -717,7 +755,7 @@ class ScalacConverterTest {
         }
       }
     """) === Set(
-        "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f", "X.f.x",
+        "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z", "X.f()Z.x",
         "X.!b1", "X.!b2", "X.!b3", "X.!b4", "X.f.!x", "scala.!Boolean", "scala.Boolean.!==")
   }
 }

@@ -16,4 +16,6 @@ object Attachment {
   case object TypeParam extends Attachment { override def asString = "tparameter" }
   case object Param extends Attachment { override def asString = "parameter" }
   case object Ref extends Attachment { override def asString = "reference" }
+
+  case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
 }

@@ -66,6 +66,32 @@ class ScalacConverter[G <: Global](val global: G) {
       addBackquotes(decodedName)
   }
 
+  def signature(sym: Symbol): String = {
+    require(sym.isMethod && !sym.asMethod.isGetter, "The passed argument is not a method symbol.")
+
+    def jvmSignature(tpe: Type): String = {
+      val TypeRef(_, sym, args) = tpe
+      sym match {
+        case definitions.UnitClass    ⇒ "V"
+        case definitions.BooleanClass ⇒ "Z"
+        case definitions.CharClass    ⇒ "C"
+        case definitions.ByteClass    ⇒ "B"
+        case definitions.ShortClass   ⇒ "S"
+        case definitions.IntClass     ⇒ "I"
+        case definitions.FloatClass   ⇒ "F"
+        case definitions.LongClass    ⇒ "J"
+        case definitions.DoubleClass  ⇒ "D"
+        case definitions.ArrayClass   ⇒ "["+jvmSignature(args.head)
+        case _                        ⇒ "L"+sym.fullName.replace('.', '/')+";"
+      }
+    }
+
+    val MethodType(params, ret) = sym.info.erasure
+    val paramsSig = params.map(param ⇒ jvmSignature(param.info)).mkString
+    val retSig = jvmSignature(if (!sym.isConstructor) ret else definitions.UnitClass.toType)
+    s"($paramsSig)$retSig"
+  }
+
   private def declFromSymbol(sym: Symbol): h.Hierarchy = {
     if (sym.name.toTermName == nme.ROOT)
       h.Root
@@ -356,6 +382,7 @@ class ScalacConverter[G <: Global](val global: G) {
     def normalDefDef() = {
       val m = h.Decl(decodedName(name, NoSymbol), owner)
       m.addAttachments(a.Def)
+      m.addAttachments(a.JvmSignature(signature(t.symbol)))
       setPosition(m, t.pos)
       found += m
       tparams foreach (typeParamDef(m, _))
