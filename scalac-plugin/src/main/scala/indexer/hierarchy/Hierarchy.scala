@@ -13,7 +13,7 @@ sealed trait Hierarchy {
       }.getOrElse("")
       s"${parent.asString}.$name$sig"
     case Ref(name, _, _, qualifier) ⇒
-      s"${qualifier.asString}.!$name"
+      s"${qualifier.asString}.<ref>$name"
     case Root ⇒
       name
   }

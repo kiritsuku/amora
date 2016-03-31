@@ -78,7 +78,7 @@ object Indexer {
           "c:tpe": "declaration",
           ${position(decl.position)}
           "c:file": "$filename",
-          "c:parent": "c:$path"
+          "c:owner": "c:$path"
         }
       """
       val declEntry = mkModel(filename)(parent)
@@ -117,10 +117,6 @@ object Indexer {
           "s": "http://schema.org/",
           "c:declaration": {
             "@id": "c:declaration",
-            "@type": "@id"
-          },
-          "c:parent": {
-            "@id": "c:parent",
             "@type": "@id"
           },
           "c:owner": {
