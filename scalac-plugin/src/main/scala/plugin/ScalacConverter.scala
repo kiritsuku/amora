@@ -99,8 +99,14 @@ class ScalacConverter[G <: Global](val global: G) {
     else {
       val noRootSymbol = sym.ownerChain.reverse.tail
       val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
-      val names = noEmptyPkgSymbol.map(s ⇒ decodedName(s.name, s))
-      names.foldLeft(h.Root: h.Hierarchy) { (owner, name) ⇒ h.Decl(name, owner) }
+
+      noEmptyPkgSymbol.foldLeft(h.Root: h.Hierarchy) { (owner, s) ⇒
+        val name = decodedName(s.name, s)
+        val decl = h.Decl(name, owner)
+        if (s.isMethod && !s.asMethod.isGetter)
+          decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
+        decl
+      }
     }
   }
 

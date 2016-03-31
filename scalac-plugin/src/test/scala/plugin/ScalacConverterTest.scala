@@ -132,7 +132,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "pkg", "pkg.X", "pkg.X.a()I", "pkg.X.a()I.b()I", "pkg.X.a()I.b()I.c",
-        "pkg.X.a()I.b()I.c.d", "scala.!Int", "pkg.X.a.!b", "pkg.X.a.b.!c", "pkg.X.a.b.c.!d")
+        "pkg.X.a()I.b()I.c.d", "scala.!Int", "pkg.X.a()I.!b", "pkg.X.a()I.b()I.!c", "pkg.X.a()I.b()I.c.!d")
   }
 
   @Test
@@ -298,7 +298,7 @@ class ScalacConverterTest {
         f(v)
         f(Int.MinValue)
       }
-    """) === Set("X", "X.v", "X.f(I)I", "X.f(I)I.i", "X.!f", "X.f.!i", "X.!v", "scala.!Int", "scala.Int.!MinValue")
+    """) === Set("X", "X.v", "X.f(I)I", "X.f(I)I.i", "X.!f", "X.f(I)I.!i", "X.!v", "scala.!Int", "scala.Int.!MinValue")
   }
 
   @Test
@@ -526,7 +526,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.t",
-        "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -537,7 +537,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.t",
-        "X.f.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
+        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.!t", "scala.!Int", "java.lang.!String", "scala.!Tuple2")
   }
 
   @Test
@@ -616,7 +616,7 @@ class ScalacConverterTest {
         def !!(i: Int) = i
         !!(0)
       }
-    """) === Set("X", "X.!!(I)I", "X.!!(I)I.i", "X.!!!", "X.!!.!i", "scala.!Int")
+    """) === Set("X", "X.!!(I)I", "X.!!(I)I.i", "X.!!!", "X.!!(I)I.!i", "scala.!Int")
   }
 
   @Test
@@ -738,6 +738,19 @@ class ScalacConverterTest {
   }
 
   @Test
+  def references_in_overloaded_methods() = {
+    convert("""
+      class X {
+        def f(i: Int) = i
+        def f(i: Int, s: Float) = i
+      }
+    """) === Set(
+        "X", "scala.!Int", "scala.!Float",
+        "X.f(I)I", "X.f(I)I.i", "X.f(I)I.!i",
+        "X.f(IF)I", "X.f(IF)I.i", "X.f(IF)I.s", "X.f(IF)I.!i")
+  }
+
+  @Test
   def match_expr() = {
     convert("""
       class X {
@@ -756,6 +769,6 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z", "X.f()Z.x",
-        "X.!b1", "X.!b2", "X.!b3", "X.!b4", "X.f.!x", "scala.!Boolean", "scala.Boolean.!==")
+        "X.!b1", "X.!b2", "X.!b3", "X.!b4", "X.f()Z.!x", "scala.!Boolean", "scala.Boolean.!==")
   }
 }
