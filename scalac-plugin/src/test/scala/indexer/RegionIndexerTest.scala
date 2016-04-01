@@ -553,4 +553,60 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_type_parameter() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] c:reference [c:attachment "tparameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        trait X[A] {
+          def f[B](a: [[A]], b: [[B]]): [[A]]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_type_parameter_without_shadowed_type_parameter_refs() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          # find type parameter
+          ?tparam c:owner [c:attachment "trait"] ; c:attachment "tparameter" .
+          # find references of type parameter
+          [c:attachment "reference"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        trait X[A] {
+          def f(a: [[A]], b: [[A]]): [[A]]
+          def f[A](a: A): A
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_shadowed_type_parameter() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          # find type parameter
+          ?tparam c:owner [c:attachment "def", "(Ljava/lang/Object;)Ljava/lang/Object;"] ; c:attachment "tparameter" .
+          # find references of type parameter
+          [c:attachment "reference"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        trait X[A] {
+          def f(a: A, b: A): A
+          def f[A](a: [[A]]): [[A]]
+        }
+      """)
+  }
 }
