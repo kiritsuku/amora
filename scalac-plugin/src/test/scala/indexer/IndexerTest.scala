@@ -107,11 +107,8 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT ?name WHERE {
-          ?class c:attachment "class" .
-          ?class s:name ?className .
-          FILTER (str(?className) = "C1") .
-          ?member c:parent ?class .
-          ?member s:name ?name .
+          ?class c:attachment "class" ; s:name "C1" .
+          [c:owner ?class] s:name ?name .
         }
       """) === Seq(
         Data("name", "m11"),
