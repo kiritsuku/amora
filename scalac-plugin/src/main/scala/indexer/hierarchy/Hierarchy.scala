@@ -11,7 +11,8 @@ sealed trait Hierarchy {
       val sig = attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ signature
       }.getOrElse("")
-      s"${parent.asString}.$name$sig"
+      val paramAtt = attachments.collectFirst { case Attachment.Param ⇒ "<param>" }.getOrElse("")
+      s"${parent.asString}.$paramAtt$name$sig"
     case Ref(name, _, _, qualifier) ⇒
       s"${qualifier.asString}.<ref>$name"
     case Root ⇒
