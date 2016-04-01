@@ -392,7 +392,7 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "parameter"] s:name ?name .
+          [c:attachment "param"] s:name ?name .
         }
       """) === Seq(
         Data("name", "i"),
@@ -411,7 +411,7 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "parameter"] s:name ?name .
+          [c:attachment "param"] s:name ?name .
         }
       """) === Seq(
         Data("name", "i"),
@@ -507,7 +507,7 @@ class IndexerTest {
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "parameter"] s:name ?name .
+          [c:attachment "param"] s:name ?name .
         }
       """) === Seq(
         Data("name", "i"),

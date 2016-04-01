@@ -13,9 +13,9 @@ object Attachment {
   case object Val extends Attachment { override def asString = "val" }
   case object Var extends Attachment { override def asString = "var" }
   case object Lazy extends Attachment { override def asString = "lazy" }
-  case object TypeParam extends Attachment { override def asString = "tparameter" }
-  case object Param extends Attachment { override def asString = "parameter" }
-  case object Ref extends Attachment { override def asString = "reference" }
+  case object TypeParam extends Attachment { override def asString = "tparam" }
+  case object Param extends Attachment { override def asString = "param" }
+  case object Ref extends Attachment { override def asString = "ref" }
 
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
 }

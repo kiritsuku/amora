@@ -274,7 +274,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "parameter"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "param"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -288,7 +288,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "parameter"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "param"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -304,7 +304,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -323,7 +323,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -353,7 +353,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -375,7 +375,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -394,7 +394,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -410,7 +410,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -429,7 +429,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -447,7 +447,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -463,7 +463,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -483,7 +483,7 @@ class RegionIndexerTest {
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
           ?def c:attachment "def", "(IF)I" .
-          [c:attachment "reference"] c:owner ?def ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:owner ?def ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -500,7 +500,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] c:reference [c:attachment "parameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference [c:attachment "param"] ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -518,7 +518,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] c:reference [c:attachment "parameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference [c:attachment "param"] ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -539,9 +539,9 @@ class RegionIndexerTest {
         SELECT * WHERE {
           ?val c:attachment "val" .
           FILTER NOT EXISTS {
-            ?val c:attachment "parameter" .
+            ?val c:attachment "param" .
           }
-          [c:attachment "reference"] c:reference ?val ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference ?val ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -560,7 +560,7 @@ class RegionIndexerTest {
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          [c:attachment "reference"] c:reference [c:attachment "tparameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference [c:attachment "tparam"] ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -577,9 +577,9 @@ class RegionIndexerTest {
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
           # find type parameter
-          ?tparam c:owner [c:attachment "trait"] ; c:attachment "tparameter" .
+          ?tparam c:owner [c:attachment "trait"] ; c:attachment "tparam" .
           # find references of type parameter
-          [c:attachment "reference"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
@@ -597,9 +597,9 @@ class RegionIndexerTest {
         PREFIX s:<http://schema.org/>
         SELECT * WHERE {
           # find type parameter
-          ?tparam c:owner [c:attachment "def", "(Ljava/lang/Object;)Ljava/lang/Object;"] ; c:attachment "tparameter" .
+          ?tparam c:owner [c:attachment "def", "(Ljava/lang/Object;)Ljava/lang/Object;"] ; c:attachment "tparam" .
           # find references of type parameter
-          [c:attachment "reference"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+          [c:attachment "ref"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
         }
       """,
       "<memory>" → """
