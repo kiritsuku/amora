@@ -105,6 +105,8 @@ class ScalacConverter[G <: Global](val global: G) {
         val decl = h.Decl(name, owner)
         if (s.isMethod && !s.asMethod.isGetter)
           decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
+        else if (s.isParameter)
+          decl.addAttachments(a.Param)
         decl
       }
     }

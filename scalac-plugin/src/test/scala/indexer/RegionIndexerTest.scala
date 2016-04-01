@@ -493,4 +493,64 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_parameter() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] c:reference [c:attachment "parameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f(i: Int) = {
+            [[i]]
+          }
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_local_value_with_same_name_as_parameter() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "reference"] c:reference [c:attachment "parameter"] ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f(i: Int) = {
+            val i = 0
+            i
+          }
+        }
+      """)
+  }
+
+  @Test
+  def refs_to_local_value_when_parameter_of_same_name_exists() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          ?val c:attachment "val" .
+          FILTER NOT EXISTS {
+            ?val c:attachment "parameter" .
+          }
+          [c:attachment "reference"] c:reference ?val ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f(i: Int) = {
+            val i = 0
+            [[i]]
+          }
+        }
+      """)
+  }
 }

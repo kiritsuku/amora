@@ -69,9 +69,10 @@ object Indexer {
       val sig = decl.attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ encode(signature)
       }.getOrElse("")
+      val paramAtt = encode(decl.attachments.collectFirst { case Attachment.Param ⇒ "<param>" }.getOrElse(""))
       val classEntry = s"""
         {
-          "@id": "c:$path/$n$sig",
+          "@id": "c:$path/$paramAtt$n$sig",
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}
