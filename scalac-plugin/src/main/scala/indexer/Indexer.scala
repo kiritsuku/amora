@@ -76,7 +76,7 @@ object Indexer {
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}
-          "c:tpe": "declaration",
+          "c:tpe": "decl",
           ${position(decl.position)}
           "c:file": "$filename",
           "c:owner": "c:$path"
@@ -96,7 +96,7 @@ object Indexer {
         {
           "@id": "c:$path/$f$h",
           "@type": "s:Text",
-          "c:tpe": "typeref",
+          "c:tpe": "ref",
           "s:name": "${ref.name}",
           ${attachments(ref)}
           "c:file": "$filename",
