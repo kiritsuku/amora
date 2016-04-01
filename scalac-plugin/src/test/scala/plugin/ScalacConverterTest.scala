@@ -235,7 +235,7 @@ class ScalacConverterTest {
   def type_parameter_at_classes() = {
     convert("""
       class X[A, B]
-    """) === Set("X", "X.A", "X.B")
+    """) === Set("X", "X.<tparam>A", "X.<tparam>B")
   }
 
   @Test
@@ -244,7 +244,7 @@ class ScalacConverterTest {
       class X {
         def f[A, B] = 0
       }
-    """) === Set("X", "X.f()I", "X.f()I.A", "X.f()I.B", "scala.<ref>Int")
+    """) === Set("X", "X.f()I", "X.f()I.<tparam>A", "X.f()I.<tparam>B", "scala.<ref>Int")
   }
 
   @Test
@@ -760,6 +760,21 @@ class ScalacConverterTest {
         }
       }
     """) === Set("X", "X.f(I)I", "X.f(I)I.i", "X.f(I)I.<param>i", "X.f(I)I.<ref>i", "scala.<ref>Int")
+  }
+
+  @Test
+  def def_with_params_and_type_params_of_same_name() = {
+    convert("""
+      class X {
+        def f[A](A: A) = {
+          val A = 0
+          A
+        }
+      }
+    """) === Set(
+        "X", "X.f(Ljava/lang/Object;)I", "X.f(Ljava/lang/Object;)I.<tparam>A",
+        "X.f(Ljava/lang/Object;)I.<param>A", "X.f(Ljava/lang/Object;)I.A",
+        "X.f(Ljava/lang/Object;)I.<ref>A", "scala.<ref>Int")
   }
 
   @Test
