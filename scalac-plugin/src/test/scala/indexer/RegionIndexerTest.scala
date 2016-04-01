@@ -609,4 +609,47 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_type_parameter_when_parameter_of_same_name_exists() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          # find type parameter
+          ?tparam c:owner [c:attachment "def"] ; c:attachment "tparam" .
+          # find references of type parameter
+          [c:attachment "ref"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f[A](A: [[A]]) = {
+            A
+          }
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_type_parameter_when_local_val_decl_of_same_name_exists() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          # find type parameter
+          ?tparam c:owner [c:attachment "def"] ; c:attachment "tparam" .
+          # find references of type parameter
+          [c:attachment "ref"] c:reference ?tparam ; s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f[A](A: [[A]]) = {
+            val A = 0
+            A
+          }
+        }
+      """)
+  }
 }

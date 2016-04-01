@@ -105,6 +105,8 @@ class ScalacConverter[G <: Global](val global: G) {
         val decl = h.Decl(name, owner)
         if (s.isMethod && !s.asMethod.isGetter)
           decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
+        else if (s.isTypeParameterOrSkolem)
+          decl.addAttachments(a.TypeParam)
         else if (s.isParameter)
           decl.addAttachments(a.Param)
         decl
@@ -167,7 +169,11 @@ class ScalacConverter[G <: Global](val global: G) {
     def refFromSymbol(sym: Symbol): h.Ref = {
       val pkg = declFromSymbol(sym.owner)
       val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name, sym), pkg)
-      h.Ref(cls.name, cls, owner, pkg)
+      val ref = h.Ref(cls.name, cls, owner, pkg)
+      ref.addAttachments(a.Ref)
+      if (sym.isTypeParameterOrSkolem)
+        cls.addAttachments(a.TypeParam)
+      ref
     }
 
     def selfRefTypes() = {
@@ -184,7 +190,6 @@ class ScalacConverter[G <: Global](val global: G) {
 
     def otherTypes() = {
       val ref = refFromSymbol(sym)
-      ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
       val isImplicitAnyRef = t.tpe =:= typeOf[AnyRef] && !t.pos.isRange
