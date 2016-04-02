@@ -92,6 +92,18 @@ class ScalacConverter[G <: Global](val global: G) {
     s"($paramsSig)$retSig"
   }
 
+  private def mkDecl(s: Symbol, owner: h.Hierarchy): h.Decl = {
+    val name = decodedName(s.name, s)
+    val decl = h.Decl(name, owner)
+    if (s.isMethod && !s.asMethod.isGetter)
+      decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
+    else if (s.isTypeParameterOrSkolem)
+      decl.addAttachments(a.TypeParam)
+    else if (s.isParameter)
+      decl.addAttachments(a.Param)
+    decl
+  }
+
   private def declFromSymbol(sym: Symbol): h.Hierarchy = {
     require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, make sure that everything with a NoSymbol does not survive long enough to get here.")
     if (sym.name.toTermName == nme.ROOT)
@@ -100,17 +112,7 @@ class ScalacConverter[G <: Global](val global: G) {
       val noRootSymbol = sym.ownerChain.reverse.tail
       val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
 
-      noEmptyPkgSymbol.foldLeft(h.Root: h.Hierarchy) { (owner, s) ⇒
-        val name = decodedName(s.name, s)
-        val decl = h.Decl(name, owner)
-        if (s.isMethod && !s.asMethod.isGetter)
-          decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
-        else if (s.isTypeParameterOrSkolem)
-          decl.addAttachments(a.TypeParam)
-        else if (s.isParameter)
-          decl.addAttachments(a.Param)
-        decl
-      }
+      noEmptyPkgSymbol.foldLeft(h.Root: h.Hierarchy) { (owner, s) ⇒ mkDecl(s, owner) }
     }
   }
 
@@ -153,8 +155,8 @@ class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case Ident(name) ⇒
-      val calledOn = declFromSymbol(t.symbol.owner)
-      val refToDecl = declFromSymbol(t.symbol)
+      val calledOn = if (t.symbol.isLocalToBlock) owner else declFromSymbol(t.symbol.owner)
+      val refToDecl = mkDecl(t.symbol, calledOn)
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
@@ -228,7 +230,7 @@ class ScalacConverter[G <: Global](val global: G) {
       args foreach (expr(owner, _))
     case _: TypeApply ⇒
       mkRef(owner, t)
-    case t: TypeTree ⇒
+    case _: TypeTree ⇒
       typeRef(owner, t)
     case _: Select ⇒
       mkRef(owner, t)
@@ -243,6 +245,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case Typed(expr, tpt) ⇒
       this.expr(owner, expr)
       typeRef(owner, tpt)
+    case _: Block ⇒
+      body(owner, t)
     case _: Literal ⇒
     case _: Ident ⇒
   }

@@ -778,6 +778,18 @@ class ScalacConverterTest {
   }
 
   @Test
+  def block_in_param_list() = {
+    convert("""
+      class X {
+        def f(i: Int) = 0
+        f({val i = 0; i})
+      }
+    """) === Set(
+        "X", "X.f(I)I", "X.f(I)I.<param>i", "scala.<ref>Int",
+        "X.<ref>f", "X.<ref>f.i", "X.<ref>f.<ref>i")
+  }
+
+  @Test
   def match_expr() = {
     convert("""
       class X {

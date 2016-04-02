@@ -709,4 +709,22 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def multiple_blocks_with_same_name() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def [[!Int]]f(i: [[Int]]) = 0
+          [[f]]({val [[!Int]]i = 0; [[i]]})
+          [[f]]({val [[!Int]]i = 0; [[i]]})
+        }
+      """)
+  }
 }
