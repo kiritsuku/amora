@@ -10,32 +10,68 @@ class RegionIndexerTest {
 
   import TestUtils._
 
-  case class Data(varName: String, value: String)
+  sealed trait Region {
+    def len: Int
+  }
+  case class Range(start: Int, end: Int, str: String) extends Region {
+    override def len = "[[]]".length
+  }
+  case class Offset(offset: Int, str: String) extends Region {
+    override def len = "[[!]]".length + str.length
+  }
 
+  /**
+   * Runs a test against the indexer. `modelName` is the name of the index that
+   * shall be used during the test. `rawQuery` is the query that can contain the
+   * string `"?MODEL?"`, which is replaced during the test by `modelName`.
+   * `rawData` are tuples of the form `(filename, source)`. The sources will be
+   * typechecked and indexed and once this is done the query will run against
+   * the index.
+   *
+   * The sources can contain markers that start with `[[` and end with `]]`.
+   * These markers are the start and end position of a range, which shall be
+   * returned by the query. If the first character after the `[[` marker is a
+   * exclamation mark, the range will become an offset region, whose start and
+   * end position are the same. Offset regions need to be used when implicit
+   * regions need to be tested for their existence (for example implicit return
+   * types of methods). The sources are freed of the region markers before they
+   * are passed to the typechecker to make it convenient to write tests.
+   */
   def ask(modelName: String, rawQuery: String, rawData: (String, String)*): Unit = {
-    def findRegions(src: String, prevStart: Int, prevEnd: Int, regions: IndexedSeq[(Int, Int, String)]): IndexedSeq[(Int, Int, String)] = {
+    def findRegions(src: String, prevStart: Int, prevEnd: Int, regions: IndexedSeq[Region]): IndexedSeq[Region] = {
       val start = src.indexOf("[[", prevEnd)
       if (start < 0)
         regions
       else {
         val end = src.indexOf("]]", start)
-        val len = regions.length
-        val prevBrackets = len*4
-        findRegions(src, start, end, regions :+ ((start - prevBrackets, end - prevBrackets - "[[".length, src.substring(start+2, end))))
+        val len = regions.map(_.len).sum
+        val isOffset = src(start + 2) == '!'
+        val range =
+          if (isOffset)
+            Offset(start - len, src.substring(start + 3, end))
+          else
+            Range(start - len, end - len - "[[".length, src.substring(start + 2, end))
+        findRegions(src, start, end, regions :+ range)
       }
     }
     val dataWithRegions = rawData map {
       case (filename, rawSrc) ⇒
         val regions = findRegions(rawSrc, 0, 0, Vector())
-        val src = rawSrc.replaceAll("""\[\[|\]\]""", "")
+        val src = rawSrc.replaceAll("""\[\[!.*?\]\]|\[\[|\]\]""", "")
         (filename, src, regions)
     }
 
+    val regionOrdering: Region ⇒ (Int, Int) = {
+      case Range(start, end, _) ⇒ (start, end)
+      case Offset(offset, _) ⇒ (offset, offset)
+    }
+
     val data = dataWithRegions.map { case (filename, src, _) ⇒ (filename, src) }
-    val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }
+    val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
+
     val hierarchyData = convertToHierarchy(data: _*)
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
-    val foundRegions = Indexer.withInMemoryDataset { dataset ⇒
+    val foundRegions: Try[Seq[Region]] = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
@@ -55,8 +91,11 @@ class RegionIndexerTest {
             val name = row.get("name")
             require(name != null, "No field with name `name` found.")
 
-            (start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
-          }.sortBy { case (start, end, _) ⇒ (start, end) }
+            if (start.asLiteral.getInt == end.asLiteral().getInt)
+              Offset(start.asLiteral().getInt, name.toString())
+            else
+              Range(start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
+          }.sortBy(regionOrdering)
         }
       }.flatten
     }.flatten
@@ -85,7 +124,7 @@ class RegionIndexerTest {
         package a.b.c
         class [[A]]
         class [[B_?]]
-        class [[!!!]]
+        class [[??]]
         class [[`hello world`]]
         object O
         abstract class [[AC]]
@@ -107,7 +146,7 @@ class RegionIndexerTest {
         class [[B_?]] {
           def f = 0
         }
-        class [[!!!]] { /* comment*/ }
+        class [[??]] { /* comment*/ }
         class [[`hello world`]] {
           def g = 0
         }
@@ -380,10 +419,10 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          val a = 0
-          def b = [[a]]
-          var c = [[b]]
-          lazy val d = [[c]]
+          val [[!Int]]a = 0
+          def [[!Int]]b = [[a]]
+          var [[!Int]]c = [[b]]
+          lazy val [[!Int]]d = [[c]]
         }
       """)
   }
@@ -399,7 +438,7 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          val a = [[classOf]][ /* Int */ [[Int]] ]
+          val [[!Class]]a = [[classOf]][ /* Int */ [[Int]] ]
         }
       """)
   }
@@ -468,10 +507,10 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          val b1 = true
-          val b2 = true
-          val b3 = true
-          def f = if ([[b1]]) [[b2]] else [[b3]]
+          val [[!Boolean]]b1 = true
+          val [[!Boolean]]b2 = true
+          val [[!Boolean]]b3 = true
+          def [[!Boolean]]f = if ([[b1]]) [[b2]] else [[b3]]
         }
       """)
   }
@@ -489,7 +528,7 @@ class RegionIndexerTest {
       "<memory>" → """
         class X {
           def f(i: Int) = i
-          def f(i: Int, s: Float) = [[i]]
+          def [[!Int]]f(i: Int, s: Float) = [[i]]
         }
       """)
   }
@@ -624,7 +663,7 @@ class RegionIndexerTest {
       """,
       "<memory>" → """
         class X {
-          def f[A](A: [[A]]) = {
+          def [[!A]]f[A](A: [[A]]) = {
             A
           }
         }
@@ -649,6 +688,24 @@ class RegionIndexerTest {
             val A = 0
             A
           }
+        }
+      """)
+  }
+
+  @Test
+  def multiple_calls_to_def() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def [[!Int]]f(i: [[Int]]) = 0
+          [[f]](0)
+          [[f]](0)
         }
       """)
   }

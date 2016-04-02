@@ -354,13 +354,11 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
-    if (t.symbol.isSynthetic)
+    if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
     val ValDef(_, name, tpt, rhs) = t
     val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
-    if (t.symbol.isLazy)
-      m.addAttachments(a.Lazy)
     if (t.symbol.isParamAccessor)
       m.addAttachments(a.Param)
     setPosition(m, t.pos)
@@ -507,6 +505,9 @@ class ScalacConverter[G <: Global](val global: G) {
           d.position = h.RangePosition(start, start+d.name.length)
         case _ ⇒
       }
+    } else if (pos.isOffset) {
+      val offset = pos.start
+      d.position = h.RangePosition(offset, offset)
     }
   }
 }
