@@ -374,7 +374,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.v", "scala.<ref>Function1", "scala.<ref>Int")
+        "X.<ref>meth", "X.<ref>meth.v", "X.<ref>meth.<ref>v", "scala.<ref>Function1", "scala.<ref>Int")
   }
 
   @Test

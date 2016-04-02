@@ -248,7 +248,9 @@ class ScalacConverter[G <: Global](val global: G) {
     case _: Block ⇒
       body(owner, t)
     case _: Literal ⇒
-    case _: Ident ⇒
+    case t: Ident ⇒
+      if (t.name != nme.USCOREkw)
+        mkRef(owner, t)
   }
 
   /** Handles `classOf[X]` constructs. */
