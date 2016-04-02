@@ -810,4 +810,22 @@ class ScalacConverterTest {
         "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z", "X.f()Z.x",
         "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4", "X.f()Z.<ref>x", "scala.<ref>Boolean", "scala.Boolean.<ref>==")
   }
+
+  @Test
+  def match_expr_with_ident_in_backticks() = {
+    convert("""
+      class X {
+        val b1 = true
+        def f = {
+          val b2 = true
+          b1 match {
+            case `b2` ⇒
+              true
+            case _ ⇒
+              true
+          }
+        }
+      }
+    """) === Set("X", "X.b1", "X.f()Z", "X.f()Z.b2", "X.<ref>b1", "X.f()Z.<ref>b2", "scala.<ref>Boolean")
+  }
 }
