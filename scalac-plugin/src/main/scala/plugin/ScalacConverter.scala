@@ -143,11 +143,17 @@ class ScalacConverter[G <: Global](val global: G) {
       qualifier match {
         case _: This ⇒
         case Ident(name) if name == nme.ROOTPKG ⇒
+        case Select(qualifier, name) if name == nme.PACKAGE ⇒
+          mkRef(owner, qualifier)
         case _ ⇒
           mkRef(owner, qualifier)
       }
-      val calledOn = declFromSymbol(t.symbol.owner)
-      val refToDecl = declFromSymbol(t.symbol)
+      val calledOn =
+        if (t.symbol.owner.name.toTermName == nme.PACKAGE)
+          declFromSymbol(t.symbol.owner.owner)
+        else
+          declFromSymbol(t.symbol.owner)
+      val refToDecl = mkDecl(t.symbol, calledOn)
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
@@ -197,20 +203,28 @@ class ScalacConverter[G <: Global](val global: G) {
     def otherTypes() = {
       val ref = refFromSymbol(sym)
       setPosition(ref, t.pos)
-      // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
-      val isImplicitAnyRef = t.tpe =:= typeOf[AnyRef] && !t.pos.isRange
-      if (!isImplicitAnyRef)
-        found += ref
+      found += ref
     }
 
     if (sym.isRefinementClass)
       selfRefTypes
-    else
-      otherTypes
+    else t.tpe match {
+      case tpe: AliasTypeRef ⇒
+        // ignore the underlying types of type aliases
+      case tpe if !t.pos.isRange && tpe =:= typeOf[scala.annotation.Annotation] ⇒
+        // Annotation is implicitly added for annotations but we only want to keep
+        // it if the Annotation type is directly extended
+      case tpe if !t.pos.isRange && tpe =:= typeOf[AnyRef] ⇒
+        // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
+      case _ ⇒
+        otherTypes
+    }
 
     t.original match {
       case AppliedTypeTree(tpt, args) ⇒
         typeRef(owner, t.original)
+      case t: Select ⇒
+        typeRef(owner, t)
       case _ ⇒
     }
   }

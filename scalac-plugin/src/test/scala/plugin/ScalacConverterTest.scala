@@ -286,7 +286,7 @@ class ScalacConverterTest {
     """) === Set(
         "X", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.<param>i",
         "X.f(ILjava/lang/String;)I.<param>s", "X.f(ILjava/lang/String;)I.g(I)I",
-        "X.f(ILjava/lang/String;)I.g(I)I.<param>i", "scala.<ref>Int", "java.lang.<ref>String")
+        "X.f(ILjava/lang/String;)I.g(I)I.<param>i", "scala.<ref>Int", "scala.Predef.<ref>String")
   }
 
   @Test
@@ -526,7 +526,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<param>t",
-        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<ref>t", "scala.<ref>Int", "java.lang.<ref>String", "scala.<ref>Tuple2")
+        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<ref>t", "scala.<ref>Int", "scala.Predef.<ref>String", "scala.<ref>Tuple2")
   }
 
   @Test
@@ -537,7 +537,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(Lscala/Tuple2;)Lscala/Tuple2;", "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<param>t",
-        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<ref>t", "scala.<ref>Int", "java.lang.<ref>String", "scala.<ref>Tuple2")
+        "X.f(Lscala/Tuple2;)Lscala/Tuple2;.<ref>t", "scala.<ref>Int", "scala.Predef.<ref>String", "scala.<ref>Tuple2")
   }
 
   @Test
@@ -553,21 +553,21 @@ class ScalacConverterTest {
   def private_class_parameter() = {
     convert("""
       class X(i: Int, j: String)
-    """) === Set("X", "X.<param>i", "X.<param>j", "java.lang.<ref>String", "scala.<ref>Int")
+    """) === Set("X", "X.<param>i", "X.<param>j", "scala.Predef.<ref>String", "scala.<ref>Int")
   }
 
   @Test
   def public_class_parameter() = {
     convert("""
       class X(val i: Int, val j: String)
-    """) === Set("X", "X.<param>i", "X.<param>j", "java.lang.<ref>String", "scala.<ref>Int")
+    """) === Set("X", "X.<param>i", "X.<param>j", "scala.Predef.<ref>String", "scala.<ref>Int")
   }
 
   @Test
   def class_parameter_with_multiple_argument_lists() = {
     convert("""
       class X(i: Int)(j: String)(k: Int)
-    """) === Set("X", "X.<param>i", "X.<param>j", "X.<param>k", "java.lang.<ref>String", "scala.<ref>Int")
+    """) === Set("X", "X.<param>i", "X.<param>j", "X.<param>k", "scala.Predef.<ref>String", "scala.<ref>Int")
   }
 
   @Test
@@ -578,7 +578,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.<param>i",
-        "X.f(ILjava/lang/String;)I.<param>j", "java.lang.<ref>String", "scala.<ref>Int")
+        "X.f(ILjava/lang/String;)I.<param>j", "scala.Predef.<ref>String", "scala.<ref>Int")
   }
 
   @Test
@@ -590,7 +590,7 @@ class ScalacConverterTest {
     """) === Set(
         "X", "X.f(ILjava/lang/String;I)I", "X.f(ILjava/lang/String;I)I.<param>i",
         "X.f(ILjava/lang/String;I)I.<param>j", "X.f(ILjava/lang/String;I)I.<param>k",
-        "java.lang.<ref>String", "scala.<ref>Int")
+        "scala.Predef.<ref>String", "scala.<ref>Int")
   }
 
   @Test
@@ -734,7 +734,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.f(I)I", "X.f(I)I.<param>i", "X.f(ILjava/lang/String;)I", "X.f(ILjava/lang/String;)I.<param>i",
-        "X.f(ILjava/lang/String;)I.<param>s", "scala.<ref>Int", "java.lang.<ref>String")
+        "X.f(ILjava/lang/String;)I.<param>s", "scala.<ref>Int", "scala.Predef.<ref>String")
   }
 
   @Test
@@ -879,6 +879,24 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.f()Z.e", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
-        "scala.Predef.<ref>println", "scala.<ref>Boolean", "java.lang.<ref>Exception")
+        "scala.Predef.<ref>println", "scala.<ref>Boolean", "scala.<ref>Exception")
+  }
+
+  @Test
+  def annotation_declaration() = {
+    convert("""
+      class Ann(arr: Array[Class[_]]) extends scala.annotation.Annotation
+    """) === Set(
+        "Ann", "Ann.<param>arr", "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>Annotation",
+        "scala.<ref>Array", "java.lang.<ref>Class")
+  }
+
+  @Test
+  def static_annotation_declaration() = {
+    convert("""
+      class Ann(arr: Array[Class[_]]) extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "Ann", "Ann.<param>arr", "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
+        "scala.<ref>Array", "java.lang.<ref>Class")
   }
 }
