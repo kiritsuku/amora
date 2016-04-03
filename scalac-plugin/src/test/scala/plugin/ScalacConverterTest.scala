@@ -828,4 +828,15 @@ class ScalacConverterTest {
       }
     """) === Set("X", "X.b1", "X.f()Z", "X.f()Z.b2", "X.<ref>b1", "X.f()Z.<ref>b2", "scala.<ref>Boolean")
   }
+
+  @Test
+  def apply_param_to_apply_method_explicitly() = {
+    convert("""
+      class X {
+        def f(i: Int) = Option.apply(i)
+      }
+    """) === Set(
+        "X", "X.f(I)Lscala/Option;", "X.f(I)Lscala/Option;.<param>i", "X.f(I)Lscala/Option;.<ref>i",
+        "scala.<ref>Option", "scala.Option.<ref>apply", "scala.<ref>Int")
+  }
 }

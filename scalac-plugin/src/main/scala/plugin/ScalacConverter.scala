@@ -155,7 +155,11 @@ class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case Ident(name) ⇒
-      val calledOn = if (t.symbol.isLocalToBlock) owner else declFromSymbol(t.symbol.owner)
+      val calledOn =
+        if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
+          owner
+        else
+          declFromSymbol(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
