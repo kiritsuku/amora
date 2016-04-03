@@ -839,4 +839,25 @@ class ScalacConverterTest {
         "X", "X.f(I)Lscala/Option;", "X.f(I)Lscala/Option;.<param>i", "X.f(I)Lscala/Option;.<ref>i",
         "scala.<ref>Option", "scala.Option.<ref>apply", "scala.<ref>Int")
   }
+
+  @Test
+  def match_expr_with_extractor() = {
+    convert("""
+      class X {
+        def f = {
+          1 match {
+            case Extractor(i) ⇒ i
+            case j ⇒ j
+          }
+        }
+      }
+      object Extractor {
+        def unapply(i: Int) = Option(i)
+      }
+    """) === Set(
+        "X", "X.f()I", "X.f()I.i", "X.f()I.j", "X.f()I.<ref>i", "X.f()I.<ref>j",
+        "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply", "Extractor",
+        "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
+        "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option", "scala.Option.<ref>apply")
+  }
 }

@@ -251,6 +251,9 @@ class ScalacConverter[G <: Global](val global: G) {
       typeRef(owner, tpt)
     case _: Block ⇒
       body(owner, t)
+    case UnApply(fun, args) ⇒
+      expr(owner, fun)
+      args foreach (expr(owner, _))
     case _: Literal ⇒
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
