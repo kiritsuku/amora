@@ -142,8 +142,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This ⇒
-        case Ident(name) if name == nme.ROOTPKG ⇒
-        case Select(qualifier, name) if name == nme.PACKAGE ⇒
+        case Ident(nme.ROOTPKG) ⇒
+        case Select(qualifier, nme.PACKAGE) ⇒
           mkRef(owner, qualifier)
         case _ ⇒
           mkRef(owner, qualifier)
