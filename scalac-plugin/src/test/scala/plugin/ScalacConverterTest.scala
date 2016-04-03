@@ -860,4 +860,25 @@ class ScalacConverterTest {
         "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
         "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option", "scala.Option.<ref>apply")
   }
+
+  @Test
+  def try_expr() = {
+    convert("""
+      class X {
+        val b1 = true
+        val b2 = true
+        val b3 = true
+        def f = {
+          try b1
+          catch {
+            case e: Exception ⇒
+              b2
+          }
+          finally println(b3)
+        }
+      }
+    """) === Set(
+        "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.f()Z.e", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
+        "scala.Predef.<ref>println", "scala.<ref>Boolean", "java.lang.<ref>Exception")
+  }
 }

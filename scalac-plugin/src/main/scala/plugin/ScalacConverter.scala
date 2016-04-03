@@ -317,6 +317,10 @@ class ScalacConverter[G <: Global](val global: G) {
       expr(owner, pat)
       this.body(owner, guard)
       this.body(owner, body)
+    case TTry(block, catches, finalizer) ⇒
+      body(owner, block)
+      catches foreach (body(owner, _))
+      body(owner, finalizer)
     case EmptyTree ⇒
   }
 
