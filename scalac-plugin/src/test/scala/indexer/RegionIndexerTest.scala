@@ -743,4 +743,20 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def implicit_apply_method() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          val [[!Option]]a = [[!apply]][[!Int]][[Option]](1)
+        }
+      """)
+  }
 }

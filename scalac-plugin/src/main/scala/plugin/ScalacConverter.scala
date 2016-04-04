@@ -134,9 +134,12 @@ class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case Select(qualifier, name) ⇒
+      // implicitly called apply methods do have range positions but the position
+      // of their qualifier is transparent. We need to ensure that we don't treat
+      // the apply method as a range position.
+      val isImplicitApplyMethod = name == nme.apply && qualifier.pos.isTransparent
       qualifier match {
-        case _: This ⇒
-        case Ident(nme.ROOTPKG) ⇒
+        case _: This | Ident(nme.ROOTPKG) ⇒
         case Select(qualifier, nme.PACKAGE) ⇒
           mkRef(owner, qualifier)
         case _ ⇒
@@ -150,7 +153,12 @@ class ScalacConverter[G <: Global](val global: G) {
       val refToDecl = mkDecl(t.symbol, calledOn)
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
-      setPosition(ref, t.pos)
+      if (!isImplicitApplyMethod)
+        setPosition(ref, t.pos)
+      else {
+        val offset = t.pos.start
+        ref.position = h.RangePosition(offset, offset)
+      }
       // TODO remove this scala.Tuple check. It is a hack, which is needed as long
       // as we keep the isRange check, we actually want to get rid of it altogether.
       if (t.pos.isRange || qualifier.symbol.fullName.startsWith("scala.Tuple"))
