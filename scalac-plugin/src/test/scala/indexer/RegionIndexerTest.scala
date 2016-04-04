@@ -61,9 +61,9 @@ class RegionIndexerTest {
         (filename, src, regions)
     }
 
-    val regionOrdering: Region ⇒ (Int, Int) = {
-      case Range(start, end, _) ⇒ (start, end)
-      case Offset(offset, _) ⇒ (offset, offset)
+    val regionOrdering: Region ⇒ (Int, Int, String) = {
+      case Range(start, end, text) ⇒ (start, end, text)
+      case Offset(offset, text) ⇒ (offset, offset, text)
     }
 
     val data = dataWithRegions.map { case (filename, src, _) ⇒ (filename, src) }
