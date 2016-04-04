@@ -122,14 +122,8 @@ class ScalacConverter[G <: Global](val global: G) {
       args foreach (expr(ref, _))
       ref
     case TypeApply(fun, args) ⇒
-      val sym = fun.symbol
-      val cls = h.Decl(decodedName(sym.name, sym), declFromSymbol(sym.owner))
-      val ref = h.Ref(cls.name, cls, owner, cls.owner)
-      ref.addAttachments(a.Ref)
-      setPosition(ref, t.pos)
-      found += ref
-      args foreach (expr(owner, _))
-      ref
+      args foreach (typeRef(owner, _))
+      mkRef(owner, fun)
     case Select(New(t), _) ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
@@ -157,7 +151,9 @@ class ScalacConverter[G <: Global](val global: G) {
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
-      if (t.pos.isRange)
+      // TODO remove this scala.Tuple check. It is a hack, which is needed as long
+      // as we keep the isRange check, we actually want to get rid of it altogether.
+      if (t.pos.isRange || qualifier.symbol.fullName.startsWith("scala.Tuple"))
         found += ref
       ref
     case Ident(name) ⇒
