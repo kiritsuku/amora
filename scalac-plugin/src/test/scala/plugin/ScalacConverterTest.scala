@@ -899,4 +899,54 @@ class ScalacConverterTest {
         "Ann", "Ann.<param>arr", "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
         "scala.<ref>Array", "java.lang.<ref>Class")
   }
+
+  @Test
+  def class_annotation_without_arguments() = {
+    convert("""
+      @Ann
+      class X
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation")
+  }
+
+  @Test
+  def multiple_class_annotations() = {
+    convert("""
+      @Ann1 @Ann2
+      @Ann3 class X
+      class Ann1 extends scala.annotation.StaticAnnotation
+      class Ann2 extends scala.annotation.StaticAnnotation
+      class Ann3 extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "Ann1", "Ann2", "Ann3", "<ref>Ann1", "<ref>Ann2", "<ref>Ann3",
+        "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation")
+  }
+
+  @Test
+  def class_annotation_with_arguments() = {
+    convert("""
+      @Ann(Array(classOf[X]))
+      class X
+      class Ann(arr: Array[Class[_]]) extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "Ann", "Ann.<param>arr", "<ref>Ann", "scala.Predef.<ref>classOf", "<ref>X",
+        "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
+        "scala.<ref>Array", "scala.Array.<ref>apply", "java.lang.<ref>Class")
+  }
+
+  @Test
+  def class_annotation_with_constant_argument() = {
+    convert("""
+      @Ann(Constants.C)
+      class X
+      object Constants {
+        final val C = 0
+      }
+      class Ann(v: Int) extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "Ann", "Constants", "Constants.C", "Ann.<param>v", "<ref>Ann", "<ref>Constants", "Constants.<ref>C",
+        "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
 }

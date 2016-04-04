@@ -759,4 +759,39 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def class_annotation() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        @[[Ann]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
+        class X
+        class Ann(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
+      """)
+  }
+
+  @Test
+  def multiple_annotations() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
+        @[[Ann2]]
+        @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
+        class X
+        class Ann1(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
+        class Ann2 extends [[scala]].[[annotation]].[[StaticAnnotation]]
+      """)
+  }
 }

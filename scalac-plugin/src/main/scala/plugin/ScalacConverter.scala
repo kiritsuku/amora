@@ -248,8 +248,11 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def expr(owner: h.Hierarchy, t: Tree): Unit = t match {
     case Apply(fun, args) ⇒
-      expr(owner, fun)
-      args foreach (expr(owner, _))
+      // TODO remove this condition because we are also interested in offset positions
+      if (t.pos.isRange) {
+        expr(owner, fun)
+        args foreach (expr(owner, _))
+      }
     case _: TypeApply ⇒
       mkRef(owner, t)
     case _: TypeTree ⇒
@@ -272,7 +275,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case UnApply(fun, args) ⇒
       expr(owner, fun)
       args foreach (expr(owner, _))
-    case _: Literal ⇒
+    case t: Literal ⇒
+      classOfConst(owner, t)
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
         mkRef(owner, t)
@@ -342,8 +346,63 @@ class ScalacConverter[G <: Global](val global: G) {
     case EmptyTree ⇒
   }
 
+  /**
+   * Handles annotations. This is rather difficult since the trees of
+   * annotations are not part of the typechecked tree. Instead they are hidden
+   * in the symbol of the annotated declaration. Unfortunately, these hidden
+   * trees do not have range positions. Only offset positions exist in the
+   * compiler generated trees. In order to handle annotations nevertheless, we
+   * find the beginning of the annotation list and then parse all of the
+   * annotations once again. After parsing the trees do have positions but no
+   * types. Therefore we copy the positions back to the original typechecked
+   * tree before we handle the trees. And at the end we remove all all copied
+   * positions from the original tree in order to avoid any potential side
+   * effects with later compiler phases.
+   *
+   * `sym` is the symbol of the declaration where the annotations belong to.
+   * `pos` is the position of this declaration.
+   */
+  private def annotationRef(owner: h.Hierarchy, sym: Symbol, pos: Position) = {
+    /* Marker that signals that we modified a tree. */
+    case object NoPosAtt
+
+    def copyPos(from: Tree, to: Tree): Unit = {
+      if (to.pos == NoPosition) {
+        to.updateAttachment(NoPosAtt)
+        to.setPos(from.pos)
+      }
+      (from.children, to.children).zipped foreach copyPos
+    }
+
+    def clear(t: Tree): Unit = {
+      if (t.hasAttachment[NoPosAtt.type]) {
+        t.pos = NoPosition
+        t.removeAttachment[NoPosAtt.type]
+      }
+      t.children foreach clear
+    }
+
+    val anns = sym.annotations
+    if (anns.nonEmpty) {
+      import Movements._
+      val mvnt = until('@', skipping = comment | inBrackets('(', ')')).backward
+      val annPos = (1 to anns.length foldLeft pos.start) { (p, _) ⇒
+        mvnt(SourceWithMarker(pos.source.content, p - 1)).get
+      }
+      val annSrc = " "*annPos + pos.source.content.slice(annPos, pos.start).mkString
+      val parser = new syntaxAnalyzer.SourceFileParser(newSourceFile(annSrc, "<memory>"))
+      val posTrees = parser.annotations(skipNewLines = true)
+      val tpeTrees = anns.map(_.tree)
+
+      (posTrees, tpeTrees).zipped foreach copyPos
+      tpeTrees foreach (body(owner, _))
+      tpeTrees foreach clear
+    }
+  }
+
   private def classDef(owner: h.Hierarchy, t: ClassDef): Unit = {
     val ClassDef(_, name, tparams, impl) = t
+    annotationRef(owner, t.symbol, t.pos)
     val c = h.Decl(decodedName(name, NoSymbol), owner)
     if (t.symbol.isTrait)
       c.addAttachments(a.Trait)
