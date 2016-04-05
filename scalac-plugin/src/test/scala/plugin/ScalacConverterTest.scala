@@ -1015,6 +1015,16 @@ class ScalacConverterTest {
   }
 
   @Test
+  def ctor_param_annotation_without_arguments() = {
+    convert("""
+      class X(@Ann p: Int)
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "X.<param>p", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
+
+  @Test
   def throw_exception() = {
     convert("""
       class X {
