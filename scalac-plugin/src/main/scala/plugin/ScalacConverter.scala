@@ -93,7 +93,7 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def mkDecl(s: Symbol, owner: h.Hierarchy): h.Decl = {
-    val name = decodedName(s.name, s)
+    val name = if (s.name == nme.CONSTRUCTOR) "this" else decodedName(s.name, NoSymbol)
     val decl = h.Decl(name, owner)
     if (s.isMethod && !s.asMethod.isGetter)
       decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
@@ -146,7 +146,8 @@ class ScalacConverter[G <: Global](val global: G) {
       val refToDecl = mkDecl(t.symbol, calledOn)
       // we can't use [[refToDecl.name]] here because for rename imports its name
       // is different from the name of the symbol
-      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
+      val decoded = if (name == nme.CONSTRUCTOR) "this" else decodedName(name, NoSymbol)
+      val ref = h.Ref(decoded, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       if (!isImplicitApplyMethod)
         setPosition(ref, t.pos)
@@ -488,7 +489,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
-      val m = h.Decl(decodedName(name, NoSymbol), owner)
+      val m = mkDecl(t.symbol, owner)
       m.addAttachments(a.Def)
       m.addAttachments(a.JvmSignature(signature(t.symbol)))
       setPosition(m, t.pos)
@@ -496,7 +497,7 @@ class ScalacConverter[G <: Global](val global: G) {
       tparams foreach (typeParamDef(m, _))
       vparamss foreach (_ foreach (defParamDef(m, _)))
       val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
-      if (!isGeneratedSetter)
+      if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
         typeRef(m, tpt)
       body(m, rhs)
     }
@@ -512,7 +513,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
     if (t.symbol.isLazy)
       lazyDefDef
-    else if (t.name == nme.CONSTRUCTOR
+    else if ((t.name == nme.CONSTRUCTOR && !t.pos.isOpaqueRange)
           || t.name == nme.MIXIN_CONSTRUCTOR
           || t.symbol.isGetter && t.symbol.isAccessor
           || t.symbol.isSetter)

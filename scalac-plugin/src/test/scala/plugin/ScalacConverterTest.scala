@@ -1033,4 +1033,18 @@ class ScalacConverterTest {
     """) === Set(
         "X", "X.f()I", "scala.<ref>IllegalArgumentException", "scala.<ref>Int")
   }
+
+  @Test
+  def auxiliary_ctor() = {
+    convert("""
+      class X(p: Int) {
+        def this(a: Int, b: Int) = {
+          this(a+b)
+        }
+      }
+    """) === Set(
+        "X", "X.<param>p", "scala.<ref>Int", "scala.Int.<ref>+", "X.this(II)V",
+        "X.this(II)V.<param>a", "X.this(II)V.<param>b", "X.this(II)V.<ref>a", "X.this(II)V.<ref>b")
+  }
+
 }
