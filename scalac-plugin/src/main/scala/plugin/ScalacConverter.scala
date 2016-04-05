@@ -589,7 +589,7 @@ class ScalacConverter[G <: Global](val global: G) {
           d.position = h.RangePosition(start, start+d.name.length)
         case _ ⇒
       }
-    } else if (pos.isOffset) {
+    } else {
       val offset = pos.start
       d.position = h.RangePosition(offset, offset)
     }
