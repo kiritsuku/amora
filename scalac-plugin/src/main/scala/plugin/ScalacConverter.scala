@@ -10,16 +10,20 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-class ScalacConverter[G <: Global](val global: G) {
+final class ScalacConverter[G <: Global](val global: G) {
   import global.{ Try ⇒ TTry, _ }
   import indexer.{ hierarchy ⇒ h }
   import indexer.hierarchy.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
 
+  /**
+   * Extracts the semantic information in `tree` and converts it into a
+   * structure described by [[Hierarchy]].
+   */
   def convert(tree: Tree): Try[Seq[h.Hierarchy]] = {
     found.clear()
-    Try(packageDef(tree)) match {
+    Try(traverse(tree)) match {
       case Success(_) ⇒
         Success(found.toList)
       case Failure(f) ⇒
@@ -54,10 +58,14 @@ class ScalacConverter[G <: Global](val global: G) {
     addBackquotes(name.decoded.trim)
   }
 
-  def signature(sym: Symbol): String = {
+  /**
+   * Computes the JVM signature for a method symbol. Throws if `sym` is not a
+   * method symbol.
+   */
+  private def jvmSignature(sym: Symbol): String = {
     require(sym.isMethod && !sym.asMethod.isGetter, "The passed argument is not a method symbol.")
 
-    def jvmSignature(tpe: Type): String = {
+    def sig(tpe: Type): String = {
       val TypeRef(_, sym, args) = tpe
       sym match {
         case definitions.UnitClass    ⇒ "V"
@@ -69,14 +77,14 @@ class ScalacConverter[G <: Global](val global: G) {
         case definitions.FloatClass   ⇒ "F"
         case definitions.LongClass    ⇒ "J"
         case definitions.DoubleClass  ⇒ "D"
-        case definitions.ArrayClass   ⇒ "["+jvmSignature(args.head)
+        case definitions.ArrayClass   ⇒ "["+sig(args.head)
         case _                        ⇒ "L"+sym.fullName.replace('.', '/')+";"
       }
     }
 
     val MethodType(params, ret) = sym.info.erasure
-    val paramsSig = params.map(param ⇒ jvmSignature(param.info)).mkString
-    val retSig = jvmSignature(if (!sym.isConstructor) ret else definitions.UnitClass.toType)
+    val paramsSig = params.map(param ⇒ sig(param.info)).mkString
+    val retSig = sig(if (!sym.isConstructor) ret else definitions.UnitClass.toType)
     s"($paramsSig)$retSig"
   }
 
@@ -95,7 +103,7 @@ class ScalacConverter[G <: Global](val global: G) {
         decodedName(sym.name)
     val decl = h.Decl(name, owner)
     if (sym.isMethod && !sym.asMethod.isGetter)
-      decl.addAttachments(a.Def, a.JvmSignature(signature(sym)))
+      decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
     else if (sym.isTypeParameterOrSkolem)
       decl.addAttachments(a.TypeParam)
     else if (sym.isParameter)
@@ -464,16 +472,6 @@ class ScalacConverter[G <: Global](val global: G) {
     body(decl, t.rhs)
   }
 
-  private def defParamDef(owner: h.Hierarchy, t: ValDef): Unit = {
-    annotationRef(owner, t.symbol, t.pos)
-    val decl = mkDecl(t.symbol, owner)
-    decl.addAttachments(a.Val, a.Param)
-    setPosition(decl, t.pos)
-    found += decl
-    typeRef(decl, t.tpt)
-    body(decl, t.rhs)
-  }
-
   private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
     if (t == noSelfType)
       return
@@ -490,12 +488,11 @@ class ScalacConverter[G <: Global](val global: G) {
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
       val m = mkDecl(t.symbol, owner)
-      m.addAttachments(a.Def)
-      m.addAttachments(a.JvmSignature(signature(t.symbol)))
+      m.addAttachments(a.Def, a.JvmSignature(jvmSignature(t.symbol)))
       setPosition(m, t.pos)
       found += m
       tparams foreach (typeParamDef(m, _))
-      vparamss foreach (_ foreach (defParamDef(m, _)))
+      vparamss foreach (_ foreach (valDef(m, _)))
       val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
       if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
         typeRef(m, tpt)
@@ -536,9 +533,9 @@ class ScalacConverter[G <: Global](val global: G) {
     t.tparams foreach (typeParamDef(m, _))
   }
 
-  private def mkPackageDecl(t: Tree): h.Decl = t match {
+  private def packageDef(t: Tree): h.Decl = t match {
     case Select(qualifier, name) ⇒
-      val decl = mkDecl(t.symbol, mkPackageDecl(qualifier))
+      val decl = mkDecl(t.symbol, packageDef(qualifier))
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl
@@ -551,9 +548,9 @@ class ScalacConverter[G <: Global](val global: G) {
       decl
   }
 
-  private def packageDef(t: Tree) = t match {
+  private def traverse(t: Tree) = t match {
     case PackageDef(pid, stats) ⇒
-      val pkg = mkPackageDecl(pid)
+      val pkg = packageDef(pid)
       if (pkg != h.Root)
         found += pkg
       stats foreach (body(pkg, _))
