@@ -483,6 +483,7 @@ class ScalacConverter[G <: Global](val global: G) {
     val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
+      annotationRef(owner, t.symbol, t.pos)
       val m = h.Decl(decodedName(name, NoSymbol), owner)
       m.addAttachments(a.Def)
       m.addAttachments(a.JvmSignature(signature(t.symbol)))
