@@ -7,6 +7,8 @@ sealed trait Hierarchy {
   final var position: Position = NoPosition
 
   final def asString: String = this match {
+    case Root ⇒
+      name
     case Decl(name, parent) ⇒
       val sig = attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ signature
@@ -18,8 +20,6 @@ sealed trait Hierarchy {
       s"${parent.asString}.$paramAtt$name$sig"
     case Ref(name, _, _, qualifier) ⇒
       s"${qualifier.asString}.<ref>$name"
-    case Root ⇒
-      name
   }
 
   def attachments: Set[Attachment] = _attachments
@@ -28,30 +28,41 @@ sealed trait Hierarchy {
     as foreach (this._attachments += _)
   }
 
+  /**
+   * The name of the hierarchy object.
+   */
   def name: String
+
+  /**
+   * The scope of [[name]], i.e. another hierarchy object in which [[name]] has
+   * been defined and where it can be accessed.
+   */
+  def owner: Hierarchy
 }
 
 /**
  * Specifies a declaration.
  *
- * `name` is the name of the declaration, `owner` is the scope of `name`, i.e.
- * another declaration in which `name` has been defined and where it can be
- * accessed.
+ * [[name]] overrides the super declaration. [[_owner]] is private to this class
+ * and exists only because [[owner]] couldn't directly be overridden.
  */
-final case class Decl(override val name: String, owner: Hierarchy) extends Hierarchy
+case class Decl(override val name: String, private val _owner: Hierarchy) extends Hierarchy {
+  override def owner = _owner
+}
 
 /**
  * Specifies a reference to a declaration.
  *
- * `name` is the name of the reference. `refToDecl` is the declaration to which
- * this reference points to. `owner` is the declaration, which contains `name`.
- * `qualifier` specifies how `name` refers to `refToDecl`.
+ * [[name]] is the name of the reference. [[refToDecl]] is the declaration to which
+ * this reference points to. [[owner]] is the declaration, which contains [[name]].
+ * [[qualifier]] specifies how [[name]] refers to [[refToDecl]].
  */
-final case class Ref(override val name: String, refToDecl: Hierarchy, owner: Hierarchy, qualifier: Hierarchy) extends Hierarchy
+case class Ref(override val name: String, refToDecl: Hierarchy, override val owner: Hierarchy, qualifier: Hierarchy) extends Hierarchy
 
 /**
- * The root or bottom of the hierarchy. It does have a name but not an owner.
+ * The root or bottom of the hierarchy. The owner refers to itself.
  */
-final case object Root extends Hierarchy {
-  override def name = "_root_"
+object Root extends Decl("_root_", null) {
+  override def toString = "Root"
+  override def owner = Root
 }

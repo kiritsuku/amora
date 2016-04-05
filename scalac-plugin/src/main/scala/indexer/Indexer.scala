@@ -63,6 +63,9 @@ object Indexer {
     URLEncoder.encode(str, "UTF-8")
 
   private def mkModel(filename: String)(h: Hierarchy): String = h match {
+    case Root ⇒
+      "[]"
+
     case decl @ Decl(name, parent) ⇒
       val path = encode(parent.asString).replace('.', '/')
       val n = encode(name)
@@ -108,9 +111,6 @@ object Indexer {
           "c:owner": "c:$u"
         }
       """
-
-    case Root ⇒
-      "[]"
   }
 
   def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model): Try[Unit] = Try {
