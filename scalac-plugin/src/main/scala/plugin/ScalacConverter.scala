@@ -102,12 +102,27 @@ final class ScalacConverter[G <: Global](val global: G) {
       else
         decodedName(sym.name)
     val decl = h.Decl(name, owner)
-    if (sym.isMethod && !sym.asMethod.isGetter)
+    if (sym.isTrait)
+      decl.addAttachments(a.Trait)
+    else if (sym.isClass) {
+      decl.addAttachments(a.Class)
+      if (sym.isAbstract)
+        decl.addAttachments(a.Abstract)
+    }
+    else if (sym.isModule && !sym.hasPackageFlag)
+      decl.addAttachments(a.Object)
+    else if (sym.isMethod && !sym.asMethod.isGetter)
       decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
+    else if (sym.isLazy)
+      decl.addAttachments(a.Lazy, a.Val)
     else if (sym.isTypeParameterOrSkolem)
       decl.addAttachments(a.TypeParam)
-    else if (sym.isParameter)
-      decl.addAttachments(a.Param)
+    else if (sym.isParameter || sym.isParamAccessor)
+      decl.addAttachments(if (sym.isVar) a.Var else a.Val, a.Param)
+    else if (sym.isVal)
+      decl.addAttachments(a.Val)
+    else if (sym.isVar)
+      decl.addAttachments(a.Var)
     decl
   }
 
@@ -197,8 +212,6 @@ final class ScalacConverter[G <: Global](val global: G) {
       val o = mkDeepDecl(sym)
       val ref = h.Ref(o.name, o, owner, o.owner)
       ref.addAttachments(a.Ref)
-      if (sym.isTypeParameterOrSkolem)
-        o.addAttachments(a.TypeParam)
       ref
     }
 
@@ -417,13 +430,6 @@ final class ScalacConverter[G <: Global](val global: G) {
   private def classDef(owner: h.Hierarchy, t: ClassDef): Unit = {
     annotationRef(owner, t.symbol, t.pos)
     val decl = mkDecl(t.symbol, owner)
-    if (t.symbol.isTrait)
-      decl.addAttachments(a.Trait)
-    else {
-      decl.addAttachments(a.Class)
-      if (t.symbol.isAbstract)
-        decl.addAttachments(a.Abstract)
-    }
     setPosition(decl, t.pos)
     found += decl
     t.tparams foreach (typeParamDef(decl, _))
@@ -433,7 +439,6 @@ final class ScalacConverter[G <: Global](val global: G) {
   private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
     annotationRef(owner, t.symbol, t.pos)
     val decl = mkDecl(t.symbol, owner)
-    decl.addAttachments(a.Object)
     setPosition(decl, t.pos)
     found += decl
     template(decl, t.impl)
@@ -465,9 +470,6 @@ final class ScalacConverter[G <: Global](val global: G) {
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
     val decl = mkDecl(t.symbol, owner)
-    decl.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
-    if (t.symbol.isParamAccessor)
-      decl.addAttachments(a.Param)
     setPosition(decl, t.pos)
     found += decl
     typeRef(decl, t.tpt)
@@ -478,7 +480,6 @@ final class ScalacConverter[G <: Global](val global: G) {
     if (t == noSelfType)
       return
     val m = mkDecl(t.symbol, owner)
-    m.addAttachments(a.Val)
     setPosition(m, t.pos)
     found += m
     typeRef(m, t.tpt)
@@ -490,7 +491,6 @@ final class ScalacConverter[G <: Global](val global: G) {
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
       val m = mkDecl(t.symbol, owner)
-      m.addAttachments(a.Def, a.JvmSignature(jvmSignature(t.symbol)))
       setPosition(m, t.pos)
       found += m
       tparams foreach (typeParamDef(m, _))
@@ -503,7 +503,6 @@ final class ScalacConverter[G <: Global](val global: G) {
 
     def lazyDefDef() = {
       val m = mkDecl(t.symbol, owner)
-      m.addAttachments(a.Lazy, a.Val)
       setPosition(m, t.pos)
       found += m
       typeRef(owner, tpt)
@@ -530,7 +529,6 @@ final class ScalacConverter[G <: Global](val global: G) {
 
   private def typeParamDef(owner: h.Hierarchy, t: TypeDef): Unit = {
     val m = mkDecl(t.symbol, owner)
-    m.addAttachments(a.TypeParam)
     found += m
     t.tparams foreach (typeParamDef(m, _))
   }
