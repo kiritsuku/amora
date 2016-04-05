@@ -971,6 +971,17 @@ class ScalacConverterTest {
   }
 
   @Test
+  def object_annotation_without_arguments() = {
+    convert("""
+      @Ann
+      object X
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation")
+  }
+
+  @Test
   def def_annotation_without_arguments() = {
     convert("""
       class X {

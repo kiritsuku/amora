@@ -431,6 +431,7 @@ final class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
+    annotationRef(owner, t.symbol, t.pos)
     val decl = mkDecl(t.symbol, owner)
     decl.addAttachments(a.Object)
     setPosition(decl, t.pos)
