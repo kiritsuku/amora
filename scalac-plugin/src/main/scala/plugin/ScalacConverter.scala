@@ -80,33 +80,45 @@ class ScalacConverter[G <: Global](val global: G) {
     s"($paramsSig)$retSig"
   }
 
-  private def mkDecl(s: Symbol, owner: h.Hierarchy): h.Decl = {
+  /**
+   * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner.
+   */
+  private def mkDecl(sym: Symbol, owner: h.Hierarchy): h.Decl = {
     val name =
-      if (s.name == tpnme.BYNAME_PARAM_CLASS_NAME)
+      if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME)
         "Function0"
-      else if (s.name == nme.CONSTRUCTOR)
+      else if (sym.name == nme.CONSTRUCTOR)
         "this"
-      else if (s.isLazyAccessor && s.isArtifact)
-        decodedName(TermName(s.name.decoded.trim.dropRight(nme.LAZY_LOCAL.length)))
+      else if (sym.isLazyAccessor && sym.isArtifact)
+        decodedName(TermName(sym.name.decoded.trim.dropRight(nme.LAZY_LOCAL.length)))
       else
-        decodedName(s.name)
+        decodedName(sym.name)
     val decl = h.Decl(name, owner)
-    if (s.isMethod && !s.asMethod.isGetter)
-      decl.addAttachments(a.Def, a.JvmSignature(signature(s)))
-    else if (s.isTypeParameterOrSkolem)
+    if (sym.isMethod && !sym.asMethod.isGetter)
+      decl.addAttachments(a.Def, a.JvmSignature(signature(sym)))
+    else if (sym.isTypeParameterOrSkolem)
       decl.addAttachments(a.TypeParam)
-    else if (s.isParameter)
+    else if (sym.isParameter)
       decl.addAttachments(a.Param)
     decl
   }
 
-  private def declFromSymbol(sym: Symbol): h.Hierarchy = {
-    require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, make sure that everything with a NoSymbol does not survive long enough to get here.")
+  /**
+   * Creates a [[Decl]], whose owner is the owner of the symbol and so on untl
+   * the root node is reached.
+   */
+  private def mkDeepDecl(sym: Symbol): h.Hierarchy = {
+    require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, "
+        + "make sure that everything with a NoSymbol does not survive long enough to get here.")
     if (sym.name.toTermName == nme.ROOT)
       h.Root
     else {
       val noRootSymbol = sym.ownerChain.reverse.tail
-      val noEmptyPkgSymbol = if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME) noRootSymbol.tail else noRootSymbol
+      val noEmptyPkgSymbol =
+        if (noRootSymbol.head.name.toTermName == nme.EMPTY_PACKAGE_NAME)
+          noRootSymbol.tail
+        else
+          noRootSymbol
 
       noEmptyPkgSymbol.foldLeft(h.Root: h.Hierarchy) { (owner, s) ⇒ mkDecl(s, owner) }
     }
@@ -136,9 +148,9 @@ class ScalacConverter[G <: Global](val global: G) {
       }
       val calledOn =
         if (t.symbol.owner.name.toTermName == nme.PACKAGE)
-          declFromSymbol(t.symbol.owner.owner)
+          mkDeepDecl(t.symbol.owner.owner)
         else
-          declFromSymbol(t.symbol.owner)
+          mkDeepDecl(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
       // we can't use [[refToDecl.name]] here because for rename imports its name
       // is different from the name of the symbol
@@ -160,7 +172,7 @@ class ScalacConverter[G <: Global](val global: G) {
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
           owner
         else
-          declFromSymbol(t.symbol.owner)
+          mkDeepDecl(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
       val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
@@ -174,7 +186,7 @@ class ScalacConverter[G <: Global](val global: G) {
     val sym = t.symbol
 
     def refFromSymbol(sym: Symbol): h.Ref = {
-      val cls = mkDecl(sym, declFromSymbol(sym.owner))
+      val cls = mkDecl(sym, mkDeepDecl(sym.owner))
       val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       if (sym.isTypeParameterOrSkolem)
@@ -276,7 +288,7 @@ class ScalacConverter[G <: Global](val global: G) {
   private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
-      val cls = mkDecl(sym, declFromSymbol(sym.owner))
+      val cls = mkDecl(sym, mkDeepDecl(sym.owner))
       val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
@@ -419,7 +431,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
     def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
-      val decl = h.Decl(decodedName(name), declFromSymbol(qualifier))
+      val decl = h.Decl(decodedName(name), mkDeepDecl(qualifier))
       val ref = h.Ref(decl.name, decl, decl.owner, decl.owner)
       ref.addAttachments(a.Ref)
       ref.position = h.RangePosition(pos, pos+ref.name.length)
