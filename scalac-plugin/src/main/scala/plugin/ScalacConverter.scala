@@ -447,10 +447,10 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
+    annotationRef(owner, t.symbol, t.pos)
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
     val ValDef(_, name, tpt, rhs) = t
-    annotationRef(owner, t.symbol, t.pos)
     val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
     if (t.symbol.isParamAccessor)
