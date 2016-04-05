@@ -951,7 +951,7 @@ class ScalacConverterTest {
   }
 
   @Test
-  def method_annotation_without_arguments() = {
+  def def_annotation_without_arguments() = {
     convert("""
       class X {
         @Ann
@@ -960,6 +960,32 @@ class ScalacConverterTest {
       class Ann extends scala.annotation.StaticAnnotation
     """) === Set(
         "X", "X.f()I", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
+
+  @Test
+  def val_annotation_without_arguments() = {
+    convert("""
+      class X {
+        @Ann
+        val v = 0
+      }
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "X.v", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
+
+  @Test
+  def var_annotation_without_arguments() = {
+    convert("""
+      class X {
+        @Ann
+        var v = 0
+      }
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "X.v", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
         "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
   }
 
