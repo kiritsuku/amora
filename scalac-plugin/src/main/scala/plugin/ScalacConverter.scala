@@ -124,7 +124,9 @@ class ScalacConverter[G <: Global](val global: G) {
     case TypeApply(fun, args) ⇒
       args foreach (typeRef(owner, _))
       mkRef(owner, fun)
-    case Select(New(t), _) ⇒
+    case Select(New(nt), _) ⇒
+      mkRef(owner, nt)
+    case t: TypeTree ⇒
       val calledOn = declFromSymbol(t.symbol.owner)
       val refToDecl = declFromSymbol(t.symbol)
       val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
@@ -343,6 +345,8 @@ class ScalacConverter[G <: Global](val global: G) {
       body(owner, block)
       catches foreach (body(owner, _))
       body(owner, finalizer)
+    case Throw(expr) ⇒
+      body(owner, expr)
     case EmptyTree ⇒
   }
 

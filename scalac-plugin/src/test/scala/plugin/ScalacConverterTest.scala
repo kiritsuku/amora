@@ -949,4 +949,14 @@ class ScalacConverterTest {
         "X", "Ann", "Constants", "Constants.C", "Ann.<param>v", "<ref>Ann", "<ref>Constants", "Constants.<ref>C",
         "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
   }
+
+  @Test
+  def throw_exception() = {
+    convert("""
+      class X {
+        def f: Int = throw new IllegalArgumentException
+      }
+    """) === Set(
+        "X", "X.f()I", "scala.<ref>IllegalArgumentException", "scala.<ref>Int")
+  }
 }
