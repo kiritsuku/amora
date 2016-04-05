@@ -610,6 +610,22 @@ class ScalacConverterTest {
   }
 
   @Test
+  def nested_lazy_val_with_special_characters() = {
+    convert("""
+      package pkg
+      class X {
+        lazy val ?! = {
+          lazy val ??! = {
+            lazy val ???! = 0
+            ???!
+          }
+          ??!
+        }
+      }
+    """) === Set("pkg", "pkg.X", "pkg.X.?!", "pkg.X.?!.??!", "pkg.X.?!.??!.???!", "scala.<ref>Int", "pkg.X.?!.<ref>??!", "pkg.X.?!.??!.<ref>???!")
+  }
+
+  @Test
   def ref_to_name_with_exclamation_marks() = {
     convert("""
       class X {
