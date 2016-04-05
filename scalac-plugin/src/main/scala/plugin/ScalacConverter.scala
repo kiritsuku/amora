@@ -126,15 +126,6 @@ class ScalacConverter[G <: Global](val global: G) {
       mkRef(owner, fun)
     case Select(New(nt), _) ⇒
       mkRef(owner, nt)
-    case t: TypeTree ⇒
-      val calledOn = declFromSymbol(t.symbol.owner)
-      val refToDecl = declFromSymbol(t.symbol)
-      val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
-      ref.addAttachments(a.Ref)
-      setPosition(ref, t.pos)
-      if (t.pos.isRange)
-        found += ref
-      ref
     case Select(qualifier, name) ⇒
       // implicitly called apply methods do have range positions but the position
       // of their qualifier is transparent. We need to ensure that we don't treat
@@ -153,6 +144,8 @@ class ScalacConverter[G <: Global](val global: G) {
         else
           declFromSymbol(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
+      // we can't use [[refToDecl.name]] here because for rename imports its name
+      // is different from the name of the symbol
       val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       if (!isImplicitApplyMethod)
@@ -166,14 +159,14 @@ class ScalacConverter[G <: Global](val global: G) {
       if (t.pos.isRange || qualifier.symbol.fullName.startsWith("scala.Tuple"))
         found += ref
       ref
-    case Ident(name) ⇒
+    case _: Ident | _: TypeTree ⇒
       val calledOn =
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
           owner
         else
           declFromSymbol(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
-      val ref = h.Ref(decodedName(name, NoSymbol), refToDecl, owner, calledOn)
+      val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       if (t.pos.isRange)
