@@ -990,6 +990,18 @@ class ScalacConverterTest {
   }
 
   @Test
+  def param_annotation_without_arguments() = {
+    convert("""
+      class X {
+        def f(@Ann i: Int) = i
+      }
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "X.f(I)I", "X.f(I)I.<param>i", "X.f(I)I.<ref>i", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
+
+  @Test
   def throw_exception() = {
     convert("""
       class X {

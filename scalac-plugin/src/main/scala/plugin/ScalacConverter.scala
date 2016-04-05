@@ -383,10 +383,12 @@ class ScalacConverter[G <: Global](val global: G) {
     if (anns.nonEmpty) {
       import Movements._
       val mvnt = until('@', skipping = comment | inBrackets('(', ')')).backward
-      val annPos = (1 to anns.length foldLeft pos.start) { (p, _) ⇒
+      val startPos = if (sym.isParameter) pos.point else pos.start
+      val annPos = (1 to anns.length foldLeft startPos) { (p, _) ⇒
+        println(pos.source.content.slice(p, p+10).mkString)
         mvnt(SourceWithMarker(pos.source.content, p - 1)).get
       }
-      val annSrc = " "*annPos + pos.source.content.slice(annPos, pos.start).mkString
+      val annSrc = " "*annPos + pos.source.content.slice(annPos, startPos).mkString
       val parser = new syntaxAnalyzer.SourceFileParser(newSourceFile(annSrc, "<memory>"))
       val posTrees = parser.annotations(skipNewLines = true)
       val tpeTrees = anns.map(_.tree)
@@ -461,6 +463,7 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def defParamDef(owner: h.Hierarchy, t: ValDef): Unit = {
     val ValDef(_, name, tpt, rhs) = t
+    annotationRef(owner, t.symbol, t.pos)
     val m = h.Decl(decodedName(name, NoSymbol), owner)
     m.addAttachments(a.Val, a.Param)
     setPosition(m, t.pos)
