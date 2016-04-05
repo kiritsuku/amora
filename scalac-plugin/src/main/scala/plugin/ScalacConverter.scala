@@ -240,6 +240,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       case t: Select ⇒
         typeRef(owner, t)
       case _ ⇒
+        // TODO index other trees as well, to make for example type aliases available
     }
   }
 
