@@ -82,7 +82,9 @@ class ScalacConverter[G <: Global](val global: G) {
 
   private def mkDecl(s: Symbol, owner: h.Hierarchy): h.Decl = {
     val name =
-      if (s.name == nme.CONSTRUCTOR)
+      if (s.name == tpnme.BYNAME_PARAM_CLASS_NAME)
+        "Function0"
+      else if (s.name == nme.CONSTRUCTOR)
         "this"
       else if (s.isLazyAccessor && s.isArtifact)
         decodedName(TermName(s.name.decoded.trim.dropRight(nme.LAZY_LOCAL.length)))
@@ -172,9 +174,8 @@ class ScalacConverter[G <: Global](val global: G) {
     val sym = t.symbol
 
     def refFromSymbol(sym: Symbol): h.Ref = {
-      val pkg = declFromSymbol(sym.owner)
-      val cls = h.Decl(if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME) "Function0" else decodedName(sym.name), pkg)
-      val ref = h.Ref(cls.name, cls, owner, pkg)
+      val cls = mkDecl(sym, declFromSymbol(sym.owner))
+      val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       if (sym.isTypeParameterOrSkolem)
         cls.addAttachments(a.TypeParam)
@@ -251,8 +252,8 @@ class ScalacConverter[G <: Global](val global: G) {
     case Function(vparams, body) ⇒
       vparams foreach (valDef(owner, _))
       expr(owner, body)
-    case Bind(name, body) ⇒
-      val decl = h.Decl(decodedName(name), owner)
+    case Bind(_, body) ⇒
+      val decl = mkDecl(t.symbol, owner)
       setPosition(decl, t.pos)
       found += decl
       expr(owner, body)
@@ -275,14 +276,13 @@ class ScalacConverter[G <: Global](val global: G) {
   private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
-      val cls = h.Decl(decodedName(sym.name), declFromSymbol(sym.owner))
+      val cls = mkDecl(sym, declFromSymbol(sym.owner))
       val ref = h.Ref(cls.name, cls, owner, cls.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
-      val predef = h.Decl("Predef", h.Decl("scala", h.Root))
-      val classOfRef = h.Ref("classOf", owner, owner, predef)
+      val classOfRef = h.Ref("classOf", owner, owner, h.Decl("Predef", h.Decl("scala", h.Root)))
       classOfRef.addAttachments(a.Ref)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
@@ -394,29 +394,27 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def classDef(owner: h.Hierarchy, t: ClassDef): Unit = {
-    val ClassDef(_, name, tparams, impl) = t
     annotationRef(owner, t.symbol, t.pos)
-    val c = h.Decl(decodedName(name), owner)
+    val decl = mkDecl(t.symbol, owner)
     if (t.symbol.isTrait)
-      c.addAttachments(a.Trait)
+      decl.addAttachments(a.Trait)
     else {
-      c.addAttachments(a.Class)
+      decl.addAttachments(a.Class)
       if (t.symbol.isAbstract)
-        c.addAttachments(a.Abstract)
+        decl.addAttachments(a.Abstract)
     }
-    setPosition(c, t.pos)
-    found += c
-    tparams foreach (typeParamDef(c, _))
-    template(c, impl)
+    setPosition(decl, t.pos)
+    found += decl
+    t.tparams foreach (typeParamDef(decl, _))
+    template(decl, t.impl)
   }
 
   private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
-    val ModuleDef(_, name, impl) = t
-    val c = h.Decl(decodedName(name), owner)
-    c.addAttachments(a.Object)
-    setPosition(c, t.pos)
-    found += c
-    template(c, impl)
+    val decl = mkDecl(t.symbol, owner)
+    decl.addAttachments(a.Object)
+    setPosition(decl, t.pos)
+    found += decl
+    template(decl, t.impl)
   }
 
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
@@ -444,41 +442,38 @@ class ScalacConverter[G <: Global](val global: G) {
     annotationRef(owner, t.symbol, t.pos)
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
-    val ValDef(_, name, tpt, rhs) = t
-    val m = h.Decl(decodedName(name), owner)
-    m.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
+    val decl = mkDecl(t.symbol, owner)
+    decl.addAttachments(if (t.symbol.isVar) a.Var else a.Val)
     if (t.symbol.isParamAccessor)
-      m.addAttachments(a.Param)
-    setPosition(m, t.pos)
-    found += m
-    typeRef(m, tpt)
-    body(m, rhs)
+      decl.addAttachments(a.Param)
+    setPosition(decl, t.pos)
+    found += decl
+    typeRef(decl, t.tpt)
+    body(decl, t.rhs)
   }
 
   private def defParamDef(owner: h.Hierarchy, t: ValDef): Unit = {
-    val ValDef(_, name, tpt, rhs) = t
     annotationRef(owner, t.symbol, t.pos)
-    val m = h.Decl(decodedName(name), owner)
-    m.addAttachments(a.Val, a.Param)
-    setPosition(m, t.pos)
-    found += m
-    typeRef(m, tpt)
-    body(m, rhs)
+    val decl = mkDecl(t.symbol, owner)
+    decl.addAttachments(a.Val, a.Param)
+    setPosition(decl, t.pos)
+    found += decl
+    typeRef(decl, t.tpt)
+    body(decl, t.rhs)
   }
 
   private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
     if (t == noSelfType)
       return
-    val ValDef(_, name, tpt, _) = t
-    val m = h.Decl(decodedName(name), owner)
+    val m = mkDecl(t.symbol, owner)
     m.addAttachments(a.Val)
     setPosition(m, t.pos)
     found += m
-    typeRef(m, tpt)
+    typeRef(m, t.tpt)
   }
 
   private def defDef(owner: h.Hierarchy, t: DefDef): Unit = {
-    val DefDef(_, name, tparams, vparamss, tpt, rhs) = t
+    val DefDef(_, _, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
@@ -496,7 +491,7 @@ class ScalacConverter[G <: Global](val global: G) {
     }
 
     def lazyDefDef() = {
-      val m = h.Decl(decodedName(name), owner)
+      val m = mkDecl(t.symbol, owner)
       m.addAttachments(a.Lazy, a.Val)
       setPosition(m, t.pos)
       found += m
@@ -523,23 +518,22 @@ class ScalacConverter[G <: Global](val global: G) {
   }
 
   private def typeParamDef(owner: h.Hierarchy, t: TypeDef): Unit = {
-    val TypeDef(_, name, tparams, _) = t
-    val m = h.Decl(decodedName(name), owner)
+    val m = mkDecl(t.symbol, owner)
     m.addAttachments(a.TypeParam)
     found += m
-    tparams foreach (typeParamDef(m, _))
+    t.tparams foreach (typeParamDef(m, _))
   }
 
   private def mkPackageDecl(t: Tree): h.Hierarchy = t match {
     case Select(qualifier, name) ⇒
-      val decl = h.Decl(decodedName(name), mkPackageDecl(qualifier))
+      val decl = mkDecl(t.symbol, mkPackageDecl(qualifier))
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl
-    case Ident(name) if name == nme.EMPTY_PACKAGE_NAME ⇒
+    case Ident(nme.EMPTY_PACKAGE_NAME) ⇒
       h.Root
-    case Ident(name) ⇒
-      val decl = h.Decl(decodedName(name), h.Root)
+    case _: Ident ⇒
+      val decl = mkDecl(t.symbol, h.Root)
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl

@@ -374,7 +374,7 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.v", "X.<ref>meth.<ref>v", "scala.<ref>Function1", "scala.<ref>Int")
+        "X.<ref>meth", "X.<ref>meth.<param>v", "X.<ref>meth.<ref>v", "scala.<ref>Function1", "scala.<ref>Int")
   }
 
   @Test
@@ -402,7 +402,8 @@ class ScalacConverterTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function3;)I", "X.meth(Lscala/Function3;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.a", "X.<ref>meth.b", "X.<ref>meth.c", "scala.<ref>Function3", "scala.<ref>Int")
+        "X.<ref>meth", "X.<ref>meth.<param>a", "X.<ref>meth.<param>b", "X.<ref>meth.<param>c",
+        "scala.<ref>Function3", "scala.<ref>Int")
   }
 
   @Test
@@ -412,7 +413,10 @@ class ScalacConverterTest {
         def meth(f: Int ⇒ Int ⇒ Int ⇒ Int) = 0
         meth(a ⇒ b ⇒ c ⇒ 0)
       }
-    """) === Set("X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f", "X.<ref>meth", "X.<ref>meth.a", "X.<ref>meth.b", "X.<ref>meth.c", "scala.<ref>Function1", "scala.<ref>Int")
+    """) === Set(
+        "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f",
+        "X.<ref>meth", "X.<ref>meth.<param>a", "X.<ref>meth.<param>b", "X.<ref>meth.<param>c",
+        "scala.<ref>Function1", "scala.<ref>Int")
   }
 
   @Test
