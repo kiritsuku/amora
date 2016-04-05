@@ -107,7 +107,7 @@ class ScalacConverter[G <: Global](val global: G) {
    * Creates a [[Decl]], whose owner is the owner of the symbol and so on untl
    * the root node is reached.
    */
-  private def mkDeepDecl(sym: Symbol): h.Hierarchy = {
+  private def mkDeepDecl(sym: Symbol): h.Decl = {
     require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, "
         + "make sure that everything with a NoSymbol does not survive long enough to get here.")
     if (sym.name.toTermName == nme.ROOT)
@@ -120,7 +120,7 @@ class ScalacConverter[G <: Global](val global: G) {
         else
           noRootSymbol
 
-      noEmptyPkgSymbol.foldLeft(h.Root: h.Hierarchy) { (owner, s) ⇒ mkDecl(s, owner) }
+      noEmptyPkgSymbol.foldLeft(h.Root: h.Decl) { (owner, s) ⇒ mkDecl(s, owner) }
     }
   }
 
@@ -186,11 +186,11 @@ class ScalacConverter[G <: Global](val global: G) {
     val sym = t.symbol
 
     def refFromSymbol(sym: Symbol): h.Ref = {
-      val cls = mkDecl(sym, mkDeepDecl(sym.owner))
-      val ref = h.Ref(cls.name, cls, owner, cls.owner)
+      val o = mkDeepDecl(sym)
+      val ref = h.Ref(o.name, o, owner, o.owner)
       ref.addAttachments(a.Ref)
       if (sym.isTypeParameterOrSkolem)
-        cls.addAttachments(a.TypeParam)
+        o.addAttachments(a.TypeParam)
       ref
     }
 
@@ -288,8 +288,8 @@ class ScalacConverter[G <: Global](val global: G) {
   private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
-      val cls = mkDecl(sym, mkDeepDecl(sym.owner))
-      val ref = h.Ref(cls.name, cls, owner, cls.owner)
+      val o = mkDeepDecl(sym)
+      val ref = h.Ref(o.name, o, owner, o.owner)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
@@ -536,7 +536,7 @@ class ScalacConverter[G <: Global](val global: G) {
     t.tparams foreach (typeParamDef(m, _))
   }
 
-  private def mkPackageDecl(t: Tree): h.Hierarchy = t match {
+  private def mkPackageDecl(t: Tree): h.Decl = t match {
     case Select(qualifier, name) ⇒
       val decl = mkDecl(t.symbol, mkPackageDecl(qualifier))
       decl.addAttachments(a.Package)
