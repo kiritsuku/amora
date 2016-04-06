@@ -796,7 +796,7 @@ class RegionIndexerTest {
   }
 
   @Test
-  def multiple_lambda_declarations() = {
+  def multiple_lambda_decls() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
         PREFIX s:<http://schema.org/>
@@ -809,6 +809,38 @@ class RegionIndexerTest {
           def f([[i]]: Int ⇒ Int) = i
           f([[v]] ⇒ v)
           f([[v]] ⇒ v)
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_lambda_decl() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_function_decl() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Function1]][ [[Int]], [[Int]] ]) = [[i]]
         }
       """)
   }

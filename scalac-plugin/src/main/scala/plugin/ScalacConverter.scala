@@ -229,7 +229,15 @@ final class ScalacConverter[G <: Global](val global: G) {
 
     def otherTypes() = {
       val ref = refFromSymbol(sym)
-      setPosition(ref, t.pos)
+      t.original match {
+        case t: AppliedTypeTree if t.symbol.fullName.startsWith("scala.Function") && owner.position.isInstanceOf[h.RangePosition] ⇒
+          // `pos.point` doesn't make a lot of sense for function literals, therefore
+          // we set the position manually here
+          val offset = owner.position.asInstanceOf[h.RangePosition].start
+          ref.position = new h.RangePosition(offset, offset)
+        case _ ⇒
+          setPosition(ref, t.pos)
+      }
       found += ref
     }
 
