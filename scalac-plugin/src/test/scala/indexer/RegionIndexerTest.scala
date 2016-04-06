@@ -794,4 +794,22 @@ class RegionIndexerTest {
         class Ann2 extends [[scala]].[[annotation]].[[StaticAnnotation]]
       """)
   }
+
+  @Test
+  def multiple_lambda_declarations() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "val"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def f([[i]]: Int ⇒ Int) = i
+          f([[v]] ⇒ v)
+          f([[v]] ⇒ v)
+        }
+      """)
+  }
 }

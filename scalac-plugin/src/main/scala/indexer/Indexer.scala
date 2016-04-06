@@ -67,7 +67,15 @@ object Indexer {
       "[]"
 
     case decl @ Decl(name, parent) ⇒
-      val path = encode(parent.asString).replace('.', '/')
+      val path = parent match {
+        case _: Decl ⇒
+          encode(parent.asString).replace('.', '/')
+        case _: Ref ⇒
+          val path = encode(parent.asString).replace('.', '/')
+          val f = encode(filename)
+          val h = uniqueRef(parent.position)
+          s"$path/$f$h"
+      }
       val n = encode(name)
       val sig = decl.attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ encode(signature)
