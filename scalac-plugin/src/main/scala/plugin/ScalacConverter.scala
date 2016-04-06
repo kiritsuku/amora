@@ -235,6 +235,11 @@ final class ScalacConverter[G <: Global](val global: G) {
           // we set the position manually here
           val offset = owner.position.asInstanceOf[h.RangePosition].start
           ref.position = new h.RangePosition(offset, offset)
+        case _ if owner.attachments(a.Function) && owner.position.isInstanceOf[h.RangePosition] ⇒
+          // functions created through function literals don't have their positions at
+          // the beginning of the identifiers where we want to have it
+          val offset = owner.position.asInstanceOf[h.RangePosition].start
+          ref.position = new h.RangePosition(offset, offset)
         case _ ⇒
           setPosition(ref, t.pos)
       }
@@ -292,7 +297,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     case _: Select ⇒
       mkRef(owner, t)
     case Function(vparams, body) ⇒
-      vparams foreach (valDef(owner, _))
+      vparams foreach (valDef(owner, _, isFunction = true))
       expr(owner, body)
     case Bind(_, body) ⇒
       val decl = mkDecl(t.symbol, owner)
@@ -473,11 +478,13 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def valDef(owner: h.Hierarchy, t: ValDef): Unit = {
+  private def valDef(owner: h.Hierarchy, t: ValDef, isFunction: Boolean = false): Unit = {
     annotationRef(owner, t.symbol, t.pos)
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
     val decl = mkDecl(t.symbol, owner)
+    if (isFunction)
+      decl.addAttachments(a.Function)
     setPosition(decl, t.pos)
     found += decl
     typeRef(decl, t.tpt)

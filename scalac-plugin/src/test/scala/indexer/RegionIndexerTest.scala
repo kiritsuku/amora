@@ -844,4 +844,22 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def multiple_lambda_refs() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "<memory>" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
+          [[f]]([[!Int]]v ⇒ [[v]])
+          [[f]]([[!Int]]value ⇒ [[value]])
+        }
+      """)
+  }
 }
