@@ -1,0 +1,13 @@
+#!/bin/bash
+
+path="firefox-plugin/target/scala-2.11"
+firefoxExecutable="$(command -v firefox)"
+
+# Check if main files exist
+[ ! -d $"$path" ] && echo >&2 "error: main files do not yet exist, please run the sbt build first." && exit 1
+
+# Check if jpm is installed
+command -v jpm > /dev/null 2>&1 || { echo >&2 "error: command 'jpm' does not exist. You have to install it first."; exit 1; }
+
+cd "$path"
+jpm -b "$firefoxExecutable" run

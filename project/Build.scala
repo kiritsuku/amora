@@ -11,6 +11,7 @@ import sbtassembly.AssemblyKeys._
 object Build extends sbt.Build {
 
   val genElectronMain = TaskKey[Unit]("gen-electron-main", "Generates Electron application's main file.")
+  val genFirefoxPlugin = TaskKey[Unit]("gen-firefox-plugin", "Generates the Firefox plugin.")
 
   lazy val commonSettings = Seq(
     scalaVersion := "2.11.7",
@@ -49,6 +50,66 @@ object Build extends sbt.Build {
   lazy val protocolJvm = protocol.jvm
 
   lazy val protocolJs = protocol.js
+
+  lazy val firefoxPlugin = project in file("firefox-plugin") enablePlugins(ScalaJSPlugin) settings commonSettings ++ Seq(
+    name := "firefox-plugin",
+
+    persistLauncher in Compile := true,
+    persistLauncher in Test := false,
+
+    libraryDependencies ++= deps.firefoxPlugin.value,
+
+    genFirefoxPlugin := {
+      import java.nio.charset.Charset
+      // TODO we rely on the files written on disk but it would be better to be able to get the actual content directly from the tasks
+      val launchCode = IO.read((packageScalaJSLauncher in Compile).value.data, Charset.forName("UTF-8"))
+      val jsCode = IO.read((fastOptJS in Compile).value.data, Charset.forName("UTF-8"))
+      val pluginJsName = "plugin.js"
+      val mainJsName = "main.js"
+
+      val pkgJson = s"""
+      {
+        "title": "tooling-research",
+        "name": "tooling-research-plugin",
+        "version": "0.0.1",
+        "description": "tooling-research-plugin",
+        "main": "$mainJsName",
+        "author": "Simon Schäfer",
+        "engines": {
+          "firefox": ">=38.0a1"
+        },
+        "license": "MIT",
+        "repository": {
+          "type": "git",
+          "url": "https://github.com/sschaef/tooling-research"
+        },
+        "keywords": [
+          "jetpack"
+        ]
+      }
+      """
+
+      val pluginJs = s"""
+        $jsCode
+        $launchCode
+      """
+
+      val mainJs = s"""
+        const data = require("sdk/self").data
+        const pageMod = require('sdk/page-mod')
+
+        pageMod.PageMod({
+          include: ['https://github.com/*'],
+          contentScriptFile: ['./$pluginJsName']
+        })
+      """
+
+      val dest = (classDirectory in Compile).value / ".."
+      IO.write(dest / "package.json", pkgJson)
+      IO.write(dest / mainJsName, mainJs)
+      IO.write(dest / "data" / pluginJsName, pluginJs)
+    }
+  )
 
   lazy val electron = project in file("electron") enablePlugins(ScalaJSPlugin) settings commonSettings ++ Seq(
     name := "electron",
@@ -257,6 +318,11 @@ object Build extends sbt.Build {
       "org.webjars"                    %   "d3js"                       % "3.5.5-1"                 / "d3.js",
       // https://github.com/fgnass/spin.js
       "org.webjars.bower"              %   "spin.js"                    % "2.3.1"                   / "spin.js"
+    ))
+
+    lazy val firefoxPlugin = Def.setting(Seq(
+      "be.doeraene"                    %%% "scalajs-jquery"             % versions.jquery,
+      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags
     ))
 
     lazy val scalacPlugin = Def.setting(Seq(
