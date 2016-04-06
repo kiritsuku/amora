@@ -1056,6 +1056,19 @@ class ScalacConverterTest {
   }
 
   @Test
+  def auxiliary_ctor_annotation_without_arguments() = {
+    convert("""
+      class X(p: Int) {
+        @Ann
+        def this() = this(0)
+      }
+      class Ann extends scala.annotation.StaticAnnotation
+    """) === Set(
+        "X", "X.<param>p", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "X.this()V", "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int")
+  }
+
+  @Test
   def throw_exception() = {
     convert("""
       class X {
