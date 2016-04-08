@@ -32,12 +32,12 @@ object Main extends JSApp {
         println(s"branch: $branch")
         println(s"filename: $filename")
 
-        val h = dom.document.getElementsByClassName("highlight")(0)
-        val tbody = h.asInstanceOf[Element].children(0)
-        val trs = tbody.children
-        val lines = for (i ← 0 until trs.length) yield {
-          val code = trs(i).getElementsByClassName("blob-code")(0)
-          val text = code.jsg.innerText
+        import dom.ext._
+        val h = dom.document.getElementsByClassName("highlight").head
+        val tbody = h.asInstanceOf[Element].children.head
+        val lines = tbody.children.zipWithIndex map { case (e, i) ⇒
+          val code = e.getElementsByClassName("blob-code").head
+          val text = code.textContent
           (i+1) → text
         }
         lines foreach println

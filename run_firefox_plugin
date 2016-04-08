@@ -1,7 +1,11 @@
 #!/bin/bash
 
-path="firefox-plugin/target/scala-2.11"
+# Finds the path were the script is stored
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+path="$SCRIPT_DIR/firefox-plugin/target/scala-2.11"
 firefoxExecutable="$(command -v firefox)"
+ffPluginPath="$SCRIPT_DIR/target/ff-plugin"
 
 # Check if main files exist
 [ ! -d $"$path" ] && echo >&2 "error: main files do not yet exist, please run the sbt build first." && exit 1
@@ -10,4 +14,4 @@ firefoxExecutable="$(command -v firefox)"
 command -v jpm > /dev/null 2>&1 || { echo >&2 "error: command 'jpm' does not exist. You have to install it first."; exit 1; }
 
 cd "$path"
-jpm -b "$firefoxExecutable" run
+jpm run -b "$firefoxExecutable" # --profile "$ffPluginPath"
