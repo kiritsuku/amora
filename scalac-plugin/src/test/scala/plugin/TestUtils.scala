@@ -56,7 +56,7 @@ object TestUtils extends AnyRef with LoggerConfig {
         filename → sf
     }
     withResponse[Unit] { g.askReload(sfs.map(_._2).toList, _) }.get
-    sfs map {
+    sfs.filter(!_._1.endsWith(".java")) map {
       case (filename, sf) ⇒
         val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
 
