@@ -45,7 +45,7 @@ final class MsgActor extends Actor {
 
   private val repl = new Repl
   private var clients = Map.empty[String, ActorRef]
-  private val nvim = new NvimAccessor(self)
+  private lazy val nvim = new NvimAccessor(self)
 
   override def receive = {
     case NewClient(subject) ⇒
