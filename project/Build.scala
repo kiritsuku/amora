@@ -261,8 +261,8 @@ object Build extends sbt.Build {
   object versions {
     // https://github.com/lihaoyi/scalatags
     val scalatags       = "0.5.2"
-    // https://github.com/ChrisNeveu/macrame
-    val macrame         = "1.0.1"
+    // https://github.com/lloydmeta/enumeratum
+    val enumeratum      = "1.3.7"
     val paradise        = "2.1.0-M5"
     val akkaStream      = "1.0"
     val akkaHttp        = "1.0"
@@ -288,14 +288,10 @@ object Build extends sbt.Build {
     ))
 
     lazy val backend = Def.setting(Seq(
-      compilerPlugin("org.scalamacros" %   "paradise"                   % versions.paradise         cross CrossVersion.full),
       "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akkaHttp,
       "com.typesafe.akka"              %%  "akka-stream-experimental"   % versions.akkaStream,
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
-//      "org.scalameta"                  %   "scalameta"                  % versions.scalameta        cross CrossVersion.binary,
-//      "org.scalameta"                  %   "scalahost"                  % versions.scalameta        cross CrossVersion.full,
-//      "org.scalameta"                  %%  "interpreter"                % versions.scalameta,
-      "com.chrisneveu"                 %%  "macrame"                    % versions.macrame,
+      "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags,
       "org.slf4j"                      %   "slf4j-log4j12"              % versions.slf4jLog4j12,
       "junit"                          %   "junit"                      % versions.junit            % "test"
@@ -305,7 +301,7 @@ object Build extends sbt.Build {
       compilerPlugin("org.scalamacros" %   "paradise"                   % versions.paradise         cross CrossVersion.full),
       "com.github.xuwei-k"             %%  "msgpack4z-core"             % versions.msgpack4zCore,
       "com.github.xuwei-k"             %   "msgpack4z-java07"           % versions.msgpack4zJava07,
-      "com.chrisneveu"                 %%  "macrame"                    % versions.macrame,
+      "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "com.typesafe.scala-logging"     %%  "scala-logging"              % versions.scalaLogging
     ))

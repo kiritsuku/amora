@@ -5,7 +5,7 @@ import scala.concurrent.Future
 
 import msgpack4z._
 import msgpack4z.MsgpackUnion._
-import macrame.enum
+import enumeratum._
 import nvim.internal.NvimHelper
 
 object Nvim {
@@ -243,30 +243,32 @@ final case class Selection(start: Position, end: Position) {
  * Represents all possible Vim modes. For documentation about the possible
  * modes run `:help mode()` in Vim.
  */
-@enum class Mode {
-  Normal
-  OperatorPending
-  VisualByCharacter
-  VisualByLine
-  VisualBlockwise
-  SelectByCharacter
-  SelectByLine
-  SelectBlockwise
-  Insert
-  Replace
-  VirtualReplace
-  CommandLine
-  VimExMode
-  NormalExMode
-  HitEnterPrompt
-  MorePrompt
-  ConfirmQuery
-  ExternalCommandRunning
-}
-object Mode {
+sealed trait Mode extends EnumEntry
+object Mode extends Enum[Mode] {
+  override val values = findValues
+
+  case object Normal extends Mode
+  case object OperatorPending extends Mode
+  case object VisualByCharacter extends Mode
+  case object VisualByLine extends Mode
+  case object VisualBlockwise extends Mode
+  case object SelectByCharacter extends Mode
+  case object SelectByLine extends Mode
+  case object SelectBlockwise extends Mode
+  case object Insert extends Mode
+  case object Replace extends Mode
+  case object VirtualReplace extends Mode
+  case object CommandLine extends Mode
+  case object VimExMode extends Mode
+  case object NormalExMode extends Mode
+  case object HitEnterPrompt extends Mode
+  case object MorePrompt extends Mode
+  case object ConfirmQuery extends Mode
+  case object ExternalCommandRunning extends Mode
+
   def asString(mode: Mode): String =
-    asStringImpl(mode)
+    mode.entryName
 
   def asMode(s: String): Mode =
-    fromStringImpl(s).getOrElse(throw new NoSuchElementException(s"Mode `$s` doesn't exist."))
+    Mode.withName(s)
 }
