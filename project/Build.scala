@@ -218,13 +218,10 @@ object Build extends sbt.Build {
 
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
-  ) dependsOn (protocolJvm, nvim)
+  ) dependsOn (protocolJvm, nvim, indexer)
 
   lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
     name := "scalac-plugin",
-
-    libraryDependencies ++= deps.scalacPlugin.value,
-    resolvers += Resolver.sonatypeRepo("snapshots"),
 
     scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
     //scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}",
@@ -247,15 +244,21 @@ object Build extends sbt.Build {
       val temp = (packagedArtifact in Compile in packageBin).value
       val (art, slimJar) = temp
       val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
-      assembly.value
       IO.copy(List(fatJar -> slimJar), overwrite = true)
       println("Using sbt-assembly to package library dependencies into a fat jar for publication")
       (art, slimJar)
     },
     test in Test <<= (test in Test).dependsOn(packagedArtifacts),
 
-    // show stack traces up to first sbt stak frame
+    // show stack traces up to first sbt stack frame
     traceLevel in Test := 0
+  ) dependsOn (indexer)
+
+  lazy val indexer = project in file("indexer") settings commonSettings ++ Seq(
+    name := "indexer",
+
+    libraryDependencies ++= deps.indexer.value,
+    resolvers += Resolver.sonatypeRepo("snapshots")
   )
 
   object versions {
@@ -326,7 +329,7 @@ object Build extends sbt.Build {
       "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags
     ))
 
-    lazy val scalacPlugin = Def.setting(Seq(
+    lazy val indexer = Def.setting(Seq(
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1"                   % "provided",
       "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT",

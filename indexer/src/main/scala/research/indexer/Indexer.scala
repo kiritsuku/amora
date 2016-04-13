@@ -1,11 +1,10 @@
+package research
 package indexer
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
-
 import scala.util.Try
-
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.QueryExecutionFactory
 import org.apache.jena.query.QueryFactory
@@ -16,7 +15,6 @@ import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
-
 import indexer.hierarchy._
 
 object Indexer {

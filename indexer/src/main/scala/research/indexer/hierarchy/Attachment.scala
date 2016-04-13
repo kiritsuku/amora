@@ -1,4 +1,4 @@
-package indexer.hierarchy
+package research.indexer.hierarchy
 
 trait Attachment {
   def asString: String

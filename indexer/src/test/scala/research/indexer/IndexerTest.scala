@@ -1,3 +1,4 @@
+package research
 package indexer
 
 import scala.util._
@@ -5,7 +6,6 @@ import scala.util._
 import org.junit.Test
 
 import indexer.hierarchy.Hierarchy
-import plugin.TestUtils
 
 class IndexerTest {
 
@@ -145,7 +145,7 @@ class IndexerTest {
     ask(modelName, convertToHierarchy(
       "f1.scala" → """
         package a.b.c
-        import d.e.f.Y
+import d.e.f.Y
         class X {
           def m: Y = null
         }

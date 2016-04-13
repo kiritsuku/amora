@@ -1,11 +1,12 @@
-package plugin
+package research
 
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 import org.junit.runners.Suite.SuiteClasses
 
-import indexer.IndexerTest
-import indexer.RegionIndexerTest
+import research.converter.ScalacConverterTest
+import research.indexer.IndexerTest
+import research.indexer.RegionIndexerTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(

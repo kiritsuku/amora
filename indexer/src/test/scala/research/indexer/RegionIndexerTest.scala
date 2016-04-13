@@ -1,10 +1,9 @@
+package research
 package indexer
 
 import scala.util._
 
 import org.junit.Test
-
-import plugin.TestUtils
 
 class RegionIndexerTest {
 
@@ -82,7 +81,7 @@ class RegionIndexerTest {
           Indexer.queryResultAsString(modelName, query, model) foreach println
         }
         Indexer.withQueryService(modelName, query)(model).map { r ⇒
-          import scala.collection.JavaConverters._
+import scala.collection.JavaConverters._
           r.asScala.toSeq.map { row ⇒
             val start = row.get("start")
             require(start != null, "No field with name `start` found.")

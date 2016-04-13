@@ -1,4 +1,4 @@
-package plugin
+package research
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -11,12 +11,13 @@ import scala.util.Success
 
 import org.junit.ComparisonFailure
 
+import converter.ScalacConverter
 import indexer.hierarchy.Hierarchy
-import util.LoggerConfig
+import indexer.util.LoggerConfig
 
 object TestUtils extends AnyRef with LoggerConfig {
 
-  var debugTests: Boolean = false
+  var debugTests: Boolean = true
 
   final implicit class Assert_===[A](private val actual: A) extends AnyVal {
     def ===(expected: A): Unit = {
