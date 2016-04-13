@@ -238,12 +238,12 @@ object Build extends sbt.Build {
     // copied from https://github.com/matanster/extractor/blob/95d16d80d534cb9b5113b5e6824021a9382168a9/build.sbt#L55-L66
     isSnapshot := true,
     test in assembly := {},
-    jarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
+    assemblyJarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
     assemblyOption in assembly ~= { _.copy(includeScala = false) },
     packagedArtifact in Compile in packageBin := {
       val temp = (packagedArtifact in Compile in packageBin).value
       val (art, slimJar) = temp
-      val fatJar = new File(crossTarget.value + "/" + (jarName in assembly).value)
+      val fatJar = new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
       IO.copy(List(fatJar -> slimJar), overwrite = true)
       println("Using sbt-assembly to package library dependencies into a fat jar for publication")
       (art, slimJar)
