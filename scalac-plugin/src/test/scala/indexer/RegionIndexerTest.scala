@@ -862,4 +862,26 @@ class RegionIndexerTest {
         }
       """)
   }
+
+  @Test
+  def ref_with_qualifier() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
+        }
+      """,
+      "f1.scala" → """
+        package a.b
+        import [[d]].[[e]]
+        class X {
+          val f: [[e]].[[Y]] = null
+        }
+      """,
+      "f2.scala" → """
+        package d.e
+        class Y
+      """)
+  }
 }
