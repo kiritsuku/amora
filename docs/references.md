@@ -80,6 +80,7 @@ This document contains a list of references, related projects, articles, blog po
   - CORBA
     - [Why has CORBA lost popularity?](http://stackoverflow.com/questions/3835785/why-has-corba-lost-popularity)
     - [The Rise and Fall of CORBA](https://queue.acm.org/detail.cfm?id=1142044)
+  - [Luna lang](http://www.luna-lang.org/)
 
 - Discussions:
   - [Standard interface between a text editor and an IDE?](https://www.reddit.com/r/programming/comments/3o4o59/standard_interface_between_a_text_editor_and_an/)
