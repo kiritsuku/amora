@@ -8,25 +8,25 @@ import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Flow
-import akka.stream.scaladsl.Keep
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import protocol._
+import akka.NotUsed
 
 final class BackendSystem(implicit system: ActorSystem) {
   import boopickle.Default._
 
   private val actor = system.actorOf(Props[MsgActor])
 
-  def authFlow(): Flow[ByteBuffer, ByteBuffer, Unit] = {
+  def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
     val out = Source
       .actorRef[Response](1, OverflowStrategy.fail)
       .mapMaterializedValue { actor ! NewClient(_) }
       .map(Pickle.intoBytes(_))
-    Flow.wrap(Sink.ignore, out)(Keep.none)
+    Flow.fromSinkAndSource(Sink.ignore, out)
   }
 
-  def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, Unit] = {
+  def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
     def sink(sender: String) = Sink.actorRef[Msg](actor, ClientLeft(sender))
 
     val in = Flow[ByteBuffer]
@@ -36,7 +36,7 @@ final class BackendSystem(implicit system: ActorSystem) {
       .actorRef[Response](1, OverflowStrategy.fail)
       .mapMaterializedValue { actor ! ClientReady(sender, _) }
       .map(Pickle.intoBytes(_))
-    Flow.wrap(in, out)(Keep.none)
+    Flow.fromSinkAndSource(in, out)
   }
 }
 

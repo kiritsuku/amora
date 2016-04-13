@@ -264,8 +264,7 @@ object Build extends sbt.Build {
     // https://github.com/lloydmeta/enumeratum
     val enumeratum      = "1.3.7"
     val paradise        = "2.1.0-M5"
-    val akkaStream      = "1.0"
-    val akkaHttp        = "1.0"
+    val akka            = "2.4.3"
     val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
     val scalaLogging    = "3.1.0"
@@ -288,8 +287,9 @@ object Build extends sbt.Build {
     ))
 
     lazy val backend = Def.setting(Seq(
-      "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akkaHttp,
-      "com.typesafe.akka"              %%  "akka-stream-experimental"   % versions.akkaStream,
+      "com.typesafe.akka"              %%  "akka-http-core"             % versions.akka,
+      "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akka,
+      "com.typesafe.akka"              %%  "akka-stream"                % versions.akka,
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags,

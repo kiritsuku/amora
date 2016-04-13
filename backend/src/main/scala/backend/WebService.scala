@@ -2,16 +2,24 @@ package backend
 
 import java.nio.ByteBuffer
 
+import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives
+import akka.stream.Attributes
+import akka.stream.FlowShape
+import akka.stream.Inlet
 import akka.stream.Materializer
+import akka.stream.Outlet
 import akka.stream.scaladsl.Flow
-import akka.stream.stage.Context
-import akka.stream.stage.PushStage
+import akka.stream.stage.GraphStage
+import akka.stream.stage.GraphStageLogic
+import akka.stream.stage.InHandler
+import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
 
 final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
@@ -24,7 +32,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
         cssDeps = Seq("default.css", "codemirror.css", "solarized.css"),
         jsDeps = Seq("clike.js", "markdown.js", "ui-fastopt.js", "ui-launcher.js")
       )
-      HttpEntity(MediaTypes.`text/html`, content)
+      HttpEntity(ContentTypes.`text/html(UTF-8)`, content)
     }) ~
     path("ui-jsdeps.js")(getFromResource("ui-jsdeps.js")) ~
     path("ui-fastopt.js")(getFromResource("ui-fastopt.js")) ~
@@ -36,11 +44,11 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     path("codemirror.css")(getFromResource("codemirror/lib/codemirror.css")) ~
     path("solarized.css")(getFromResource("codemirror/theme/solarized.css")) ~
     path("auth") {
-      handleWebsocketMessages(authClientFlow())
+      handleWebSocketMessages(authClientFlow())
     } ~
     path("communication") {
       parameter('name) { name ⇒
-        handleWebsocketMessages(communicationFlow(sender = name))
+        handleWebSocketMessages(communicationFlow(sender = name))
       }
     } ~
     rejectEmptyResponse {
@@ -48,7 +56,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     }
   }
 
-  private def withWebsocketFlow(flow: Flow[ByteBuffer, ByteBuffer, Unit]): Flow[Message, Message, Unit] =
+  private def withWebsocketFlow(flow: Flow[ByteBuffer, ByteBuffer, NotUsed]): Flow[Message, Message, NotUsed] =
     Flow[Message]
     .collect {
       case BinaryMessage.Strict(bs) ⇒ bs.toByteBuffer
@@ -59,18 +67,28 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     }
     .via(reportErrorsFlow())
 
-  private def authClientFlow(): Flow[Message, Message, Unit] =
+  private def authClientFlow(): Flow[Message, Message, NotUsed] =
     withWebsocketFlow(bs.authFlow())
 
-  private def communicationFlow(sender: String): Flow[Message, Message, Unit] =
+  private def communicationFlow(sender: String): Flow[Message, Message, NotUsed] =
     withWebsocketFlow(bs.messageFlow(sender))
 
-  private def reportErrorsFlow[A](): Flow[A, A, Unit] =
-    Flow[A].transform { () => new PushStage[A, A] {
-      override def onPush(elem: A, ctx: Context[A]) = ctx push elem
-      override def onUpstreamFailure(cause: Throwable, ctx: Context[A]) = {
-        system.log.error(cause, "WebService stream failed")
-        super.onUpstreamFailure(cause, ctx)
+  private def reportErrorsFlow[A](): Flow[A, A, NotUsed] =
+    Flow[A].via(new GraphStage[FlowShape[A, A]] {
+      val in = Inlet[A]("in")
+      val out = Outlet[A]("out")
+      override val shape = FlowShape(in, out)
+      override def createLogic(atts: Attributes) = new GraphStageLogic(shape) {
+        setHandler(in, new InHandler {
+          override def onPush() =
+            push(out, grab(in))
+          override def onUpstreamFailure(cause: Throwable) =
+            system.log.error(cause, "WebService stream failed")
+        })
+        setHandler(out, new OutHandler {
+          override def onPull() =
+            pull(in)
+        })
       }
-    }}
+    })
 }

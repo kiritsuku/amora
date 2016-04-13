@@ -30,7 +30,7 @@ object Main extends App with LoggerConfig {
       system.log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
     case Failure(e) ⇒
       system.log.error(e, "Failed to start server")
-      system.shutdown()
+      system.terminate()
   }
 }
 
