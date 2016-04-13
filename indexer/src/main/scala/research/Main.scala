@@ -1,33 +1,18 @@
 package research
-package indexer
 
 import java.net.URL
+
 import org.apache.jena.query.ResultSetFormatter
+
+import indexer.Indexer
 import indexer.hierarchy._
 import indexer.util.LoggerConfig
-import research.indexer.Indexer
-import indexer.Indexer
 
 object Main extends App with LoggerConfig {
 
   import Indexer._
 
-//  val m = Member(Class(Decl("c", Decl("b", Decl("a", Root))), "SomeClass"), "method")
-//  val c = Class(Decl("f", Decl("e", Decl("d", Root))), "SomeType")
-//  val data = Seq(
-//      Class(Package(Seq("a", "b", "c")), "TestClass"),
-//      Class(Package(Seq("a", "b", "c")), "SomeClass"),
-//      Class(Package(Seq("a", "b", "c")), "AnotherClass"),
-//      c,
-//      Class(Package(Seq("d", "e", "f")), "SomeClass"),
-//      m,
-//      Member(Class(Package(Seq("d", "e", "f")), "SomeClass"), "toList"),
-//      Member(Class(Package(Seq("d", "e", "f")), "SomeType"), "someFunc"),
-//      Member(Class(Package(Seq("a", "b", "c")), "AnotherClass"), "anotherMethod"),
-//      TypeRef(m, c)
-//  )
-//  addData("testfile.scala", data)
-//  httpRequest()
+  private val sep = System.getProperty("file.separator")
 
   /**
    * The location where we want to store our data. Since we can run the program
@@ -36,7 +21,7 @@ object Main extends App with LoggerConfig {
    */
   def storageLocation = {
     val p = getClass.getProtectionDomain.getCodeSource.getLocation.getPath
-    val projectName = "scalac-plugin/"
+    val projectName = s"indexer$sep"
     val i = p.indexOf(projectName)
     p.substring(0, i+projectName.length)
   }
@@ -44,7 +29,7 @@ object Main extends App with LoggerConfig {
   private def addData(filename: String, data: Seq[Hierarchy]) = {
     val modelName = "http://test.model/"
 
-    withDataset(s"$storageLocation/dataset") { dataset ⇒
+    withDataset(s"$storageLocation${sep}dataset") { dataset ⇒
       withModel(dataset, modelName)(add(modelName, filename, data))
       withModel(dataset, modelName) { model ⇒
         val q = selectAll(modelName)
