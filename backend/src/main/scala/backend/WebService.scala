@@ -53,7 +53,25 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     } ~
     rejectEmptyResponse {
       path("favicon.ico")(getFromResource("favicon.ico", MediaTypes.`image/x-icon`))
+    } ~
+    pathPrefix("kb") {
+      path(RestPath) { path ⇒
+        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"got: $path"))
+      }
     }
+  } ~
+  post {
+    path("add") {
+      entity(as[String]) { str ⇒
+        testAddData(str)
+        complete(s"data added")
+      }
+    }
+  }
+
+  private def testAddData(str: String): Unit = {
+    import research.indexer.hierarchy._
+    bs.addData("test.scala", Seq(Decl(str, Root)))
   }
 
   private def withWebsocketFlow(flow: Flow[ByteBuffer, ByteBuffer, NotUsed]): Flow[Message, Message, NotUsed] =

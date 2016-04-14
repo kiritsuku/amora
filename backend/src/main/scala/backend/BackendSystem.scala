@@ -13,7 +13,10 @@ import akka.stream.scaladsl.Source
 import protocol._
 import akka.NotUsed
 
-final class BackendSystem(implicit system: ActorSystem) {
+final class BackendSystem(implicit system: ActorSystem)
+    extends AnyRef
+    with IndexerSystem {
+
   import boopickle.Default._
 
   private val actor = system.actorOf(Props[MsgActor])
