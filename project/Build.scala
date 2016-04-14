@@ -331,7 +331,7 @@ object Build extends sbt.Build {
 
     lazy val indexer = Def.setting(Seq(
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
-      "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1"                   % "provided",
+      "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1",
       "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT",
       "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
