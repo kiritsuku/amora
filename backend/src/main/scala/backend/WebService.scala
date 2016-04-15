@@ -30,6 +30,7 @@ import akka.util.CompactByteString
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import akka.http.scaladsl.server.ContentNegotiator
+import akka.http.scaladsl.server.MalformedRequestContentRejection
 
 final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -92,7 +93,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
   } ~
   post {
     path("sparql") {
-      entity(as[String]) { str ⇒
+      entity(as[String]) { encodedPostReq ⇒
         extractRequest { req ⇒
           import CustomContentTypes._
 
@@ -104,9 +105,12 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
           }
           val resp = ct.map {
             case (ct, fmt) ⇒
-              val decoded = URLDecoder.decode(str, "UTF-8")
-              println("(post) str: " + decoded)
-              complete(HttpEntity(ct, askQuery("select * where {?s ?p ?o} limit 1", fmt)))
+              if (!encodedPostReq.startsWith("query="))
+                reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+              else {
+                val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
+                complete(HttpEntity(ct, askQuery(query, fmt)))
+              }
           }
           resp.getOrElse {
             reject(UnacceptedResponseContentTypeRejection(allMediaTypes.map(ContentNegotiator.Alternative(_))))
