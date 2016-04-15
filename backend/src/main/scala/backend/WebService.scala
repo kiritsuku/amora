@@ -70,11 +70,19 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     } ~
     path("sparql") {
       parameterMap { params ⇒
+        import CustomContentTypes._
         val ret =
           if (params.isEmpty)
             showSparqlEditor()
-          else if (params.contains("query"))
-            HttpEntity(CustomContentTypes.`sparql-results+json(UTF-8)`, askQuery(params("query"), ResultsFormat.FMT_RS_JSON))
+          else if (params.contains("query")) {
+            val (ct, fmt) = params.get("format") collect {
+              case "xml"  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
+              case "json" ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
+              case "csv"  ⇒ ContentTypes.`text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
+              case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
+            } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
+            HttpEntity(ct, askQuery(params("query"), fmt))
+          }
           else
             ???
 
@@ -117,7 +125,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
   private def askQuery(query: String, fmt: ResultsFormat) = {
     bs.askQuery(query, fmt) match {
       case scala.util.Success(s) ⇒ s
-      case scala.util.Failure(f) ⇒ f.printStackTrace(); "{}"
+      case scala.util.Failure(f) ⇒ f.printStackTrace(); ""
     }
   }
 
