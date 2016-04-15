@@ -1,21 +1,25 @@
 package backend
 
 import java.net.URLDecoder
-
 import java.nio.ByteBuffer
 
 import org.apache.jena.sparql.resultset.ResultsFormat
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpCharsets
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
+import akka.http.scaladsl.server.ContentNegotiator
 import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.MalformedRequestContentRejection
+import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
@@ -27,10 +31,6 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
-import akka.http.scaladsl.model.headers.Accept
-import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
-import akka.http.scaladsl.server.ContentNegotiator
-import akka.http.scaladsl.server.MalformedRequestContentRejection
 
 final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -72,22 +72,19 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     path("sparql") {
       parameterMap { params ⇒
         import CustomContentTypes._
-        val ret =
-          if (params.isEmpty)
-            showSparqlEditor()
-          else if (params.contains("query")) {
-            val (ct, fmt) = params.get("format") collect {
-              case "xml"  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
-              case "json" ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
-              case "csv"  ⇒ ContentTypes.`text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
-              case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
-            } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
-            HttpEntity(ct, askQuery(params("query"), fmt))
-          }
-          else
-            ???
-
-        complete(ret)
+        if (params.isEmpty)
+          complete(showSparqlEditor())
+        else if (params.contains("query")) {
+          val (ct, fmt) = params.get("format") collect {
+            case "xml"  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
+            case "json" ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
+            case "csv"  ⇒ ContentTypes.`text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
+            case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
+          } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
+          askQuery(params("query"), ct, fmt)
+        }
+        else
+          reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
       }
     }
   } ~
@@ -109,7 +106,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
                 reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
               else {
                 val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
-                complete(HttpEntity(ct, askQuery(query, fmt)))
+                askQuery(query, ct, fmt)
               }
           }
           resp.getOrElse {
@@ -126,10 +123,12 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     }
   }
 
-  private def askQuery(query: String, fmt: ResultsFormat) = {
+  private def askQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat) = {
     bs.askQuery(query, fmt) match {
-      case scala.util.Success(s) ⇒ s
-      case scala.util.Failure(f) ⇒ f.printStackTrace(); ""
+      case scala.util.Success(s) ⇒
+        complete(HttpEntity(ct, s))
+      case scala.util.Failure(f) ⇒
+        failWith(f)
     }
   }
 
