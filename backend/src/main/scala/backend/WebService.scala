@@ -27,6 +27,9 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
+import akka.http.scaladsl.model.headers.Accept
+import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
+import akka.http.scaladsl.server.ContentNegotiator
 
 final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -71,7 +74,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
           if (params.isEmpty)
             showSparqlEditor()
           else if (params.contains("query"))
-            askQuery(params("query"))
+            HttpEntity(CustomContentTypes.`sparql-results+json(UTF-8)`, askQuery(params("query"), ResultsFormat.FMT_RS_JSON))
           else
             ???
 
@@ -82,9 +85,25 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
   post {
     path("sparql") {
       entity(as[String]) { str ⇒
-        val decoded = URLDecoder.decode(str, "UTF-8")
-        println("(post) str: " + decoded)
-        complete(askQuery("select * where {?s ?p ?o} limit 1"))
+        extractRequest { req ⇒
+          import CustomContentTypes._
+          val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
+            case m if m matches `sparql-results+xml`  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
+            case m if m matches `sparql-results+json` ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
+          }
+          val resp = ct.map {
+            case (ct, fmt) ⇒
+              val decoded = URLDecoder.decode(str, "UTF-8")
+              println("(post) str: " + decoded)
+              complete(HttpEntity(ct, askQuery("select * where {?s ?p ?o} limit 1", fmt)))
+          }
+          resp.getOrElse {
+            reject(UnacceptedResponseContentTypeRejection(Set(
+                ContentNegotiator.Alternative(`sparql-results+json`),
+                ContentNegotiator.Alternative(`sparql-results+xml`)
+            )))
+          }
+        }
       }
     } ~
     path("add") {
@@ -95,13 +114,11 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
     }
   }
 
-  private def askQuery(query: String) = {
-    val ret = bs.askQuery(query, ResultsFormat.FMT_RS_JSON) match {
+  private def askQuery(query: String, fmt: ResultsFormat) = {
+    bs.askQuery(query, fmt) match {
       case scala.util.Success(s) ⇒ s
       case scala.util.Failure(f) ⇒ f.printStackTrace(); "{}"
     }
-    // TODO we need to investigate which content type is expected. See header `Accept`
-    HttpEntity(CustomContentTypes.`sparql-results+json(UTF-8)`, ret)
   }
 
   object CustomContentTypes {
