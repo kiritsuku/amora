@@ -4,6 +4,9 @@ import research.indexer.hierarchy.Hierarchy
 import research.indexer.Indexer
 import scala.util.Try
 import java.io.File
+import java.io.ByteArrayOutputStream
+import org.apache.jena.query.ResultSetFormatter
+import org.apache.jena.sparql.resultset.ResultsFormat
 
 trait IndexerSystem {
 
@@ -16,7 +19,7 @@ trait IndexerSystem {
    * from different locations we need a stable location which never changes.
    * This method returns such a path.
    */
-  val storageLocation: String = {
+  private val storageLocation: String = {
     val home = System.getProperty("user.home")
     val xdgPath = ".config"
     val dir = "tooling-research"
@@ -26,10 +29,25 @@ trait IndexerSystem {
     loc
   }
 
-  def addData(filename: String, data: Seq[Hierarchy]): Try[Unit] = {
-    val modelName = "http://test.model/"
+  private val dataset = s"$storageLocation${sep}dataset"
 
-    withDataset(s"$storageLocation${sep}dataset") { dataset ⇒
+  private val modelName = "http://test.model/"
+
+  def askQuery(query: String, fmt: ResultsFormat): Try[String] = {
+    withDataset(dataset) { dataset ⇒
+      withModel(dataset, modelName) { model ⇒
+        withQueryService(modelName, query)(model) map { r ⇒
+          val s = new ByteArrayOutputStream
+
+          ResultSetFormatter.output(s, r, fmt)
+          new String(s.toByteArray(), "UTF-8")
+        }
+      }.flatten
+    }.flatten
+  }
+
+  def addData(filename: String, data: Seq[Hierarchy]): Try[Unit] = {
+    withDataset(dataset) { dataset ⇒
       withModel(dataset, modelName)(add(modelName, filename, data))
     }
   }

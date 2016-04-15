@@ -1,11 +1,17 @@
 package backend
 
+import java.net.URLDecoder
+
 import java.nio.ByteBuffer
+
+import org.apache.jena.sparql.resultset.ResultsFormat
 
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentTypes
+import akka.http.scaladsl.model.HttpCharsets
 import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
@@ -58,15 +64,60 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
       path(RestPath) { path ⇒
         complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"got: $path"))
       }
+    } ~
+    path("sparql") {
+      parameterMap { params ⇒
+        val ret =
+          if (params.isEmpty)
+            showSparqlEditor()
+          else if (params.contains("query"))
+            askQuery(params("query"))
+          else
+            ???
+
+        complete(ret)
+      }
     }
   } ~
   post {
+    path("sparql") {
+      entity(as[String]) { str ⇒
+        val decoded = URLDecoder.decode(str, "UTF-8")
+        println("(post) str: " + decoded)
+        complete(askQuery("select * where {?s ?p ?o} limit 1"))
+      }
+    } ~
     path("add") {
       entity(as[String]) { str ⇒
         testAddData(str)
         complete(s"data added")
       }
     }
+  }
+
+  private def askQuery(query: String) = {
+    val ret = bs.askQuery(query, ResultsFormat.FMT_RS_JSON) match {
+      case scala.util.Success(s) ⇒ s
+      case scala.util.Failure(f) ⇒ f.printStackTrace(); "{}"
+    }
+    // TODO we need to investigate which content type is expected. See header `Accept`
+    HttpEntity(CustomContentTypes.`sparql-results+json(UTF-8)`, ret)
+  }
+
+  object CustomContentTypes {
+    val `sparql-results+xml` = MediaType.applicationWithOpenCharset("sparql-results+xml")
+    val `sparql-results+json` = MediaType.applicationWithOpenCharset("sparql-results+json")
+
+    val `sparql-results+xml(UTF-8)` = `sparql-results+xml` withCharset HttpCharsets.`UTF-8`
+    val `sparql-results+json(UTF-8)` = `sparql-results+json` withCharset HttpCharsets.`UTF-8`
+  }
+
+  private def showSparqlEditor() = {
+    val content = Content.sparql(
+      cssDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.css"),
+      jsDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.js")
+    )
+    HttpEntity(ContentTypes.`text/html(UTF-8)`, content)
   }
 
   private def testAddData(str: String): Unit = {
