@@ -9,9 +9,7 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.ContentTypes
-import akka.http.scaladsl.model.HttpCharsets
 import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.ws.BinaryMessage
@@ -99,8 +97,8 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
           val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
             case m if m matches `sparql-results+xml`  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
             case m if m matches `sparql-results+json` ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
-            case m if m matches MediaTypes.`text/csv` ⇒ ContentTypes.`text/csv(UTF-8)`  → ResultsFormat.FMT_RS_CSV
-            case m if m matches MediaTypes.`text/tab-separated-values` ⇒ `text/tab-separated-values(UTF-8)`  → ResultsFormat.FMT_RS_TSV
+            case m if m matches MediaTypes.`text/csv` ⇒ ContentTypes.`text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
+            case m if m matches MediaTypes.`text/tab-separated-values` ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
           }
           val resp = ct.map {
             case (ct, fmt) ⇒
@@ -132,28 +130,6 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
-    }
-  }
-
-  object CustomContentTypes {
-
-    private var mt = Set[MediaType.WithOpenCharset]()
-
-    val `sparql-results+xml` = reg("sparql-results+xml")
-    val `sparql-results+json` = reg("sparql-results+json")
-    mt += MediaTypes.`text/csv`
-    mt += MediaTypes.`text/tab-separated-values`
-
-    val `sparql-results+xml(UTF-8)` = `sparql-results+xml` withCharset HttpCharsets.`UTF-8`
-    val `sparql-results+json(UTF-8)` = `sparql-results+json` withCharset HttpCharsets.`UTF-8`
-    val `text/tab-separated-values(UTF-8)` = MediaTypes.`text/tab-separated-values` withCharset HttpCharsets.`UTF-8`
-
-    def allMediaTypes: Set[MediaType.WithOpenCharset] = mt
-
-    private def reg(subType: String): MediaType.WithOpenCharset = {
-      val mt = MediaType.applicationWithOpenCharset(subType)
-      this.mt += mt
-      mt
     }
   }
 
