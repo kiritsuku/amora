@@ -31,6 +31,8 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 
 final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
 
@@ -128,7 +130,8 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
       case scala.util.Success(s) ⇒
         complete(HttpEntity(ct, s))
       case scala.util.Failure(f) ⇒
-        failWith(f)
+        import StatusCodes._
+        complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
     }
   }
 
