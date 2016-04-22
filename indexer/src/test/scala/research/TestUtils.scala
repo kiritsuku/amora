@@ -14,6 +14,8 @@ import org.junit.ComparisonFailure
 import converter.ScalacConverter
 import indexer.hierarchy.Hierarchy
 import indexer.util.LoggerConfig
+import net.openhft.compiler.CompilerUtils
+import research.converter.ClassfileConverter
 
 object TestUtils extends AnyRef with LoggerConfig {
 
@@ -75,4 +77,26 @@ object TestUtils extends AnyRef with LoggerConfig {
     }
   }
 
+  def bytecodeToHierarchy(data: (String, String)*): Seq[(String, Seq[Hierarchy])] = {
+    data flatMap {
+      case (filename, src) ⇒
+        require(filename.endsWith(".java"), "Only Java files are currently supported")
+
+        val m = CompilerUtils.CACHED_COMPILER.getClass.getDeclaredMethod("compileFromJava", classOf[String], classOf[String])
+        m.setAccessible(true)
+        val ret = m.invoke(CompilerUtils.CACHED_COMPILER, filename.dropRight(".java".length), src)
+        import scala.collection.JavaConverters._
+        val map = ret.asInstanceOf[java.util.Map[String, Array[Byte]]].asScala.toList
+        map map {
+          case (_, bytecode) ⇒
+            val res = new ClassfileConverter().convert(bytecode)
+            res match {
+              case Success(res) ⇒
+                filename → res
+              case Failure(f) ⇒
+                throw f
+            }
+        }
+    }
+  }
 }

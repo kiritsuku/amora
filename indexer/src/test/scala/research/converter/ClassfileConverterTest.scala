@@ -1,0 +1,26 @@
+package research
+package converter
+
+import org.junit.Test
+
+import indexer.hierarchy.Root
+
+class ClassfileConverterTest {
+
+  import TestUtils._
+
+  def convert(src: String): Set[String] =
+    convert("<memory>" → src)
+
+  def convert(data: (String, String)*): Set[String] = {
+    val res = bytecodeToHierarchy(data: _*).flatMap(_._2)
+    res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
+  }
+
+  @Test
+  def public_class() = {
+    convert("Test.java" → """
+      public class Test {}
+    """) === Set("Test")
+  }
+}
