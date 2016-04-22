@@ -32,4 +32,38 @@ class ClassfileConverterTest {
       class Z {}
     """) === Set("X", "Y", "Z")
   }
+
+  @Test
+  def single_field() = {
+    convert("X.java" → """
+      public class X {
+        int i;
+      }
+    """) === Set("X", "X.i")
+  }
+
+  @Test
+  def multiple_fields() = {
+    convert("X.java" → """
+      public class X {
+        int i;
+        int j;
+        int k;
+      }
+    """) === Set("X", "X.i", "X.j", "X.k")
+  }
+
+  @Test
+  def multiple_fields_in_multiple_classes() = {
+    convert("X.java" → """
+      public class X {
+        int i;
+        int j;
+      }
+      class Y {
+        int k;
+        int l;
+      }
+    """) === Set("X", "X.i", "X.j", "Y", "Y.k", "Y.l")
+  }
 }

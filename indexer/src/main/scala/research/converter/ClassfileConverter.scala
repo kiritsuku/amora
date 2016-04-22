@@ -33,12 +33,16 @@ final class ClassfileConverter {
 
   private class Visitor extends ClassVisitor(Opcodes.ASM5) {
     val found = ListBuffer[h.Hierarchy]()
+    var owner: h.Decl = h.Root
 
     override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]): Unit = {
-      found += h.Decl(name, h.Root)
+      val d = h.Decl(name, owner)
+      owner = d
+      found += d
     }
 
     override def visitField(access: Int, name: String, desc: String, signature: String, value: AnyRef): FieldVisitor = {
+      found += h.Decl(name, owner)
       super.visitField(access, name, desc, signature, value)
     }
 
