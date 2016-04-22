@@ -335,7 +335,6 @@ object Build extends sbt.Build {
       "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT",
       "org.ow2.asm"                    %   "asm-commons"                % "5.0.4",
       "org.ow2.asm"                    %   "asm-util"                   % "5.0.4",
-      "net.openhft"                    %   "compiler"                   % "2.2.1",
       "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
   }
