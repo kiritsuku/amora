@@ -47,6 +47,8 @@ final class ClassfileConverter {
     }
 
     override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]): MethodVisitor = {
+      if (name != "<init>")
+        found += h.Decl(name, owner)
       super.visitMethod(access, name, desc, signature, exceptions)
     }
 

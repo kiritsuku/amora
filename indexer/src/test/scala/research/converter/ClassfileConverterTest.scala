@@ -66,4 +66,45 @@ class ClassfileConverterTest {
       }
     """) === Set("X", "X.i", "X.j", "Y", "Y.k", "Y.l")
   }
+
+  @Test
+  def single_method() = {
+    convert("X.java" → """
+      public class X {
+        int i() {
+          return 0;
+        }
+      }
+    """) === Set("X", "X.i")
+  }
+
+  @Test
+  def multiple_methods() = {
+    convert("X.java" → """
+      public class X {
+        int i() {
+          return 0;
+        }
+        int j() {
+          return 0;
+        }
+      }
+    """) === Set("X", "X.i", "X.j")
+  }
+
+  @Test
+  def multiple_methods_in_multiple_classes() = {
+    convert("X.java" → """
+      public class X {
+        int i() {
+          return 0;
+        }
+      }
+      class Y {
+        int j() {
+          return 0;
+        }
+      }
+    """) === Set("X", "X.i", "Y", "Y.j")
+  }
 }
