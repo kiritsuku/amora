@@ -107,4 +107,15 @@ class ClassfileConverterTest {
       }
     """) === Set("X", "X.i", "Y", "Y.j")
   }
+
+  @Test
+  def method_with_parameter() = {
+    convert("X.java" → """
+      public class X {
+        int f(int i) {
+          return i;
+        }
+      }
+    """) === Set("X", "X.f", "X.f.i")
+  }
 }

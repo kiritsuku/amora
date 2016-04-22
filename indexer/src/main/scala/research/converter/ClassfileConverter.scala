@@ -15,12 +15,16 @@ import org.objectweb.asm.Opcodes
 final class ClassfileConverter {
   import indexer.{ hierarchy ⇒ h }
 
+  val found = ListBuffer[h.Hierarchy]()
+
   def convert(bytecode: Array[Byte]): Try[Seq[h.Hierarchy]] = {
+    this.found.clear()
+
     val found = Try {
       val r = new ClassReader(bytecode)
-      val v = new Visitor
+      val v = new CVisitor
       r.accept(v, 0)
-      v.found
+      this.found
     }
 
     found match {
@@ -31,8 +35,7 @@ final class ClassfileConverter {
     }
   }
 
-  private class Visitor extends ClassVisitor(Opcodes.ASM5) {
-    val found = ListBuffer[h.Hierarchy]()
+  private class CVisitor extends ClassVisitor(Opcodes.ASM5) {
     var owner: h.Decl = h.Root
 
     override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]): Unit = {
@@ -47,10 +50,20 @@ final class ClassfileConverter {
     }
 
     override def visitMethod(access: Int, name: String, desc: String, signature: String, exceptions: Array[String]): MethodVisitor = {
-      if (name != "<init>")
-        found += h.Decl(name, owner)
-      super.visitMethod(access, name, desc, signature, exceptions)
+      if (name == "<init>")
+        null
+      else {
+        val d = h.Decl(name, owner)
+        found += d
+        new MVisitor(d)
+      }
     }
+  }
 
+  private class MVisitor(owner: h.Decl) extends MethodVisitor(Opcodes.ASM5) {
+    override def visitParameter(name: String, access: Int) = {
+      println(name)
+      found += h.Decl(name, owner)
+    }
   }
 }

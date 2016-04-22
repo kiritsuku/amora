@@ -1,7 +1,6 @@
 package research
 
 import java.io.ByteArrayOutputStream
-
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.net.URI
@@ -140,7 +139,12 @@ object TestUtils extends AnyRef with LoggerConfig {
         val s = new ByteArrayOutputStream
         val pw = new PrintWriter(s)
 
-        c.getTask(pw, vfm, null, null, null, java.util.Arrays.asList(new VirtualJavaFile(filename, src))).call()
+        c.getTask(
+            pw, vfm, null,
+            /* options */ java.util.Arrays.asList("-parameters"),
+            null,
+            /* compilationUnits */ java.util.Arrays.asList(new VirtualJavaFile(filename, src))
+        ).call()
 
         val errorMsgs = new String(s.toByteArray(), "UTF-8")
         if (errorMsgs.nonEmpty)
