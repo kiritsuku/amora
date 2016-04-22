@@ -103,7 +103,7 @@ object TestUtils extends AnyRef with LoggerConfig {
 
     private var bs = Map[String, ByteArrayOutputStream]()
 
-    def buffers = bs.map { case (k, v) ⇒ k → v.toByteArray() }
+    def buffers = bs.map { case (k, v) ⇒ k → v.toByteArray() }.toList
 
     override def getJavaFileForOutput(location: Location, className: String, kind: Kind, sibling: FileObject): JavaFileObject = {
       new SimpleJavaFileObject(URI.create(className), kind) {

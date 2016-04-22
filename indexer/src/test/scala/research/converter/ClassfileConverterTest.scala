@@ -18,9 +18,18 @@ class ClassfileConverterTest {
   }
 
   @Test
-  def public_class() = {
-    convert("Test.java" → """
-      public class Test {}
-    """) === Set("Test")
+  def single_public_class() = {
+    convert("X.java" → """
+      public class X {}
+    """) === Set("X")
+  }
+
+  @Test
+  def multiple_classes() = {
+    convert("X.java" → """
+      public class X {}
+      class Y {}
+      class Z {}
+    """) === Set("X", "Y", "Z")
   }
 }
