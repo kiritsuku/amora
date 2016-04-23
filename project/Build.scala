@@ -14,7 +14,7 @@ object Build extends sbt.Build {
   val genFirefoxPlugin = TaskKey[Unit]("gen-firefox-plugin", "Generates the Firefox plugin.")
 
   lazy val commonSettings = Seq(
-    scalaVersion := "2.11.7",
+    scalaVersion := "2.11.8",
     scalacOptions ++= Seq(
       "-deprecation",
       "-encoding", "UTF-8",
@@ -266,7 +266,6 @@ object Build extends sbt.Build {
     val scalatags       = "0.5.2"
     // https://github.com/lloydmeta/enumeratum
     val enumeratum      = "1.3.7"
-    val paradise        = "2.1.0-M5"
     val akka            = "2.4.3"
     val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
@@ -302,7 +301,6 @@ object Build extends sbt.Build {
     ))
 
     lazy val nvim = Def.setting(Seq(
-      compilerPlugin("org.scalamacros" %   "paradise"                   % versions.paradise         cross CrossVersion.full),
       "com.github.xuwei-k"             %%  "msgpack4z-core"             % versions.msgpack4zCore,
       "com.github.xuwei-k"             %   "msgpack4z-java07"           % versions.msgpack4zJava07,
       "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
@@ -333,7 +331,7 @@ object Build extends sbt.Build {
     lazy val indexer = Def.setting(Seq(
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1",
-      "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT",
+      "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT"      cross CrossVersion.full,
       "org.ow2.asm"                    %   "asm-commons"                % "5.0.4",
       "org.ow2.asm"                    %   "asm-util"                   % "5.0.4",
       "junit"                          %   "junit"                      % versions.junit            % "test"
