@@ -14,6 +14,7 @@ import org.objectweb.asm.Opcodes
 
 final class ClassfileConverter {
   import indexer.{ hierarchy ⇒ h }
+  import indexer.hierarchy.{ Attachment ⇒ a }
 
   val found = ListBuffer[h.Hierarchy]()
 
@@ -54,6 +55,7 @@ final class ClassfileConverter {
         null
       else {
         val d = h.Decl(name, owner)
+        d.addAttachments(a.JvmSignature(desc))
         found += d
         new MVisitor(d)
       }

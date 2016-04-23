@@ -75,7 +75,7 @@ class ClassfileConverterTest {
           return 0;
         }
       }
-    """) === Set("X", "X.i")
+    """) === Set("X", "X.i()I")
   }
 
   @Test
@@ -89,7 +89,7 @@ class ClassfileConverterTest {
           return 0;
         }
       }
-    """) === Set("X", "X.i", "X.j")
+    """) === Set("X", "X.i()I", "X.j()I")
   }
 
   @Test
@@ -105,7 +105,7 @@ class ClassfileConverterTest {
           return 0;
         }
       }
-    """) === Set("X", "X.i", "Y", "Y.j")
+    """) === Set("X", "X.i()I", "Y", "Y.j()I")
   }
 
   @Test
@@ -113,9 +113,23 @@ class ClassfileConverterTest {
     convert("X.java" → """
       public class X {
         int f(int i) {
-          return i;
+          return 0;
         }
       }
-    """) === Set("X", "X.f", "X.f.i")
+    """) === Set("X", "X.f(I)I", "X.f(I)I.i")
+  }
+
+  @Test
+  def overloaded_method() = {
+    convert("X.java" → """
+      public class X {
+        int f(int i) {
+          return 0;
+        }
+        int f(int i, int j) {
+          return 0;
+        }
+      }
+    """) === Set("X", "X.f(I)I", "X.f(I)I.i", "X.f(II)I", "X.f(II)I.i", "X.f(II)I.j")
   }
 }
