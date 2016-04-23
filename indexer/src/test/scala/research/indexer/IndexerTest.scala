@@ -5,21 +5,25 @@ import scala.util._
 
 import org.junit.Test
 
-import indexer.hierarchy.Hierarchy
-
 class IndexerTest {
 
   import TestUtils._
 
   case class Data(varName: String, value: String)
 
-  def ask(modelName: String, data: Seq[(String, Seq[Hierarchy])], query: String): Seq[Data] = {
+  def ask(modelName: String, data: Seq[(String, String)], query: String): Seq[Data] = {
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        data foreach {
-          case (filename, data) ⇒
-            Indexer.add(modelName, filename, data)(model)
+        convertToHierarchy(data) match {
+          case scala.util.Success(data) ⇒
+            data foreach {
+              case (filename, data) ⇒
+                Indexer.add(modelName, filename, data)(model)
+            }
+          case scala.util.Failure(f) ⇒
+            throw f
         }
+
         if (debugTests) {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
           Indexer.queryResultAsString(modelName, query, model) foreach println
@@ -43,7 +47,7 @@ class IndexerTest {
   @Test
   def find_top_level_classes() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package a.b.c
         class C1
@@ -63,7 +67,7 @@ class IndexerTest {
   @Test
   def find_methods_in_top_level_classes() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package a.b.c
         class C1 {
@@ -90,7 +94,7 @@ class IndexerTest {
   @Test
   def find_all_methods_of_single_class() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package a.b.c
         class C1 {
@@ -118,7 +122,7 @@ class IndexerTest {
   @Test
   def find_classes_of_single_file() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "f1.scala" → """
         package a.b.c
         class C1
@@ -142,7 +146,7 @@ class IndexerTest {
   @Test
   def find_usages() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "f1.scala" → """
         package a.b.c
 import d.e.f.Y
@@ -171,7 +175,7 @@ import d.e.f.Y
   @Test
   def find_package_declarations() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package a.b.c
         class X
@@ -189,7 +193,7 @@ import d.e.f.Y
   @Test
   def find_vals_and_lazy_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class X {
@@ -212,7 +216,7 @@ import d.e.f.Y
   @Test
   def find_lazy_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class X {
@@ -234,7 +238,7 @@ import d.e.f.Y
   @Test
   def find_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class X {
@@ -259,7 +263,7 @@ import d.e.f.Y
   @Test
   def find_vars() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class X {
@@ -281,7 +285,7 @@ import d.e.f.Y
   @Test
   def find_methods() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class X {
@@ -305,7 +309,7 @@ import d.e.f.Y
   @Test
   def find_classes() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class A
@@ -325,7 +329,7 @@ import d.e.f.Y
   @Test
   def find_classes_but_not_abstract_ones() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class A
@@ -347,7 +351,7 @@ import d.e.f.Y
   @Test
   def find_traits() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class A
@@ -366,7 +370,7 @@ import d.e.f.Y
   @Test
   def find_objects() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         package pkg
         class A
@@ -385,7 +389,7 @@ import d.e.f.Y
   @Test
   def find_private_class_parameters() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X(i: Int, j: String)
       """), s"""
@@ -402,7 +406,7 @@ import d.e.f.Y
   @Test
   def find_public_class_parameters() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X(val i: Int, val j: String) {
           val k = 0
@@ -421,7 +425,7 @@ import d.e.f.Y
   @Test
   def public_class_parameters_are_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X(val i: Int, val j: String) {
           val k = 0
@@ -441,7 +445,7 @@ import d.e.f.Y
   @Test
   def private_class_parameters_are_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X(i: Int, j: String) {
           val k = 0
@@ -461,7 +465,7 @@ import d.e.f.Y
   @Test
   def class_parameters_can_be_vars() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X(val i: Int, var j: String) {
           val k = 0
@@ -479,7 +483,7 @@ import d.e.f.Y
   @Test
   def method_parameters_are_vals() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X {
           def f(i: Int, j: String) = 0
@@ -498,7 +502,7 @@ import d.e.f.Y
   @Test
   def method_parameters() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X {
           def f(i: Int, j: String) = 0
@@ -517,7 +521,7 @@ import d.e.f.Y
   @Test
   def owner_of_refs_in_if_expr() = {
     val modelName = "http://test.model/"
-    ask(modelName, convertToHierarchy(
+    ask(modelName, Seq(
       "<memory>" → """
         class X {
           val b1 = true

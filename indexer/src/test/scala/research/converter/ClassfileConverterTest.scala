@@ -13,7 +13,10 @@ class ClassfileConverterTest {
     convert("<memory>" → src)
 
   def convert(data: (String, String)*): Set[String] = {
-    val res = bytecodeToHierarchy(data: _*).flatMap(_._2)
+    val res = bytecodeToHierarchy(data) match {
+      case scala.util.Success(res) ⇒ res.flatMap(_._2)
+      case scala.util.Failure(f) ⇒ throw f
+    }
     res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
   }
 
