@@ -64,7 +64,6 @@ final class ClassfileConverter {
 
   private class MVisitor(owner: h.Decl) extends MethodVisitor(Opcodes.ASM5) {
     override def visitParameter(name: String, access: Int) = {
-      println(name)
       found += h.Decl(name, owner)
     }
   }

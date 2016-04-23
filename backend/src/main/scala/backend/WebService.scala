@@ -80,7 +80,6 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     } ~
     path("add-json") {
       entity(as[String]) { str ⇒
-        system.log.info(s"received add-json request: $str")
         handleAddJsonRequest(str)
       }
     } ~
