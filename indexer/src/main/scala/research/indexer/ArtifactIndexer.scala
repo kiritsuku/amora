@@ -2,10 +2,6 @@ package research.indexer
 
 import java.io.File
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
 
@@ -13,7 +9,11 @@ trait ArtifactIndexer {
 
   import coursier._
 
-  def fetchArtifact(organization: String, name: String, version: String): Try[String] = {
+  sealed trait DownloadStatus
+  case class DownloadSuccess(artifactName: String) extends DownloadStatus
+  case class DownloadError(artifactName: String, reason: Option[String]) extends DownloadStatus
+
+  def fetchArtifact(organization: String, name: String, version: String): Seq[DownloadStatus] = {
     val start = Resolution(Set(Dependency(Module(organization, name), version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
     val cache = new File(IndexerConstants.LocalArtifactRepo)
@@ -21,19 +21,18 @@ trait ArtifactIndexer {
     val resolution = start.process.run(fetch).run
 
     if (resolution.errors.nonEmpty)
-      Failure(new RuntimeException("Couldn't find dependencies:"+resolution.errors.flatMap(_._2).mkString("\n    ", "    \n", "")))
+      resolution.errors.flatMap(_._2).map(DownloadError(_, None))
     else {
       val localArtifacts = Task.gatherUnordered(
         resolution.artifacts.map(Cache.file(_, cache = cache, logger = Some(logger)).run)
       ).run
 
-      val fileNames = localArtifacts.map {
+      localArtifacts.map {
         case -\/(f) ⇒
-          throw new RuntimeException(s"Error occurred while downloading file `${f.message}`: ${f.`type`}")
+          DownloadError(f.message, Some(f.`type`))
         case \/-(file) ⇒
-          file.getName
+          DownloadSuccess(file.getName)
       }
-      Success("Successfully downloaded dependencies:"+fileNames.mkString("\n    ", "    \n", ""))
     }
   }
 
