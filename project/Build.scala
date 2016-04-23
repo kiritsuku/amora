@@ -334,6 +334,8 @@ object Build extends sbt.Build {
       "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT"      cross CrossVersion.full,
       "org.ow2.asm"                    %   "asm-commons"                % "5.0.4",
       "org.ow2.asm"                    %   "asm-util"                   % "5.0.4",
+      "io.get-coursier"                %%  "coursier"                   % "1.0.0-M11",
+      "io.get-coursier"                %%  "coursier-cache"             % "1.0.0-M11",
       "junit"                          %   "junit"                      % versions.junit            % "test"
     ))
   }
