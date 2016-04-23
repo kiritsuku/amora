@@ -10,7 +10,9 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentType
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
@@ -29,12 +31,13 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.StatusCodes
+import backend.requests.AddJson
 
-final class WebService(implicit m: Materializer, system: ActorSystem) extends Directives {
+final class WebService(implicit m: Materializer, system: ActorSystem)
+    extends Directives
+    with AddJson {
 
-  private val bs = new BackendSystem()
+  override val bs = new BackendSystem()
 
   def route = get {
     pathSingleSlash(complete {
@@ -113,6 +116,12 @@ final class WebService(implicit m: Materializer, system: ActorSystem) extends Di
             reject(UnacceptedResponseContentTypeRejection(allMediaTypes.map(ContentNegotiator.Alternative(_))))
           }
         }
+      }
+    } ~
+    path("add-json") {
+      entity(as[String]) { str ⇒
+        system.log.info(s"received add-json request: $str")
+        handleAddJsonRequest(str)
       }
     } ~
     path("add") {

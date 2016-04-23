@@ -292,6 +292,7 @@ object Build extends sbt.Build {
     lazy val backend = Def.setting(Seq(
       "com.typesafe.akka"              %%  "akka-http-core"             % versions.akka,
       "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akka,
+      "com.typesafe.akka"              %%  "akka-http-spray-json-experimental" % versions.akka,
       "com.typesafe.akka"              %%  "akka-stream"                % versions.akka,
       "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
       "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
