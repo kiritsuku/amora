@@ -132,4 +132,12 @@ class ClassfileConverterTest {
       }
     """) === Set("X", "X.f(I)I", "X.f(I)I.i", "X.f(II)I", "X.f(II)I.i", "X.f(II)I.j")
   }
+
+  @Test
+  def packages() = {
+    convert("a/b/c/X.java" → """
+      package a.b.c;
+      public class X {}
+    """) === Set("a.b.c.X")
+  }
 }

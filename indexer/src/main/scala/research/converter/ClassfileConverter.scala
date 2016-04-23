@@ -40,7 +40,7 @@ final class ClassfileConverter {
     var owner: h.Decl = h.Root
 
     override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]): Unit = {
-      val d = h.Decl(name, owner)
+      val d = mkDecl(name)
       owner = d
       found += d
     }
@@ -66,6 +66,17 @@ final class ClassfileConverter {
     override def visitParameter(name: String, access: Int) = {
       println(name)
       found += h.Decl(name, owner)
+    }
+  }
+
+  /**
+   * Packages are part of the name, divided by slashes. They are split into a
+   * `Decl` hierarchy.
+   */
+  private def mkDecl(name: String) = {
+    val parts = name.split('/')
+    parts.tail.foldLeft(h.Decl(parts.head, h.Root)) {
+      (a, b) ⇒ h.Decl(b, a)
     }
   }
 }
