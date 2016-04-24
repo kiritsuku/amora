@@ -102,6 +102,24 @@ trait AddJson
 
     log.info(msg)
 
+    if (errors.isEmpty)
+      indexArtifacts(succs)
+
     msg
+  }
+
+  private def indexArtifacts(artifacts: Seq[DownloadStatus]) = {
+    log.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
+    val indexed = artifacts.collect {
+      case DownloadSuccess(artifact) ⇒ indexArtifact(artifact).get
+    }.flatten
+
+    log.info(s"Indexing ${indexed.size} files.")
+    indexed.zipWithIndex foreach {
+      case ((name, hierarchy), i) ⇒
+        log.info(s"Indexing file $i ($name) with ${hierarchy.size} entries.")
+        bs.addData(name, hierarchy).get
+    }
+    log.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }
 }
