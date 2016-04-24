@@ -39,8 +39,8 @@ trait AddJson
 
   def handleAddJsonRequest(jsonString: String): StandardRoute = {
     Try(handleJsonString(jsonString)) match {
-      case scala.util.Success(answer) ⇒
-        complete(answer)
+      case scala.util.Success(_) ⇒
+        complete("Request successfully added to worker queue.")
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         log.error(f, "Error happened while handling add-json request.")
@@ -48,73 +48,70 @@ trait AddJson
     }
   }
 
-  private def handleJsonString(jsonString: String) = {
+  private def handleJsonString(jsonString: String): Unit = {
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
-    fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
-      case JsString("scala-source")  ⇒ handleScalaSource(json)
-      case JsString("java-bytecode") ⇒ handleJavaBytecode(json)
-      case JsString("artifact")      ⇒ handleArtifact(json)
-      case v                         ⇒ throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
+    val func = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
+      case JsString("scala-source") ⇒
+        val files = json.convertTo[Files]
+        () ⇒ handleScalaSource(files)
+
+      case JsString("java-bytecode") ⇒
+        val files = json.convertTo[Files]
+        () ⇒ handleJavaBytecode(files)
+
+      case JsString("artifact") ⇒
+        val artifacts = json.convertTo[Artifacts]
+        () ⇒ handleArtifact(artifacts)
+
+      case v ⇒
+        throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
+    }
+
+    bs.queue ! QueueMsg.Add(func)
+  }
+
+  private def handleScalaSource(files: Files) = {
+    val res = convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+    res foreach {
+      case (fileName, hierarchy) ⇒
+        bs.addData(fileName, hierarchy).get
     }
   }
 
-  private def handleScalaSource(json: JsValue) = {
-    val files = json.convertTo[Files]
-    val func = () ⇒ {
-      val res = convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
-      res foreach {
-        case (fileName, hierarchy) ⇒
-          bs.addData(fileName, hierarchy).get
-      }
+  private def handleJavaBytecode(files: Files) = {
+    val res = bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+    res foreach {
+      case (fileName, hierarchy) ⇒
+        bs.addData(fileName, hierarchy).get
     }
-    bs.queue ! QueueMsg.Add(func)
-    "Request successfully added to worker queue."
   }
 
-  private def handleJavaBytecode(json: JsValue) = {
-    val files = json.convertTo[Files]
-    val func = () ⇒ {
-      val res = bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
-      res foreach {
-        case (fileName, hierarchy) ⇒
-          bs.addData(fileName, hierarchy).get
-      }
+  private def handleArtifact(artifacts: Artifacts) = {
+    val res = artifacts.artifacts.flatMap { artifact ⇒
+      import artifact._
+      fetchArtifact(organization, name, version)
     }
-    bs.queue ! QueueMsg.Add(func)
-    "Request successfully added to worker queue."
-  }
-
-  private def handleArtifact(json: JsValue) = {
-    val artifacts = json.convertTo[Artifacts]
-    val func = () ⇒ {
-      val res = artifacts.artifacts.flatMap { artifact ⇒
-        import artifact._
-        fetchArtifact(organization, name, version)
-      }
-      val (errors, succs) = res.partition(_.isError)
-      val succMsgs = succs.collect {
-        case DownloadSuccess(artifact) ⇒
-          artifact.getName
-      }
-      val errMsgs = errors.collect {
-        case DownloadError(artifactName, reasonOpt) ⇒
-          if (reasonOpt.isDefined)
-            artifactName+"because of: "+reasonOpt.get
-          else
-            artifactName
-      }
-      val succMsg = if (succs.isEmpty) Nil else Seq(s"Fetched artifacts:" + succMsgs.sorted.mkString("\n  ", "\n  ", ""))
-      val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
-      val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
-
-      log.info(msg)
-
-      if (errors.isEmpty)
-        indexArtifacts(succs)
+    val (errors, succs) = res.partition(_.isError)
+    val succMsgs = succs.collect {
+      case DownloadSuccess(artifact) ⇒
+        artifact.getName
     }
-    bs.queue ! QueueMsg.Add(func)
-    "Request successfully added to worker queue."
+    val errMsgs = errors.collect {
+      case DownloadError(artifactName, reasonOpt) ⇒
+        if (reasonOpt.isDefined)
+          artifactName+"because of: "+reasonOpt.get
+        else
+          artifactName
+    }
+    val succMsg = if (succs.isEmpty) Nil else Seq(s"Fetched artifacts:" + succMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
+
+    log.info(msg)
+
+    if (errors.isEmpty)
+      indexArtifacts(succs)
   }
 
   private def indexArtifacts(artifacts: Seq[DownloadStatus]) = {
