@@ -47,7 +47,9 @@ final class ClassfileConverter {
     }
 
     override def visitField(access: Int, name: String, desc: String, signature: String, value: AnyRef): FieldVisitor = {
-      found += h.Decl(name, owner)
+      val d = h.Decl(name, owner)
+      d.addAttachments(a.Var)
+      found += d
       super.visitField(access, name, desc, signature, value)
     }
 

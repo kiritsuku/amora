@@ -80,4 +80,21 @@ class JavaBytecodeIndexerTest {
         }
       """) === Seq(Data("name", "i"), Data("name", "j"))
   }
+
+  @Test
+  def fields() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "var"] s:name ?name .
+        }
+      """,
+      "X.java" → """
+        public class X {
+          int i = 0;
+          int j = 0;
+        }
+      """) === Seq(Data("name", "i"), Data("name", "j"))
+  }
 }
