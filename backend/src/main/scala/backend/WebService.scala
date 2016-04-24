@@ -30,6 +30,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     with Sparql {
 
   override val bs = new BackendSystem()
+  override val log = system.log
 
   def route = get {
     pathSingleSlash(complete {

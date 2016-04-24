@@ -2,6 +2,7 @@ package backend.requests
 
 import scala.util.Try
 
+import akka.event.LoggingAdapter
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
@@ -18,6 +19,7 @@ trait AddJson
     with ArtifactIndexer {
 
   def bs: BackendSystem
+  def log: LoggingAdapter
 
   import spray.json._
 
@@ -40,6 +42,7 @@ trait AddJson
         complete(answer)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
+        log.error(f, "Error happened while handling add-json request.")
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
     }
   }
