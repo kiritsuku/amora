@@ -5,7 +5,7 @@ import scala.util._
 
 import org.junit.Test
 
-class IndexerTest {
+class ScalaSourceIndexerTest {
 
   import TestUtils._
 
