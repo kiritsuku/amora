@@ -84,13 +84,24 @@ trait AddJson
       import artifact._
       fetchArtifact(organization, name, version)
     }
-    val messages = res.map {
-      case DownloadSuccess(artifactName) ⇒
-        s"Success: Found $artifactName."
-      case DownloadError(artifactName, reasonOpt) ⇒
-        val reason = if (reasonOpt.isDefined) s" Reason: ${reasonOpt.get}." else ""
-        s"Error: Couldn't find $artifactName.$reason"
+    val (errors, succs) = res.partition(_.isError)
+    val succMsgs = succs.collect {
+      case DownloadSuccess(artifact) ⇒
+        artifact.getName
     }
-    messages.sorted.mkString("\n")
+    val errMsgs = errors.collect {
+      case DownloadError(artifactName, reasonOpt) ⇒
+        if (reasonOpt.isDefined)
+          artifactName+"because of: "+reasonOpt.get
+        else
+          artifactName
+    }
+    val succMsg = if (succs.isEmpty) Nil else Seq(s"Fetched artifacts:" + succMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
+
+    log.info(msg)
+
+    msg
   }
 }
