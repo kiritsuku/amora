@@ -59,4 +59,25 @@ class JavaBytecodeIndexerTest {
         public class X {}
       """) === Seq(Data("name", "X"))
   }
+
+  @Test
+  def methods() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "def"] s:name ?name .
+        }
+      """,
+      "X.java" → """
+        public class X {
+          int i() {
+            return 0;
+          }
+          int j(int i) {
+            return 0;
+          }
+        }
+      """) === Seq(Data("name", "i"), Data("name", "j"))
+  }
 }
