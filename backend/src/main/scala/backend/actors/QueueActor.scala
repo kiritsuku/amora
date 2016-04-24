@@ -1,0 +1,52 @@
+package backend.actors
+
+import scala.collection.mutable.Queue
+import scala.concurrent.duration._
+import scala.util.control.NonFatal
+
+import akka.actor.Actor
+
+final class QueueActor extends Actor {
+  import QueueMsg._
+  private implicit val d = context.system.dispatcher
+  private val log = context.system.log
+
+  private val queue = Queue[() ⇒ Unit]()
+  private var cancellable = mkQueueRunner()
+
+  override def receive = {
+    case Add(func) ⇒
+      queue.enqueue(func)
+    case Stop ⇒
+      cancellable.cancel()
+    case Start ⇒
+      if (cancellable.isCancelled)
+        cancellable = mkQueueRunner()
+    case Check ⇒
+      if (queue.nonEmpty) {
+        val func = queue.dequeue()
+        log.info(s"Scheduler handles next element in queue. ${queue.size} elements remaining.")
+        try func() catch {
+          case NonFatal(t) ⇒
+            log.error(t, "Error happened during execution of queue item.")
+        }
+      }
+  }
+
+  /**
+   * Periodically sends a [[Check]] message to the actor that tells it to handle
+   * the next item in the queue if one exists.
+   */
+  private def mkQueueRunner() =
+    context.system.scheduler.schedule(10.millis, 10.millis) {
+      self ! Check
+    }
+}
+
+sealed trait QueueMsg
+object QueueMsg {
+  case class Add(func: () ⇒ Unit) extends QueueMsg
+  case object Check extends QueueMsg
+  case object Stop extends QueueMsg
+  case object Start extends QueueMsg
+}
