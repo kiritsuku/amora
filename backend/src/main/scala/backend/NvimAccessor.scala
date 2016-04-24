@@ -6,6 +6,7 @@ import scala.util.Success
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import backend.actors.NvimMsg.NvimSignal
 import backend.internal.WindowTreeCreator
 import nvim.{Selection ⇒ _, _}
 import nvim.internal.Notification
