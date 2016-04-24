@@ -16,7 +16,7 @@ final class ClassfileConverter {
   import indexer.{ hierarchy ⇒ h }
   import indexer.hierarchy.{ Attachment ⇒ a }
 
-  val found = ListBuffer[h.Hierarchy]()
+  private val found = ListBuffer[h.Hierarchy]()
 
   def convert(bytecode: Array[Byte]): Try[Seq[h.Hierarchy]] = {
     this.found.clear()
