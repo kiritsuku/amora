@@ -13,6 +13,7 @@ import akka.stream.scaladsl.Source
 import protocol._
 import akka.NotUsed
 import backend.actors.QueueActor
+import backend.actors.QueueMsg
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
@@ -21,7 +22,10 @@ final class BackendSystem(implicit system: ActorSystem)
   import boopickle.Default._
 
   private val actor = system.actorOf(Props[MsgActor])
-  val queue = system.actorOf(Props[QueueActor])
+  private val queue = system.actorOf(Props[QueueActor])
+
+  def addQueueItem(func: () ⇒ Unit): Unit =
+    queue ! QueueMsg.Add(func)
 
   def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
     val out = Source

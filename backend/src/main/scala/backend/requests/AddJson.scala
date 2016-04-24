@@ -11,7 +11,6 @@ import backend.BackendSystem
 import research.indexer.ArtifactIndexer
 import research.indexer.JavaBytecodeIndexer
 import research.indexer.ScalaSourceIndexer
-import backend.actors.QueueMsg
 
 trait AddJson
     extends Directives
@@ -68,7 +67,7 @@ trait AddJson
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    bs.queue ! QueueMsg.Add(func)
+    bs.addQueueItem(func)
   }
 
   private def handleScalaSource(files: Files) = {
