@@ -97,4 +97,36 @@ class JavaBytecodeIndexerTest {
         }
       """) === Seq(Data("name", "i"), Data("name", "j"))
   }
+
+  @Test
+  def index_method_parameter_as_vars() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "var"] s:name ?name .
+        }
+      """,
+      "X.java" → """
+        public class X {
+          void f(int i, int j) {}
+        }
+      """) === Seq(Data("name", "i"), Data("name", "j"))
+  }
+
+  @Test
+  def index_method_parameter_as_params() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "param"] s:name ?name .
+        }
+      """,
+      "X.java" → """
+        public class X {
+          void f(int i, int j) {}
+        }
+      """) === Seq(Data("name", "i"), Data("name", "j"))
+  }
 }
