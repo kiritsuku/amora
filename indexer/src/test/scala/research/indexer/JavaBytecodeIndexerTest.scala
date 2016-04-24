@@ -45,4 +45,18 @@ class JavaBytecodeIndexerTest {
   }
 
   def modelName = "http://test.model/"
+
+  @Test
+  def classes() = {
+    ask(modelName, s"""
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "class"] s:name ?name .
+        }
+      """,
+      "X.java" → """
+        public class X {}
+      """) === Seq(Data("name", "X"))
+  }
 }

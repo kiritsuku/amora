@@ -41,6 +41,7 @@ final class ClassfileConverter {
 
     override def visit(version: Int, access: Int, name: String, signature: String, superName: String, interfaces: Array[String]): Unit = {
       val d = mkDecl(name)
+      d.addAttachments(a.Class)
       owner = d
       found += d
     }
