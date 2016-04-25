@@ -19,8 +19,7 @@ import research.indexer.ArtifactIndexer._
 
 trait AddJson
     extends Directives
-    with ScalaSourceIndexer
-    with JavaBytecodeIndexer {
+    with ScalaSourceIndexer {
 
   def bs: BackendSystem
   def log: LoggingAdapter
@@ -64,7 +63,7 @@ trait AddJson
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
-        handleJavaBytecode(files, _)
+        logger ⇒ handleJavaBytecode(files, new JavaBytecodeIndexer(logger))
 
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
@@ -85,8 +84,8 @@ trait AddJson
     }
   }
 
-  private def handleJavaBytecode(files: Files, logger: Logger) = {
-    val res = bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+  private def handleJavaBytecode(files: Files, indexer: JavaBytecodeIndexer) = {
+    val res = indexer.bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
         bs.addData(fileName, hierarchy).get

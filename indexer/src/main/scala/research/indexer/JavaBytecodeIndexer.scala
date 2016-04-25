@@ -16,11 +16,12 @@ import javax.tools.StandardJavaFileManager
 import javax.tools.ToolProvider
 import research.converter.ClassfileConverter
 import research.indexer.hierarchy.Hierarchy
+import research.Logger
 
 /**
  * Provides functionality to extract information out of Java bytecode.
  */
-trait JavaBytecodeIndexer {
+final class JavaBytecodeIndexer(logger: Logger) {
 
   /**
    * Converts pairs of file names and Java sources to pairs of file names and

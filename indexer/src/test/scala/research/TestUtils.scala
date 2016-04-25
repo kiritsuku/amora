@@ -3,13 +3,11 @@ package research
 import org.junit.ComparisonFailure
 
 import indexer.util.LoggerConfig
-import research.indexer.JavaBytecodeIndexer
 import research.indexer.ScalaSourceIndexer
 
 object TestUtils
     extends AnyRef
     with LoggerConfig
-    with JavaBytecodeIndexer
     with ScalaSourceIndexer {
 
   var debugTests: Boolean = true

@@ -4,6 +4,7 @@ package converter
 import org.junit.Test
 
 import indexer.hierarchy.Root
+import research.indexer.JavaBytecodeIndexer
 
 class ClassfileConverterTest {
 
@@ -13,7 +14,8 @@ class ClassfileConverterTest {
     convert("<memory>" → src)
 
   def convert(data: (String, String)*): Set[String] = {
-    val res = bytecodeToHierarchy(data) match {
+    val indexer = new JavaBytecodeIndexer(new Logger)
+    val res = indexer.bytecodeToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res.flatMap(_._2)
       case scala.util.Failure(f) ⇒ throw f
     }

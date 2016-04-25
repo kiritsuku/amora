@@ -14,7 +14,8 @@ class JavaBytecodeIndexerTest {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        bytecodeToHierarchy(data) match {
+        val indexer = new JavaBytecodeIndexer(new Logger)
+        indexer.bytecodeToHierarchy(data) match {
           case Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
