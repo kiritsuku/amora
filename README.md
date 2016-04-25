@@ -11,6 +11,6 @@ Electron needs to be installed, a pre-built binary can be found [here](https://g
 Important sbt commands:
 
 - `backend/reStart` - Launches server application. After that the `run_electron` executable can be run.
-- `;scalacPlugin/clean;scalacPlugin/test` - Runs the scalac plugin.
+- `;scalacPlugin/assembly;scalacPlugin/test` - Runs the scalac plugin.
 - `firefoxPlugin/genFirefoxPlugin` - Generates the firefox plugin. It can be tested with `run_firefox_plugin`.
 
