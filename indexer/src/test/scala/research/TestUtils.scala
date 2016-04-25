@@ -3,12 +3,10 @@ package research
 import org.junit.ComparisonFailure
 
 import indexer.util.LoggerConfig
-import research.indexer.ScalaSourceIndexer
 
 object TestUtils
     extends AnyRef
-    with LoggerConfig
-    with ScalaSourceIndexer {
+    with LoggerConfig {
 
   var debugTests: Boolean = true
 

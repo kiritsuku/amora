@@ -12,11 +12,12 @@ import scala.util.Try
 
 import research.converter.ScalacConverter
 import research.indexer.hierarchy.Hierarchy
+import research.Logger
 
 /**
  * Provides functionality to extract information out of Scala source code.
  */
-trait ScalaSourceIndexer {
+final class ScalaSourceIndexer(logger: Logger) {
 
   /**
    * Converts pairs of file names and Scala sources to pairs of file names and

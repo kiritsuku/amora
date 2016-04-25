@@ -17,9 +17,7 @@ import research.indexer.ScalaSourceIndexer
 import research.Logger
 import research.indexer.ArtifactIndexer._
 
-trait AddJson
-    extends Directives
-    with ScalaSourceIndexer {
+trait AddJson extends Directives {
 
   def bs: BackendSystem
   def log: LoggingAdapter
@@ -59,7 +57,7 @@ trait AddJson
     val func: Logger ⇒ Unit = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
       case JsString("scala-source") ⇒
         val files = json.convertTo[Files]
-        handleScalaSource(files, _)
+        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
@@ -76,8 +74,8 @@ trait AddJson
     bs.addQueueItem(func)
   }
 
-  private def handleScalaSource(files: Files, logger: Logger) = {
-    val res = convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+  private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
+    val res = indexer.convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
         bs.addData(fileName, hierarchy).get

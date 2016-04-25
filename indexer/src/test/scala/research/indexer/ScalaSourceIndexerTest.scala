@@ -14,7 +14,8 @@ class ScalaSourceIndexerTest {
   def ask(modelName: String, data: Seq[(String, String)], query: String): Seq[Data] = {
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        convertToHierarchy(data) match {
+        val indexer = new ScalaSourceIndexer(new Logger)
+        indexer.convertToHierarchy(data) match {
           case scala.util.Success(data) ⇒
             data foreach {
               case (filename, data) ⇒

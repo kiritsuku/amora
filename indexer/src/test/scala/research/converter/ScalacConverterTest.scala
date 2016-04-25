@@ -4,6 +4,7 @@ package converter
 import org.junit.Test
 
 import indexer.hierarchy.Root
+import research.indexer.ScalaSourceIndexer
 
 class ScalacConverterTest {
 
@@ -13,7 +14,8 @@ class ScalacConverterTest {
     convert("<memory>" → src)
 
   def convert(data: (String, String)*): Set[String] = {
-    val res = convertToHierarchy(data) match {
+    val indexer = new ScalaSourceIndexer(new Logger)
+    val res = indexer.convertToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res.flatMap(_._2)
       case scala.util.Failure(f) ⇒ throw f
     }
