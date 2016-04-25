@@ -61,55 +61,89 @@ object Content {
             $("#form1").alpaca({
 
               "schema": {
-                  "title":"User Feedback",
-                  "description":"What do you think about Alpaca?",
+                  "title":"Artifact Indexing",
+                  "description":"Specify an artifact that should be indexed.",
                   "type":"object",
                   "properties": {
-                      "name": {
+                      "tpe": {
                           "type":"string",
-                          "title":"Name",
-                          "required":true
+                          "hidden": true,
                       },
-                      "feedback": {
-                          "type":"string",
-                          "title":"Feedback"
-                      },
-                      "ranking": {
-                          "type":"string",
-                          "title":"Ranking",
-                          "enum":['excellent','ok','so so']
+                      "artifacts": {
+                          "type": "array",
+                          "items": {
+                              "type": "object",
+                              "properties": {
+                                  "organization": {
+                                      "type":"string",
+                                      "title":"Organization",
+                                      "required":true
+                                  },
+                                  "name": {
+                                      "type":"string",
+                                      "title":"Name",
+                                      "required":true
+                                  },
+                                  "version": {
+                                      "type":"string",
+                                      "title":"Version",
+                                      "required":true
+                                  }
+                              }
+                          }
                       }
                   }
               },
               "options": {
                   "form": {
-                      "attributes": {
-                          "action": "http://httpbin.org/post",
-                          "method": "post"
-                      },
                       "buttons": {
-                          "submit": {}
+                          "submit": {
+                              "click": function() {
+                                  var value = this.getValue();
+                                  $.ajax({
+                                      type: "POST",
+                                      url: "//localhost:9999/add-json",
+                                      data: JSON.stringify(value, null, "  "),
+                                      success: function(resp) {
+                                          console.log("success: " + JSON.stringify(resp));
+                                      },
+                                      error: function(err) {
+                                          console.log("error: " + JSON.stringify(err));
+                                      }
+                                  });
+                              }
+                          }
                       }
                   },
-                  "helper": "Tell us what you think about Alpaca!",
                   "fields": {
-                      "name": {
-                          "size": 20,
-                          "helper": "Please enter your name.",
-                          "placeholder": "Enter your name"
+                      "tpe": {
+                          "hidden": true
                       },
-                      "feedback" : {
-                          "type": "textarea",
-                          "rows": 5,
-                          "cols": 40,
-                          "helper": "Please enter your feedback."
-                      },
-                      "ranking": {
-                          "type": "select",
-                          "helper": "Select your ranking.",
-                          "optionLabels": ["Awesome!", "It's Ok", "Hmm..."]
+                      "artifacts": {
+                          "toolbarSticky": true,
+                          "fields": {
+                              "item": {
+                                  "fields": {
+                                      "organization": {
+                                          "size": 20,
+                                          "placeholder": "Enter the organization of the artifact"
+                                      },
+                                      "name": {
+                                          "size": 20,
+                                          "placeholder": "Enter the name of the artifact"
+                                      },
+                                      "version": {
+                                          "size": 20,
+                                          "placeholder": "Enter the version of the artifact"
+                                      }
+                                  }
+                              }
+                          }
                       }
                   }
+              },
+              "data": {
+                "tpe": "artifact"
               }
 
             });
