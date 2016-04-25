@@ -121,7 +121,7 @@ class ClassfileConverterTest {
           return 0;
         }
       }
-    """) === Set("X", "X.f(I)I", "X.f(I)I.i")
+    """) === Set("X", "X.f(I)I", "X.f(I)I.<param>i")
   }
 
   @Test
@@ -135,7 +135,7 @@ class ClassfileConverterTest {
           return 0;
         }
       }
-    """) === Set("X", "X.f(I)I", "X.f(I)I.i", "X.f(II)I", "X.f(II)I.i", "X.f(II)I.j")
+    """) === Set("X", "X.f(I)I", "X.f(I)I.<param>i", "X.f(II)I", "X.f(II)I.<param>i", "X.f(II)I.<param>j")
   }
 
   @Test
