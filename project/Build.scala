@@ -252,14 +252,27 @@ object Build extends sbt.Build {
 
     // show stack traces up to first sbt stack frame
     traceLevel in Test := 0
-  ) dependsOn (indexer)
+  ) dependsOn (scalacConverter)
 
   lazy val indexer = project in file("indexer") settings commonSettings ++ Seq(
     name := "indexer",
 
-    libraryDependencies ++= deps.indexer.value,
-    resolvers += Resolver.sonatypeRepo("snapshots")
+    libraryDependencies ++= deps.indexer.value
+  ) dependsOn (scalacConverter)
+
+  /**
+   * Contains common definitions that are needed by all converters and by the indexer.
+   */
+  lazy val converterProtocol = project in file("converter/protocol") settings commonSettings ++ Seq(
+    name := "converter-protocol"
   )
+
+  lazy val scalacConverter = project in file("converter/scalac") settings commonSettings ++ Seq(
+    name := "scalac-converter",
+
+    libraryDependencies ++= deps.scalacConverter.value,
+    resolvers += Resolver.sonatypeRepo("snapshots")
+  ) dependsOn (converterProtocol)
 
   object versions {
     // https://github.com/lihaoyi/scalatags
@@ -329,13 +342,17 @@ object Build extends sbt.Build {
     ))
 
     lazy val indexer = Def.setting(Seq(
-      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
-      "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0-SNAPSHOT"         cross CrossVersion.full,
       "org.ow2.asm"                    %   "asm-commons"                       % "5.0.4",
       "org.ow2.asm"                    %   "asm-util"                          % "5.0.4",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
+      "junit"                          %   "junit"                             % versions.junit            % "test"
+    ))
+
+    lazy val scalacConverter = Def.setting(Seq(
+      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
+      "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0-SNAPSHOT"         cross CrossVersion.full,
       "junit"                          %   "junit"                             % versions.junit            % "test"
     ))
   }

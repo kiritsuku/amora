@@ -1,4 +1,4 @@
-package research.indexer.hierarchy
+package research.converter.protocol
 
 trait Position
 

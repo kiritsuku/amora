@@ -13,8 +13,8 @@ import scala.util.Try
 
 final class ScalacConverter[G <: Global](val global: G) {
   import global.{ Try ⇒ TTry, _ }
-  import indexer.{ hierarchy ⇒ h }
-  import indexer.hierarchy.{ Attachment ⇒ a }
+  import converter.{ protocol ⇒ h }
+  import h.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
 

@@ -10,7 +10,7 @@ import java.util.zip.ZipFile
 import scala.util.Try
 
 import research.converter.ClassfileConverter
-import research.indexer.hierarchy.Hierarchy
+import research.converter.protocol.Hierarchy
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
 import research.Logger

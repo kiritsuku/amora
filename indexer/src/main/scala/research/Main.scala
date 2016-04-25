@@ -5,7 +5,7 @@ import java.net.URL
 import org.apache.jena.query.ResultSetFormatter
 
 import indexer.Indexer
-import indexer.hierarchy._
+import research.converter.protocol.Hierarchy
 import indexer.util.LoggerConfig
 
 object Main extends App with LoggerConfig {

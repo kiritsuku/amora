@@ -11,7 +11,7 @@ import scala.util.Success
 import scala.util.Try
 
 import research.converter.ScalacConverter
-import research.indexer.hierarchy.Hierarchy
+import research.converter.protocol.Hierarchy
 import research.Logger
 
 /**

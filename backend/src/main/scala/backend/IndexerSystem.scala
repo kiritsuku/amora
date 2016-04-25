@@ -9,7 +9,7 @@ import org.apache.jena.sparql.resultset.ResultsFormat
 
 import research.indexer.Indexer
 import research.indexer.IndexerConstants
-import research.indexer.hierarchy.Hierarchy
+import research.converter.protocol.Hierarchy
 
 trait IndexerSystem {
 

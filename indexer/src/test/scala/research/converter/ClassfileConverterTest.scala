@@ -3,7 +3,7 @@ package converter
 
 import org.junit.Test
 
-import indexer.hierarchy.Root
+import research.converter.protocol.Root
 import research.indexer.JavaBytecodeIndexer
 
 class ClassfileConverterTest {

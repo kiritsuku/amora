@@ -15,7 +15,7 @@ import javax.tools.SimpleJavaFileObject
 import javax.tools.StandardJavaFileManager
 import javax.tools.ToolProvider
 import research.converter.ClassfileConverter
-import research.indexer.hierarchy.Hierarchy
+import research.converter.protocol.Hierarchy
 import research.Logger
 
 /**

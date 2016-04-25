@@ -15,7 +15,7 @@ import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
-import indexer.hierarchy._
+import research.converter.protocol._
 
 object Indexer {
 
