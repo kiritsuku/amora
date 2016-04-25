@@ -18,6 +18,7 @@ import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMsg
 import protocol._
+import research.Logger
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
@@ -29,7 +30,7 @@ final class BackendSystem(implicit system: ActorSystem)
   private val nvim = system.actorOf(Props[NvimActor])
   private val queue = system.actorOf(Props[QueueActor])
 
-  def addQueueItem(func: () ⇒ Unit): Future[Int] = {
+  def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
     import akka.pattern.ask
     implicit val timeout = Timeout(5.seconds)
     queue.ask(QueueMsg.Add(func)).asInstanceOf[Future[Int]]

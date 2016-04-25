@@ -7,19 +7,15 @@ import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-import scala.util.Failure
-import scala.util.Success
 import scala.util.Try
 
 import research.converter.ClassfileConverter
 import research.indexer.hierarchy.Hierarchy
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
+import research.Logger
 
-trait ArtifactIndexer {
-
-  import coursier._
-
+object ArtifactIndexer {
   sealed trait DownloadStatus {
     def isError: Boolean
   }
@@ -29,19 +25,24 @@ trait ArtifactIndexer {
   case class DownloadError(artifactName: String, reason: Option[String]) extends DownloadStatus {
     override def isError = true
   }
+}
+
+final class ArtifactIndexer(val logger: Logger) {
+  import ArtifactIndexer._
+  import coursier._
 
   def fetchArtifact(organization: String, name: String, version: String): Seq[DownloadStatus] = {
     val start = Resolution(Set(Dependency(Module(organization, name), version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
     val cache = new File(IndexerConstants.LocalArtifactRepo)
-    val fetch = Fetch.from(repos, Cache.fetch(cache = cache, logger = Some(logger)))
+    val fetch = Fetch.from(repos, Cache.fetch(cache = cache, logger = Some(coursierLogger)))
     val resolution = start.process.run(fetch).run
 
     if (resolution.errors.nonEmpty)
       resolution.errors.flatMap(_._2).map(DownloadError(_, None))
     else {
       val localArtifacts = Task.gatherUnordered(
-        resolution.artifacts.map(Cache.file(_, cache = cache, logger = Some(logger)).run)
+        resolution.artifacts.map(Cache.file(_, cache = cache, logger = Some(coursierLogger)).run)
       ).run
 
       localArtifacts.map {
@@ -59,12 +60,8 @@ trait ArtifactIndexer {
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
-      new ClassfileConverter().convert(bytes) match {
-        case Success(res) ⇒
-          entry.getName → res
-        case Failure(f) ⇒
-          throw f
-      }
+      val hierarchy = new ClassfileConverter().convert(bytes).get
+      entry.getName → hierarchy
     }
 
     def zipToHierarchy(zip: ZipFile) = {
@@ -90,33 +87,33 @@ trait ArtifactIndexer {
   private def using[A <: { def close(): Unit }, B](closeable: A)(f: A ⇒ B): B =
     try f(closeable) finally closeable.close()
 
-  private val logger = new Cache.Logger {
+  private val coursierLogger = new Cache.Logger {
     override def foundLocally(url: String, file: File): Unit = {
-      println(s"[found-locally] url: $url, file: $file")
+      logger.info(s"[found-locally] url: $url, file: $file")
     }
 
     override def downloadingArtifact(url: String, file: File): Unit = {
-      println(s"[downloading-artifact] url: $url, file: $file")
+      logger.info(s"[downloading-artifact] url: $url, file: $file")
     }
 
     override def downloadLength(url: String, totalLength: Long, alreadyDownloaded: Long): Unit = {
-      println(s"[download-length] url: $url, total-length: $totalLength, already-downloaded: $alreadyDownloaded")
+      logger.info(s"[download-length] url: $url, total-length: $totalLength, already-downloaded: $alreadyDownloaded")
     }
 
     override def downloadProgress(url: String, downloaded: Long): Unit = {
-      //      println(s"[download-progress] url: $url, downloaded: $downloaded")
+      logger.info(s"[download-progress] url: $url, downloaded: $downloaded")
     }
 
     override def downloadedArtifact(url: String, success: Boolean): Unit = {
-      println(s"[downloaded-artifact] url: $url, success: $success")
+      logger.info(s"[downloaded-artifact] url: $url, success: $success")
     }
 
     override def checkingUpdates(url: String, currentTimeOpt: Option[Long]): Unit = {
-      println(s"[checking-updates] url: $url, current-time-opt: $currentTimeOpt")
+      logger.info(s"[checking-updates] url: $url, current-time-opt: $currentTimeOpt")
     }
 
     override def checkingUpdatesResult(url: String, currentTimeOpt: Option[Long], remoteTimeOpt: Option[Long]): Unit = {
-      println(s"[checking-updates-result] url: $url, current-time-opt: $currentTimeOpt, remote-time-opt: $remoteTimeOpt")
+      logger.info(s"[checking-updates-result] url: $url, current-time-opt: $currentTimeOpt, remote-time-opt: $remoteTimeOpt")
     }
   }
 }

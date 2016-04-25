@@ -5,6 +5,7 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 import akka.actor.Actor
+import research.Logger
 
 final class QueueActor extends Actor {
   import QueueMsg._
@@ -17,7 +18,7 @@ final class QueueActor extends Actor {
 
   override def receive = {
     case Add(func) ⇒
-      val item = Item(genId, func)
+      val item = Item(genId, func, new Logger)
       queue.enqueue(item)
       sender ! item.id
     case Stop ⇒
@@ -27,12 +28,13 @@ final class QueueActor extends Actor {
         cancellable = mkQueueRunner()
     case Check ⇒
       if (queue.nonEmpty) {
-        val Item(id, func) = queue.dequeue()
+        val Item(id, func, logger) = queue.dequeue()
         log.info(s"Queue scheduler handles item with id $id. ${queue.size} elements remaining.")
-        try func() catch {
+        try func(logger) catch {
           case NonFatal(t) ⇒
             log.error(t, "Error happened during execution of queue item.")
         }
+        log.info(logger.log)
       }
   }
 
@@ -50,12 +52,12 @@ final class QueueActor extends Actor {
     id
   }
 
-  private case class Item(id: Int, func: () ⇒ Unit)
+  private case class Item(id: Int, func: Logger ⇒ Unit, logger: Logger)
 }
 
 sealed trait QueueMsg
 object QueueMsg {
-  case class Add(func: () ⇒ Unit) extends QueueMsg
+  case class Add(func: Logger ⇒ Unit) extends QueueMsg
   case object Check extends QueueMsg
   case object Stop extends QueueMsg
   case object Start extends QueueMsg

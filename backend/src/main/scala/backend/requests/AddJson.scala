@@ -14,12 +14,13 @@ import backend.BackendSystem
 import research.indexer.ArtifactIndexer
 import research.indexer.JavaBytecodeIndexer
 import research.indexer.ScalaSourceIndexer
+import research.Logger
+import research.indexer.ArtifactIndexer._
 
 trait AddJson
     extends Directives
     with ScalaSourceIndexer
-    with JavaBytecodeIndexer
-    with ArtifactIndexer {
+    with JavaBytecodeIndexer {
 
   def bs: BackendSystem
   def log: LoggingAdapter
@@ -56,18 +57,18 @@ trait AddJson
   private def handleJsonString(jsonString: String): Future[Int] = {
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
-    val func = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
+    val func: Logger ⇒ Unit = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
       case JsString("scala-source") ⇒
         val files = json.convertTo[Files]
-        () ⇒ handleScalaSource(files)
+        handleScalaSource(files, _)
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
-        () ⇒ handleJavaBytecode(files)
+        handleJavaBytecode(files, _)
 
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
-        () ⇒ handleArtifact(artifacts)
+        logger ⇒ handleArtifact(artifacts, new ArtifactIndexer(logger))
 
       case v ⇒
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
@@ -76,7 +77,7 @@ trait AddJson
     bs.addQueueItem(func)
   }
 
-  private def handleScalaSource(files: Files) = {
+  private def handleScalaSource(files: Files, logger: Logger) = {
     val res = convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
@@ -84,7 +85,7 @@ trait AddJson
     }
   }
 
-  private def handleJavaBytecode(files: Files) = {
+  private def handleJavaBytecode(files: Files, logger: Logger) = {
     val res = bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
@@ -92,7 +93,9 @@ trait AddJson
     }
   }
 
-  private def handleArtifact(artifacts: Artifacts) = {
+  private def handleArtifact(artifacts: Artifacts, indexer: ArtifactIndexer) = {
+    import indexer._
+
     val res = artifacts.artifacts.flatMap { artifact ⇒
       import artifact._
       fetchArtifact(organization, name, version)
@@ -113,24 +116,25 @@ trait AddJson
     val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
     val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
 
-    log.info(msg)
+    logger.info(msg)
 
     if (errors.isEmpty)
-      indexArtifacts(succs)
+      indexArtifacts(succs, indexer)
   }
 
-  private def indexArtifacts(artifacts: Seq[DownloadStatus]) = {
-    log.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
+  private def indexArtifacts(artifacts: Seq[DownloadStatus], indexer: ArtifactIndexer) = {
+    import indexer._
+    logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     val indexed = artifacts.collect {
       case DownloadSuccess(artifact) ⇒ indexArtifact(artifact).get
     }.flatten
 
-    log.info(s"Indexing ${indexed.size} files.")
+    logger.info(s"Indexing ${indexed.size} files.")
     indexed.zipWithIndex foreach {
       case ((name, hierarchy), i) ⇒
-        log.info(s"Indexing file $i ($name) with ${hierarchy.size} entries.")
+        logger.info(s"Indexing file $i ($name) with ${hierarchy.size} entries.")
         bs.addData(name, hierarchy).get
     }
-    log.info(s"Successfully indexed ${artifacts.size} artifacts.")
+    logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }
 }
