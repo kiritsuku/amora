@@ -55,10 +55,10 @@ object Content {
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       ),
       body(
-        div(id := "form1"),
+        div(id := "form"),
         script(`type` := "text/javascript", raw("""
           $(document).ready(function() {
-            $("#form1").alpaca({
+            $("#form").alpaca({
 
               "schema": {
                   "title":"Artifact Indexing",
