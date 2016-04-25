@@ -6,6 +6,7 @@ import java.io.StringWriter
 object Logger {
 
   sealed abstract class LogLevel(val value: Int)
+  case object Debug extends LogLevel(0)
   case object Info extends LogLevel(1)
   case object Warning extends LogLevel(2)
   case object Error extends LogLevel(3)
@@ -18,6 +19,13 @@ final class Logger {
   private val pw = new PrintWriter(sw)
 
   private var level: LogLevel = Info
+
+  def debug(msg: String): Unit = {
+    if (level.value >= Debug.value) {
+      pw.print("[debug] ")
+      pw.println(msg)
+    }
+  }
 
   def warning(msg: String): Unit = {
     if (level.value >= Warning.value) {
