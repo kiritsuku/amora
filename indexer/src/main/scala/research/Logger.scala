@@ -50,6 +50,6 @@ final class Logger {
   }
 
   def log: String = sw.toString()
-  def logLevel = level
-  def logLevel_=(level: LogLevel) = this.level = level
+  def logLevel: LogLevel = level
+  def logLevel_=(level: LogLevel): Unit = this.level = level
 }
