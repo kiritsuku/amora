@@ -1,5 +1,8 @@
 package backend.requests
 
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.concurrent.duration._
 import scala.util.Try
 
 import akka.event.LoggingAdapter
@@ -37,9 +40,12 @@ trait AddJson
   import JsonProtocols._
 
   def handleAddJsonRequest(jsonString: String): StandardRoute = {
-    Try(handleJsonString(jsonString)) match {
-      case scala.util.Success(_) ⇒
-        complete("Request successfully added to worker queue.")
+    Try {
+      val f = handleJsonString(jsonString)
+      Await.result(f, Duration.Inf)
+    } match {
+      case scala.util.Success(id) ⇒
+        complete(s"Request successfully added to worker queue. Item id: $id")
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         log.error(f, "Error happened while handling add-json request.")
@@ -47,7 +53,7 @@ trait AddJson
     }
   }
 
-  private def handleJsonString(jsonString: String): Unit = {
+  private def handleJsonString(jsonString: String): Future[Int] = {
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
     val func = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {

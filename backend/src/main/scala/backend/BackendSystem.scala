@@ -2,6 +2,9 @@ package backend
 
 import java.nio.ByteBuffer
 
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.actor.Props
@@ -9,6 +12,7 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
+import akka.util.Timeout
 import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
@@ -25,8 +29,11 @@ final class BackendSystem(implicit system: ActorSystem)
   private val nvim = system.actorOf(Props[NvimActor])
   private val queue = system.actorOf(Props[QueueActor])
 
-  def addQueueItem(func: () ⇒ Unit): Unit =
-    queue ! QueueMsg.Add(func)
+  def addQueueItem(func: () ⇒ Unit): Future[Int] = {
+    import akka.pattern.ask
+    implicit val timeout = Timeout(5.seconds)
+    queue.ask(QueueMsg.Add(func)).asInstanceOf[Future[Int]]
+  }
 
   def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
     val out = Source

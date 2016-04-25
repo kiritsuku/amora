@@ -11,12 +11,15 @@ final class QueueActor extends Actor {
   private implicit val d = context.system.dispatcher
   private val log = context.system.log
 
-  private val queue = Queue[() ⇒ Unit]()
+  private val queue = Queue[Item]()
   private var cancellable = mkQueueRunner()
+  private var id = 0
 
   override def receive = {
     case Add(func) ⇒
-      queue.enqueue(func)
+      val item = Item(genId, func)
+      queue.enqueue(item)
+      sender ! item.id
     case Stop ⇒
       cancellable.cancel()
     case Start ⇒
@@ -24,8 +27,8 @@ final class QueueActor extends Actor {
         cancellable = mkQueueRunner()
     case Check ⇒
       if (queue.nonEmpty) {
-        val func = queue.dequeue()
-        log.info(s"Scheduler handles next element in queue. ${queue.size} elements remaining.")
+        val Item(id, func) = queue.dequeue()
+        log.info(s"Queue scheduler handles item with id $id. ${queue.size} elements remaining.")
         try func() catch {
           case NonFatal(t) ⇒
             log.error(t, "Error happened during execution of queue item.")
@@ -41,6 +44,13 @@ final class QueueActor extends Actor {
     context.system.scheduler.schedule(10.millis, 10.millis) {
       self ! Check
     }
+
+  private def genId() = {
+    id += 1
+    id
+  }
+
+  private case class Item(id: Int, func: () ⇒ Unit)
 }
 
 sealed trait QueueMsg
