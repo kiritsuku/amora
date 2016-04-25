@@ -112,7 +112,8 @@ object Content {
                                       }
                                   });
                               }
-                          }
+                          },
+                          "reset": {}
                       }
                   },
                   "fields": {
