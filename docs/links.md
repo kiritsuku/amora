@@ -59,3 +59,6 @@ Scalac compiler plugins:
 
 OWL/RDF libraries for Scala:
 - [scowl](https://github.com/phenoscape/scowl)
+
+Other:
+- [Artifact Scraper](https://github.com/MasseGuillaume/super-winner)
