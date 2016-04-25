@@ -285,58 +285,58 @@ object Build extends sbt.Build {
 
   object deps {
     lazy val protocol = Def.setting(Seq(
-      "me.chrons"                      %%% "boopickle"                  % versions.boopickle
+      "me.chrons"                      %%% "boopickle"                         % versions.boopickle
     ))
 
     lazy val backend = Def.setting(Seq(
-      "com.typesafe.akka"              %%  "akka-http-core"             % versions.akka,
-      "com.typesafe.akka"              %%  "akka-http-experimental"     % versions.akka,
+      "com.typesafe.akka"              %%  "akka-http-core"                    % versions.akka,
+      "com.typesafe.akka"              %%  "akka-http-experimental"            % versions.akka,
       "com.typesafe.akka"              %%  "akka-http-spray-json-experimental" % versions.akka,
-      "com.typesafe.akka"              %%  "akka-stream"                % versions.akka,
-      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
-      "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
-      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags,
-      "org.slf4j"                      %   "slf4j-log4j12"              % versions.slf4jLog4j12,
-      "junit"                          %   "junit"                      % versions.junit            % "test"
+      "com.typesafe.akka"              %%  "akka-stream"                       % versions.akka,
+      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
+      "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
+      "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags,
+      "org.slf4j"                      %   "slf4j-log4j12"                     % versions.slf4jLog4j12,
+      "junit"                          %   "junit"                             % versions.junit            % "test"
     ))
 
     lazy val nvim = Def.setting(Seq(
-      "com.github.xuwei-k"             %%  "msgpack4z-core"             % versions.msgpack4zCore,
-      "com.github.xuwei-k"             %   "msgpack4z-java07"           % versions.msgpack4zJava07,
-      "com.beachape"                   %%  "enumeratum"                 % versions.enumeratum,
-      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
-      "com.typesafe.scala-logging"     %%  "scala-logging"              % versions.scalaLogging
+      "com.github.xuwei-k"             %%  "msgpack4z-core"                    % versions.msgpack4zCore,
+      "com.github.xuwei-k"             %   "msgpack4z-java07"                  % versions.msgpack4zJava07,
+      "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
+      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
+      "com.typesafe.scala-logging"     %%  "scala-logging"                     % versions.scalaLogging
     ))
 
     lazy val sjs = Def.setting(Seq(
-      "be.doeraene"                    %%% "scalajs-jquery"             % versions.jquery,
-      "org.denigma"                    %%% "codemirror-facade"          % versions.codemirror,
-      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags
+      "be.doeraene"                    %%% "scalajs-jquery"                    % versions.jquery,
+      "org.denigma"                    %%% "codemirror-facade"                 % versions.codemirror,
+      "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags
     ))
 
     lazy val webjars = Def.setting(Seq(
-      "org.webjars"                    %   "codemirror"                 % "5.5"                     / "codemirror.js",
+      "org.webjars"                    %   "codemirror"                        % "5.5"                     / "codemirror.js",
       // https://github.com/chjj/marked
-      "org.webjars.bower"              %   "marked"                     % "0.3.3"                   / "marked.js",
-      "org.webjars"                    %   "d3js"                       % "3.5.5-1"                 / "d3.js",
+      "org.webjars.bower"              %   "marked"                            % "0.3.3"                   / "marked.js",
+      "org.webjars"                    %   "d3js"                              % "3.5.5-1"                 / "d3.js",
       // https://github.com/fgnass/spin.js
-      "org.webjars.bower"              %   "spin.js"                    % "2.3.1"                   / "spin.js"
+      "org.webjars.bower"              %   "spin.js"                           % "2.3.1"                   / "spin.js"
     ))
 
     lazy val firefoxPlugin = Def.setting(Seq(
-      "be.doeraene"                    %%% "scalajs-jquery"             % versions.jquery,
-      "com.lihaoyi"                    %%% "scalatags"                  % versions.scalatags
+      "be.doeraene"                    %%% "scalajs-jquery"                    % versions.jquery,
+      "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags
     ))
 
     lazy val indexer = Def.setting(Seq(
-      "org.scala-lang"                 %   "scala-compiler"             % scalaVersion.value,
-      "org.apache.jena"                %   "apache-jena-libs"           % "3.0.1",
-      "org.scala-refactoring"          %%  "org.scala-refactoring.library" % "0.10.0-SNAPSHOT"      cross CrossVersion.full,
-      "org.ow2.asm"                    %   "asm-commons"                % "5.0.4",
-      "org.ow2.asm"                    %   "asm-util"                   % "5.0.4",
-      "io.get-coursier"                %%  "coursier"                   % "1.0.0-M11",
-      "io.get-coursier"                %%  "coursier-cache"             % "1.0.0-M11",
-      "junit"                          %   "junit"                      % versions.junit            % "test"
+      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
+      "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
+      "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0-SNAPSHOT"         cross CrossVersion.full,
+      "org.ow2.asm"                    %   "asm-commons"                       % "5.0.4",
+      "org.ow2.asm"                    %   "asm-util"                          % "5.0.4",
+      "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
+      "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
+      "junit"                          %   "junit"                             % versions.junit            % "test"
     ))
   }
 }
