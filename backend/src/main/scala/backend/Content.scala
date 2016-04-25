@@ -154,4 +154,17 @@ object Content {
     )
   }
 
+  def queuePage(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
+    "<!DOCTYPE html>" + html(
+      head(
+        meta(charset := "UTF-8"),
+        tags2.title("Indexer queue"),
+        for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
+      ),
+      body(
+        for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
+      )
+    )
+  }
+
 }

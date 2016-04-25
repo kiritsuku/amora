@@ -84,6 +84,15 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
         )
       )
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
+    } ~
+    path("queue") {
+      val content = Content.queuePage(
+        cssDeps = Seq(
+        ),
+        jsDeps = Seq(
+        )
+      )
+      complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     }
   } ~
   post {
