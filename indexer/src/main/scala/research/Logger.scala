@@ -6,10 +6,10 @@ import java.io.StringWriter
 object Logger {
 
   sealed abstract class LogLevel(val value: Int)
-  case object Debug extends LogLevel(0)
-  case object Info extends LogLevel(1)
-  case object Warning extends LogLevel(2)
-  case object Error extends LogLevel(3)
+  case object Debug extends LogLevel(3)
+  case object Info extends LogLevel(2)
+  case object Warning extends LogLevel(1)
+  case object Error extends LogLevel(0)
 }
 
 final class Logger {
