@@ -39,6 +39,7 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   override def debug(msg: String): Unit = {
     if (level.value >= Debug.value) {
       val m = s"[debug] $msg\n"
+      pw.append(m)
       sources foreach (_ ! m)
     }
   }
@@ -46,6 +47,7 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   override def warning(msg: String): Unit = {
     if (level.value >= Warning.value) {
       val m = s"[warning] $msg\n"
+      pw.append(m)
       sources foreach (_ ! m)
     }
   }
@@ -53,6 +55,7 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   override def info(msg: String): Unit = {
     if (level.value >= Info.value) {
       val m = s"[info] $msg\n"
+      pw.append(m)
       sources foreach (_ ! m)
     }
   }
@@ -64,6 +67,7 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
       t.printStackTrace(pw)
 
       val m = s"[error] $msg\n${sw.toString}\n"
+      pw.append(m)
       sources foreach (_ ! m)
     }
   }
