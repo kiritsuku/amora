@@ -258,7 +258,7 @@ object Build extends sbt.Build {
     name := "indexer",
 
     libraryDependencies ++= deps.indexer.value
-  ) dependsOn (scalacConverter)
+  ) dependsOn (scalacConverter, javacConverter)
 
   /**
    * Contains common definitions that are needed by all converters and by the indexer.
@@ -271,6 +271,13 @@ object Build extends sbt.Build {
     name := "scalac-converter",
 
     libraryDependencies ++= deps.scalacConverter.value,
+    resolvers += Resolver.sonatypeRepo("snapshots")
+  ) dependsOn (converterProtocol)
+
+  lazy val javacConverter = project in file("converter/javac") settings commonSettings ++ Seq(
+    name := "javac-converter",
+
+    libraryDependencies ++= deps.javacConverter.value,
     resolvers += Resolver.sonatypeRepo("snapshots")
   ) dependsOn (converterProtocol)
 
@@ -343,8 +350,6 @@ object Build extends sbt.Build {
 
     lazy val indexer = Def.setting(Seq(
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
-      "org.ow2.asm"                    %   "asm-commons"                       % "5.0.4",
-      "org.ow2.asm"                    %   "asm-util"                          % "5.0.4",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
       "junit"                          %   "junit"                             % versions.junit            % "test"
@@ -352,8 +357,12 @@ object Build extends sbt.Build {
 
     lazy val scalacConverter = Def.setting(Seq(
       "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
-      "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0-SNAPSHOT"         cross CrossVersion.full,
-      "junit"                          %   "junit"                             % versions.junit            % "test"
+      "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0-SNAPSHOT"         cross CrossVersion.full
+    ))
+
+    lazy val javacConverter = Def.setting(Seq(
+      "org.ow2.asm"                    %   "asm-commons"                       % "5.0.4",
+      "org.ow2.asm"                    %   "asm-util"                          % "5.0.4"
     ))
   }
 }
