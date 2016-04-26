@@ -9,7 +9,8 @@ import backend.Logger
 
 final class QueueActor extends Actor {
   import QueueMsg._
-  private implicit val d = context.system.dispatcher
+  private implicit val system = context.system
+  import system.dispatcher
   private val log = context.system.log
 
   private val queue = Queue[Item]()
@@ -34,7 +35,6 @@ final class QueueActor extends Actor {
           case NonFatal(t) ⇒
             log.error(t, "Error happened during execution of queue item.")
         }
-        log.info(logger.log)
       }
   }
 
