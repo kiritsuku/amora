@@ -88,14 +88,23 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
     path("queue") {
+      parameter('item) { rawId ⇒
+        val id = rawId.toInt
+        onComplete(bs.queueItem(id)) {
+          case scala.util.Success(logger) ⇒
+            val content = Content.itemPage(id, logger)
+            complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
+
+          case scala.util.Failure(f) ⇒
+            import StatusCodes._
+            complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+        }
+      }
+    } ~
+    path("queue") {
       onComplete(bs.queueItems) {
         case scala.util.Success(items) ⇒
-          val content = Content.queuePage(items,
-            cssDeps = Seq(
-            ),
-            jsDeps = Seq(
-            )
-          )
+          val content = Content.queuePage(items)
           complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
 
         case scala.util.Failure(f) ⇒
