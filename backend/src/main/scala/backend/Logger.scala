@@ -11,7 +11,6 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 
 object Logger {
-
   sealed abstract class LogLevel(val value: Int)
   case object Debug extends LogLevel(3)
   case object Info extends LogLevel(2)
@@ -19,7 +18,17 @@ object Logger {
   case object Error extends LogLevel(0)
 }
 
-final class Logger(implicit val system: ActorSystem) {
+trait Logger {
+  def debug(msg: String): Unit
+  def warning(msg: String): Unit
+  def info(msg: String): Unit
+  def error(msg: String, t: Throwable): Unit
+  def log: Source[String, Unit]
+  def logLevel: Logger.LogLevel
+  def logLevel_=(level: Logger.LogLevel): Unit
+}
+
+final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   import Logger._
 
   private var level: LogLevel = Info
@@ -27,28 +36,28 @@ final class Logger(implicit val system: ActorSystem) {
   val sw = new StringWriter
   val pw = new PrintWriter(sw)
 
-  def debug(msg: String): Unit = {
+  override def debug(msg: String): Unit = {
     if (level.value >= Debug.value) {
       val m = s"[debug] $msg\n"
       sources foreach (_ ! m)
     }
   }
 
-  def warning(msg: String): Unit = {
+  override def warning(msg: String): Unit = {
     if (level.value >= Warning.value) {
       val m = s"[warning] $msg\n"
       sources foreach (_ ! m)
     }
   }
 
-  def info(msg: String): Unit = {
+  override def info(msg: String): Unit = {
     if (level.value >= Info.value) {
       val m = s"[info] $msg\n"
       sources foreach (_ ! m)
     }
   }
 
-  def error(msg: String, t: Throwable): Unit = {
+  override def error(msg: String, t: Throwable): Unit = {
     if (level.value >= Error.value) {
       val sw = new StringWriter
       val pw = new PrintWriter(sw)
@@ -59,12 +68,22 @@ final class Logger(implicit val system: ActorSystem) {
     }
   }
 
-  def log: Source[String, Unit] =
+  override def log: Source[String, Unit] =
     Source.actorRef[String](10, OverflowStrategy.fail).mapMaterializedValue { ref ⇒
       sources += ref
       ref ! sw.toString
     }
 
-  def logLevel: LogLevel = level
-  def logLevel_=(level: LogLevel): Unit = this.level = level
+  override def logLevel: LogLevel = level
+  override def logLevel_=(level: LogLevel): Unit = this.level = level
+}
+
+case object IgnoreLogger extends Logger {
+  override def debug(msg: String): Unit = ()
+  override def warning(msg: String): Unit = ()
+  override def info(msg: String): Unit = ()
+  override def error(msg: String, t: Throwable): Unit = ()
+  override def log: Source[String, Unit] = throw new UnsupportedOperationException
+  override def logLevel: Logger.LogLevel = throw new UnsupportedOperationException
+  override def logLevel_=(level: Logger.LogLevel): Unit = throw new UnsupportedOperationException
 }

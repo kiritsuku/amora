@@ -3,7 +3,6 @@ package indexer
 
 import scala.util._
 import org.junit.Test
-import backend.Logger
 
 class JavaBytecodeIndexerTest {
 
@@ -15,7 +14,7 @@ class JavaBytecodeIndexerTest {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        val indexer = new JavaBytecodeIndexer(new Logger)
+        val indexer = new JavaBytecodeIndexer(IgnoreLogger)
         indexer.bytecodeToHierarchy(data) match {
           case Success(data) ⇒
             data foreach {

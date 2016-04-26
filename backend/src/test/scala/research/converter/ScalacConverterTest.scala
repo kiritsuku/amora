@@ -5,8 +5,8 @@ import org.junit.Test
 
 import research.converter.protocol.Root
 import backend.indexer.ScalaSourceIndexer
-import backend.Logger
 import backend.TestUtils
+import backend.IgnoreLogger
 
 class ScalacConverterTest {
 
@@ -16,7 +16,7 @@ class ScalacConverterTest {
     convert("<memory>" → src)
 
   def convert(data: (String, String)*): Set[String] = {
-    val indexer = new ScalaSourceIndexer(new Logger)
+    val indexer = new ScalaSourceIndexer(IgnoreLogger)
     val res = indexer.convertToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res.flatMap(_._2)
       case scala.util.Failure(f) ⇒ throw f

@@ -4,7 +4,6 @@ package indexer
 import scala.util._
 
 import org.junit.Test
-import backend.Logger
 import backend.TestUtils
 
 class RegionIndexerTest {
@@ -70,7 +69,7 @@ class RegionIndexerTest {
     val data = dataWithRegions.map { case (filename, src, _) ⇒ (filename, src) }
     val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
 
-    val indexer = new ScalaSourceIndexer(new Logger)
+    val indexer = new ScalaSourceIndexer(IgnoreLogger)
     val hierarchyData = indexer.convertToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res
       case scala.util.Failure(f) ⇒ throw f

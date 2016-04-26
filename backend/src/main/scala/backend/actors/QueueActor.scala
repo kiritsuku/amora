@@ -8,6 +8,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import akka.actor.Props
 import backend.Logger
+import backend.ActorLogger
 
 final class QueueActor extends Actor {
   import QueueMsg._
@@ -33,7 +34,7 @@ final class QueueActor extends Actor {
 
   override def receive = {
     case Add(func) ⇒
-      val item = Item(genId, func, new Logger)
+      val item = Item(genId, func, new ActorLogger)
       queue.enqueue(item)
       sender ! item.id
     case Stop ⇒

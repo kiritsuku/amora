@@ -4,7 +4,6 @@ package indexer
 import scala.util._
 
 import org.junit.Test
-import backend.Logger
 import backend.TestUtils
 
 class ScalaSourceIndexerTest {
@@ -16,7 +15,7 @@ class ScalaSourceIndexerTest {
   def ask(modelName: String, data: Seq[(String, String)], query: String): Seq[Data] = {
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        val indexer = new ScalaSourceIndexer(new Logger)
+        val indexer = new ScalaSourceIndexer(IgnoreLogger)
         indexer.convertToHierarchy(data) match {
           case scala.util.Success(data) ⇒
             data foreach {

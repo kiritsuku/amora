@@ -5,8 +5,8 @@ import org.junit.Test
 
 import research.converter.protocol.Root
 import backend.indexer.JavaBytecodeIndexer
-import backend.Logger
 import backend.TestUtils
+import backend.IgnoreLogger
 
 class ClassfileConverterTest {
 
@@ -16,7 +16,7 @@ class ClassfileConverterTest {
     convert("<memory>" → src)
 
   def convert(data: (String, String)*): Set[String] = {
-    val indexer = new JavaBytecodeIndexer(new Logger)
+    val indexer = new JavaBytecodeIndexer(IgnoreLogger)
     val res = indexer.bytecodeToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res.flatMap(_._2)
       case scala.util.Failure(f) ⇒ throw f
