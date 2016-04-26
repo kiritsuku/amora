@@ -49,6 +49,8 @@ final class QueueActor extends Actor {
         running = true
         runner ! item
       }
+    case GetItems ⇒
+      sender ! queue.map(_.id)
   }
 
   /**
@@ -74,4 +76,5 @@ object QueueMsg {
   case object Check extends QueueMsg
   case object Stop extends QueueMsg
   case object Start extends QueueMsg
+  case object GetItems extends QueueMsg
 }

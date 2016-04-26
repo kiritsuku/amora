@@ -29,10 +29,15 @@ final class BackendSystem(implicit system: ActorSystem)
   private val nvim = system.actorOf(Props[NvimActor])
   private val queue = system.actorOf(Props[QueueActor])
 
+  import akka.pattern.ask
+  implicit val timeout = Timeout(5.seconds)
+
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
-    import akka.pattern.ask
-    implicit val timeout = Timeout(5.seconds)
     queue.ask(QueueMsg.Add(func)).asInstanceOf[Future[Int]]
+  }
+
+  def queueItems: Future[Seq[Int]] = {
+    queue.ask(QueueMsg.GetItems).asInstanceOf[Future[Seq[Int]]]
   }
 
   def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
