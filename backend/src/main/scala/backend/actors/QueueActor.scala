@@ -51,6 +51,8 @@ final class QueueActor extends Actor {
       }
     case GetItems ⇒
       sender ! queue.map(_.id)
+    case GetItem(id) ⇒
+      sender ! queue.find(_.id == id).map(_.logger)
   }
 
   /**
@@ -77,4 +79,5 @@ object QueueMsg {
   case object Stop extends QueueMsg
   case object Start extends QueueMsg
   case object GetItems extends QueueMsg
+  case class GetItem(id: Int) extends QueueMsg
 }

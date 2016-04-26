@@ -30,6 +30,7 @@ final class BackendSystem(implicit system: ActorSystem)
   private val queue = system.actorOf(Props[QueueActor])
 
   import akka.pattern.ask
+  import system.dispatcher
   implicit val timeout = Timeout(5.seconds)
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
@@ -38,6 +39,13 @@ final class BackendSystem(implicit system: ActorSystem)
 
   def queueItems: Future[Seq[Int]] = {
     queue.ask(QueueMsg.GetItems).asInstanceOf[Future[Seq[Int]]]
+  }
+
+  def queueItem(id: Int): Future[Logger] = {
+    queue.ask(QueueMsg.GetItem(id)).asInstanceOf[Future[Option[Logger]]].map {
+      case None ⇒ throw new NoSuchElementException(s"Item with id $id doesn't exist.")
+      case Some(logger) ⇒ logger
+    }
   }
 
   def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
