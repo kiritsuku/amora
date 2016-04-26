@@ -4,7 +4,9 @@ package converter
 import org.junit.Test
 
 import research.converter.protocol.Root
-import research.indexer.JavaBytecodeIndexer
+import backend.indexer.JavaBytecodeIndexer
+import backend.Logger
+import backend.TestUtils
 
 class ClassfileConverterTest {
 

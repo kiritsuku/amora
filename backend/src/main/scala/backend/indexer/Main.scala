@@ -1,12 +1,9 @@
-package research
+package backend.indexer
 
 import java.net.URL
-
 import org.apache.jena.query.ResultSetFormatter
-
-import indexer.Indexer
 import research.converter.protocol.Hierarchy
-import indexer.util.LoggerConfig
+import backend.util.LoggerConfig
 
 object Main extends App with LoggerConfig {
 

@@ -1,4 +1,4 @@
-package research.indexer.util
+package backend.util
 
 import org.apache.log4j.ConsoleAppender
 import org.apache.log4j.Level

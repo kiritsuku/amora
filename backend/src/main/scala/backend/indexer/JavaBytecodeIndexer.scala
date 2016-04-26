@@ -1,4 +1,4 @@
-package research.indexer
+package backend.indexer
 
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
@@ -16,7 +16,7 @@ import javax.tools.StandardJavaFileManager
 import javax.tools.ToolProvider
 import research.converter.ClassfileConverter
 import research.converter.protocol.Hierarchy
-import research.Logger
+import backend.Logger
 
 /**
  * Provides functionality to extract information out of Java bytecode.

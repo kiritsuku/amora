@@ -1,8 +1,9 @@
-package research
+package backend
 package indexer
 
 import scala.util._
 import org.junit.Test
+import backend.Logger
 
 class JavaBytecodeIndexerTest {
 

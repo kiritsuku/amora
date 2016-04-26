@@ -1,4 +1,4 @@
-package research.indexer
+package backend.indexer
 
 import java.io.ByteArrayOutputStream
 
@@ -13,7 +13,7 @@ import research.converter.ClassfileConverter
 import research.converter.protocol.Hierarchy
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
-import research.Logger
+import backend.Logger
 
 object ArtifactIndexer {
   sealed trait DownloadStatus {

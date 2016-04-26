@@ -1,5 +1,4 @@
-package research
-package indexer
+package backend.indexer
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

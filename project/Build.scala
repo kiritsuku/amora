@@ -218,7 +218,7 @@ object Build extends sbt.Build {
 
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
-  ) dependsOn (protocolJvm, nvim, indexer)
+  ) dependsOn (protocolJvm, nvim, scalacConverter, javacConverter)
 
   lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
     name := "scalac-plugin",
@@ -253,12 +253,6 @@ object Build extends sbt.Build {
     // show stack traces up to first sbt stack frame
     traceLevel in Test := 0
   ) dependsOn (scalacConverter)
-
-  lazy val indexer = project in file("indexer") settings commonSettings ++ Seq(
-    name := "indexer",
-
-    libraryDependencies ++= deps.indexer.value
-  ) dependsOn (scalacConverter, javacConverter)
 
   /**
    * Contains common definitions that are needed by all converters and by the indexer.
@@ -317,6 +311,9 @@ object Build extends sbt.Build {
       "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags,
       "org.slf4j"                      %   "slf4j-log4j12"                     % versions.slf4jLog4j12,
+      "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
+      "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
+      "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
       "junit"                          %   "junit"                             % versions.junit            % "test"
     ))
 
@@ -346,13 +343,6 @@ object Build extends sbt.Build {
     lazy val firefoxPlugin = Def.setting(Seq(
       "be.doeraene"                    %%% "scalajs-jquery"                    % versions.jquery,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags
-    ))
-
-    lazy val indexer = Def.setting(Seq(
-      "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
-      "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
-      "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
-      "junit"                          %   "junit"                             % versions.junit            % "test"
     ))
 
     lazy val scalacConverter = Def.setting(Seq(

@@ -1,4 +1,4 @@
-package research.indexer
+package backend.indexer
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -12,7 +12,7 @@ import scala.util.Try
 
 import research.converter.ScalacConverter
 import research.converter.protocol.Hierarchy
-import research.Logger
+import backend.Logger
 
 /**
  * Provides functionality to extract information out of Scala source code.
