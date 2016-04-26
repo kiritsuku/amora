@@ -5,6 +5,8 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 import akka.actor.Actor
+import akka.actor.ActorRef
+import akka.actor.Props
 import backend.Logger
 
 final class QueueActor extends Actor {
@@ -16,6 +18,18 @@ final class QueueActor extends Actor {
   private val queue = Queue[Item]()
   private var cancellable = mkQueueRunner()
   private var id = 0
+  private var running = false
+
+  private val runner: ActorRef = system.actorOf(Props(new Actor {
+    override def receive = {
+      case item @ Item(id, func, logger) ⇒
+        try func(logger) catch {
+          case NonFatal(t) ⇒
+            log.error(t, "Error happened during execution of queue item.")
+        }
+        running = false
+    }
+  }))
 
   override def receive = {
     case Add(func) ⇒
@@ -27,14 +41,12 @@ final class QueueActor extends Actor {
     case Start ⇒
       if (cancellable.isCancelled)
         cancellable = mkQueueRunner()
-    case Check ⇒
+    case Check if !running ⇒
       if (queue.nonEmpty) {
-        val Item(id, func, logger) = queue.dequeue()
-        log.info(s"Queue scheduler handles item with id $id. ${queue.size} elements remaining.")
-        try func(logger) catch {
-          case NonFatal(t) ⇒
-            log.error(t, "Error happened during execution of queue item.")
-        }
+        val item = queue.dequeue()
+        log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
+        running = true
+        runner ! item
       }
   }
 
