@@ -5,7 +5,7 @@ import scala.concurrent.duration._
 import scala.util.control.NonFatal
 
 import akka.actor.Actor
-import research.Logger
+import backend.Logger
 
 final class QueueActor extends Actor {
   import QueueMsg._

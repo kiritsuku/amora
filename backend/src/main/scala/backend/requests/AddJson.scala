@@ -11,11 +11,11 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.StandardRoute
 import backend.BackendSystem
-import research.indexer.ArtifactIndexer
-import research.indexer.JavaBytecodeIndexer
-import research.indexer.ScalaSourceIndexer
-import research.Logger
-import research.indexer.ArtifactIndexer._
+import backend.indexer.ArtifactIndexer
+import backend.indexer.JavaBytecodeIndexer
+import backend.indexer.ScalaSourceIndexer
+import backend.Logger
+import backend.indexer.ArtifactIndexer._
 
 trait AddJson extends Directives {
 

@@ -7,8 +7,8 @@ import scala.util.Try
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.sparql.resultset.ResultsFormat
 
-import research.indexer.Indexer
-import research.indexer.IndexerConstants
+import backend.indexer.Indexer
+import backend.indexer.IndexerConstants
 import research.converter.protocol.Hierarchy
 
 trait IndexerSystem {

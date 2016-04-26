@@ -18,7 +18,6 @@ import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMsg
 import protocol._
-import research.Logger
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
