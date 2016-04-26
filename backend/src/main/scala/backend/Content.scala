@@ -154,7 +154,7 @@ object Content {
     )
   }
 
-  def queuePage(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
+  def queuePage(items: Seq[Int], cssDeps: Seq[String], jsDeps: Seq[String]): String = {
     "<!DOCTYPE html>" + html(
       head(
         meta(charset := "UTF-8"),
@@ -162,6 +162,13 @@ object Content {
         for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
       ),
       body(
+        h4("Queue items"),
+        ul(
+          if (items.isEmpty)
+            li("No items")
+          else
+            for (i ← items) yield li(a(href := s"//localhost:9999/queue?item=$i", s"Item $i"))
+        ),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )
     )

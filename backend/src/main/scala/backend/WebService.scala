@@ -23,6 +23,8 @@ import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
 import backend.requests.AddJson
 import backend.requests.Sparql
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
 
 final class WebService(implicit m: Materializer, system: ActorSystem)
     extends Directives
@@ -86,13 +88,20 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
     path("queue") {
-      val content = Content.queuePage(
-        cssDeps = Seq(
-        ),
-        jsDeps = Seq(
-        )
-      )
-      complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
+      onComplete(bs.queueItems) {
+        case scala.util.Success(items) ⇒
+          val content = Content.queuePage(items,
+            cssDeps = Seq(
+            ),
+            jsDeps = Seq(
+            )
+          )
+          complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
+
+        case scala.util.Failure(f) ⇒
+          import StatusCodes._
+          complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+      }
     }
   } ~
   post {
