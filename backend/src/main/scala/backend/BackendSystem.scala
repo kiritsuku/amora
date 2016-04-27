@@ -18,6 +18,7 @@ import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMsg
 import protocol._
+import akka.actor.ActorRef
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
@@ -48,13 +49,11 @@ final class BackendSystem(implicit system: ActorSystem)
     }
   }
 
-  def authFlow(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    val out = Source
-      .actorRef[Response](1, OverflowStrategy.fail)
-      .mapMaterializedValue { nvim ! NewClient(_) }
-      .map(Pickle.intoBytes(_))
-    Flow.fromSinkAndSource(Sink.ignore, out)
-  }
+  def authNvimUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] =
+    authFlow[Response](nvim ! NewClient(_))
+
+  def authWebUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] =
+    authFlow[frontend.webui.protocol.Response](ref ⇒ ())
 
   def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
     def sink(sender: String) = Sink.actorRef[NvimMsg](nvim, ClientLeft(sender))
@@ -67,5 +66,13 @@ final class BackendSystem(implicit system: ActorSystem)
       .mapMaterializedValue { nvim ! ClientReady(sender, _) }
       .map(Pickle.intoBytes(_))
     Flow.fromSinkAndSource(in, out)
+  }
+
+  private def authFlow[A : Pickler](f: ActorRef ⇒ Unit): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
+    val out = Source
+      .actorRef[A](1, OverflowStrategy.fail)
+      .mapMaterializedValue(f)
+      .map(Pickle.intoBytes(_))
+    Flow.fromSinkAndSource(Sink.ignore, out)
   }
 }

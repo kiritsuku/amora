@@ -52,7 +52,10 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     path("codemirror.css")(getFromResource("codemirror/lib/codemirror.css")) ~
     path("solarized.css")(getFromResource("codemirror/theme/solarized.css")) ~
     path("auth") {
-      handleWebSocketMessages(authClientFlow())
+      handleWebSocketMessages(authNvimUi())
+    } ~
+    path("auth-web") {
+      handleWebSocketMessages(authWebUi())
     } ~
     path("communication") {
       parameter('name) { name ⇒
@@ -139,8 +142,11 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     }
     .via(reportErrorsFlow())
 
-  private def authClientFlow(): Flow[Message, Message, NotUsed] =
-    withWebsocketFlow(bs.authFlow())
+  private def authNvimUi(): Flow[Message, Message, NotUsed] =
+    withWebsocketFlow(bs.authNvimUi())
+
+  private def authWebUi(): Flow[Message, Message, NotUsed] =
+    withWebsocketFlow(bs.authWebUi())
 
   private def communicationFlow(sender: String): Flow[Message, Message, NotUsed] =
     withWebsocketFlow(bs.messageFlow(sender))
