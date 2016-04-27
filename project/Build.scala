@@ -173,16 +173,35 @@ object Build extends sbt.Build {
     }
   )
 
+  /**
+   * The electron based UI for neovim.
+   */
   lazy val ui = project in file("ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
     name := "ui",
     scalaJSStage in Global := FastOptStage,
 
+    // for codemirror-facade
     resolvers += sbt.Resolver.bintrayRepo("denigma", "denigma-releases"),
 
     libraryDependencies ++= deps.sjs.value,
 
     skip in packageJSDependencies := false,
     jsDependencies ++= deps.webjars.value,
+
+    persistLauncher in Compile := true,
+    persistLauncher in Test := false
+  ) dependsOn (protocolJs)
+
+  /**
+   * The web interface of the backend.
+   */
+  lazy val webUi = project in file("web-ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
+    name := "web-ui",
+    scalaJSStage in Global := FastOptStage,
+
+    libraryDependencies ++= deps.webUi.value,
+
+    skip in packageJSDependencies := false,
 
     persistLauncher in Compile := true,
     persistLauncher in Test := false
@@ -328,6 +347,11 @@ object Build extends sbt.Build {
     lazy val sjs = Def.setting(Seq(
       "be.doeraene"                    %%% "scalajs-jquery"                    % versions.jquery,
       "org.denigma"                    %%% "codemirror-facade"                 % versions.codemirror,
+      "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags
+    ))
+
+    lazy val webUi = Def.setting(Seq(
+      "be.doeraene"                    %%% "scalajs-jquery"                    % versions.jquery,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags
     ))
 
