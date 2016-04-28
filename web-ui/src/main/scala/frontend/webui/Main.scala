@@ -82,10 +82,6 @@ object Main extends JSApp {
     ws.onclose = (e: Event) ⇒ {
       dom.console.info(s"websocket for server communication closed")
     }
-    dom.window.jsg.onerror = js.Any.fromFunction5((msg: Event, file: String, line: Int, col: Int, error: Any) ⇒ {
-      // TODO See https://github.com/stacktracejs/stacktrace.js for a browser independent solution to log errors
-      dom.console.error(error.jsg.stack)
-    })
   }
 
   def handleResponse(response: Response) = response match {
