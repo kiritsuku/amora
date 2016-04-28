@@ -54,9 +54,8 @@ object Main extends JSApp {
           import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
           Future(setupWS())
 
-        case ConnectionFailure ⇒
-          dom.console.error("Connection failure")
-          // TODO what to do here?
+        case ConnectionFailure(reason) ⇒
+          dom.console.error(s"Server rejected connection request: $reason")
 
         case msg ⇒
           dom.console.error(s"Unexpected message arrived: $msg")
