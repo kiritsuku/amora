@@ -30,6 +30,9 @@ class WebActor extends Actor {
       log.info(s"Client with ID `$clientId` left")
 
     case ClientRequest(clientId, req) ⇒ req match {
+      case GetQueueItems ⇒
+        // Test data
+        clients(clientId) ! QueueItems(Seq(1, 2))
       case msg ⇒
         log.error(s"Unexpected message: $msg")
     }

@@ -8,15 +8,9 @@ import scala.scalajs.js.JSApp
 import scala.scalajs.js.JSON
 
 import org.scalajs.dom
-import org.scalajs.dom.raw.CloseEvent
-import org.scalajs.dom.raw.ErrorEvent
-import org.scalajs.dom.raw.Event
-import org.scalajs.dom.raw.MessageEvent
-import org.scalajs.dom.raw.WebSocket
+import org.scalajs.dom.raw._
 
-import frontend.webui.protocol.AuthorizationGranted
-import frontend.webui.protocol.Response
-import protocol.ConnectionSuccessful
+import frontend.webui.protocol._
 
 object Main extends JSApp {
   private val $ = org.scalajs.jquery.jQuery
@@ -89,15 +83,51 @@ object Main extends JSApp {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
       showMainPage()
+
+    case req: QueueItems ⇒
+      handleQueueItems(req)
+
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
 
   def showMainPage() = {
     import scalatags.JsDom.all._
-    val par = div(h3("Knowledge Base")).render
-    $("body").append(par)
 
+    val content = div(
+        h3("Knowledge Base"),
+        ul(
+          li(id := "li1", a(href := "", "Show queue", onclick := "return false;"))
+        ),
+        div(id := "content")
+    ).render
+    $("body").append(content)
+
+    val d = dom.document.getElementById("li1").asInstanceOf[dom.html.Link]
+    d.onclick = (e: MouseEvent) ⇒ {
+      send(GetQueueItems)
+    }
+  }
+
+  def handleQueueItems(req: QueueItems) = {
+    import scalatags.JsDom.all._
+    val content = div(
+      h4("Queue Items"),
+      ul(
+        if (req.items.isEmpty)
+          li("No items")
+        else
+          for (i ← req.items) yield li(a(href := "", s"Item $i"))
+      )
+    ).render
+    $("#content").empty().append(content)
+  }
+
+  def send(req: Request): Unit = {
+    import boopickle.Default._
+    val msg = Pickle.intoBytes(req)
+    ws.send(toArrayBuffer(msg))
+    dom.console.info(s"Sent request: $req")
   }
 
   private def websocketUri(path: String): String = {
@@ -108,5 +138,10 @@ object Main extends JSApp {
   private def toByteBuffer(data: Any): ByteBuffer = {
     val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
     js.typedarray.TypedArrayBuffer.wrap(ab)
+  }
+
+  private def toArrayBuffer(data: ByteBuffer): js.typedarray.ArrayBuffer = {
+    import js.typedarray.TypedArrayBufferOps._
+    data.arrayBuffer
   }
 }
