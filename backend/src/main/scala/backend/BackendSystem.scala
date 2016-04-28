@@ -17,21 +17,22 @@ import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMsg
-import protocol._
 import akka.actor.ActorRef
+import backend.actors.WebMessage
+import backend.actors.WebActor
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
     with IndexerSystem {
 
   import boopickle.Default._
-  import NvimMsg._
+  import akka.pattern.ask
+  import system.dispatcher
 
   private val nvim = system.actorOf(Props[NvimActor])
   private val queue = system.actorOf(Props[QueueActor])
+  private val web = system.actorOf(Props[WebActor])
 
-  import akka.pattern.ask
-  import system.dispatcher
   implicit val timeout = Timeout(5.seconds)
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
@@ -49,21 +50,40 @@ final class BackendSystem(implicit system: ActorSystem)
     }
   }
 
-  def authNvimUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] =
-    authFlow[Response](nvim ! NewClient(_))
+  def authNvimUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
+    import NvimMsg._
+    authFlow[protocol.Response](nvim ! NewClient(_))
+  }
 
-  def authWebUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] =
-    authFlow[frontend.webui.protocol.Response](ref ⇒ ())
+  def authWebUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
+    import WebMessage._
+    authFlow[frontend.webui.protocol.Response](web ! ClientAuthorizationRequest(_))
+  }
 
-  def messageFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    def sink(sender: String) = Sink.actorRef[NvimMsg](nvim, ClientLeft(sender))
+  def nvimFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
+    import NvimMsg._
+    import protocol._
 
     val in = Flow[ByteBuffer]
       .map(b ⇒ ReceivedMessage(sender, Unpickle[Request].fromBytes(b)))
-      .to(sink(sender))
+      .to(Sink.actorRef[NvimMsg](nvim, ClientLeft(sender)))
     val out = Source
       .actorRef[Response](1, OverflowStrategy.fail)
       .mapMaterializedValue { nvim ! ClientReady(sender, _) }
+      .map(Pickle.intoBytes(_))
+    Flow.fromSinkAndSource(in, out)
+  }
+
+  def webUiFlow(clientId: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
+    import WebMessage._
+    import frontend.webui.protocol._
+
+    val in = Flow[ByteBuffer]
+      .map(b ⇒ ClientRequest(clientId, Unpickle[Request].fromBytes(b)))
+      .to(Sink.actorRef[WebMessage](web, ClientLeft(clientId)))
+    val out = Source
+      .actorRef[Response](1, OverflowStrategy.fail)
+      .mapMaterializedValue { web ! ClientJoined(clientId, _) }
       .map(Pickle.intoBytes(_))
     Flow.fromSinkAndSource(in, out)
   }

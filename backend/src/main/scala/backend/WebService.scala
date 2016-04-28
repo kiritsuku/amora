@@ -62,6 +62,11 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
         handleWebSocketMessages(communicationFlow(sender = name))
       }
     } ~
+    pathPrefix("kbws") {
+      parameter('id) { id ⇒
+        handleWebSocketMessages(withWebsocketFlow(bs.webUiFlow(id)))
+      }
+    } ~
     rejectEmptyResponse {
       path("favicon.ico")(getFromResource("favicon.ico", MediaTypes.`image/x-icon`))
     } ~
@@ -154,7 +159,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     withWebsocketFlow(bs.authWebUi())
 
   private def communicationFlow(sender: String): Flow[Message, Message, NotUsed] =
-    withWebsocketFlow(bs.messageFlow(sender))
+    withWebsocketFlow(bs.nvimFlow(sender))
 
   private def reportErrorsFlow[A](): Flow[A, A, NotUsed] =
     Flow[A].via(new GraphStage[FlowShape[A, A]] {

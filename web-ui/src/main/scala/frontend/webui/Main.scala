@@ -8,13 +8,14 @@ import scala.scalajs.js.JSApp
 import scala.scalajs.js.JSON
 
 import org.scalajs.dom
+import org.scalajs.dom.raw.CloseEvent
 import org.scalajs.dom.raw.ErrorEvent
 import org.scalajs.dom.raw.Event
 import org.scalajs.dom.raw.MessageEvent
 import org.scalajs.dom.raw.WebSocket
 
+import frontend.webui.protocol.AuthorizationGranted
 import frontend.webui.protocol.Response
-import protocol.ConnectionFailure
 import protocol.ConnectionSuccessful
 
 object Main extends JSApp {
@@ -38,7 +39,7 @@ object Main extends JSApp {
     val ws = new WebSocket(websocketUri("auth-web"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
-      dom.console.info("Connection for server authentication opened")
+      dom.console.info("Connection for client authorization opened")
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
       dom.console.error(s"Couldn't create connection to server: ${JSON.stringify(e)}")
@@ -47,25 +48,23 @@ object Main extends JSApp {
       import boopickle.Default._
       val bytes = toByteBuffer(e.data)
       Unpickle[Response].fromBytes(bytes) match {
-        case ConnectionSuccessful(id) ⇒
+        case AuthorizationGranted(id) ⇒
           dom.console.info(s"Server assigned id `$id`.")
           this.id = id
 
           import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
           Future(setupWS())
 
-        case ConnectionFailure(reason) ⇒
-          dom.console.error(s"Server rejected connection request: $reason")
-
         case msg ⇒
           dom.console.error(s"Unexpected message arrived: $msg")
       }
       ws.close()
+      dom.console.info("Connection for client authorization closed")
     }
   }
 
   def setupWS() = {
-    ws = new WebSocket(websocketUri("kb"))
+    ws = new WebSocket(websocketUri(s"kbws?id=$id"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
       dom.console.info("Connection for server communication opened")
@@ -78,13 +77,16 @@ object Main extends JSApp {
       val bytes = toByteBuffer(e.data)
       handleResponse(Unpickle[Response].fromBytes(bytes))
     }
-    ws.onclose = (e: Event) ⇒ {
-      dom.console.info(s"websocket for server communication closed")
+    ws.onclose = (e: CloseEvent) ⇒ {
+      val reason = if (e.reason.isEmpty) "" else s" Reason: ${e.reason}"
+      dom.console.info(s"Connection for server communication closed.$reason")
       ws = null
     }
   }
 
   def handleResponse(response: Response) = response match {
+    case ConnectionSuccessful ⇒
+      dom.console.info(s"Connection to server established. Communication is now possible.")
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
