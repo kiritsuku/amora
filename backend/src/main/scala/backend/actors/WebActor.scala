@@ -33,6 +33,8 @@ class WebActor extends Actor {
       case GetQueueItems ⇒
         // Test data
         clients(clientId) ! QueueItems(Seq(1, 2))
+      case GetQueueItem(id) ⇒
+        clients(clientId) ! QueueItem(id, "test log output", false)
       case msg ⇒
         log.error(s"Unexpected message: $msg")
     }

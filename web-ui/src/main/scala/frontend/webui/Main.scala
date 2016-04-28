@@ -11,6 +11,7 @@ import org.scalajs.dom
 import org.scalajs.dom.raw._
 
 import frontend.webui.protocol._
+import frontend.webui.protocol.QueueItem
 
 object Main extends JSApp {
   private val $ = org.scalajs.jquery.jQuery
@@ -87,6 +88,9 @@ object Main extends JSApp {
     case req: QueueItems ⇒
       handleQueueItems(req)
 
+    case req: QueueItem ⇒
+      handleQueueItem(req)
+
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
@@ -103,10 +107,7 @@ object Main extends JSApp {
     ).render
     $("body").append(content)
 
-    val d = dom.document.getElementById("li1").asInstanceOf[dom.html.Link]
-    d.onclick = (e: MouseEvent) ⇒ {
-      send(GetQueueItems)
-    }
+    handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
   }
 
   def handleQueueItems(req: QueueItems) = {
@@ -117,10 +118,26 @@ object Main extends JSApp {
         if (req.items.isEmpty)
           li("No items")
         else
-          for (i ← req.items) yield li(a(href := "", s"Item $i"))
+          for (i ← req.items) yield li(id := s"item$i", a(href := "", s"Item $i", onclick := "return false;"))
       )
     ).render
     $("#content").empty().append(content)
+
+    for (i ← req.items) handleClickEvent(s"item$i")(_ ⇒ send(GetQueueItem(i)))
+  }
+
+  def handleQueueItem(req: QueueItem) = {
+    import scalatags.JsDom.all._
+    if (req.appendLog) {
+      val d = dom.document.getElementById(s"item${req.id}").asInstanceOf[dom.html.TextArea]
+      d.value += req.log
+    } else {
+      val content = div(
+        h4(s"Queue Item ${req.id}"),
+        textarea(id := s"item${req.id}", req.log)
+      ).render
+      $("#content").empty().append(content)
+    }
   }
 
   def send(req: Request): Unit = {
@@ -128,6 +145,11 @@ object Main extends JSApp {
     val msg = Pickle.intoBytes(req)
     ws.send(toArrayBuffer(msg))
     dom.console.info(s"Sent request: $req")
+  }
+
+  private def handleClickEvent(id: String)(f: MouseEvent ⇒ Unit) = {
+    val d = dom.document.getElementById(id).asInstanceOf[dom.html.Link]
+    d.onclick = (e: MouseEvent) ⇒ f(e)
   }
 
   private def websocketUri(path: String): String = {
