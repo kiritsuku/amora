@@ -94,6 +94,9 @@ object Main extends JSApp {
     case req: Schemas ⇒
       handleSchemas(req)
 
+    case req: Schema ⇒
+      handleSchema(req)
+
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
@@ -157,15 +160,27 @@ object Main extends JSApp {
           else
             option(schemaName)
       ),
-      div(
-        id := "schema",
-        div(id := "schemaForm"),
-        script(`type` := "text/javascript", raw(s"""
-          $$("#schemaForm").alpaca(${schemas.defaultSchema.jsonSchema});
-        """))
-      )
+      div(id := "schema")
     ).render
     $("#content").empty().append(content)
+
+    handleSchema(schemas.defaultSchema)
+    val d = dom.document.getElementById("schemas").asInstanceOf[dom.html.Select]
+    d.onchange = (_: Event) ⇒ {
+      val selectedSchema = d.options(d.selectedIndex).textContent
+      send(GetSchema(selectedSchema))
+    }
+  }
+
+  def handleSchema(schema: Schema) = {
+    import scalatags.JsDom.all._
+    val content = div(
+      div(id := "schemaForm"),
+      script(`type` := "text/javascript", raw(s"""
+        $$("#schemaForm").alpaca(${schema.jsonSchema});
+      """))
+    ).render
+    $("#schema").empty().append(content)
   }
 
   def send(req: Request): Unit = {

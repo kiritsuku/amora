@@ -38,6 +38,8 @@ class WebActor extends Actor {
         clients(clientId) ! QueueItem(id, "test log output", false)
       case GetSchemas ⇒
         clients(clientId) ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
+      case GetSchema(name) ⇒
+        clients(clientId) ! Schema("artifacts", Content.schemas.artifacts)
       case msg ⇒
         log.error(s"Unexpected message: $msg")
     }
