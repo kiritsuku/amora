@@ -68,7 +68,7 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     pathPrefix("kb") {
       val content = Content.kbPage(
         cssDeps = Seq(),
-        jsDeps = Seq("web-ui-fastopt.js", "web-ui-launcher.js")
+        jsDeps = Seq("web-ui-jsdeps.js", "web-ui-fastopt.js", "web-ui-launcher.js")
       )
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
