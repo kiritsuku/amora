@@ -85,17 +85,17 @@ object Main extends JSApp {
       dom.console.info(s"Connection to server established. Communication is now possible.")
       showMainPage()
 
-    case req: QueueItems ⇒
-      handleQueueItems(req)
+    case resp: QueueItems ⇒
+      handleQueueItems(resp)
 
-    case req: QueueItem ⇒
-      handleQueueItem(req)
+    case resp: QueueItem ⇒
+      handleQueueItem(resp)
 
-    case req: Schemas ⇒
-      handleSchemas(req)
+    case resp: Schemas ⇒
+      handleSchemas(resp)
 
-    case req: Schema ⇒
-      handleSchema(req)
+    case resp: Schema ⇒
+      handleSchema(resp)
 
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
@@ -118,31 +118,31 @@ object Main extends JSApp {
     handleClickEvent("li2")(_ ⇒ send(GetSchemas))
   }
 
-  def handleQueueItems(req: QueueItems) = {
+  def handleQueueItems(items: QueueItems) = {
     import scalatags.JsDom.all._
     val content = div(
       h4("Queue Items"),
       ul(
-        if (req.items.isEmpty)
+        if (items.items.isEmpty)
           li("No items")
         else
-          for (i ← req.items) yield li(id := s"item$i", a(href := "", s"Item $i", onclick := "return false;"))
+          for (i ← items.items) yield li(id := s"item$i", a(href := "", s"Item $i", onclick := "return false;"))
       )
     ).render
     $("#content").empty().append(content)
 
-    for (i ← req.items) handleClickEvent(s"item$i")(_ ⇒ send(GetQueueItem(i)))
+    for (i ← items.items) handleClickEvent(s"item$i")(_ ⇒ send(GetQueueItem(i)))
   }
 
-  def handleQueueItem(req: QueueItem) = {
+  def handleQueueItem(item: QueueItem) = {
     import scalatags.JsDom.all._
-    if (req.appendLog) {
-      val d = dom.document.getElementById(s"item${req.id}").asInstanceOf[dom.html.TextArea]
-      d.value += req.log
+    if (item.appendLog) {
+      val d = dom.document.getElementById(s"item${item.id}").asInstanceOf[dom.html.TextArea]
+      d.value += item.log
     } else {
       val content = div(
-        h4(s"Queue Item ${req.id}"),
-        textarea(id := s"item${req.id}", req.log)
+        h4(s"Queue Item ${item.id}"),
+        textarea(id := s"item${item.id}", item.log)
       ).render
       $("#content").empty().append(content)
     }
