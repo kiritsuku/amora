@@ -222,14 +222,22 @@ object Build extends sbt.Build {
       "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"
     ),
 
-    // add *fastopt.js file to resources
+    // add *fastopt.js file of ui project to resources
     resourceGenerators in Compile <+= (fastOptJS in Compile in ui).map(r => Seq(r.data)),
     // add *fullopt.js file to resources
 //    (resourceGenerators in Compile) <+= (fullOptJS in Compile in ui).map(r => Seq(r.data)),
-    // add *launcher.js file to resources
+    // add *launcher.js file of ui project to resources
     resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in ui).map(r => Seq(r.data)),
-    // add *jsdeps.js file to resources
+    // add *jsdeps.js file of ui project to resources
     resourceGenerators in Compile <+= (packageJSDependencies in Compile in ui).map(Seq(_)),
+
+    // add *fastopt.js file of webUi project to resources
+    resourceGenerators in Compile <+= (fastOptJS in Compile in webUi).map(r => Seq(r.data)),
+    // add *launcher.js file of webUi project to resources
+    resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in webUi).map(r => Seq(r.data)),
+    // add *jsdeps.js file of webUi project to resources
+    resourceGenerators in Compile <+= (packageJSDependencies in Compile in webUi).map(Seq(_)),
+
     // depend on the genElectronMain task but don't add its generated resources since we don't need to route them at runtime
     resourceGenerators in Compile <+= (genElectronMain in Compile in electron).map(_ => Seq()),
     // add folder of webjars to resources

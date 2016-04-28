@@ -184,4 +184,17 @@ object Content {
     )
   }
 
+  def kbPage(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
+    "<!DOCTYPE html>" + html(
+      head(
+        meta(charset := "UTF-8"),
+        tags2.title("Knowledge Base"),
+        for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
+      ),
+      body(
+        for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
+      )
+    )
+  }
+
 }

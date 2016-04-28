@@ -66,10 +66,15 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
       path("favicon.ico")(getFromResource("favicon.ico", MediaTypes.`image/x-icon`))
     } ~
     pathPrefix("kb") {
-      path(RestPath) { path ⇒
-        complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, s"got: $path"))
-      }
+      val content = Content.kbPage(
+        cssDeps = Seq(),
+        jsDeps = Seq("web-ui-fastopt.js", "web-ui-launcher.js")
+      )
+      complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
+    path("web-ui-jsdeps.js")(getFromResource("web-ui-jsdeps.js")) ~
+    path("web-ui-fastopt.js")(getFromResource("web-ui-fastopt.js")) ~
+    path("web-ui-launcher.js")(getFromResource("web-ui-launcher.js")) ~
     path("sparql") {
       parameterMap { params ⇒
         handleSparqlGetRequest(params)
