@@ -28,14 +28,14 @@ object Main extends JSApp {
 
   /** The socket to the server */
   private var ws: WebSocket = _
-  /** The ID of the client which is assigned by the server after authentication. */
+  /** The ID of the client which is assigned by the server after authorization. */
   private var id: String = _
 
   override def main(): Unit = {
-    authenticate()
+    authorize()
   }
 
-  def authenticate() = {
+  def authorize() = {
     val ws = new WebSocket(websocketUri("auth-web"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
