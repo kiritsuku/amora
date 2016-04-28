@@ -80,11 +80,13 @@ object Main extends JSApp {
     }
     ws.onclose = (e: Event) ⇒ {
       dom.console.info(s"websocket for server communication closed")
+      ws = null
     }
   }
 
   def handleResponse(response: Response) = response match {
-    case _ ⇒
+    case msg ⇒
+      dom.console.error(s"Unexpected message arrived: $msg")
   }
 
   private def websocketUri(path: String): String = {
