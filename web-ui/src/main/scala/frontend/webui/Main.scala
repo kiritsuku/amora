@@ -5,6 +5,7 @@ import java.nio.ByteBuffer
 import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
+import scala.scalajs.js.JSON
 
 import org.scalajs.dom
 import org.scalajs.dom.raw.ErrorEvent
@@ -37,10 +38,10 @@ object Main extends JSApp {
     val ws = new WebSocket(websocketUri("auth-web"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
-      dom.console.log("Connection for server authentication opened")
+      dom.console.info("Connection for server authentication opened")
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
-      dom.console.error(s"Couldn't create connection to server: $e")
+      dom.console.error(s"Couldn't create connection to server: ${JSON.stringify(e)}")
     }
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
@@ -71,7 +72,7 @@ object Main extends JSApp {
       dom.console.info("Connection for server communication opened")
     }
     ws.onerror = (e: ErrorEvent) ⇒ {
-      dom.console.error(s"Couldn't create connection to server: $e")
+      dom.console.error(s"Couldn't create connection to server: ${JSON.stringify(e)}")
     }
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
