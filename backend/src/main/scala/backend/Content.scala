@@ -56,98 +56,11 @@ object Content {
       ),
       body(
         div(id := "form"),
-        script(`type` := "text/javascript", raw("""
-          $(document).ready(function() {
-            $("#form").alpaca({
-
-              "schema": {
-                  "title":"Artifact Indexing",
-                  "description":"Specify an artifact that should be indexed.",
-                  "type":"object",
-                  "properties": {
-                      "tpe": {
-                          "type":"string",
-                          "hidden": true,
-                      },
-                      "artifacts": {
-                          "type": "array",
-                          "items": {
-                              "type": "object",
-                              "properties": {
-                                  "organization": {
-                                      "type":"string",
-                                      "title":"Organization",
-                                      "required":true
-                                  },
-                                  "name": {
-                                      "type":"string",
-                                      "title":"Name",
-                                      "required":true
-                                  },
-                                  "version": {
-                                      "type":"string",
-                                      "title":"Version",
-                                      "required":true
-                                  }
-                              }
-                          }
-                      }
-                  }
-              },
-              "options": {
-                  "form": {
-                      "buttons": {
-                          "submit": {
-                              "click": function() {
-                                  var value = this.getValue();
-                                  $.ajax({
-                                      type: "POST",
-                                      url: "//localhost:9999/add-json",
-                                      data: JSON.stringify(value, null, "  "),
-                                      success: function(resp) {
-                                          console.log("success: " + JSON.stringify(resp));
-                                      },
-                                      error: function(err) {
-                                          console.log("error: " + JSON.stringify(err));
-                                      }
-                                  });
-                              }
-                          },
-                          "reset": {}
-                      }
-                  },
-                  "fields": {
-                      "tpe": {
-                          "hidden": true
-                      },
-                      "artifacts": {
-                          "toolbarSticky": true,
-                          "fields": {
-                              "item": {
-                                  "fields": {
-                                      "organization": {
-                                          "size": 20,
-                                          "placeholder": "Enter the organization of the artifact"
-                                      },
-                                      "name": {
-                                          "size": 20,
-                                          "placeholder": "Enter the name of the artifact"
-                                      },
-                                      "version": {
-                                          "size": 20,
-                                          "placeholder": "Enter the version of the artifact"
-                                      }
-                                  }
-                              }
-                          }
-                      }
-                  }
-              },
-              "data": {
-                "tpe": "artifact"
-              }
-
-            });
+        script(`type` := "text/javascript", raw(s"""
+          $$(document).ready(function() {
+            $$("#form").alpaca(
+              ${schemas.artifacts}
+            );
           });
         """))
       )
@@ -195,6 +108,97 @@ object Content {
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )
     )
+  }
+
+  object schemas {
+    val artifacts = """{
+      "schema": {
+        "title":"Artifact Indexing",
+        "description":"Specify an artifact to index",
+        "type":"object",
+        "properties": {
+          "tpe": {
+            "type":"string",
+            "hidden": true
+          },
+          "artifacts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "organization": {
+                  "type":"string",
+                  "title":"Organization",
+                  "required":true
+                },
+                "name": {
+                  "type":"string",
+                  "title":"Name",
+                  "required":true
+                },
+                "version": {
+                  "type":"string",
+                  "title":"Version",
+                  "required":true
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "form": {
+          "buttons": {
+            "submit": {
+              "click": function() {
+                var value = this.getValue();
+                $.ajax({
+                  type: "POST",
+                  url: "//localhost:9999/add-json",
+                  data: JSON.stringify(value, null, "  "),
+                  success: function(resp) {
+                    console.log("success: " + JSON.stringify(resp));
+                  },
+                  error: function(err) {
+                    console.log("error: " + JSON.stringify(err));
+                  }
+                });
+              }
+            },
+            "reset": {}
+          }
+        },
+        "fields": {
+          "tpe": {
+            "hidden": true
+          },
+          "artifacts": {
+            "toolbarSticky": true,
+            "fields": {
+              "item": {
+                "fields": {
+                  "organization": {
+                    "size": 20,
+                    "placeholder": "Enter the organization of the artifact"
+                  },
+                  "name": {
+                    "size": 20,
+                    "placeholder": "Enter the name of the artifact"
+                  },
+                  "version": {
+                    "size": 20,
+                    "placeholder": "Enter the version of the artifact"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "data": {
+        "tpe": "artifact"
+      }
+    }"""
   }
 
 }

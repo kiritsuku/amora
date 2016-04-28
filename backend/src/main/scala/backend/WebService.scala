@@ -72,8 +72,16 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
     } ~
     pathPrefix("kb") {
       val content = Content.kbPage(
-        cssDeps = Seq(),
-        jsDeps = Seq("web-ui-jsdeps.js", "web-ui-fastopt.js", "web-ui-launcher.js")
+        cssDeps = Seq(
+          "http://www.alpacajs.org/lib/bootstrap/dist/css/bootstrap.min.css",
+          "http://www.alpacajs.org/lib/alpaca/bootstrap/alpaca.min.css"
+        ),
+        jsDeps = Seq(
+          "web-ui-jsdeps.js", "web-ui-fastopt.js", "web-ui-launcher.js",
+          "http://www.alpacajs.org/lib/handlebars/handlebars.min.js",
+          "http://www.alpacajs.org/lib/bootstrap/dist/js/bootstrap.min.js",
+          "http://www.alpacajs.org/lib/alpaca/bootstrap/alpaca.min.js"
+        )
       )
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~

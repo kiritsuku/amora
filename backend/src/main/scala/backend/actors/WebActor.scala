@@ -4,6 +4,7 @@ import akka.actor.Actor
 import akka.actor.ActorRef
 import frontend.webui.protocol._
 import WebMessage._
+import backend.Content
 
 class WebActor extends Actor {
 
@@ -35,6 +36,8 @@ class WebActor extends Actor {
         clients(clientId) ! QueueItems(Seq(1, 2))
       case GetQueueItem(id) ⇒
         clients(clientId) ! QueueItem(id, "test log output", false)
+      case GetSchemas ⇒
+        clients(clientId) ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
       case msg ⇒
         log.error(s"Unexpected message: $msg")
     }

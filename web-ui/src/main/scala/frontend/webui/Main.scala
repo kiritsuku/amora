@@ -91,6 +91,9 @@ object Main extends JSApp {
     case req: QueueItem ⇒
       handleQueueItem(req)
 
+    case req: Schemas ⇒
+      handleSchemas(req)
+
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
@@ -101,13 +104,15 @@ object Main extends JSApp {
     val content = div(
         h3("Knowledge Base"),
         ul(
-          li(id := "li1", a(href := "", "Show queue", onclick := "return false;"))
+          li(id := "li1", a(href := "", "Show queue", onclick := "return false;")),
+          li(id := "li2", a(href := "", "Show schemas", onclick := "return false;"))
         ),
         div(id := "content")
     ).render
     $("body").append(content)
 
     handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
+    handleClickEvent("li2")(_ ⇒ send(GetSchemas))
   }
 
   def handleQueueItems(req: QueueItems) = {
@@ -138,6 +143,29 @@ object Main extends JSApp {
       ).render
       $("#content").empty().append(content)
     }
+  }
+
+  def handleSchemas(schemas: Schemas) = {
+    import scalatags.JsDom.all._
+    val content = div(
+      h4(s"Schemas"),
+      select(
+        id := "schemas",
+        for (schemaName ← schemas.schemaNames) yield
+          if (schemaName == schemas.defaultSchema.name)
+            option(selected := "", schemaName)
+          else
+            option(schemaName)
+      ),
+      div(
+        id := "schema",
+        div(id := "schemaForm"),
+        script(`type` := "text/javascript", raw(s"""
+          $$("#schemaForm").alpaca(${schemas.defaultSchema.jsonSchema});
+        """))
+      )
+    ).render
+    $("#content").empty().append(content)
   }
 
   def send(req: Request): Unit = {
