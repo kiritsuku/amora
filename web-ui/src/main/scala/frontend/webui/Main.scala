@@ -19,6 +19,7 @@ import frontend.webui.protocol.Response
 import protocol.ConnectionSuccessful
 
 object Main extends JSApp {
+  private val $ = org.scalajs.jquery.jQuery
 
   implicit class AsDynamic[A](private val a: A) extends AnyVal {
     def jsg: js.Dynamic = a.asInstanceOf[js.Dynamic]
@@ -29,7 +30,7 @@ object Main extends JSApp {
   /** The socket to the server */
   private var ws: WebSocket = _
   /** The ID of the client which is assigned by the server after authorization. */
-  private var id: String = _
+  private var clientId: String = _
 
   override def main(): Unit = {
     authorize()
@@ -50,7 +51,7 @@ object Main extends JSApp {
       Unpickle[Response].fromBytes(bytes) match {
         case AuthorizationGranted(id) ⇒
           dom.console.info(s"Server assigned id `$id`.")
-          this.id = id
+          this.clientId = id
 
           import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
           Future(setupWS())
@@ -64,7 +65,7 @@ object Main extends JSApp {
   }
 
   def setupWS() = {
-    ws = new WebSocket(websocketUri(s"kbws?id=$id"))
+    ws = new WebSocket(websocketUri(s"kbws?id=$clientId"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
       dom.console.info("Connection for server communication opened")
@@ -87,8 +88,16 @@ object Main extends JSApp {
   def handleResponse(response: Response) = response match {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
+      showMainPage()
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
+  }
+
+  def showMainPage() = {
+    import scalatags.JsDom.all._
+    val par = div(h3("Knowledge Base")).render
+    $("body").append(par)
+
   }
 
   private def websocketUri(path: String): String = {
