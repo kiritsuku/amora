@@ -174,7 +174,8 @@ object Main extends JSApp {
     }
   }
 
-  // TODO get rid of this @JSExport. It is a hack which was needed to call the Scala from Alpaca.js
+  // TODO Get rid of this @JSExport
+  // It is a hack which was needed to call the Scala code from Alpaca.js
   @JSExport
   def handleFormSubmit(elem: js.Object) = {
     val value = elem.jsg.getValue()
@@ -186,6 +187,11 @@ object Main extends JSApp {
     import scalatags.JsDom.all._
     val content = div(
       div(id := "schemaForm"),
+      // TODO Replace this JS script with Scala code
+      // We should use `$("#schemaForm").jsg.alpaca(JSON.parse(schema.jsonSchema))`
+      // but we can't yet because the json schema contains non JSON code but some
+      // JS definitions which Scala.js doesn't understand. Once we got rid with the
+      // JS definitions, we can also fix this issue.
       script(`type` := "text/javascript", raw(s"""
         $$("#schemaForm").alpaca(${schema.jsonSchema});
       """))
