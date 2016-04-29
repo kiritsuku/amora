@@ -5,6 +5,7 @@ case object GetQueueItems extends Request
 case class GetQueueItem(id: Int) extends Request
 case object GetSchemas extends Request
 case class GetSchema(name: String) extends Request
+case class IndexData(json: String) extends Request
 
 sealed trait Response
 case class AuthorizationGranted(id: String) extends Response

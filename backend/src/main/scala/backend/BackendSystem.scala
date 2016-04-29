@@ -20,6 +20,7 @@ import backend.actors.QueueMsg
 import akka.actor.ActorRef
 import backend.actors.WebMessage
 import backend.actors.WebActor
+import backend.actors.IndexerActor
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
@@ -31,7 +32,8 @@ final class BackendSystem(implicit system: ActorSystem)
 
   private val nvim = system.actorOf(Props[NvimActor])
   private val queue = system.actorOf(Props[QueueActor])
-  private val web = system.actorOf(Props[WebActor])
+  private val indexer = system.actorOf(Props[IndexerActor])
+  private val web = system.actorOf(Props(classOf[WebActor], queue, indexer))
 
   implicit val timeout = Timeout(5.seconds)
 
