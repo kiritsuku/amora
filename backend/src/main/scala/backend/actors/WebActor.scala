@@ -12,6 +12,7 @@ import backend.indexer.ArtifactIndexer.DownloadError
 import backend.Logger
 import spray.json.DefaultJsonProtocol
 import backend.indexer.ScalaSourceIndexer
+import backend.indexer.JavaBytecodeIndexer
 
 class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
 
@@ -76,6 +77,10 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
         val files = json.convertTo[Files]
         logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
 
+      case JsString("java-bytecode") ⇒
+        val files = json.convertTo[Files]
+        logger ⇒ handleJavaBytecode(files, new JavaBytecodeIndexer(logger))
+
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
         logger ⇒ handleArtifact(artifacts, new ArtifactIndexer(logger))
@@ -89,6 +94,14 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
 
   private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
     val res = indexer.convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+    res foreach {
+      case (fileName, hierarchy) ⇒
+        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+    }
+  }
+
+  private def handleJavaBytecode(files: Files, indexer: JavaBytecodeIndexer) = {
+    val res = indexer.bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
         this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
