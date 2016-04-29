@@ -11,13 +11,18 @@ import backend.indexer.ArtifactIndexer.DownloadSuccess
 import backend.indexer.ArtifactIndexer.DownloadError
 import backend.Logger
 import spray.json.DefaultJsonProtocol
+import backend.indexer.ScalaSourceIndexer
 
 class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
 
+  case class Files(tpe: String, files: Seq[File])
+  case class File(fileName: String, src: String)
   case class Artifact(organization: String, name: String, version: String)
   case class Artifacts(tpe: String, artifacts: Seq[Artifact])
 
   object JsonProtocols extends DefaultJsonProtocol {
+    implicit val fileFormat = jsonFormat2(File)
+    implicit val filesFormat = jsonFormat2(Files)
     implicit val artifactFormat = jsonFormat3(Artifact)
     implicit val artifactsFormat = jsonFormat2(Artifacts)
   }
@@ -67,6 +72,10 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
     val func: Logger ⇒ Unit = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
+      case JsString("scala-source") ⇒
+        val files = json.convertTo[Files]
+        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
+
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
         logger ⇒ handleArtifact(artifacts, new ArtifactIndexer(logger))
@@ -76,6 +85,14 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
     }
 
     queue ! QueueMsg.Add(func)
+  }
+
+  private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
+    val res = indexer.convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
+    res foreach {
+      case (fileName, hierarchy) ⇒
+        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+    }
   }
 
   private def handleArtifact(artifacts: Artifacts, indexer: ArtifactIndexer) = {
@@ -116,9 +133,9 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
 
     logger.info(s"Indexing ${indexed.size} files.")
     indexed.zipWithIndex foreach {
-      case ((name, hierarchy), i) ⇒
-        logger.info(s"Indexing file $i ($name) with ${hierarchy.size} entries.")
-        this.indexer ! IndexerMessage.AddFile(name, hierarchy)
+      case ((fileName, hierarchy), i) ⇒
+        logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
+        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }
