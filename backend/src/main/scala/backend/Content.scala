@@ -151,18 +151,10 @@ object Content {
           "buttons": {
             "submit": {
               "click": function() {
-                var value = this.getValue();
-                $.ajax({
-                  type: "POST",
-                  url: "//localhost:9999/add-json",
-                  data: JSON.stringify(value, null, "  "),
-                  success: function(resp) {
-                    console.log("success: " + JSON.stringify(resp));
-                  },
-                  error: function(err) {
-                    console.log("error: " + JSON.stringify(err));
-                  }
-                });
+                // we need to do some logic here but I couldn't find out a better
+                // way to combine alpace with Scala.js code, therefore we just call
+                // the Scala code here directly.
+                frontend.webui.Main().handleFormSubmit(this);
               }
             },
             "reset": {}

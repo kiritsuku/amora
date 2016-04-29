@@ -6,6 +6,7 @@ import scala.concurrent.Future
 import scala.scalajs.js
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.JSON
+import scala.scalajs.js.annotation.JSExport
 
 import org.scalajs.dom
 import org.scalajs.dom.raw._
@@ -13,6 +14,7 @@ import org.scalajs.dom.raw._
 import frontend.webui.protocol._
 import frontend.webui.protocol.QueueItem
 
+@JSExport
 object Main extends JSApp {
   private val $ = org.scalajs.jquery.jQuery
 
@@ -170,6 +172,14 @@ object Main extends JSApp {
       val selectedSchema = d.options(d.selectedIndex).textContent
       send(GetSchema(selectedSchema))
     }
+  }
+
+  // TODO get rid of this @JSExport. It is a hack which was needed to call the Scala from Alpaca.js
+  @JSExport
+  def handleFormSubmit(elem: js.Object) = {
+    val value = elem.jsg.getValue()
+    val formattedJson = JSON.stringify(value, null: js.Function2[String, js.Any, js.Any], "  ")
+    send(IndexData(formattedJson))
   }
 
   def handleSchema(schema: Schema) = {
