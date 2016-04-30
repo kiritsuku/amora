@@ -39,19 +39,19 @@ final class BackendSystem(implicit system: ActorSystem)
   implicit val timeout = Timeout(5.seconds)
 
   def indexData(json: String): Future[Int] = {
-    web.ask(WebMessage.ClientRequest("anonymous", IndexData(json))).asInstanceOf[Future[Int]]
+    web.ask(WebMessage.ClientRequest("anonymous", IndexData(json))).mapTo[Int]
   }
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
-    queue.ask(QueueMsg.Add(func)).asInstanceOf[Future[Int]]
+    queue.ask(QueueMsg.Add(func)).mapTo[Int]
   }
 
   def queueItems: Future[Seq[Int]] = {
-    queue.ask(QueueMsg.GetItems).asInstanceOf[Future[Seq[Int]]]
+    queue.ask(QueueMsg.GetItems).mapTo[Seq[Int]]
   }
 
   def queueItem(id: Int): Future[Logger] = {
-    queue.ask(QueueMsg.GetItem(id)).asInstanceOf[Future[Option[Logger]]].map {
+    queue.ask(QueueMsg.GetItem(id)).mapTo[Option[Logger]].map {
       case None ⇒ throw new NoSuchElementException(s"Item with id $id doesn't exist.")
       case Some(logger) ⇒ logger
     }
