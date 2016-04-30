@@ -6,14 +6,15 @@ import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
+import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
-import akka.stream.Materializer
 import akka.stream.Outlet
 import akka.stream.scaladsl.Flow
 import akka.stream.stage.GraphStage
@@ -22,19 +23,15 @@ import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
 import backend.requests.Sparql
-import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.StatusCodes
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
-import frontend.webui.protocol.RequestSucceeded
 import frontend.webui.protocol.RequestFailed
+import frontend.webui.protocol.RequestSucceeded
 
-final class WebService(implicit system: ActorSystem)
+final class WebService(override implicit val system: ActorSystem)
     extends Directives
-    with Sparql {
+    with Sparql
+    with AkkaLogging {
 
   override val bs = new BackendSystem()
-  val log = system.log
 
   def route = get {
     pathSingleSlash(complete {
