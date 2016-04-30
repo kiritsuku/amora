@@ -92,7 +92,7 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    queue.tell(QueueMsg.Add(func), sender)
+    queue.tell(QueueMessage.Add(func), sender)
   }
 
   private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {

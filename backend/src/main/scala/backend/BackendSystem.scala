@@ -16,7 +16,7 @@ import akka.util.Timeout
 import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
-import backend.actors.QueueMsg
+import backend.actors.QueueMessage
 import akka.actor.ActorRef
 import backend.actors.WebMessage
 import backend.actors.WebActor
@@ -43,15 +43,15 @@ final class BackendSystem(implicit system: ActorSystem)
   }
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
-    queue.ask(QueueMsg.Add(func)).mapTo[Int]
+    queue.ask(QueueMessage.Add(func)).mapTo[Int]
   }
 
   def queueItems: Future[Seq[Int]] = {
-    queue.ask(QueueMsg.GetItems).mapTo[Seq[Int]]
+    queue.ask(QueueMessage.GetItems).mapTo[Seq[Int]]
   }
 
   def queueItem(id: Int): Future[Logger] = {
-    queue.ask(QueueMsg.GetItem(id)).mapTo[Option[Logger]].map {
+    queue.ask(QueueMessage.GetItem(id)).mapTo[Option[Logger]].map {
       case None ⇒ throw new NoSuchElementException(s"Item with id $id doesn't exist.")
       case Some(logger) ⇒ logger
     }

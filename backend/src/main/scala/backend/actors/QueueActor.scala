@@ -11,7 +11,7 @@ import backend.Logger
 import backend.ActorLogger
 
 final class QueueActor extends Actor {
-  import QueueMsg._
+  import QueueMessage._
   private implicit val system = context.system
   import system.dispatcher
   private val log = context.system.log
@@ -72,12 +72,12 @@ final class QueueActor extends Actor {
   private case class Item(id: Int, func: Logger ⇒ Unit, logger: Logger)
 }
 
-sealed trait QueueMsg
-object QueueMsg {
-  case class Add(func: Logger ⇒ Unit) extends QueueMsg
-  case object Check extends QueueMsg
-  case object Stop extends QueueMsg
-  case object Start extends QueueMsg
-  case object GetItems extends QueueMsg
-  case class GetItem(id: Int) extends QueueMsg
+sealed trait QueueMessage
+object QueueMessage {
+  case class Add(func: Logger ⇒ Unit) extends QueueMessage
+  case object Check extends QueueMessage
+  case object Stop extends QueueMessage
+  case object Start extends QueueMessage
+  case object GetItems extends QueueMessage
+  case class GetItem(id: Int) extends QueueMessage
 }
