@@ -3,20 +3,18 @@ package backend
 import scala.util.Failure
 import scala.util.Success
 
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.LogManager
-import org.apache.log4j.PatternLayout
-
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.UnhandledMessage
+import akka.event.LogSource
+import akka.event.Logging
+import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import backend.actors.UnhandledMessagesActor
 
-object Main extends App with LoggerConfig {
-  implicit val system = ActorSystem()
+object Main extends App with AkkaLogging {
+  override implicit val system = ActorSystem("backend")
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
@@ -34,17 +32,26 @@ object Main extends App with LoggerConfig {
   binding.onComplete {
     case Success(binding) ⇒
       val addr = binding.localAddress
-      system.log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
+      log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
     case Failure(e) ⇒
-      system.log.error(e, "Failed to start server")
+      log.error(e, "Failed to start server")
       system.terminate()
   }
 }
 
-trait LoggerConfig {
-  val layout = new PatternLayout("%d %5p [%t] - %c - %m%n")
-  val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
-  val rootLogger = LogManager.getRootLogger
-  rootLogger.setLevel(Level.INFO)
-  rootLogger.addAppender(consoleAppender)
+trait AkkaLogging {
+  private var _log: LoggingAdapter = _
+
+  private implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
+    override def genString(o: AnyRef): String = o.getClass.getName
+    override def getClazz(o: AnyRef): Class[_] = o.getClass
+  }
+
+  def system: ActorSystem
+
+  def log: LoggingAdapter = {
+    if (_log eq null)
+      _log = Logging(system, this)
+    _log
+  }
 }
