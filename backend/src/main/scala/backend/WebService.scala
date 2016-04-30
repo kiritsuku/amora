@@ -27,7 +27,7 @@ import akka.http.scaladsl.model.StatusCodes
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 
-final class WebService(implicit m: Materializer, system: ActorSystem)
+final class WebService(implicit system: ActorSystem)
     extends Directives
     with Sparql {
 
