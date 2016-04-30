@@ -9,8 +9,11 @@ import org.apache.log4j.LogManager
 import org.apache.log4j.PatternLayout
 
 import akka.actor.ActorSystem
+import akka.actor.Props
+import akka.actor.UnhandledMessage
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
+import backend.actors.UnhandledMessagesActor
 
 object Main extends App with LoggerConfig {
   implicit val system = ActorSystem()
@@ -20,6 +23,10 @@ object Main extends App with LoggerConfig {
   val config = system.settings.config
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
+
+  system.eventStream.subscribe(
+      system.actorOf(Props[UnhandledMessagesActor], "unhandled-messages"),
+      classOf[UnhandledMessage])
 
   val service = new WebService
 
