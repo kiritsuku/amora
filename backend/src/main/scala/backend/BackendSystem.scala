@@ -31,10 +31,10 @@ final class BackendSystem(implicit system: ActorSystem)
   import akka.pattern.ask
   import system.dispatcher
 
-  private val nvim = system.actorOf(Props[NvimActor])
-  private val queue = system.actorOf(Props[QueueActor])
-  private val indexer = system.actorOf(Props[IndexerActor])
-  private val web = system.actorOf(Props(classOf[WebActor], queue, indexer))
+  private val nvim = system.actorOf(Props[NvimActor], "nvim")
+  private val queue = system.actorOf(Props[QueueActor], "queue")
+  private val indexer = system.actorOf(Props[IndexerActor], "indexer")
+  private val web = system.actorOf(Props(classOf[WebActor], queue, indexer), "web")
 
   implicit val timeout = Timeout(5.seconds)
 
