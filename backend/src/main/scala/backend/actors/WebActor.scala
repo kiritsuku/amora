@@ -54,6 +54,9 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
     case ClientRequest(clientId, req) ⇒
       val sender = clients(clientId)
       handleRequest(sender, req)
+
+    case AnonymousClientRequest(req) ⇒
+      handleRequest(sender, req)
   }
 
   def handleRequest(sender: ActorRef, req: Request) = req match {
@@ -159,6 +162,9 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
 }
 sealed trait WebMessage
 object WebMessage {
+  /** Used for HTTP GET and POST requests. */
+  case class AnonymousClientRequest(req: Request) extends WebMessage
+  /** Used for requests over websocket. */
   case class ClientRequest(clientId: String, req: Request) extends WebMessage
   case class ClientAuthorizationRequest(client: ActorRef) extends WebMessage
   case class ClientLeft(clientId: String) extends WebMessage
