@@ -18,8 +18,8 @@ import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMessage
 import akka.actor.ActorRef
-import backend.actors.WebMessage
-import backend.actors.WebActor
+import backend.actors.RequestMessage
+import backend.actors.RequestActor
 import backend.actors.IndexerActor
 import frontend.webui.protocol.IndexData
 
@@ -34,12 +34,12 @@ final class BackendSystem(implicit system: ActorSystem)
   private val nvim = system.actorOf(Props[NvimActor], "nvim")
   private val queue = system.actorOf(Props[QueueActor], "queue")
   private val indexer = system.actorOf(Props[IndexerActor], "indexer")
-  private val web = system.actorOf(Props(classOf[WebActor], queue, indexer), "web")
+  private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
 
   implicit val timeout = Timeout(5.seconds)
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {
-    web.ask(WebMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]
+    requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]
   }
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
@@ -63,8 +63,8 @@ final class BackendSystem(implicit system: ActorSystem)
   }
 
   def authWebUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import WebMessage._
-    authFlow[frontend.webui.protocol.Response](web ! ClientAuthorizationRequest(_))
+    import RequestMessage._
+    authFlow[frontend.webui.protocol.Response](requestHandler ! ClientAuthorizationRequest(_))
   }
 
   def nvimFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
@@ -82,15 +82,15 @@ final class BackendSystem(implicit system: ActorSystem)
   }
 
   def webUiFlow(clientId: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import WebMessage._
+    import RequestMessage._
     import frontend.webui.protocol._
 
     val in = Flow[ByteBuffer]
       .map(b ⇒ ClientRequest(clientId, Unpickle[Request].fromBytes(b)))
-      .to(Sink.actorRef[WebMessage](web, ClientLeft(clientId)))
+      .to(Sink.actorRef[RequestMessage](requestHandler, ClientLeft(clientId)))
     val out = Source
       .actorRef[Response](1, OverflowStrategy.fail)
-      .mapMaterializedValue { web ! ClientJoined(clientId, _) }
+      .mapMaterializedValue { requestHandler ! ClientJoined(clientId, _) }
       .map(Pickle.intoBytes(_))
     Flow.fromSinkAndSource(in, out)
   }

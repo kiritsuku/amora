@@ -3,7 +3,7 @@ package backend.actors
 import akka.actor.Actor
 import akka.actor.ActorRef
 import frontend.webui.protocol._
-import WebMessage._
+import RequestMessage._
 import backend.Content
 import backend.indexer.ArtifactIndexer
 import backend.indexer.ArtifactIndexer.DownloadStatus
@@ -18,7 +18,7 @@ import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
 
-class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
+class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
   import system.dispatcher
 
@@ -169,13 +169,13 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
   }
 
 }
-sealed trait WebMessage
-object WebMessage {
+sealed trait RequestMessage
+object RequestMessage {
   /** Used for HTTP GET and POST requests. */
-  case class AnonymousClientRequest(req: Request) extends WebMessage
+  case class AnonymousClientRequest(req: Request) extends RequestMessage
   /** Used for requests over websocket. */
-  case class ClientRequest(clientId: String, req: Request) extends WebMessage
-  case class ClientAuthorizationRequest(client: ActorRef) extends WebMessage
-  case class ClientLeft(clientId: String) extends WebMessage
-  case class ClientJoined(clientId: String, client: ActorRef) extends WebMessage
+  case class ClientRequest(clientId: String, req: Request) extends RequestMessage
+  case class ClientAuthorizationRequest(client: ActorRef) extends RequestMessage
+  case class ClientLeft(clientId: String) extends RequestMessage
+  case class ClientJoined(clientId: String, client: ActorRef) extends RequestMessage
 }
