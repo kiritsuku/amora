@@ -42,8 +42,8 @@ final class QueueActor extends Actor {
     case Start ⇒
       if (cancellable.isCancelled)
         cancellable = mkQueueRunner()
-    case Check if !running ⇒
-      if (queue.nonEmpty) {
+    case Check ⇒
+      if (!running && queue.nonEmpty) {
         val item = queue.dequeue()
         log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
         running = true
