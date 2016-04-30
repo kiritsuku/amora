@@ -5,8 +5,9 @@ import akka.actor.ActorRef
 import backend.NvimAccessor
 import backend.Repl
 import protocol._
+import akka.actor.ActorLogging
 
-final class NvimActor extends Actor {
+final class NvimActor extends Actor with ActorLogging {
   import context.system
   import NvimMsg._
 
@@ -17,18 +18,18 @@ final class NvimActor extends Actor {
   override def receive = {
     case NewClient(subject) ⇒
       val sender = "client" + clients.size
-      system.log.info(s"New client '$sender' seen")
+      log.info(s"New client '$sender' seen")
       subject ! ConnectionSuccessful(sender)
 
     case ClientReady(sender, subject) ⇒
       if (clients.contains(sender)) {
-        system.log.info(s"'$sender' already exists")
+        log.info(s"'$sender' already exists")
         // TODO this can only happen when multiple clients try to join at nearly the same moment
         subject ! ConnectionFailure
       }
       else {
         clients += sender → subject
-        system.log.info(s"'$sender' joined")
+        log.info(s"'$sender' joined")
         subject ! ConnectionSuccessful(sender)
         nvim.handleClientJoined(sender)
       }
@@ -57,7 +58,7 @@ final class NvimActor extends Actor {
 
     case ClientLeft(sender) ⇒
       clients -= sender
-      system.log.info(s"'$sender' left")
+      log.info(s"'$sender' left")
   }
 }
 

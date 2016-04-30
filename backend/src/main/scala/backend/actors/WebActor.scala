@@ -13,8 +13,9 @@ import backend.Logger
 import spray.json.DefaultJsonProtocol
 import backend.indexer.ScalaSourceIndexer
 import backend.indexer.JavaBytecodeIndexer
+import akka.actor.ActorLogging
 
-class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
+class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
 
   case class Files(tpe: String, files: Seq[File])
   case class File(fileName: String, src: String)
@@ -29,7 +30,6 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor {
   }
   import JsonProtocols._
 
-  private val log = context.system.log
   private var clients = Map.empty[String, ActorRef]
 
   override def receive = {
