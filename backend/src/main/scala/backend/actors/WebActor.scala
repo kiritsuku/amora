@@ -51,24 +51,27 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
       clients -= clientId
       log.info(s"Client with ID `$clientId` left.")
 
-    case ClientRequest(clientId, req) ⇒ req match {
-      case GetQueueItems ⇒
-        // Test data
-        clients(clientId) ! QueueItems(Seq(1, 2))
-      case GetQueueItem(id) ⇒
-        clients(clientId) ! QueueItem(id, "test log output", false)
-      case GetSchemas ⇒
-        clients(clientId) ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
-      case GetSchema(name) ⇒
-        clients(clientId) ! Schema("artifacts", Content.schemas.artifacts)
-      case IndexData(json) ⇒
-        handleIndexData(json)
-      case msg ⇒
-        log.error(s"Unexpected message: $msg")
-    }
+    case ClientRequest(clientId, req) ⇒
+      val sender = clients(clientId)
+      handleRequest(sender, req)
   }
 
-  def handleIndexData(jsonString: String) = {
+  def handleRequest(sender: ActorRef, req: Request) = req match {
+    case GetQueueItems ⇒
+      sender ! QueueItems(Seq(1, 2))
+    case GetQueueItem(id) ⇒
+      sender ! QueueItem(id, "test log output", false)
+    case GetSchemas ⇒
+      sender ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
+    case GetSchema(name) ⇒
+      sender ! Schema("artifacts", Content.schemas.artifacts)
+    case IndexData(json) ⇒
+      handleIndexData(sender, json)
+    case msg ⇒
+      log.error(s"Unexpected message: $msg")
+  }
+
+  def handleIndexData(sender: ActorRef, jsonString: String) = {
     import spray.json._
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
@@ -89,7 +92,7 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    queue.forward(QueueMsg.Add(func))
+    queue.tell(QueueMsg.Add(func), sender)
   }
 
   private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
