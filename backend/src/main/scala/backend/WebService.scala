@@ -21,18 +21,18 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
-import backend.requests.AddJson
 import backend.requests.Sparql
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 final class WebService(implicit m: Materializer, system: ActorSystem)
     extends Directives
-    with AddJson
     with Sparql {
 
   override val bs = new BackendSystem()
-  override val log = system.log
+  val log = system.log
 
   def route = get {
     pathSingleSlash(complete {
@@ -143,8 +143,19 @@ final class WebService(implicit m: Materializer, system: ActorSystem)
       }
     } ~
     path("add-json") {
-      entity(as[String]) { str ⇒
-        handleAddJsonRequest(str)
+      entity(as[String]) { json ⇒
+        import scala.util._
+        Try {
+          val f = bs.indexData(json)
+          Await.result(f, Duration.Inf)
+        } match {
+          case Success(id) ⇒
+            complete(s"Request successfully added to worker queue. Item id: $id")
+          case Failure(f) ⇒
+            import StatusCodes._
+            log.error(f, "Error happened while handling add-json request.")
+            complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+        }
       }
     }
   }

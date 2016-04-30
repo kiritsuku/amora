@@ -21,6 +21,7 @@ import akka.actor.ActorRef
 import backend.actors.WebMessage
 import backend.actors.WebActor
 import backend.actors.IndexerActor
+import frontend.webui.protocol.IndexData
 
 final class BackendSystem(implicit system: ActorSystem)
     extends AnyRef
@@ -36,6 +37,10 @@ final class BackendSystem(implicit system: ActorSystem)
   private val web = system.actorOf(Props(classOf[WebActor], queue, indexer))
 
   implicit val timeout = Timeout(5.seconds)
+
+  def indexData(json: String): Future[Int] = {
+    web.ask(WebMessage.ClientRequest("anonymous", IndexData(json))).asInstanceOf[Future[Int]]
+  }
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
     queue.ask(QueueMsg.Add(func)).asInstanceOf[Future[Int]]
