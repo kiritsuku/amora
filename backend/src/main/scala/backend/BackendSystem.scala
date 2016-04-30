@@ -38,8 +38,8 @@ final class BackendSystem(implicit system: ActorSystem)
 
   implicit val timeout = Timeout(5.seconds)
 
-  def indexData(json: String): Future[Int] = {
-    web.ask(WebMessage.AnonymousClientRequest(IndexData(json))).mapTo[Int]
+  def indexData(json: String): Future[frontend.webui.protocol.Response] = {
+    web.ask(WebMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]
   }
 
   def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {

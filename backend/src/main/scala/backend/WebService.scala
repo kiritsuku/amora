@@ -26,6 +26,8 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
+import frontend.webui.protocol.RequestSucceeded
+import frontend.webui.protocol.RequestFailed
 
 final class WebService(implicit system: ActorSystem)
     extends Directives
@@ -145,12 +147,15 @@ final class WebService(implicit system: ActorSystem)
     path("add-json") {
       entity(as[String]) { json ⇒
         import scala.util._
-        Try {
-          val f = bs.indexData(json)
-          Await.result(f, Duration.Inf)
-        } match {
-          case Success(id) ⇒
-            complete(s"Request successfully added to worker queue. Item id: $id")
+        onComplete(bs.indexData(json)) {
+          case Success(RequestSucceeded(msg)) ⇒
+            complete(msg)
+          case Success(RequestFailed(msg)) ⇒
+            complete(msg)
+          case Success(msg) ⇒
+            import StatusCodes._
+            log.error(s"Unexpected response for add-json request: $msg")
+            complete(HttpResponse(InternalServerError, entity = s"Internal server error: No valid response provided."))
           case Failure(f) ⇒
             import StatusCodes._
             log.error(f, "Error happened while handling add-json request.")

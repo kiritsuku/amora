@@ -14,8 +14,13 @@ import spray.json.DefaultJsonProtocol
 import backend.indexer.ScalaSourceIndexer
 import backend.indexer.JavaBytecodeIndexer
 import akka.actor.ActorLogging
+import akka.pattern.ask
+import scala.concurrent.duration._
+import akka.util.Timeout
 
 class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
+  implicit val system = context.system
+  import system.dispatcher
 
   case class Files(tpe: String, files: Seq[File])
   case class File(fileName: String, src: String)
@@ -95,7 +100,11 @@ class WebActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLoggi
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    queue.tell(QueueMessage.Add(func), sender)
+    implicit val timeout = Timeout(5.seconds)
+    queue.ask(QueueMessage.Add(func)).mapTo[Int] onComplete {
+      case util.Success(id) ⇒ sender ! RequestSucceeded(s"Request successfully added to worker queue. Item id: $id")
+      case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+    }
   }
 
   private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {

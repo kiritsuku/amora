@@ -99,6 +99,12 @@ object Main extends JSApp {
     case resp: Schema ⇒
       handleSchema(resp)
 
+    case resp: RequestSucceeded ⇒
+      handleRequestSucceeded(resp)
+
+    case resp: RequestFailed ⇒
+      handleRequestFailed(resp)
+
     case msg ⇒
       dom.console.error(s"Unexpected message arrived: $msg")
   }
@@ -118,6 +124,20 @@ object Main extends JSApp {
 
     handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
     handleClickEvent("li2")(_ ⇒ send(GetSchemas))
+  }
+
+  def handleRequestSucceeded(succ: RequestSucceeded) = {
+    import scalatags.JsDom.all._
+
+    val content = div(style := "background-color: green", raw(succ.msg)).render
+    $("#content").empty().append(content)
+  }
+
+  def handleRequestFailed(fail: RequestFailed) = {
+    import scalatags.JsDom.all._
+
+    val content = div(style := "background-color: red", raw(fail.msg)).render
+    $("#content").empty().append(content)
   }
 
   def handleQueueItems(items: QueueItems) = {
