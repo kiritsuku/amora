@@ -286,15 +286,13 @@ object Build extends sbt.Build {
   lazy val scalacConverter = project in file("converter/scalac") settings commonSettings ++ Seq(
     name := "scalac-converter",
 
-    libraryDependencies ++= deps.scalacConverter.value,
-    resolvers += Resolver.sonatypeRepo("snapshots")
+    libraryDependencies ++= deps.scalacConverter.value
   ) dependsOn (converterProtocol)
 
   lazy val javacConverter = project in file("converter/javac") settings commonSettings ++ Seq(
     name := "javac-converter",
 
-    libraryDependencies ++= deps.javacConverter.value,
-    resolvers += Resolver.sonatypeRepo("snapshots")
+    libraryDependencies ++= deps.javacConverter.value
   ) dependsOn (converterProtocol)
 
   object versions {
