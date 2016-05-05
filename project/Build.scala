@@ -306,7 +306,6 @@ object Build extends sbt.Build {
     val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
     val scalaLogging    = "3.1.0"
-    val slf4jLog4j12    = "1.7.12"
     val junit           = "4.12"
     // https://github.com/ochrons/boopickle
     val boopickle       = "1.1.0"
@@ -329,10 +328,10 @@ object Build extends sbt.Build {
       "com.typesafe.akka"              %%  "akka-http-experimental"            % versions.akka,
       "com.typesafe.akka"              %%  "akka-http-spray-json-experimental" % versions.akka,
       "com.typesafe.akka"              %%  "akka-stream"                       % versions.akka,
+      "com.typesafe.akka"              %%  "akka-slf4j"                       % versions.akka,
       "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
       "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags,
-      "org.slf4j"                      %   "slf4j-log4j12"                     % versions.slf4jLog4j12,
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
