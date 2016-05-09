@@ -40,6 +40,8 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     case RequestMessage.Artifacts(_, artifacts) ⇒
       handleArtifact(artifacts)
       sender ! QueueMessage.Completed
+    case RequestMessage.GetLogger ⇒
+      sender ! logger
   }
 
   def handleArtifact(artifacts: Seq[RequestMessage.Artifact]) = {

@@ -17,6 +17,7 @@ import akka.util.Timeout
 import akka.actor.Props
 import spray.json.RootJsonFormat
 import backend.ActorLogger
+import akka.stream.ActorMaterializer
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
@@ -59,7 +60,22 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
         case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
       }
     case GetQueueItem(id) ⇒
-      sender ! QueueItem(id, "test log output", false)
+      queue.ask(QueueMessage.GetItem(id)).mapTo[Option[ActorRef]].onComplete {
+        case util.Success(None) ⇒ sender ! RequestFailed(s"Item with id `$id` doesn't exist.")
+        case util.Success(Some(ref)) ⇒
+          ref.ask(GetLogger).mapTo[Logger].onComplete {
+            case util.Success(logger) ⇒
+              implicit val m = ActorMaterializer()
+              var append = false
+              logger.log.runForeach { str ⇒
+                sender ! QueueItem(id, str, append)
+                if (!append)
+                  append = true
+              }
+            case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+          }
+        case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+      }
     case GetSchemas ⇒
       sender ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
     case GetSchema(name) ⇒
@@ -133,6 +149,7 @@ object RequestMessage {
   case class File(fileName: String, src: String)
   case class Artifact(organization: String, name: String, version: String)
   case class Artifacts(tpe: String, artifacts: Seq[Artifact])
+  case object GetLogger
 
   object JsonProtocols extends DefaultJsonProtocol {
     implicit val fileFormat: RootJsonFormat[File] = jsonFormat2(File)
