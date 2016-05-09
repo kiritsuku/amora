@@ -19,6 +19,7 @@ import backend.actors.RequestMessage
 import akka.actor.ActorRef
 import backend.actors.IndexerMessage
 import backend.actors.QueueMessage
+import scala.concurrent.Future
 
 object ArtifactIndexer {
   sealed trait DownloadStatus {
@@ -36,10 +37,15 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
   import ArtifactIndexer._
   import coursier._
 
+  implicit def dispatcher = context.system.dispatcher
+
   override def receive = {
     case RequestMessage.Artifacts(_, artifacts) ⇒
-      handleArtifact(artifacts)
-      sender ! QueueMessage.Completed
+      val s = sender
+      Future(handleArtifact(artifacts)).onComplete {
+        case scala.util.Success(_) ⇒ s ! QueueMessage.Completed
+        case scala.util.Failure(f) ⇒ throw f
+      }
     case RequestMessage.GetLogger ⇒
       sender ! logger
   }
