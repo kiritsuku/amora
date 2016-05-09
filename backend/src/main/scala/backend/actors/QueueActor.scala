@@ -1,14 +1,11 @@
 package backend.actors
 
+import scala.collection.mutable.Map
 import scala.collection.mutable.Queue
 import scala.concurrent.duration._
-import scala.util.control.NonFatal
 
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.actor.Props
-import backend.Logger
-import backend.ActorLogger
 import akka.util.Timeout
 import akka.pattern.ask
 
@@ -22,6 +19,7 @@ final class QueueActor extends Actor {
   private var cancellable = mkQueueRunner()
   private var id = 0
   private var running = false
+  private val history = Map[Int, Item]()
 
   override def receive = {
     case RunWithData(actor, data) ⇒
@@ -36,6 +34,7 @@ final class QueueActor extends Actor {
     case Check ⇒
       if (!running && queue.nonEmpty) {
         val item = queue.dequeue()
+        history += item.id → item
         log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
         running = true
         implicit val timeout = Timeout(5.seconds)
@@ -49,9 +48,9 @@ final class QueueActor extends Actor {
         }
       }
     case GetItems ⇒
-      sender ! queue.map(_.id)
+      sender ! queue.map(_.id) ++ history.keys
     case GetItem(id) ⇒
-      sender ! queue.find(_.id == id).map(_.actor)
+      sender ! queue.find(_.id == id).orElse(history.get(id)).map(_.actor)
   }
 
   /**
