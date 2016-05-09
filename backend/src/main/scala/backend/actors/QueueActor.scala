@@ -9,6 +9,8 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import backend.Logger
 import backend.ActorLogger
+import akka.util.Timeout
+import akka.pattern.ask
 
 final class QueueActor extends Actor {
   import QueueMessage._
@@ -21,20 +23,9 @@ final class QueueActor extends Actor {
   private var id = 0
   private var running = false
 
-  private val runner: ActorRef = system.actorOf(Props(new Actor {
-    override def receive = {
-      case item @ Item(id, func, logger) ⇒
-        try func(logger) catch {
-          case NonFatal(t) ⇒
-            log.error(t, "Error happened during execution of queue item.")
-        }
-        running = false
-    }
-  }))
-
   override def receive = {
-    case Add(func) ⇒
-      val item = Item(genId, func, new ActorLogger)
+    case RunWithData(actor, data) ⇒
+      val item = Item(genId, actor, data)
       queue.enqueue(item)
       sender ! item.id
     case Stop ⇒
@@ -47,12 +38,20 @@ final class QueueActor extends Actor {
         val item = queue.dequeue()
         log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
         running = true
-        runner ! item
+        implicit val timeout = Timeout(5.seconds)
+        item.actor ask item.data onComplete { v ⇒
+          running = false
+          v match {
+            case util.Success(Completed) ⇒ log.info(s"Processing queue item with id ${item.id} finished successfully.")
+            case util.Success(msg) ⇒ log.error(s"Processing queue item with id ${item.id} finished successfully but it sent an unexpected message: $msg")
+            case util.Failure(f) ⇒ log.error(f, s"Processing queue item with id ${item.id} failed.")
+          }
+        }
       }
     case GetItems ⇒
       sender ! queue.map(_.id)
     case GetItem(id) ⇒
-      sender ! queue.find(_.id == id).map(_.logger)
+      sender ! queue.find(_.id == id).map(_.actor)
   }
 
   /**
@@ -69,15 +68,16 @@ final class QueueActor extends Actor {
     id
   }
 
-  private case class Item(id: Int, func: Logger ⇒ Unit, logger: Logger)
+  private case class Item(id: Int, actor: ActorRef, data: Any)
 }
 
 sealed trait QueueMessage
 object QueueMessage {
-  case class Add(func: Logger ⇒ Unit) extends QueueMessage
+  case class RunWithData(actor: ActorRef, data: Any) extends QueueMessage
   case object Check extends QueueMessage
   case object Stop extends QueueMessage
   case object Start extends QueueMessage
   case object GetItems extends QueueMessage
   case class GetItem(id: Int) extends QueueMessage
+  case object Completed extends QueueMessage
 }

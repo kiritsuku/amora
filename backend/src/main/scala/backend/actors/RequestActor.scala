@@ -6,9 +6,6 @@ import frontend.webui.protocol._
 import RequestMessage._
 import backend.Content
 import backend.indexer.ArtifactIndexer
-import backend.indexer.ArtifactIndexer.DownloadStatus
-import backend.indexer.ArtifactIndexer.DownloadSuccess
-import backend.indexer.ArtifactIndexer.DownloadError
 import backend.Logger
 import spray.json.DefaultJsonProtocol
 import backend.indexer.ScalaSourceIndexer
@@ -17,23 +14,13 @@ import akka.actor.ActorLogging
 import akka.pattern.ask
 import scala.concurrent.duration._
 import akka.util.Timeout
+import akka.actor.Props
+import spray.json.RootJsonFormat
+import backend.ActorLogger
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
   import system.dispatcher
-
-  case class Files(tpe: String, files: Seq[File])
-  case class File(fileName: String, src: String)
-  case class Artifact(organization: String, name: String, version: String)
-  case class Artifacts(tpe: String, artifacts: Seq[Artifact])
-
-  object JsonProtocols extends DefaultJsonProtocol {
-    implicit val fileFormat = jsonFormat2(File)
-    implicit val filesFormat = jsonFormat2(Files)
-    implicit val artifactFormat = jsonFormat3(Artifact)
-    implicit val artifactsFormat = jsonFormat2(Artifacts)
-  }
-  import JsonProtocols._
 
   private var clients = Map.empty[String, ActorRef]
 
@@ -81,27 +68,32 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
 
   def handleIndexData(sender: ActorRef, jsonString: String) = {
     import spray.json._
+    import RequestMessage.JsonProtocols._
+
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
-    val func: Logger ⇒ Unit = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
+    val msg = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
       case JsString("scala-source") ⇒
         val files = json.convertTo[Files]
-        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
+//        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
+        ???
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
-        logger ⇒ handleJavaBytecode(files, new JavaBytecodeIndexer(logger))
+//        logger ⇒ handleJavaBytecode(files, new JavaBytecodeIndexer(logger))
+        ???
 
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
-        logger ⇒ handleArtifact(artifacts, new ArtifactIndexer(logger))
+        val ref = system.actorOf(Props(classOf[ArtifactIndexer], indexer, new ActorLogger))
+        QueueMessage.RunWithData(ref, artifacts)
 
       case v ⇒
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
     implicit val timeout = Timeout(5.seconds)
-    queue.ask(QueueMessage.Add(func)).mapTo[Int] onComplete {
+    queue.ask(msg).mapTo[Int] onComplete {
       case util.Success(id) ⇒ sender ! RequestSucceeded(s"Request successfully added to worker queue. Item id: $id")
       case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
     }
@@ -123,51 +115,6 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
     }
   }
 
-  private def handleArtifact(artifacts: Artifacts, indexer: ArtifactIndexer) = {
-    import indexer._
-
-    val res = artifacts.artifacts.flatMap { artifact ⇒
-      import artifact._
-      fetchArtifact(organization, name, version)
-    }
-    val (errors, succs) = res.partition(_.isError)
-    val succMsgs = succs.collect {
-      case DownloadSuccess(artifact) ⇒
-        artifact.getName
-    }
-    val errMsgs = errors.collect {
-      case DownloadError(artifactName, reasonOpt) ⇒
-        if (reasonOpt.isDefined)
-          artifactName+"because of: "+reasonOpt.get
-        else
-          artifactName
-    }
-    val succMsg = if (succs.isEmpty) Nil else Seq(s"Fetched artifacts:" + succMsgs.sorted.mkString("\n  ", "\n  ", ""))
-    val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
-    val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
-
-    logger.info(msg)
-
-    if (errors.isEmpty)
-      indexArtifacts(succs, indexer)
-  }
-
-  private def indexArtifacts(artifacts: Seq[DownloadStatus], indexer: ArtifactIndexer) = {
-    import indexer._
-    logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
-    val indexed = artifacts.collect {
-      case DownloadSuccess(artifact) ⇒ indexArtifact(artifact).get
-    }.flatten
-
-    logger.info(s"Indexing ${indexed.size} files.")
-    indexed.zipWithIndex foreach {
-      case ((fileName, hierarchy), i) ⇒
-        logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
-    }
-    logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
-  }
-
 }
 sealed trait RequestMessage
 object RequestMessage {
@@ -178,4 +125,16 @@ object RequestMessage {
   case class ClientAuthorizationRequest(client: ActorRef) extends RequestMessage
   case class ClientLeft(clientId: String) extends RequestMessage
   case class ClientJoined(clientId: String, client: ActorRef) extends RequestMessage
+
+  case class Files(tpe: String, files: Seq[File])
+  case class File(fileName: String, src: String)
+  case class Artifact(organization: String, name: String, version: String)
+  case class Artifacts(tpe: String, artifacts: Seq[Artifact])
+
+  object JsonProtocols extends DefaultJsonProtocol {
+    implicit val fileFormat: RootJsonFormat[File] = jsonFormat2(File)
+    implicit val filesFormat: RootJsonFormat[Files] = jsonFormat2(Files)
+    implicit val artifactFormat: RootJsonFormat[Artifact] = jsonFormat3(Artifact)
+    implicit val artifactsFormat: RootJsonFormat[Artifacts] = jsonFormat2(Artifacts)
+  }
 }

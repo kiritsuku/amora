@@ -42,10 +42,6 @@ final class BackendSystem(implicit system: ActorSystem)
     requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]
   }
 
-  def addQueueItem(func: Logger ⇒ Unit): Future[Int] = {
-    queue.ask(QueueMessage.Add(func)).mapTo[Int]
-  }
-
   def queueItems: Future[Seq[Int]] = {
     queue.ask(QueueMessage.GetItems).mapTo[Seq[Int]]
   }

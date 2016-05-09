@@ -14,6 +14,11 @@ import research.converter.protocol.Hierarchy
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
 import backend.Logger
+import akka.actor.Actor
+import backend.actors.RequestMessage
+import akka.actor.ActorRef
+import backend.actors.IndexerMessage
+import backend.actors.QueueMessage
 
 object ArtifactIndexer {
   sealed trait DownloadStatus {
@@ -27,9 +32,57 @@ object ArtifactIndexer {
   }
 }
 
-final class ArtifactIndexer(val logger: Logger) {
+final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
   import ArtifactIndexer._
   import coursier._
+
+  override def receive = {
+    case RequestMessage.Artifacts(_, artifacts) ⇒
+      handleArtifact(artifacts)
+      sender ! QueueMessage.Completed
+  }
+
+  def handleArtifact(artifacts: Seq[RequestMessage.Artifact]) = {
+    val res = artifacts.flatMap { artifact ⇒
+      import artifact._
+      fetchArtifact(organization, name, version)
+    }
+    val (errors, succs) = res.partition(_.isError)
+    val succMsgs = succs.collect {
+      case DownloadSuccess(artifact) ⇒
+        artifact.getName
+    }
+    val errMsgs = errors.collect {
+      case DownloadError(artifactName, reasonOpt) ⇒
+        if (reasonOpt.isDefined)
+          artifactName+"because of: "+reasonOpt.get
+        else
+          artifactName
+    }
+    val succMsg = if (succs.isEmpty) Nil else Seq(s"Fetched artifacts:" + succMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val errMsg = if (errors.isEmpty) Nil else Seq(s"Failed to fetch artifacts:" + errMsgs.sorted.mkString("\n  ", "\n  ", ""))
+    val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
+
+    logger.info(msg)
+
+    if (errors.isEmpty)
+      indexArtifacts(succs)
+  }
+
+  def indexArtifacts(artifacts: Seq[DownloadStatus]) = {
+    logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
+    val indexed = artifacts.collect {
+      case DownloadSuccess(artifact) ⇒ indexArtifact(artifact).get
+    }.flatten
+
+    logger.info(s"Indexing ${indexed.size} files.")
+    indexed.zipWithIndex foreach {
+      case ((fileName, hierarchy), i) ⇒
+        logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
+        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+    }
+    logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
+  }
 
   def fetchArtifact(organization: String, name: String, version: String): Seq[DownloadStatus] = {
     val start = Resolution(Set(Dependency(Module(organization, name), version)))
