@@ -20,6 +20,7 @@ import backend.ActorLogger
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
+  implicit val timeout = Timeout(5.seconds)
   import system.dispatcher
 
   private var clients = Map.empty[String, ActorRef]
@@ -53,7 +54,10 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
 
   def handleRequest(sender: ActorRef, req: Request) = req match {
     case GetQueueItems ⇒
-      sender ! QueueItems(Seq(1, 2))
+      queue.ask(QueueMessage.GetItems).mapTo[Seq[Int]].onComplete {
+        case util.Success(items) ⇒ sender ! QueueItems(items)
+        case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+      }
     case GetQueueItem(id) ⇒
       sender ! QueueItem(id, "test log output", false)
     case GetSchemas ⇒
@@ -92,7 +96,6 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    implicit val timeout = Timeout(5.seconds)
     queue.ask(msg).mapTo[Int] onComplete {
       case util.Success(id) ⇒ sender ! RequestSucceeded(s"Request successfully added to worker queue. Item id: $id")
       case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
