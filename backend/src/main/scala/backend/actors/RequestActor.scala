@@ -18,6 +18,7 @@ import akka.actor.Props
 import spray.json.RootJsonFormat
 import backend.ActorLogger
 import akka.stream.ActorMaterializer
+import scala.concurrent.Future
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
@@ -55,26 +56,23 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
 
   def handleRequest(sender: ActorRef, req: Request) = req match {
     case GetQueueItems ⇒
-      queue.ask(QueueMessage.GetItems).mapTo[Seq[Int]].onComplete {
-        case util.Success(items) ⇒ sender ! QueueItems(items)
-        case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+      onComplete[Seq[Int]](sender, queue.ask(QueueMessage.GetItems)) { items ⇒
+        sender ! QueueItems(items)
       }
     case GetQueueItem(id) ⇒
-      queue.ask(QueueMessage.GetItem(id)).mapTo[Option[ActorRef]].onComplete {
-        case util.Success(None) ⇒ sender ! RequestFailed(s"Item with id `$id` doesn't exist.")
-        case util.Success(Some(ref)) ⇒
-          ref.ask(GetLogger).mapTo[Logger].onComplete {
-            case util.Success(logger) ⇒
-              implicit val m = ActorMaterializer()
-              var append = false
-              logger.log.runForeach { str ⇒
-                sender ! QueueItem(id, str, append)
-                if (!append)
-                  append = true
-              }
-            case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+      onComplete[Option[ActorRef]](sender, queue.ask(QueueMessage.GetItem(id))) {
+        case None ⇒
+          sender ! RequestFailed(s"Item with id `$id` doesn't exist.")
+        case Some(ref) ⇒
+          onComplete[Logger](sender, ref.ask(GetLogger)) { logger ⇒
+            implicit val m = ActorMaterializer()
+            var append = false
+            logger.log.runForeach { str ⇒
+              sender ! QueueItem(id, str, append)
+              if (!append)
+                append = true
+            }
           }
-        case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
       }
     case GetSchemas ⇒
       sender ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
@@ -112,10 +110,14 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
         throw new RuntimeException(s"The value `$v` of field `tpe` is unknown.")
     }
 
-    queue.ask(msg).mapTo[Int] onComplete {
-      case util.Success(id) ⇒ sender ! RequestSucceeded(s"Request successfully added to worker queue. Item id: $id")
-      case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
+    onComplete[Int](sender, queue.ask(msg)) { id ⇒
+      sender ! RequestSucceeded(s"Request successfully added to worker queue. Item id: $id")
     }
+  }
+
+  def onComplete[A : reflect.ClassTag](sender: ActorRef, fut: Future[Any])(onSuccess: A ⇒ Unit): Unit = fut.mapTo[A] onComplete {
+    case util.Success(v) ⇒ onSuccess(v)
+    case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
   }
 
   private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
