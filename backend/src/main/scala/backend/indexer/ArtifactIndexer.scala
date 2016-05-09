@@ -79,7 +79,7 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     indexed.zipWithIndex foreach {
       case ((fileName, hierarchy), i) ⇒
         logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+        indexer ! IndexerMessage.AddFile(fileName, hierarchy)
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }

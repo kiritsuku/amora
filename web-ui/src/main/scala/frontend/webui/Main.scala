@@ -73,7 +73,9 @@ object Main extends JSApp {
     ws.onmessage = (e: MessageEvent) ⇒ {
       import boopickle.Default._
       val bytes = toByteBuffer(e.data)
-      handleResponse(Unpickle[Response].fromBytes(bytes))
+      val resp = Unpickle[Response].fromBytes(bytes)
+      dom.console.info(s"Received response from server: $resp")
+      handleResponse(resp)
     }
     ws.onclose = (e: CloseEvent) ⇒ {
       val reason = if (e.reason.isEmpty) "" else s" Reason: ${e.reason}"
@@ -164,7 +166,7 @@ object Main extends JSApp {
     } else {
       val content = div(
         h4(s"Queue Item ${item.id}"),
-        textarea(id := s"item${item.id}", item.log)
+        textarea(id := s"item${item.id}", rows := "20", cols := "150", item.log)
       ).render
       $("#content").empty().append(content)
     }
