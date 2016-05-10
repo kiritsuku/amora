@@ -193,8 +193,82 @@ object Content {
       }
     }"""
 
+    val scalaSources = """{
+      "schema": {
+        "title": "Scala Source Indexing",
+        "description": "Specify a Scala source file to index",
+        "type": "object",
+        "properties": {
+          "tpe": {
+            "type":"string",
+            "hidden": true
+          },
+          "files": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "fileName": {
+                  "type": "string",
+                  "title": "Name of the file",
+                  "required": true
+                },
+                "src": {
+                  "type": "string",
+                  "title": "Scala source",
+                  "required": true
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "form": {
+          "buttons": {
+            "submit": {
+              "click": function() {
+                // we need to do some logic here but I couldn't find out a better
+                // way to combine alpace with Scala.js code, therefore we just call
+                // the Scala code here directly.
+                frontend.webui.Main().handleFormSubmit(this);
+              }
+            },
+            "reset": {}
+          }
+        },
+        "fields": {
+          "tpe": {
+            "hidden": true
+          },
+          "files": {
+            "toolbarSticky": true,
+            "fields": {
+              "item": {
+                "fields": {
+                  "fileName": {
+                    "size": 20,
+                    "placeholder": "Enter the organization of the artifact"
+                  },
+                  "src": {
+                    "type": "editor",
+                    "aceTheme": "ace/theme/solarized_light",
+                    "aceMode": "ace/mode/scala"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "data": {
+        "tpe": "scala-sources"
+      }
+    }"""
+
     val all = Map(
-      "artifacts" → artifacts
+      "artifacts" → artifacts,
+      "scala-sources" → scalaSources
     )
 
   }

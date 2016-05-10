@@ -97,7 +97,7 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
     val msg = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
-      case JsString("scala-source") ⇒
+      case JsString("scala-sources") ⇒
         val files = json.convertTo[Files]
 //        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
         ???

@@ -79,7 +79,8 @@ final class WebService(override implicit val system: ActorSystem)
           "web-ui-jsdeps.js", "web-ui-fastopt.js", "web-ui-launcher.js",
           "http://www.alpacajs.org/lib/handlebars/handlebars.min.js",
           "http://www.alpacajs.org/lib/bootstrap/dist/js/bootstrap.min.js",
-          "http://www.alpacajs.org/lib/alpaca/bootstrap/alpaca.min.js"
+          "http://www.alpacajs.org/lib/alpaca/bootstrap/alpaca.min.js",
+          "http://www.alpacajs.org/lib/ace-builds/src-min-noconflict/ace.js"
         )
       )
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
