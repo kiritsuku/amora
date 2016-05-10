@@ -1,24 +1,26 @@
 package backend.actors
 
-import akka.actor.Actor
-import akka.actor.ActorRef
-import frontend.webui.protocol._
-import RequestMessage._
-import backend.Content
-import backend.indexer.ArtifactIndexer
-import backend.Logger
-import spray.json.DefaultJsonProtocol
-import backend.indexer.ScalaSourceIndexer
-import backend.indexer.JavaBytecodeIndexer
-import akka.actor.ActorLogging
-import akka.pattern.ask
-import scala.concurrent.duration._
-import akka.util.Timeout
-import akka.actor.Props
-import spray.json.RootJsonFormat
-import backend.ActorLogger
-import akka.stream.ActorMaterializer
 import scala.concurrent.Future
+import scala.concurrent.duration._
+
+import RequestMessage._
+
+import akka.actor.Actor
+import akka.actor.ActorLogging
+import akka.actor.ActorRef
+import akka.actor.Props
+import akka.pattern.ask
+import akka.stream.ActorMaterializer
+import akka.util.Timeout
+import backend.ActorLogger
+import backend.Content
+import backend.Logger
+import backend.indexer.ArtifactIndexer
+import backend.indexer.JavaBytecodeIndexer
+import backend.indexer.ScalaSourceIndexer
+import frontend.webui.protocol._
+import spray.json.DefaultJsonProtocol
+import spray.json.RootJsonFormat
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
@@ -75,9 +77,13 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
           }
       }
     case GetSchemas ⇒
-      sender ! Schemas(Seq("artifacts", "test"), Schema("artifacts", Content.schemas.artifacts))
+      val schemas = Content.schemas.all
+      val names = schemas.keys.toSeq
+      val default = schemas.head
+
+      sender ! Schemas(names, Schema(default._1, default._2))
     case GetSchema(name) ⇒
-      sender ! Schema("artifacts", Content.schemas.artifacts)
+      sender ! Schema(name, Content.schemas.all(name))
     case IndexData(json) ⇒
       handleIndexData(sender, json)
     case msg ⇒

@@ -111,6 +111,7 @@ object Content {
   }
 
   object schemas {
+
     val artifacts = """{
       "schema": {
         "title":"Artifact Indexing",
@@ -191,6 +192,11 @@ object Content {
         "tpe": "artifact"
       }
     }"""
+
+    val all = Map(
+      "artifacts" → artifacts
+    )
+
   }
 
 }
