@@ -51,7 +51,10 @@ object Main extends JSApp {
           this.clientId = id
 
           import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
-          Future(setupWS())
+          Future {
+            setupWS()
+            showMainPage()
+          }
 
         case msg ⇒
           dom.console.error(s"Unexpected message arrived: $msg")
@@ -91,7 +94,6 @@ object Main extends JSApp {
   def handleResponse(response: Response) = response match {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
-      showMainPage()
 
     case resp: QueueItems ⇒
       handleQueueItems(resp)
