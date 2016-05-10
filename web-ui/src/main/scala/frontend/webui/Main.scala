@@ -61,7 +61,7 @@ object Main extends JSApp {
     }
   }
 
-  def setupWS() = {
+  def setupWS(): Unit = {
     ws = new WebSocket(websocketUri(s"kbws?id=$clientId"))
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
@@ -80,7 +80,11 @@ object Main extends JSApp {
     ws.onclose = (e: CloseEvent) ⇒ {
       val reason = if (e.reason.isEmpty) "" else s" Reason: ${e.reason}"
       dom.console.info(s"Connection for server communication closed.$reason")
-      ws = null
+      dom.window.setTimeout({ () ⇒
+        // when the connection is closed automatically, we want to reconnect
+        dom.console.info("Recreating connection for server communication")
+        setupWS()
+      }, 100)
     }
   }
 
