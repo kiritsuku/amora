@@ -8,6 +8,8 @@ import org.apache.log4j.Level
 import org.apache.log4j.LogManager
 import org.apache.log4j.PatternLayout
 
+import com.typesafe.config.ConfigFactory
+
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.actor.UnhandledMessage
@@ -31,7 +33,15 @@ object Main extends App with AkkaLogging {
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
 
-  val config = system.settings.config
+  val config = {
+    val f = new java.io.File(s"${System.getProperty("user.home")}/application.conf")
+    if (f.exists()) {
+      log.info(s"Reading config file `$f`")
+      ConfigFactory.parseFile(f).withFallback(system.settings.config)
+    }
+    else
+      system.settings.config
+  }
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
 
