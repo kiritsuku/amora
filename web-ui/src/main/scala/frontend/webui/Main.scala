@@ -22,8 +22,6 @@ object Main extends JSApp {
     def jsg: js.Dynamic = a.asInstanceOf[js.Dynamic]
   }
 
-  val ServerAddress = "localhost:9999"
-
   /** The socket to the server */
   private var ws: WebSocket = _
   /** The ID of the client which is assigned by the server after authorization. */
@@ -240,8 +238,13 @@ object Main extends JSApp {
   }
 
   private def websocketUri(path: String): String = {
+    // The server address is defined by the server
+    val addr = js.Dynamic.global.ServerAddress
     val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-    s"$wsProtocol://$ServerAddress/$path"
+    val fullAddr = s"$wsProtocol://$addr/$path"
+
+    dom.console.log(s"Connecting to `$fullAddr`")
+    fullAddr
   }
 
   private def toByteBuffer(data: Any): ByteBuffer = {

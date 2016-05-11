@@ -35,6 +35,8 @@ object Main extends App with AkkaLogging {
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
 
+  def ServerAddress = s"$interface:$port"
+
   system.eventStream.subscribe(
       system.actorOf(Props[UnhandledMessagesActor], "unhandled-messages"),
       classOf[UnhandledMessage])

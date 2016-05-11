@@ -38,7 +38,7 @@ object Content {
         div(id := "yasgui"),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d),
         script(`type` := "text/javascript", raw(s"""
-          YASGUI.YASQE.defaults.sparql.endpoint = "http://localhost:9999/sparql";
+          YASGUI.YASQE.defaults.sparql.endpoint = "${Main.ServerAddress}/sparql";
           YASGUI.YASQE.defaults.value = "$q";
           var yasgui = YASGUI(document.getElementById("yasgui"));
         """))
@@ -79,7 +79,7 @@ object Content {
           if (items.isEmpty)
             li("No items")
           else
-            for (i ← items) yield li(a(href := s"//localhost:9999/queue?item=$i", s"Item $i"))
+            for (i ← items) yield li(a(href := s"${Main.ServerAddress}/queue?item=$i", s"Item $i"))
         )
       )
     )
@@ -105,6 +105,9 @@ object Content {
         for (d <- cssDeps) yield link(rel := "stylesheet", `type` := "text/css", href := d)
       ),
       body(
+        script(`type` := "text/javascript", raw(s"""
+          var ServerAddress = "${Main.ServerAddress}";
+        """)),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )
     )
