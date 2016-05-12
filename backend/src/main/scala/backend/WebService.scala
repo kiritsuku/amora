@@ -61,7 +61,7 @@ final class WebService(override implicit val system: ActorSystem)
         handleWebSocketMessages(communicationFlow(sender = name))
       }
     } ~
-    pathPrefix("kbws") {
+    path("kbws") {
       parameter('id) { id ⇒
         handleWebSocketMessages(withWebsocketFlow(bs.webUiFlow(id)))
       }
@@ -69,7 +69,7 @@ final class WebService(override implicit val system: ActorSystem)
     rejectEmptyResponse {
       path("favicon.ico")(getFromResource("favicon.ico", MediaTypes.`image/x-icon`))
     } ~
-    pathPrefix("kb") {
+    path("kb") {
       val content = Content.kbPage(
         cssDeps = Seq(
           "http://www.alpacajs.org/lib/bootstrap/dist/css/bootstrap.min.css",
