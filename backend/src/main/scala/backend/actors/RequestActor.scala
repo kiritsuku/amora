@@ -16,8 +16,6 @@ import backend.ActorLogger
 import backend.Content
 import backend.Logger
 import backend.indexer.ArtifactIndexer
-import backend.indexer.JavaBytecodeIndexer
-import backend.indexer.ScalaSourceIndexer
 import frontend.webui.protocol._
 import spray.json.DefaultJsonProtocol
 import spray.json.RootJsonFormat
@@ -104,8 +102,8 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
-//        logger ⇒ handleJavaBytecode(files, new JavaBytecodeIndexer(logger))
-        ???
+        val ref = system.actorOf(Props(classOf[JavaBytecodeIndexerActor], indexer, new ActorLogger))
+        QueueMessage.RunWithData(ref, files)
 
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
@@ -125,15 +123,6 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
     case util.Success(v) ⇒ onSuccess(v)
     case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
   }
-
-  private def handleJavaBytecode(files: Files, indexer: JavaBytecodeIndexer) = {
-    val res = indexer.bytecodeToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
-    res foreach {
-      case (fileName, hierarchy) ⇒
-        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
-    }
-  }
-
 }
 sealed trait RequestMessage
 object RequestMessage {
