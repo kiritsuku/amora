@@ -99,8 +99,8 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
     val msg = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
       case JsString("scala-sources") ⇒
         val files = json.convertTo[Files]
-//        logger ⇒ handleScalaSource(files, new ScalaSourceIndexer(logger))
-        ???
+        val ref = system.actorOf(Props(classOf[ScalaSourceIndexerActor], indexer, new ActorLogger))
+        QueueMessage.RunWithData(ref, files)
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
@@ -124,14 +124,6 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
   def onComplete[A : reflect.ClassTag](sender: ActorRef, fut: Future[Any])(onSuccess: A ⇒ Unit): Unit = fut.mapTo[A] onComplete {
     case util.Success(v) ⇒ onSuccess(v)
     case util.Failure(f) ⇒ sender ! RequestFailed(s"Internal server error occurred while handling request: ${f.getMessage}")
-  }
-
-  private def handleScalaSource(files: Files, indexer: ScalaSourceIndexer) = {
-    val res = indexer.convertToHierarchy(files.files.map{ f ⇒ f.fileName → f.src }).get
-    res foreach {
-      case (fileName, hierarchy) ⇒
-        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
-    }
   }
 
   private def handleJavaBytecode(files: Files, indexer: JavaBytecodeIndexer) = {
