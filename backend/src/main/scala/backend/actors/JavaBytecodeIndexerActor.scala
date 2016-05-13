@@ -27,6 +27,7 @@ final class JavaBytecodeIndexerActor(indexer: ActorRef, logger: Logger) extends 
     val res = indexer.bytecodeToHierarchy(files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
+        logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
         this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
     }
   }

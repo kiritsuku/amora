@@ -27,6 +27,7 @@ final class ScalaSourceIndexerActor(indexer: ActorRef, logger: Logger) extends A
     val res = indexer.convertToHierarchy(files.map{ f ⇒ f.fileName → f.src }).get
     res foreach {
       case (fileName, hierarchy) ⇒
+        logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
         this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
     }
   }
