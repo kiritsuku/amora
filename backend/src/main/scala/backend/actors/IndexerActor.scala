@@ -22,7 +22,7 @@ class IndexerActor extends Actor {
 
   override def receive = {
     case AskQuery(query, fmt) ⇒
-      handleAskQuery(query, fmt)
+      sender ! handleAskQuery(query, fmt)
 
     case AddFile(fileName, data) ⇒
       handleAddData(fileName, data)

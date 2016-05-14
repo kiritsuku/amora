@@ -22,10 +22,11 @@ import backend.actors.RequestMessage
 import backend.actors.RequestActor
 import backend.actors.IndexerActor
 import frontend.webui.protocol.IndexData
+import backend.actors.IndexerMessage
+import org.apache.jena.sparql.resultset.ResultsFormat
+import scala.util.Try
 
-final class BackendSystem(implicit system: ActorSystem)
-    extends AnyRef
-    with IndexerSystem {
+final class BackendSystem(implicit system: ActorSystem) {
 
   import boopickle.Default._
   import akka.pattern.ask
@@ -37,6 +38,10 @@ final class BackendSystem(implicit system: ActorSystem)
   private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
 
   implicit val timeout = Timeout(5.seconds)
+
+  def askQuery(query: String, fmt: ResultsFormat): Future[String] = {
+    indexer.ask(IndexerMessage.AskQuery(query, fmt)).mapTo[Try[String]].flatMap(Future.fromTry)
+  }
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {
     requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]

@@ -16,7 +16,7 @@ import akka.http.scaladsl.server.ContentNegotiator
 
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
-import akka.http.scaladsl.server.StandardRoute
+import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.BackendSystem
 import backend.Content
@@ -29,7 +29,7 @@ trait Sparql extends Directives {
 
   def bs: BackendSystem
 
-  def handleSparqlGetRequest(params: Map[String, String]): StandardRoute = {
+  def handleSparqlGetRequest(params: Map[String, String]): Route = {
     if (params.isEmpty)
       complete(showSparqlEditor())
     else if (params.contains("query")) {
@@ -45,7 +45,7 @@ trait Sparql extends Directives {
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
   }
 
-  def handleSparqlPostRequest(req: HttpRequest, encodedPostReq: String): StandardRoute = {
+  def handleSparqlPostRequest(req: HttpRequest, encodedPostReq: String): Route = {
     val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
       case m if m matches `sparql-results+xml`  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
       case m if m matches `sparql-results+json` ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
@@ -75,7 +75,7 @@ trait Sparql extends Directives {
   }
 
   private def askQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat) = {
-    bs.askQuery(query, fmt) match {
+    onComplete(bs.askQuery(query, fmt)) {
       case scala.util.Success(s) ⇒
         complete(HttpEntity(ct, s))
       case scala.util.Failure(f) ⇒
