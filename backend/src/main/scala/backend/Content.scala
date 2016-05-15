@@ -4,6 +4,8 @@ object Content {
   import scalatags.Text.all._
   import scalatags.Text.tags2
 
+  val ModelName = s"http://${Main.ServerAddress}/kb/"
+
   def indexPage(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
     "<!DOCTYPE html>" + html(
       head(
@@ -19,8 +21,8 @@ object Content {
   }
 
   def sparql(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
-    val q = """
-      |PREFIX c:<http://test.model/>
+    val q = s"""
+      |PREFIX kb:<$ModelName>
       |PREFIX s:<http://schema.org/>
       |
       |SELECT * WHERE {
@@ -38,7 +40,7 @@ object Content {
         div(id := "yasgui"),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d),
         script(`type` := "text/javascript", raw(s"""
-          YASGUI.YASQE.defaults.sparql.endpoint = "${Main.ServerAddress}/sparql";
+          YASGUI.YASQE.defaults.sparql.endpoint = "http://${Main.ServerAddress}/sparql";
           YASGUI.YASQE.defaults.value = "$q";
           var yasgui = YASGUI(document.getElementById("yasgui"));
         """))

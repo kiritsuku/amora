@@ -8,6 +8,7 @@ import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.sparql.resultset.ResultsFormat
 
 import akka.actor.Actor
+import backend.Content
 import backend.indexer.Indexer
 import backend.indexer.IndexerConstants
 import research.converter.protocol.Hierarchy
@@ -17,8 +18,6 @@ class IndexerActor extends Actor {
   import Indexer._
   import IndexerConstants._
   import IndexerMessage._
-
-  private val modelName = "http://test.model/"
 
   override def receive = {
     case AskQuery(query, fmt) ⇒
@@ -30,8 +29,8 @@ class IndexerActor extends Actor {
 
   def handleAskQuery(query: String, fmt: ResultsFormat): Try[String] = {
     withDataset(IndexDataset) { dataset ⇒
-      withModel(dataset, modelName) { model ⇒
-        withQueryService(modelName, query)(model) map { r ⇒
+      withModel(dataset, Content.ModelName) { model ⇒
+        withQueryService(Content.ModelName, query)(model) map { r ⇒
           val s = new ByteArrayOutputStream
 
           ResultSetFormatter.output(s, r, fmt)
@@ -43,10 +42,10 @@ class IndexerActor extends Actor {
 
   def handleAddData(data: Indexable): Try[Unit] = {
     withDataset(IndexDataset) { dataset ⇒
-      withModel(dataset, modelName) { model ⇒
+      withModel(dataset, Content.ModelName) { model ⇒
         data match {
-          case p: Project ⇒ addProject(modelName, p)(model)
-          case f: File ⇒ addFile(modelName, f)(model)
+          case p: Project ⇒ addProject(Content.ModelName, p)(model)
+          case f: File ⇒ addFile(Content.ModelName, f)(model)
         }
       }
     }
