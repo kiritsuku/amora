@@ -28,7 +28,7 @@ final class JavaBytecodeIndexerActor(indexer: ActorRef, logger: Logger) extends 
     res foreach {
       case (fileName, hierarchy) ⇒
         logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
-        this.indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+        this.indexer ! IndexerMessage.AddData(IndexerMessage.File(IndexerMessage.NoOrigin, fileName, hierarchy))
     }
   }
 

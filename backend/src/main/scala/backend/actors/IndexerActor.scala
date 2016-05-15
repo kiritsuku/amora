@@ -24,8 +24,8 @@ class IndexerActor extends Actor {
     case AskQuery(query, fmt) ⇒
       sender ! handleAskQuery(query, fmt)
 
-    case AddFile(fileName, data) ⇒
-      handleAddData(fileName, data)
+    case AddData(data) ⇒
+      handleAddData(data)
   }
 
   def handleAskQuery(query: String, fmt: ResultsFormat): Try[String] = {
@@ -41,9 +41,14 @@ class IndexerActor extends Actor {
     }.flatten
   }
 
-  def handleAddData(fileName: String, data: Seq[Hierarchy]): Try[Unit] = {
+  def handleAddData(data: Indexable): Try[Unit] = {
     withDataset(IndexDataset) { dataset ⇒
-      withModel(dataset, modelName)(add(modelName, fileName, data))
+      withModel(dataset, modelName) { model ⇒
+        data match {
+          case p: Project ⇒ addProject(modelName, p)(model)
+          case f: File ⇒ addFile(modelName, f)(model)
+        }
+      }
     }
   }
 }
@@ -51,5 +56,12 @@ class IndexerActor extends Actor {
 sealed trait IndexerMessage
 object IndexerMessage {
   case class AskQuery(query: String, fmt: ResultsFormat) extends IndexerMessage
-  case class AddFile(fileName: String, data: Seq[Hierarchy]) extends IndexerMessage
+  case class AddData(data: Indexable) extends IndexerMessage
+
+  sealed trait Indexable extends IndexerMessage
+  final case class Artifact(organization: String, name: String, version: String) extends Indexable
+  sealed trait Origin extends Indexable
+  final case class Project(name: String, artifact: Artifact) extends Origin
+  case object NoOrigin extends Origin
+  final case class File(origin: Origin, name: String, data: Seq[Hierarchy]) extends Indexable
 }

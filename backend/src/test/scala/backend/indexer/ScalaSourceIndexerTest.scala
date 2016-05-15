@@ -20,7 +20,7 @@ class ScalaSourceIndexerTest {
           case scala.util.Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.add(modelName, filename, data)(model)
+                Indexer.addFile(modelName, filename, data)(model)
             }
           case scala.util.Failure(f) ⇒
             throw f

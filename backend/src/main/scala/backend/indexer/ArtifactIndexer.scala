@@ -10,7 +10,6 @@ import java.util.zip.ZipFile
 import scala.util.Try
 
 import research.converter.ClassfileConverter
-import research.converter.protocol.Hierarchy
 import scalaz.{ Success ⇒ _, _ }
 import scalaz.concurrent.Task
 import backend.Logger
@@ -25,7 +24,7 @@ object ArtifactIndexer {
   sealed trait DownloadStatus {
     def isError: Boolean
   }
-  case class DownloadSuccess(artifact: File) extends DownloadStatus {
+  case class DownloadSuccess(artifact: RequestMessage.Artifact, file: File) extends DownloadStatus {
     override def isError = false
   }
   case class DownloadError(artifactName: String, reason: Option[String]) extends DownloadStatus {
@@ -57,8 +56,8 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     }
     val (errors, succs) = res.partition(_.isError)
     val succMsgs = succs.collect {
-      case DownloadSuccess(artifact) ⇒
-        artifact.getName
+      case DownloadSuccess(_, file) ⇒
+        file.getName
     }
     val errMsgs = errors.collect {
       case DownloadError(artifactName, reasonOpt) ⇒
@@ -74,20 +73,23 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     logger.info(msg)
 
     if (errors.isEmpty)
-      indexArtifacts(succs)
+      indexArtifacts(succs.asInstanceOf[Seq[DownloadSuccess]])
   }
 
-  def indexArtifacts(artifacts: Seq[DownloadStatus]) = {
+  def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
-    val indexed = artifacts.collect {
-      case DownloadSuccess(artifact) ⇒ indexArtifact(artifact).get
-    }.flatten
+    artifacts foreach {
+      case DownloadSuccess(artifact, file) ⇒
+        val project = IndexerMessage.Project(artifact.name, IndexerMessage.Artifact(artifact.organization, artifact.name, artifact.version))
+        val files = indexArtifact(project, file).get
 
-    logger.info(s"Indexing ${indexed.size} files.")
-    indexed.zipWithIndex foreach {
-      case ((fileName, hierarchy), i) ⇒
-        logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-        indexer ! IndexerMessage.AddFile(fileName, hierarchy)
+        logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
+        indexer ! IndexerMessage.AddData(project)
+        files.zipWithIndex foreach {
+          case (file @ IndexerMessage.File(project, fileName, hierarchy), i) ⇒
+            logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
+            indexer ! IndexerMessage.AddData(file)
+        }
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }
@@ -103,26 +105,30 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
       resolution.errors.flatMap(_._2).map(DownloadError(_, None))
     else {
       val localArtifacts = Task.gatherUnordered(
-        resolution.artifacts.map(Cache.file(_, cache = cache, logger = Some(coursierLogger)).run)
+        resolution.dependencyArtifacts.map {
+          case (dependency, artifact) ⇒
+            val a = RequestMessage.Artifact(dependency.module.organization, dependency.module.name, dependency.version)
+            Cache.file(artifact, cache = cache, logger = Some(coursierLogger)).map(f ⇒ a → f).run
+        }
       ).run
 
       localArtifacts.map {
         case -\/(f) ⇒
           DownloadError(f.message, Some(f.`type`))
-        case \/-(file) ⇒
-          DownloadSuccess(file)
+        case \/-((artifact, file)) ⇒
+          DownloadSuccess(artifact, file)
       }
     }
   }
 
-  def indexArtifact(artifact: File): Try[Seq[(String, Seq[Hierarchy])]] = Try {
+  def indexArtifact(project: IndexerMessage.Project, artifact: File): Try[Seq[IndexerMessage.File]] = Try {
     import scala.collection.JavaConverters._
     require(artifact.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
       val hierarchy = new ClassfileConverter().convert(bytes).get
-      entry.getName → hierarchy
+      IndexerMessage.File(project, entry.getName, hierarchy)
     }
 
     def zipToHierarchy(zip: ZipFile) = {

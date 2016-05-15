@@ -19,7 +19,7 @@ class JavaBytecodeIndexerTest {
           case Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.add(modelName, filename, data)(model)
+                Indexer.addFile(modelName, filename, data)(model)
             }
           case Failure(f) ⇒
             throw f

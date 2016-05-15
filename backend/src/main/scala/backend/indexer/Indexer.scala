@@ -15,6 +15,7 @@ import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
 import research.converter.protocol._
+import backend.actors.IndexerMessage._
 
 object Indexer {
 
@@ -59,7 +60,7 @@ object Indexer {
   private def encode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 
-  private def mkModel(filename: String)(h: Hierarchy): String = h match {
+  private def mkModel(projectFile: File)(h: Hierarchy): String = h match {
     case Root ⇒
       "[]"
 
@@ -69,7 +70,7 @@ object Indexer {
           encode(parent.asString).replace('.', '/')
         case _: Ref ⇒
           val path = encode(parent.asString).replace('.', '/')
-          val f = encode(filename)
+          val f = encode(projectFile.name)
           val h = uniqueRef(parent.position)
           s"$path/$f$h"
       }
@@ -89,18 +90,18 @@ object Indexer {
           ${attachments(decl)}
           "c:tpe": "decl",
           ${position(decl.position)}
-          "c:file": "$filename",
+          "c:file": "${projectFile.name}",
           "c:owner": "c:$path"
         }
       """
-      val declEntry = mkModel(filename)(parent)
+      val declEntry = mkModel(projectFile)(parent)
       Seq(classEntry, declEntry).mkString(",\n")
 
     case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
       // TODO do not use replace function here, it is not safe since Scala
       // identifiers can contain dots.
       val path = encode(refToDecl.asString).replace('.', '/')
-      val f = encode(filename)
+      val f = encode(projectFile.name)
       val h = uniqueRef(ref.position)
       val u = encode(owner.asString).replace('.', '/')
       s"""
@@ -110,7 +111,7 @@ object Indexer {
           "c:tpe": "ref",
           "s:name": "${ref.name}",
           ${attachments(ref)}
-          "c:file": "$filename",
+          "c:file": "${projectFile.name}",
           ${position(ref.position)}
           "c:reference": "c:$path",
           "c:owner": "c:$u"
@@ -118,7 +119,46 @@ object Indexer {
       """
   }
 
-  def add(modelName: String, filename: String, data: Seq[Hierarchy])(model: Model): Try[Unit] = Try {
+  def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
+    val str = s"""
+      {
+        "@context": {
+          "c": "$modelName",
+          "c:name": {
+            "@id": "c:name"
+          },
+          "c:artifact": {
+            "@id": "c:artifact",
+            "@type": "@id"
+          },
+          "c:organization": {
+            "@id": "c:organization"
+          },
+          "c:version": {
+            "@id": "c:version"
+          }
+        },
+        "@graph": [
+          {
+            "@id": "c:${pathOf(project)}",
+            "@type": "c:Project",
+            "c:name": "${encode(project.name)}",
+            "c:artifact": "c:${pathOf(project.artifact)}"
+          },
+          {
+            "@id": "c:${pathOf(project.artifact)}",
+            "@type": "c:Artifact",
+            "c:organization": "${encode(project.artifact.organization)}",
+            "c:name": "${encode(project.artifact.name)}",
+            "c:version": "${encode(project.artifact.version)}"
+          }
+        ]
+      }
+    """
+    addJsonLd(model, str)
+  }
+
+  def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
     val str = s"""
       {
         "@context": {
@@ -144,14 +184,36 @@ object Indexer {
           },
           "c:end": {
             "@id": "c:end"
+          },
+          "c:project": {
+            "@id": "c:project"
           }
         },
         "@graph": [
-          ${data map mkModel(filename) mkString ",\n"}
+          ${projectFile.data map mkModel(projectFile) mkString ",\n"}
         ]
       }
     """
-    val in = new ByteArrayInputStream(str.getBytes)
+    addJsonLd(model, str)
+  }
+
+  private def pathOf(data: Indexable): String = data match {
+    case Artifact(organization, name, version) ⇒
+      val o = encode(organization)
+      val n = encode(name)
+      val v = encode(version)
+      s"a/$o/$n/$v"
+    case Project(name, _) ⇒
+      val n = encode(name)
+      s"p/$n"
+    case File(project, name, _) ⇒
+      val p = pathOf(project)
+      val n = encode(name)
+      s"f/$p/$n"
+  }
+
+  private def addJsonLd(model: Model, data: String) = {
+    val in = new ByteArrayInputStream(data.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
