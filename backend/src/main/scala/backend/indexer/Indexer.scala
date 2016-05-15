@@ -142,15 +142,15 @@ object Indexer {
           {
             "@id": "c:${pathOf(project)}",
             "@type": "c:Project",
-            "c:name": "${encode(project.name)}",
+            "c:name": "${project.name}",
             "c:artifact": "c:${pathOf(project.artifact)}"
           },
           {
             "@id": "c:${pathOf(project.artifact)}",
             "@type": "c:Artifact",
-            "c:organization": "${encode(project.artifact.organization)}",
-            "c:name": "${encode(project.artifact.name)}",
-            "c:version": "${encode(project.artifact.version)}"
+            "c:organization": "${project.artifact.organization}",
+            "c:name": "${project.artifact.name}",
+            "c:version": "${project.artifact.version}"
           }
         ]
       }
