@@ -44,7 +44,7 @@ class IndexerActor extends Actor {
     withDataset(IndexDataset) { dataset ⇒
       withModel(dataset, Content.ModelName) { model ⇒
         data match {
-          case p: Project ⇒ addProject(Content.ModelName, p)(model)
+          case a: Artifact ⇒ addArtifact(Content.ModelName, a)(model)
           case f: File ⇒ addFile(Content.ModelName, f)(model)
         }
       }
@@ -58,9 +58,9 @@ object IndexerMessage {
   case class AddData(data: Indexable) extends IndexerMessage
 
   sealed trait Indexable extends IndexerMessage
-  final case class Artifact(organization: String, name: String, version: String) extends Indexable
   sealed trait Origin extends Indexable
-  final case class Project(name: String, artifact: Artifact) extends Origin
+  final case class Artifact(project: Project, organization: String, name: String, version: String) extends Origin
   case object NoOrigin extends Origin
+  final case class Project(name: String) extends Indexable
   final case class File(origin: Origin, name: String, data: Seq[Hierarchy]) extends Indexable
 }

@@ -119,13 +119,17 @@ object Indexer {
       """
   }
 
-  def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
+  def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
     val str = s"""
       {
         "@context": {
           "c": "$modelName",
           "c:name": {
             "@id": "c:name"
+          },
+          "c:project": {
+            "@id": "c:project",
+            "@type": "@id"
           },
           "c:artifact": {
             "@id": "c:artifact",
@@ -140,17 +144,17 @@ object Indexer {
         },
         "@graph": [
           {
-            "@id": "c:${pathOf(project)}",
+            "@id": "c:${pathOf(artifact.project)}",
             "@type": "c:Project",
-            "c:name": "${project.name}",
-            "c:artifact": "c:${pathOf(project.artifact)}"
+            "c:name": "${artifact.project.name}"
           },
           {
-            "@id": "c:${pathOf(project.artifact)}",
+            "@id": "c:${pathOf(artifact)}",
             "@type": "c:Artifact",
-            "c:organization": "${project.artifact.organization}",
-            "c:name": "${project.artifact.name}",
-            "c:version": "${project.artifact.version}"
+            "c:organization": "${artifact.organization}",
+            "c:name": "${artifact.name}",
+            "c:version": "${artifact.version}",
+            "c:project": "c:${pathOf(artifact)}"
           }
         ]
       }
@@ -198,18 +202,25 @@ object Indexer {
   }
 
   private def pathOf(data: Indexable): String = data match {
-    case Artifact(organization, name, version) ⇒
+    case Artifact(_, organization, name, version) ⇒
       val o = encode(organization)
       val n = encode(name)
       val v = encode(version)
-      s"a/$o/$n/$v"
-    case Project(name, _) ⇒
+      s"artifact/$o/$n/$v"
+    case Project(name) ⇒
       val n = encode(name)
-      s"p/$n"
-    case File(project, name, _) ⇒
-      val p = pathOf(project)
-      val n = encode(name)
-      s"f/$p/$n"
+      s"project/$n"
+    case File(origin, name, _) ⇒
+      val fn = encode(name)
+      origin match {
+        case Artifact(_, organization, name, version) ⇒
+          val o = encode(organization)
+          val n = encode(name)
+          val v = encode(version)
+          s"file/$o/$n/$v/$fn"
+        case NoOrigin ⇒
+          s"file/$fn"
+      }
   }
 
   private def addJsonLd(model: Model, data: String) = {

@@ -80,11 +80,12 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
-        val project = IndexerMessage.Project(artifact.name, IndexerMessage.Artifact(artifact.organization, artifact.name, artifact.version))
-        val files = indexArtifact(project, file).get
+        val p = IndexerMessage.Project(artifact.name)
+        val a = IndexerMessage.Artifact(p, artifact.organization, artifact.name, artifact.version)
+        val files = indexArtifact(a, file).get
 
         logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
-        indexer ! IndexerMessage.AddData(project)
+        indexer ! IndexerMessage.AddData(a)
         files.zipWithIndex foreach {
           case (file @ IndexerMessage.File(project, fileName, hierarchy), i) ⇒
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
@@ -121,14 +122,14 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
     }
   }
 
-  def indexArtifact(project: IndexerMessage.Project, artifact: File): Try[Seq[IndexerMessage.File]] = Try {
+  def indexArtifact(artifact: IndexerMessage.Artifact, file: File): Try[Seq[IndexerMessage.File]] = Try {
     import scala.collection.JavaConverters._
-    require(artifact.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
+    require(file.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
       val hierarchy = new ClassfileConverter().convert(bytes).get
-      IndexerMessage.File(project, entry.getName, hierarchy)
+      IndexerMessage.File(artifact, entry.getName, hierarchy)
     }
 
     def zipToHierarchy(zip: ZipFile) = {
@@ -137,7 +138,7 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
       filtered.map(entry ⇒ entryToHierarchy(zip, entry)).toList
     }
 
-    using(new ZipFile(artifact))(zipToHierarchy)
+    using(new ZipFile(file))(zipToHierarchy)
   }
 
   private def readInputStream(in: InputStream): Array[Byte] = {
