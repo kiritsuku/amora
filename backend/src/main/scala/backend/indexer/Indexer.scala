@@ -82,9 +82,17 @@ object Indexer {
         case Attachment.Param ⇒ "<param>"
         case Attachment.TypeParam ⇒ "<tparam>"
       }.getOrElse(""))
+      val origin = projectFile.origin match {
+        // TODO use decl instead of artifact prefix?
+        case a: Artifact ⇒ pathOf(a) + "/"
+        case NoOrigin ⇒ ""
+      }
+      val fullPath = s"$origin$path/$paramAtt$n$sig"
+      // TODO c:file needs to refer to origin
+
       val classEntry = s"""
         {
-          "@id": "c:$path/$paramAtt$n$sig",
+          "@id": "c:$fullPath",
           "@type": "s:Text",
           "s:name": "$name",
           ${attachments(decl)}
@@ -104,9 +112,14 @@ object Indexer {
       val f = encode(projectFile.name)
       val h = uniqueRef(ref.position)
       val u = encode(owner.asString).replace('.', '/')
+      val origin = projectFile.origin match {
+        case a: Artifact ⇒ pathOf(a) + "/"
+        case NoOrigin ⇒ ""
+      }
+      val fullPath = s"$origin$path/$f$h"
       s"""
         {
-          "@id": "c:$path/$f$h",
+          "@id": "c:$fullPath",
           "@type": "s:Text",
           "c:tpe": "ref",
           "s:name": "${ref.name}",
@@ -190,11 +203,36 @@ object Indexer {
             "@id": "c:end"
           },
           "c:project": {
-            "@id": "c:project"
+            "@id": "c:project",
+            "@type": "@id"
+          },
+          "c:artifact": {
+            "@id": "c:artifact",
+            "@type": "@id"
+          },
+          "c:name": {
+            "@id": "c:name"
           }
         },
         "@graph": [
-          ${projectFile.data map mkModel(projectFile) mkString ",\n"}
+          {
+            "@id": "c:${pathOf(projectFile)}",
+            "@type": "c:File",
+            "c:name": "${projectFile.name}"
+            ${
+              projectFile.origin match {
+                // TODO replace artifact by package
+                case a: Artifact ⇒ s""" ,"c:artifact": "c:${pathOf(a)}" """
+                case NoOrigin ⇒ ""
+              }
+            }
+          }
+          ${
+            if (projectFile.data.isEmpty)
+              ""
+            else
+              projectFile.data.map(mkModel(projectFile)).mkString(",", ",\n", "")
+          }
         ]
       }
     """
