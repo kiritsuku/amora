@@ -5,6 +5,7 @@ import scala.util._
 
 import org.junit.Test
 import backend.TestUtils
+import backend.actors.IndexerMessage
 
 class ScalaSourceIndexerTest {
 
@@ -20,7 +21,7 @@ class ScalaSourceIndexerTest {
           case scala.util.Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.addFile(modelName, filename, data)(model)
+                Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
             }
           case scala.util.Failure(f) ⇒
             throw f

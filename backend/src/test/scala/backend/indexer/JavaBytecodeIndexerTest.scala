@@ -3,6 +3,7 @@ package indexer
 
 import scala.util._
 import org.junit.Test
+import backend.actors.IndexerMessage
 
 class JavaBytecodeIndexerTest {
 
@@ -19,7 +20,7 @@ class JavaBytecodeIndexerTest {
           case Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.addFile(modelName, filename, data)(model)
+                Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
             }
           case Failure(f) ⇒
             throw f

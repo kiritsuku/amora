@@ -5,6 +5,7 @@ import scala.util._
 
 import org.junit.Test
 import backend.TestUtils
+import backend.actors.IndexerMessage
 
 class RegionIndexerTest {
 
@@ -80,7 +81,7 @@ class RegionIndexerTest {
       Indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
-            Indexer.addFile(modelName, filename, data)(model)
+            Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
         }
         if (debugTests) {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
