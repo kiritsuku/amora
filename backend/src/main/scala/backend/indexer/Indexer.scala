@@ -212,7 +212,7 @@ object Indexer {
             "c:organization": "${artifact.organization}",
             "c:name": "${artifact.name}",
             "c:version": "${artifact.version}",
-            "c:project": "c:${pathOf(artifact)}"
+            "c:project": "c:${pathOf(artifact.project)}"
           }
         ]
       }
