@@ -142,6 +142,15 @@ object Indexer {
         }
       """
   }
+
+  def add(modelName: String, model: Model, data: Indexable): Unit = {
+    data match {
+      case project: Project ⇒ addProject(modelName, project)(model).get
+      case artifact: Artifact ⇒ addArtifact(modelName, artifact)(model).get
+      case file: File ⇒ addFile(modelName, file)(model).get
+    }
+  }
+
   def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
     val str = s"""
       {

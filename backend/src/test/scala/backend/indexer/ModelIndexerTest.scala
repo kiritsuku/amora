@@ -17,11 +17,7 @@ class ModelIndexerTest {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        data foreach {
-          case project: Project ⇒ Indexer.addProject(modelName, project)(model).get
-          case artifact: Artifact ⇒ Indexer.addArtifact(modelName, artifact)(model).get
-          case file: File ⇒ Indexer.addFile(modelName, file)(model).get
-        }
+        data foreach (Indexer.add(modelName, model, _))
 
         if (debugTests) {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println

@@ -43,10 +43,7 @@ class IndexerActor extends Actor {
   def handleAddData(data: Indexable): Try[Unit] = {
     withDataset(IndexDataset) { dataset ⇒
       withModel(dataset, Content.ModelName) { model ⇒
-        data match {
-          case a: Artifact ⇒ addArtifact(Content.ModelName, a)(model)
-          case f: File ⇒ addFile(Content.ModelName, f)(model)
-        }
+        add(Content.ModelName, model, data)
       }
     }
   }
