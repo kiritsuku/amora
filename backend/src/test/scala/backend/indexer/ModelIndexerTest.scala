@@ -127,9 +127,8 @@ class ModelIndexerTest {
 
     ask(modelName, """
         PREFIX c:<?MODEL?>
-        SELECT ?name ?version WHERE {
-          [a c:File] c:name ?name; c:artifact ?artifact .
-          ?artifact c:version ?version
+        SELECT * WHERE {
+          [a c:File] c:name ?name; c:artifact [c:version ?version] .
         }
       """, artifact1, artifact2, file1, file2) === Seq(
           Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v1")),
