@@ -58,6 +58,51 @@ class ModelIndexerTest {
   }
 
   @Test
+  def multiple_projects() = {
+    val project1 = Project("p1")
+    val project2 = Project("p2")
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Project] c:name ?name .
+        }
+      """, project1, project2) === Seq(
+          Seq(Data("name", "p1")),
+          Seq(Data("name", "p2")))
+  }
+
+  @Test
+  def single_artifact() = {
+    val project = Project("project")
+    val artifact = Artifact(project, "organization", "artifact", "v1")
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Artifact] c:organization ?organization ; c:name ?name ; c:version ?version .
+        }
+      """, artifact) === Seq(
+          Seq(Data("name", "artifact"), Data("organization", "organization"), Data("version", "v1")))
+  }
+
+  @Test
+  def multiple_artifacts() = {
+    val project = Project("project")
+    val artifact1 = Artifact(project, "o1", "a1", "v1")
+    val artifact2 = Artifact(project, "o2", "a2", "v2")
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Artifact] c:organization ?organization ; c:name ?name ; c:version ?version .
+        }
+      """, artifact1, artifact2) === Seq(
+          Seq(Data("name", "a1"), Data("organization", "o1"), Data("version", "v1")),
+          Seq(Data("name", "a2"), Data("organization", "o2"), Data("version", "v2")))
+  }
+
+  @Test
   def files_with_same_name_of_different_artifacts() = {
     val project = Project("project")
     val artifact1 = Artifact(project, "organization", "name", "v1")
