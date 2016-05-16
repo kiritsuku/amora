@@ -13,11 +13,14 @@ class ModelIndexerTest {
 
   case class Data(varName: String, value: String)
 
-  def ask(modelName: String, rawQuery: String, artifact: Artifact): Seq[Data] = {
+  def ask(modelName: String, rawQuery: String, data: Indexable*): Seq[Data] = {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
-        Indexer.addArtifact(modelName, artifact)(model).get
+        data foreach {
+          case artifact: Artifact ⇒ Indexer.addArtifact(modelName, artifact)(model).get
+          case file: File ⇒ Indexer.addFile(modelName, file)(model).get
+        }
 
         if (debugTests) {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
@@ -51,5 +54,21 @@ class ModelIndexerTest {
           [a c:Project] c:name ?name .
         }
       """, artifact) === Seq(Data("name", "project"))
+  }
+
+  @Test
+  def files_with_same_name_of_different_artifacts() = {
+    val project = Project("project")
+    val artifact1 = Artifact(project, "organization", "name", "v1")
+    val artifact2 = Artifact(project, "organization", "name", "v2")
+    val file1 = File(artifact1, "a/b/c/Test.scala", Seq())
+    val file2 = File(artifact2, "a/b/c/Test.scala", Seq())
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:File] c:name ?name .
+        }
+      """, artifact1, artifact2, file1, file2) === Seq(Data("name", "a/b/c/Test.scala"), Data("name", "a/b/c/Test.scala"))
   }
 }
