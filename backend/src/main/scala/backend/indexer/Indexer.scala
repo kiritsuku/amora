@@ -142,6 +142,40 @@ object Indexer {
         }
       """
   }
+  def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
+    val str = s"""
+      {
+        "@context": {
+          "c": "$modelName",
+          "c:name": {
+            "@id": "c:name"
+          },
+          "c:project": {
+            "@id": "c:project",
+            "@type": "@id"
+          },
+          "c:artifact": {
+            "@id": "c:artifact",
+            "@type": "@id"
+          },
+          "c:organization": {
+            "@id": "c:organization"
+          },
+          "c:version": {
+            "@id": "c:version"
+          }
+        },
+        "@graph": [
+          {
+            "@id": "c:${pathOf(project)}",
+            "@type": "c:Project",
+            "c:name": "${project.name}"
+          }
+        ]
+      }
+    """
+    addJsonLd(model, str)
+  }
 
   def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
     val str = s"""

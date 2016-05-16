@@ -18,6 +18,7 @@ class ModelIndexerTest {
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
         data foreach {
+          case project: Project ⇒ Indexer.addProject(modelName, project)(model).get
           case artifact: Artifact ⇒ Indexer.addArtifact(modelName, artifact)(model).get
           case file: File ⇒ Indexer.addFile(modelName, file)(model).get
         }
@@ -45,16 +46,15 @@ class ModelIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def find_single_project() = {
+  def single_project() = {
     val project = Project("project")
-    val artifact = Artifact(project, "organization", "name", "v1")
 
     ask(modelName, """
         PREFIX c:<?MODEL?>
         SELECT * WHERE {
           [a c:Project] c:name ?name .
         }
-      """, artifact) === Seq(Seq(Data("name", "project")))
+      """, project) === Seq(Seq(Data("name", "project")))
   }
 
   @Test
