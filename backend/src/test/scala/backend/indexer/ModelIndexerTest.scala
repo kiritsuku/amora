@@ -13,7 +13,7 @@ class ModelIndexerTest {
 
   case class Data(varName: String, value: String)
 
-  def ask(modelName: String, rawQuery: String, data: Indexable*): Seq[Data] = {
+  def ask(modelName: String, rawQuery: String, data: Indexable*): Seq[Seq[Data]] = {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = Indexer.withInMemoryDataset { dataset ⇒
       Indexer.withModel(dataset, modelName) { model ⇒
@@ -26,6 +26,7 @@ class ModelIndexerTest {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
           Indexer.queryResultAsString(modelName, query, model) foreach println
         }
+
         Indexer.queryResult(modelName, query, model) { (v, q) ⇒
           val res = q.get(v)
           require(res != null, s"The variable `$v` does not exist in the result set.")
@@ -35,7 +36,7 @@ class ModelIndexerTest {
     }.flatten
     res match {
       case Success(res) ⇒
-        res.sortBy(d ⇒ (d.varName, d.value))
+        res.map(_.sortBy(d ⇒ (d.varName, d.value)))
       case Failure(f) ⇒
         throw new RuntimeException("An error happened during the test.", f)
     }
@@ -53,7 +54,7 @@ class ModelIndexerTest {
         SELECT * WHERE {
           [a c:Project] c:name ?name .
         }
-      """, artifact) === Seq(Data("name", "project"))
+      """, artifact) === Seq(Seq(Data("name", "project")))
   }
 
   @Test
@@ -66,9 +67,12 @@ class ModelIndexerTest {
 
     ask(modelName, """
         PREFIX c:<?MODEL?>
-        SELECT * WHERE {
-          [a c:File] c:name ?name .
+        SELECT ?name ?version WHERE {
+          [a c:File] c:name ?name; c:artifact ?artifact .
+          ?artifact c:version ?version
         }
-      """, artifact1, artifact2, file1, file2) === Seq(Data("name", "a/b/c/Test.scala"), Data("name", "a/b/c/Test.scala"))
+      """, artifact1, artifact2, file1, file2) === Seq(
+          Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v1")),
+          Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v2")))
   }
 }

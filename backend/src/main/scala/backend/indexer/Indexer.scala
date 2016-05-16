@@ -28,12 +28,23 @@ object Indexer {
     }
   }
 
-  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
+  def flattenedQueryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
     import scala.collection.JavaConverters._
     withQueryService(modelName, query)(model) map { r ⇒
       val vars = r.getResultVars.asScala.toSeq
 
       for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
+    }
+  }
+
+  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[Seq[A]]] = {
+    import scala.collection.JavaConverters._
+    withQueryService(modelName, query)(model) map { r ⇒
+      val vars = r.getResultVars.asScala.toSeq
+
+      for (q ← r.asScala.toSeq) yield
+        for (v ← vars) yield
+          f(v, q)
     }
   }
 
