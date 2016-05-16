@@ -21,7 +21,7 @@ class ScalaSourceIndexerTest {
           case scala.util.Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
+                Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
             }
           case scala.util.Failure(f) ⇒
             throw f

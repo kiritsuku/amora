@@ -81,7 +81,7 @@ class RegionIndexerTest {
       Indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
-            Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
+            Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
         }
         if (debugTests) {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
