@@ -49,50 +49,48 @@ object Indexer {
     }
   }
 
-  private def context(modelName: String) = s"""
-    {
-      "c": "$modelName",
-      "s": "http://schema.org/",
-      "c:declaration": {
-        "@id": "c:declaration",
-        "@type": "@id"
-      },
-      "c:owner": {
-        "@id": "c:owner",
-        "@type": "@id"
-      },
-      "c:attachment": {
-        "@id": "c:attachment"
-      },
-      "c:reference": {
-        "@id": "c:reference",
-        "@type": "@id"
-      },
-      "c:start": {
-        "@id": "c:start"
-      },
-      "c:end": {
-        "@id": "c:end"
-      },
-      "c:project": {
-        "@id": "c:project",
-        "@type": "@id"
-      },
-      "c:artifact": {
-        "@id": "c:artifact",
-        "@type": "@id"
-      },
-      "c:organization": {
-        "@id": "c:organization"
-      },
-      "c:version": {
-        "@id": "c:version"
-      },
-      "c:name": {
-        "@id": "c:name"
-      }
-    }
-  """
+  private def context(modelName: String) = JsObject(
+      "c" → JsString(modelName),
+      "s" → JsString("http://schema.org/"),
+      "c:declaration" → JsObject(
+        "@id" → JsString("c:declaration"),
+        "@type" → JsString("@id")
+      ),
+      "c:owner" → JsObject(
+        "@id" → JsString("c:owner"),
+        "@type" → JsString("@id")
+      ),
+      "c:attachment" → JsObject(
+        "@id" → JsString("c:attachment")
+      ),
+      "c:reference" → JsObject(
+        "@id" → JsString("c:reference"),
+        "@type" → JsString("@id")
+      ),
+      "c:start" → JsObject(
+        "@id" → JsString("c:start")
+      ),
+      "c:end" → JsObject(
+        "@id" → JsString("c:end")
+      ),
+      "c:project" → JsObject(
+        "@id" → JsString("c:project"),
+        "@type" → JsString("@id")
+      ),
+      "c:artifact" → JsObject(
+        "@id" → JsString("c:artifact"),
+        "@type" → JsString("@id")
+      ),
+      "c:organization" → JsObject(
+        "@id" → JsString("c:organization")
+      ),
+      "c:version" → JsObject(
+        "@id" → JsString("c:version")
+      ),
+      "c:name" → JsObject(
+        "@id" → JsString("c:name")
+      )
+  )
 
   private def attachments(h: Hierarchy) =
     if (h.attachments.isEmpty)
@@ -220,11 +218,11 @@ object Indexer {
       "c:name" → JsString(project.name)
     )
     val contextEntry = Map(
-      "@context" → context(modelName).parseJson,
+      "@context" → context(modelName),
       "@graph" → JsArray(Vector(JsObject(projectEntry)))
     )
 
-    addJsonLd(model, JsObject(contextEntry).prettyPrint)
+    addJsonLd(model, JsObject(contextEntry))
   }
 
   def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
@@ -244,11 +242,11 @@ object Indexer {
     )
 
     val contextEntry = Map(
-      "@context" → context(modelName).parseJson,
+      "@context" → context(modelName),
       "@graph" → JsArray(Vector(JsObject(projectEntry), JsObject(artifactEntry)))
     )
 
-    addJsonLd(model, JsObject(contextEntry).prettyPrint)
+    addJsonLd(model, JsObject(contextEntry))
   }
 
   def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
@@ -273,11 +271,11 @@ object Indexer {
     val modelEntries: Vector[JsValue] = projectFile.data.flatMap(mkModel(projectFile))(collection.breakOut)
 
     val contextEntry = Map(
-      "@context" → context(modelName).parseJson,
+      "@context" → context(modelName),
       "@graph" → JsArray(JsObject(fileEntry) +: modelEntries)
     )
 
-    addJsonLd(model, JsObject(contextEntry).prettyPrint)
+    addJsonLd(model, JsObject(contextEntry))
   }
 
   private def pathOf(data: Indexable): String = data match {
@@ -302,8 +300,9 @@ object Indexer {
       }
   }
 
-  private def addJsonLd(model: Model, data: String) = {
-    val in = new ByteArrayInputStream(data.getBytes)
+  private def addJsonLd(model: Model, data: JsValue) = {
+    val str = data.prettyPrint
+    val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
