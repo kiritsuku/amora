@@ -427,7 +427,6 @@ final class ScalacConverter[G <: Global](val global: G) {
       val mvnt = until('@', skipping = comment | inBrackets('(', ')')).backward
       val startPos = if (sym.isParameter || sym.isParamAccessor) pos.point else pos.start
       val annPos = (1 to anns.length foldLeft startPos) { (p, _) ⇒
-        println(pos.source.content.slice(p, p+10).mkString)
         mvnt(SourceWithMarker(pos.source.content, p - 1)).get
       }
       val annSrc = " "*annPos + pos.source.content.slice(annPos, startPos).mkString
