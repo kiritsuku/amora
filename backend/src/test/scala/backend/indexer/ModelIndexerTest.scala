@@ -107,7 +107,7 @@ class ModelIndexerTest {
     ask(modelName, """
         PREFIX c:<?MODEL?>
         SELECT DISTINCT * WHERE {
-          [a c:Artifact] c:project [c:name ?name] .
+          [a c:Artifact] c:owner [c:name ?name] .
         }
       """, artifact1, artifact2) === Seq(
           Seq(Data("name", "project")))

@@ -194,12 +194,12 @@ object Indexer {
           "c:name": {
             "@id": "c:name"
           },
-          "c:project": {
-            "@id": "c:project",
-            "@type": "@id"
-          },
           "c:artifact": {
             "@id": "c:artifact",
+            "@type": "@id"
+          },
+          "c:owner": {
+            "@id": "c:owner",
             "@type": "@id"
           },
           "c:organization": {
@@ -221,7 +221,7 @@ object Indexer {
             "c:organization": "${artifact.organization}",
             "c:name": "${artifact.name}",
             "c:version": "${artifact.version}",
-            "c:project": "c:${pathOf(artifact.project)}"
+            "c:owner": "c:${pathOf(artifact.project)}"
           }
         ]
       }
