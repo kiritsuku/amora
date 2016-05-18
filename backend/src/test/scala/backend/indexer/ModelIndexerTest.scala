@@ -113,6 +113,7 @@ class ModelIndexerTest {
           Seq(Data("name", "project")))
   }
 
+  @org.junit.Ignore("Ignore until _root_ package is gone")
   @Test
   def files_with_same_name_of_different_artifacts() = {
     val project = Project("project")
@@ -129,5 +130,30 @@ class ModelIndexerTest {
       """, artifact1, artifact2, file1, file2) === Seq(
           Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v1")),
           Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v2")))
+  }
+
+  @Test
+  def the_owner_of_a_project_does_not_exist() = {
+    val project = Project("p")
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Project] c:owner ?owner .
+        }
+      """, project) === Seq()
+  }
+
+  @Test
+  def the_owner_of_an_artifact_is_a_project() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "a", "v1")
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Artifact] c:owner [c:name ?name] .
+        }
+      """, artifact) === Seq(Seq(Data("name", "p")))
   }
 }
