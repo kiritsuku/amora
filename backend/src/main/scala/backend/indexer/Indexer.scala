@@ -48,6 +48,51 @@ object Indexer {
     }
   }
 
+  private def context(modelName: String) = s"""
+    {
+      "c": "$modelName",
+      "s": "http://schema.org/",
+      "c:declaration": {
+        "@id": "c:declaration",
+        "@type": "@id"
+      },
+      "c:owner": {
+        "@id": "c:owner",
+        "@type": "@id"
+      },
+      "c:attachment": {
+        "@id": "c:attachment"
+      },
+      "c:reference": {
+        "@id": "c:reference",
+        "@type": "@id"
+      },
+      "c:start": {
+        "@id": "c:start"
+      },
+      "c:end": {
+        "@id": "c:end"
+      },
+      "c:project": {
+        "@id": "c:project",
+        "@type": "@id"
+      },
+      "c:artifact": {
+        "@id": "c:artifact",
+        "@type": "@id"
+      },
+      "c:organization": {
+        "@id": "c:organization"
+      },
+      "c:version": {
+        "@id": "c:version"
+      },
+      "c:name": {
+        "@id": "c:name"
+      }
+    }
+  """
+
   private def attachments(h: Hierarchy): String =
     if (h.attachments.isEmpty)
       ""
@@ -166,26 +211,7 @@ object Indexer {
   def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
     val str = s"""
       {
-        "@context": {
-          "c": "$modelName",
-          "c:name": {
-            "@id": "c:name"
-          },
-          "c:project": {
-            "@id": "c:project",
-            "@type": "@id"
-          },
-          "c:artifact": {
-            "@id": "c:artifact",
-            "@type": "@id"
-          },
-          "c:organization": {
-            "@id": "c:organization"
-          },
-          "c:version": {
-            "@id": "c:version"
-          }
-        },
+        "@context": ${context(modelName)},
         "@graph": [
           {
             "@id": "c:${pathOf(project)}",
@@ -201,26 +227,7 @@ object Indexer {
   def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
     val str = s"""
       {
-        "@context": {
-          "c": "$modelName",
-          "c:name": {
-            "@id": "c:name"
-          },
-          "c:artifact": {
-            "@id": "c:artifact",
-            "@type": "@id"
-          },
-          "c:owner": {
-            "@id": "c:owner",
-            "@type": "@id"
-          },
-          "c:organization": {
-            "@id": "c:organization"
-          },
-          "c:version": {
-            "@id": "c:version"
-          }
-        },
+        "@context": ${context(modelName)},
         "@graph": [
           {
             "@id": "c:${pathOf(artifact.project)}",
@@ -254,42 +261,7 @@ object Indexer {
     }.getOrElse("")
     val str = s"""
       {
-        "@context": {
-          "c": "$modelName",
-          "s": "http://schema.org/",
-          "c:declaration": {
-            "@id": "c:declaration",
-            "@type": "@id"
-          },
-          "c:owner": {
-            "@id": "c:owner",
-            "@type": "@id"
-          },
-          "c:attachment": {
-            "@id": "c:attachment"
-          },
-          "c:reference": {
-            "@id": "c:reference",
-            "@type": "@id"
-          },
-          "c:start": {
-            "@id": "c:start"
-          },
-          "c:end": {
-            "@id": "c:end"
-          },
-          "c:project": {
-            "@id": "c:project",
-            "@type": "@id"
-          },
-          "c:artifact": {
-            "@id": "c:artifact",
-            "@type": "@id"
-          },
-          "c:name": {
-            "@id": "c:name"
-          }
-        },
+        "@context": ${context(modelName)},
         "@graph": [
           {
             "@id": "c:${pathOf(projectFile)}",
