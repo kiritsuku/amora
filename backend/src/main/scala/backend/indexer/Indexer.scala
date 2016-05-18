@@ -303,7 +303,7 @@ object Indexer {
       val n = encode(name)
       s"project/$n"
     case File(origin, name, _) ⇒
-      val fn = encode(name)
+      val fn = name.split('/').map(encode).mkString("/")
       origin match {
         case Artifact(_, organization, name, version) ⇒
           val o = encode(organization)
