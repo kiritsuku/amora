@@ -16,6 +16,7 @@ import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
 import research.converter.protocol._
 import backend.actors.IndexerMessage._
+import spray.json._
 
 object Indexer {
 
@@ -93,17 +94,18 @@ object Indexer {
     }
   """
 
-  private def attachments(h: Hierarchy): String =
+  private def attachments(h: Hierarchy) =
     if (h.attachments.isEmpty)
-      ""
-    else
-      h.attachments.map(_.asString).mkString("\"c:attachment\": [\"", "\", \"", "\"],")
+      JsArray()
+    else {
+      JsArray(h.attachments.map(x ⇒ JsString(x.asString)).toVector)
+    }
 
   private def position(pos: Position) = pos match {
     case RangePosition(start, end) ⇒
-      s""""c:start": $start, "c:end": $end,"""
+      Seq("c:start" → JsNumber(start), "c:end" → JsNumber(end))
     case _ ⇒
-      ""
+      Nil
   }
 
   private def uniqueRef(pos: Position) = pos match {
@@ -156,9 +158,9 @@ object Indexer {
       fullOwnerPath → s"$origin$ownerPath/$paramAtt$n$sig"
   }
 
-  private def mkModel(projectFile: File)(h: Hierarchy): String = h match {
+  private def mkModel(projectFile: File)(h: Hierarchy): Vector[JsValue] = h match {
     case Root ⇒
-      "[]"
+      Vector(JsArray())
 
     case decl @ Decl(name, parent) ⇒
       val tpe = decl.attachments.collectFirst {
@@ -166,19 +168,17 @@ object Indexer {
         case Attachment.Package ⇒ "Package"
       }.getOrElse("Declaration")
       val (ownerPath, declPath) = mkPath(projectFile, decl)
-      val classEntry = s"""
-        {
-          "@id": "c:$declPath",
-          "@type": "c:$tpe",
-          ${position(decl.position)}
-          "s:name": "$name",
-          ${attachments(decl)}
-          ${ownerPath.map(p ⇒ s""" "c:owner": "c:$p", """).getOrElse("")}
-          "c:tpe": "decl"
-        }
-      """
+      var classEntry = Map(
+        "@id" → JsString(s"c:$declPath"),
+        "@type" → JsString(s"c:$tpe"),
+        "s:name" → JsString(name),
+        "c:attachment" → attachments(decl),
+        "c:tpe" → JsString("decl")
+      )
+      position(decl.position) foreach (classEntry += _)
+      ownerPath foreach (p ⇒ classEntry += "c:owner" → JsString(s"c:$p"))
       val declEntry = mkModel(projectFile)(parent)
-      Seq(classEntry, declEntry).mkString(",\n")
+      JsObject(classEntry) +: declEntry
 
     case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
       // TODO do not use replace function here, it is not safe since Scala
@@ -192,18 +192,17 @@ object Indexer {
         case NoOrigin ⇒ ""
       }
       val fullPath = s"$origin$path/$f$h"
-      s"""
-        {
-          "@id": "c:$fullPath",
-          "@type": "s:Text",
-          "c:tpe": "ref",
-          ${attachments(ref)}
-          "s:name": "${ref.name}",
-          ${position(ref.position)}
-          "c:reference": "c:$path",
-          "c:owner": "c:$u"
-        }
-      """
+      var m = Map(
+        "@id" → JsString(s"c:$fullPath"),
+        "@type" → JsString("s:Text"),
+        "c:tpe" → JsString("ref"),
+        "c:attachment" → attachments(ref),
+        "s:name" → JsString(ref.name),
+        "c:reference" → JsString(s"c:$path"),
+        "c:owner" → JsString(s"c:$u")
+      )
+      position(ref.position) foreach (m += _)
+      Vector(JsObject(m))
   }
 
   def add(modelName: String, model: Model, data: Indexable): Unit = {
@@ -255,36 +254,32 @@ object Indexer {
   }
 
   def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
-    val pkg = projectFile.data.headOption.map { h ⇒
+    val pkg = projectFile.data.headOption.flatMap { h ⇒
       def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
       def isPkg = h.owner.attachments(Attachment.Package)
       if (isTopLevelDecl && isPkg && h.owner.isInstanceOf[Decl]) {
         val (_, declPath) = mkPath(projectFile, h.owner.asInstanceOf[Decl])
-        s""" ,"c:owner": "c:$declPath" """
+        Some(declPath)
       }
       else
-        ""
-    }.getOrElse("")
-    val str = s"""
-      {
-        "@context": ${context(modelName)},
-        "@graph": [
-          {
-            "@id": "c:${pathOf(projectFile)}",
-            "@type": "c:File",
-            "c:name": "${projectFile.name}"
-            $pkg
-          }
-          ${
-            if (projectFile.data.isEmpty)
-              ""
-            else
-              projectFile.data.map(mkModel(projectFile)).mkString(",", ",\n", "")
-          }
-        ]
-      }
-    """
-    addJsonLd(model, str)
+        None
+    }
+
+    var fileEntry = Map(
+      "@id" → JsString(s"c:${pathOf(projectFile)}"),
+      "@type" → JsString("c:File"),
+      "c:name" → JsString(projectFile.name)
+    )
+    pkg foreach (pkg ⇒ fileEntry += "c:owner" → JsString(s"c:$pkg"))
+
+    val modelEntries: Vector[JsValue] = projectFile.data.flatMap(mkModel(projectFile))(collection.breakOut)
+
+    val contextEntry = Map(
+      "@context" → context(modelName).parseJson,
+      "@graph" → JsArray(JsObject(fileEntry) +: modelEntries)
+    )
+
+    addJsonLd(model, JsObject(contextEntry).prettyPrint)
   }
 
   private def pathOf(data: Indexable): String = data match {
