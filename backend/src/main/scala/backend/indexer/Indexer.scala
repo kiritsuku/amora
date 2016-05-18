@@ -71,21 +71,18 @@ object Indexer {
   private def encode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 
-  private def mkModel(projectFile: File)(h: Hierarchy): String = h match {
-    case Root ⇒
-      "[]"
-
-    case decl @ Decl(name, parent) ⇒
-      val path = parent match {
+  private def mkPath(file: File, decl: Decl) = {
+    val Decl(name, owner) = decl
+      val n = encode(name)
+      val ownerPath = owner match {
         case _: Decl ⇒
-          encode(parent.asString).replace('.', '/')
+          encode(owner.asString).replace('.', '/')
         case _: Ref ⇒
-          val path = encode(parent.asString).replace('.', '/')
-          val f = encode(projectFile.name)
-          val h = uniqueRef(parent.position)
+          val path = encode(owner.asString).replace('.', '/')
+          val f = encode(file.name)
+          val h = uniqueRef(owner.position)
           s"$path/$f$h"
       }
-      val n = encode(name)
       val sig = decl.attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ encode(signature)
       }.getOrElse("")
@@ -93,24 +90,40 @@ object Indexer {
         case Attachment.Param ⇒ "<param>"
         case Attachment.TypeParam ⇒ "<tparam>"
       }.getOrElse(""))
-      val origin = projectFile.origin match {
+      val origin = file.origin match {
         // TODO use decl instead of artifact prefix?
         case a: Artifact ⇒ pathOf(a) + "/"
         case NoOrigin ⇒ ""
       }
-      val fullPath = s"$origin$path/$paramAtt$n$sig"
-      // TODO c:file needs to refer to origin
+      val fullOwnerPath =
+        if (decl.attachments(Attachment.Package))
+          s"$origin$ownerPath"
+        else if (decl.owner.attachments(Attachment.Package))
+          pathOf(file)
+        else
+          s"$origin$ownerPath"
+      fullOwnerPath → s"$origin$ownerPath/$paramAtt$n$sig"
+  }
 
+  private def mkModel(projectFile: File)(h: Hierarchy): String = h match {
+    case Root ⇒
+      "[]"
+
+    case decl @ Decl(name, parent) ⇒
+      val tpe = decl.attachments.collectFirst {
+        case Attachment.Class ⇒ "Class"
+        case Attachment.Package ⇒ "Package"
+      }.getOrElse("Declaration")
+      val (ownerPath, declPath) = mkPath(projectFile, decl)
       val classEntry = s"""
         {
-          "@id": "c:$fullPath",
-          "@type": "s:Text",
+          "@id": "c:$declPath",
+          "@type": "c:$tpe",
           "s:name": "$name",
           ${attachments(decl)}
           "c:tpe": "decl",
           ${position(decl.position)}
-          "c:file": "${projectFile.name}",
-          "c:owner": "c:$path"
+          "c:owner": "c:$ownerPath"
         }
       """
       val declEntry = mkModel(projectFile)(parent)
@@ -135,7 +148,6 @@ object Indexer {
           "c:tpe": "ref",
           "s:name": "${ref.name}",
           ${attachments(ref)}
-          "c:file": "${projectFile.name}",
           ${position(ref.position)}
           "c:reference": "c:$path",
           "c:owner": "c:$u"
@@ -230,6 +242,16 @@ object Indexer {
   }
 
   def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
+    val pkg = projectFile.data.headOption.map { h ⇒
+      def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
+      def isPkg = h.owner.attachments(Attachment.Package)
+      if (isTopLevelDecl && isPkg && h.owner.isInstanceOf[Decl]) {
+        val (_, declPath) = mkPath(projectFile, h.owner.asInstanceOf[Decl])
+        s""" ,"c:owner": "c:$declPath" """
+      }
+      else
+        ""
+    }.getOrElse("")
     val str = s"""
       {
         "@context": {
@@ -273,13 +295,7 @@ object Indexer {
             "@id": "c:${pathOf(projectFile)}",
             "@type": "c:File",
             "c:name": "${projectFile.name}"
-            ${
-              projectFile.origin match {
-                // TODO replace artifact by package
-                case a: Artifact ⇒ s""" ,"c:artifact": "c:${pathOf(a)}" """
-                case NoOrigin ⇒ ""
-              }
-            }
+            $pkg
           }
           ${
             if (projectFile.data.isEmpty)

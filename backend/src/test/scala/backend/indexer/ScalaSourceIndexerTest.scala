@@ -139,7 +139,7 @@ class ScalaSourceIndexerTest {
         PREFIX c:<$modelName>
         SELECT ?class WHERE {
           ?class c:attachment "class" .
-          ?class c:file "f1.scala" .
+          ?class c:owner [c:name "f1.scala"] .
         }
       """) === Seq(
         Data("class", s"${modelName}_root_/a/b/c/C1"),
