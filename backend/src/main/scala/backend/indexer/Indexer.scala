@@ -230,27 +230,27 @@ object Indexer {
   }
 
   def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
-    val str = s"""
-      {
-        "@context": ${context(modelName)},
-        "@graph": [
-          {
-            "@id": "c:${pathOf(artifact.project)}",
-            "@type": "c:Project",
-            "c:name": "${artifact.project.name}"
-          },
-          {
-            "@id": "c:${pathOf(artifact)}",
-            "@type": "c:Artifact",
-            "c:organization": "${artifact.organization}",
-            "c:name": "${artifact.name}",
-            "c:version": "${artifact.version}",
-            "c:owner": "c:${pathOf(artifact.project)}"
-          }
-        ]
-      }
-    """
-    addJsonLd(model, str)
+    val projectEntry = Map(
+      "@id" → JsString(s"c:${pathOf(artifact.project)}"),
+      "@type" → JsString("c:Porject"),
+      "c:name" → JsString(artifact.project.name)
+    )
+
+    val artifactEntry = Map(
+      "@id" → JsString(s"c:${pathOf(artifact)}"),
+      "@type" → JsString("c:Artifact"),
+      "c:organization" → JsString(artifact.organization),
+      "c:name" → JsString(artifact.name),
+      "c:version" → JsString(artifact.version),
+      "c:owner" → JsString(s"c:${pathOf(artifact.project)}")
+    )
+
+    val contextEntry = Map(
+      "@context" → context(modelName).parseJson,
+      "@graph" → JsArray(Vector(JsObject(projectEntry), JsObject(artifactEntry)))
+    )
+
+    addJsonLd(model, JsObject(contextEntry).prettyPrint)
   }
 
   def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
