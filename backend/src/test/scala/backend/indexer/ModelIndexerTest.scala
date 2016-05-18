@@ -7,6 +7,7 @@ import org.junit.Test
 
 import backend.TestUtils
 import backend.actors.IndexerMessage._
+import research.converter.protocol._
 
 class ModelIndexerTest {
   import TestUtils._
@@ -40,6 +41,15 @@ class ModelIndexerTest {
   }
 
   def modelName = "http://test.model/"
+
+  def mkDecl(name: String, owner: Decl, attachments: Attachment*) = {
+    val decl = Decl(name, owner)
+    decl.addAttachments(attachments: _*)
+    decl
+  }
+
+  def mkPackage(name: String, owner: Decl) =
+    mkDecl(name, owner, Attachment.Package)
 
   @Test
   def single_project() = {
@@ -155,5 +165,34 @@ class ModelIndexerTest {
           [a c:Artifact] c:owner [c:name ?name] .
         }
       """, artifact) === Seq(Seq(Data("name", "p")))
+  }
+
+  @Test
+  def the_owner_of_the_top_package_is_an_artifact() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "a", "v1")
+    val file = File(artifact, "pkg/A.scala", Seq(mkPackage("pkg", Root)))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Package] c:owner [c:name ?name] .
+        }
+      """, artifact, file) === Seq(Seq(Data("name", "a")))
+  }
+
+  @Test
+  def the_owner_of_a_non_top_package_is_a_package() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "a", "v1")
+    val file = File(artifact, "pkg/A.scala", Seq(mkPackage("inner", mkPackage("pkg", Root))))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:owner [a c:Package]] s:name ?name .
+        }
+      """, artifact, file) === Seq(Seq(Data("name", "inner")))
   }
 }

@@ -142,11 +142,17 @@ object Indexer {
       }
       val fullOwnerPath =
         if (decl.attachments(Attachment.Package))
-          s"$origin$ownerPath"
+          if (decl.owner == Root)
+            file.origin match {
+              case NoOrigin ⇒ None
+              case origin ⇒ Some(pathOf(origin))
+            }
+          else
+            Some(s"$origin$ownerPath")
         else if (decl.owner.attachments(Attachment.Package))
-          pathOf(file)
+          Some(pathOf(file))
         else
-          s"$origin$ownerPath"
+          Some(s"$origin$ownerPath")
       fullOwnerPath → s"$origin$ownerPath/$paramAtt$n$sig"
   }
 
@@ -164,11 +170,11 @@ object Indexer {
         {
           "@id": "c:$declPath",
           "@type": "c:$tpe",
+          ${position(decl.position)}
           "s:name": "$name",
           ${attachments(decl)}
-          "c:tpe": "decl",
-          ${position(decl.position)}
-          "c:owner": "c:$ownerPath"
+          ${ownerPath.map(p ⇒ s""" "c:owner": "c:$p", """).getOrElse("")}
+          "c:tpe": "decl"
         }
       """
       val declEntry = mkModel(projectFile)(parent)
@@ -191,8 +197,8 @@ object Indexer {
           "@id": "c:$fullPath",
           "@type": "s:Text",
           "c:tpe": "ref",
-          "s:name": "${ref.name}",
           ${attachments(ref)}
+          "s:name": "${ref.name}",
           ${position(ref.position)}
           "c:reference": "c:$path",
           "c:owner": "c:$u"
