@@ -155,7 +155,7 @@ object Indexer {
             }
           else
             Some(origin)
-        else if (decl.owner.attachments(Attachment.Package))
+        else if (decl.owner.attachments(Attachment.Package) || decl.owner == Root)
           Some(pathOf(file))
         else
           Some(origin)

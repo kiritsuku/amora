@@ -51,6 +51,9 @@ class ModelIndexerTest {
   def mkPackage(name: String, owner: Decl) =
     mkDecl(name, owner, Attachment.Package)
 
+  def mkClass(name: String, owner: Decl) =
+    mkDecl(name, owner, Attachment.Class)
+
   @Test
   def single_project() = {
     val project = Project("project")
@@ -194,5 +197,34 @@ class ModelIndexerTest {
           [c:owner [a c:Package]] s:name ?name .
         }
       """, artifact, file) === Seq(Seq(Data("name", "inner")))
+  }
+
+  @Test
+  def the_owner_of_a_top_level_class_is_a_file() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "a", "v1")
+    val file = File(artifact, "pkg/A.scala", Seq(mkClass("A", mkPackage("pkg", Root))))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [a c:Class] c:owner [c:name ?name] .
+        }
+      """, artifact, file) === Seq(Seq(Data("name", "pkg/A.scala")))
+  }
+
+  @Test
+  def the_owner_of_a_class_in_the_default_package_is_a_file() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "n", "v1")
+    val file = File(artifact, "A.scala", Seq(mkClass("A", Root)))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Class] c:owner [c:name ?name] .
+        }
+      """, artifact, file) === Seq(Seq(Data("name", "A.scala")))
   }
 }
