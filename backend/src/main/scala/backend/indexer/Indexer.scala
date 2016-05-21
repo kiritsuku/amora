@@ -218,6 +218,7 @@ object Indexer {
       case project: Project ⇒ addProject(modelName, project)(model).get
       case artifact: Artifact ⇒ addArtifact(modelName, artifact)(model).get
       case file: File ⇒ addFile(modelName, file)(model).get
+      case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} can't be indexed.")
     }
   }
 
@@ -308,6 +309,7 @@ object Indexer {
         case NoOrigin ⇒
           s"file/$fn"
       }
+      case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} does not have a path.")
   }
 
   private def addJsonLd(model: Model, data: JsValue) = {
