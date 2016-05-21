@@ -58,13 +58,14 @@ class ScalaSourceIndexerTest {
         class C3
       """), s"""
         PREFIX c:<$modelName>
+        PREFIX s:<http://schema.org/>
         SELECT * WHERE {
-          ?class c:attachment "class" .
+          [c:attachment "class"] s:name ?name .
         }
       """) === Seq(
-        Data("class", s"${modelName}_root_/a/b/c/C1"),
-        Data("class", s"${modelName}_root_/a/b/c/C2"),
-        Data("class", s"${modelName}_root_/a/b/c/C3"))
+        Data("name", "C1"),
+        Data("name", "C2"),
+        Data("name", "C3"))
   }
 
   @Test
@@ -137,13 +138,13 @@ class ScalaSourceIndexerTest {
         class D2
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?class WHERE {
-          ?class c:attachment "class" .
-          ?class c:owner [c:name "f1.scala"] .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "class"] c:owner [c:name "f1.scala"]; s:name ?name .
         }
       """) === Seq(
-        Data("class", s"${modelName}_root_/a/b/c/C1"),
-        Data("class", s"${modelName}_root_/a/b/c/C2"))
+        Data("name", "C1"),
+        Data("name", "C2"))
   }
 
   @Test
@@ -152,7 +153,7 @@ class ScalaSourceIndexerTest {
     ask(modelName, Seq(
       "f1.scala" → """
         package a.b.c
-import d.e.f.Y
+        import d.e.f.Y
         class X {
           def m: Y = null
         }
@@ -163,16 +164,17 @@ import d.e.f.Y
       """), s"""
         PREFIX c:<$modelName>
         PREFIX s:<http://schema.org/>
-        SELECT ?owner WHERE {
+        SELECT ?name WHERE {
           ?class c:attachment "class" .
           ?class s:name ?className .
           FILTER (str(?className) = "Y") .
           ?ref c:reference ?class .
           ?ref c:owner ?owner .
+          ?owner s:name ?name .
         }
       """) === Seq(
-        Data("owner", s"${modelName}_root_/a/b/c/X/m%28%29Ld%2Fe%2Ff%2FY%3B"),
-        Data("owner", s"${modelName}_root_/d/e/f"))
+        Data("name", "f"),
+        Data("name", "m"))
   }
 
   @Test
@@ -184,13 +186,14 @@ import d.e.f.Y
         class X
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "package" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "package"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/a"),
-        Data("s", s"${modelName}_root_/a/b"),
-        Data("s", s"${modelName}_root_/a/b/c"))
+        Data("name", "a"),
+        Data("name", "b"),
+        Data("name", "c"))
     }
 
   @Test
@@ -208,12 +211,13 @@ import d.e.f.Y
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "val" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "val"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/X/b"),
-        Data("s", s"${modelName}_root_/pkg/X/e"))
+        Data("name", "b"),
+        Data("name", "e"))
     }
 
   @Test
@@ -231,11 +235,12 @@ import d.e.f.Y
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "lazy", "val" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "lazy", "val"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/X/e"))
+        Data("name", "e"))
     }
 
   @Test
@@ -253,14 +258,15 @@ import d.e.f.Y
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "val" .
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          ?s c:attachment "val"; s:name ?name .
           FILTER NOT EXISTS {
             ?s c:attachment "lazy" .
           }
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/X/b"))
+        Data("name", "b"))
     }
 
   @Test
@@ -278,11 +284,12 @@ import d.e.f.Y
         }
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "var" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "var"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/X/d"))
+        Data("name", "d"))
     }
 
   @Test
@@ -321,12 +328,13 @@ import d.e.f.Y
         object D
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "class" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "class"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/A"),
-        Data("s", s"${modelName}_root_/pkg/B"))
+        Data("name", "A"),
+        Data("name", "B"))
     }
 
   @Test
@@ -341,14 +349,15 @@ import d.e.f.Y
         object D
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "class" .
+        PREFIX s:<http://schema.org/>
+        SELECT ?name WHERE {
+          ?s c:attachment "class"; s:name ?name .
           FILTER NOT EXISTS {
             ?s c:attachment "abstract" .
           }
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/A"))
+        Data("name", "A"))
     }
 
   @Test
@@ -363,11 +372,12 @@ import d.e.f.Y
         object D
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "trait" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "trait"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/C"))
+        Data("name", "C"))
     }
 
   @Test
@@ -382,11 +392,12 @@ import d.e.f.Y
         object D
       """), s"""
         PREFIX c:<$modelName>
-        SELECT ?s WHERE {
-          ?s c:attachment "object" .
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [c:attachment "object"] s:name ?name .
         }
       """) === Seq(
-        Data("s", s"${modelName}_root_/pkg/D"))
+        Data("name", "D"))
     }
 
   @Test

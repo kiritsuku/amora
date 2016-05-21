@@ -8,7 +8,7 @@ sealed trait Hierarchy {
 
   final def asString: String = this match {
     case Root ⇒
-      name
+      throw new UnsupportedOperationException("Root can't be represented as a string.")
     case Decl(name, parent) ⇒
       val sig = attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ signature
@@ -17,9 +17,19 @@ sealed trait Hierarchy {
         case Attachment.Param ⇒ "<param>"
         case Attachment.TypeParam ⇒ "<tparam>"
       }.getOrElse("")
-      s"${parent.asString}.$paramAtt$name$sig"
+      parent match {
+        case Root ⇒
+          s"$paramAtt$name$sig"
+        case _ ⇒
+          s"${parent.asString}.$paramAtt$name$sig"
+      }
     case Ref(name, _, _, qualifier) ⇒
-      s"${qualifier.asString}.<ref>$name"
+      qualifier match {
+        case Root ⇒
+          s"<ref>$name"
+        case _ ⇒
+          s"${qualifier.asString}.<ref>$name"
+      }
   }
 
   def attachments: Set[Attachment] = _attachments

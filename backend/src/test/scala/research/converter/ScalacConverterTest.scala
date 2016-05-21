@@ -3,7 +3,6 @@ package converter
 
 import org.junit.Test
 
-import research.converter.protocol.Root
 import backend.indexer.ScalaSourceIndexer
 import backend.TestUtils
 import backend.IgnoreLogger
@@ -21,7 +20,7 @@ class ScalacConverterTest {
       case scala.util.Success(res) ⇒ res.flatMap(_._2)
       case scala.util.Failure(f) ⇒ throw f
     }
-    res.map(_.asString).map(_.drop(Root.name.length+1)).toSet
+    res.map(_.asString).toSet
   }
 
   @Test

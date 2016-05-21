@@ -120,6 +120,8 @@ object Indexer {
     val Decl(name, owner) = decl
       val n = encode(name)
       val ownerPath = owner match {
+        case Root ⇒
+          ""
         case _: Decl ⇒
           encode(owner.asString).replace('.', '/')
         case _: Ref ⇒
@@ -136,9 +138,13 @@ object Indexer {
         case Attachment.TypeParam ⇒ "<tparam>"
       }.getOrElse(""))
       val origin = file.origin match {
-        // TODO use decl instead of artifact prefix?
-        case a: Artifact ⇒ pathOf(a) + "/"
-        case NoOrigin ⇒ ""
+        case a: Artifact ⇒
+          if (ownerPath.isEmpty)
+            pathOf(a)
+          else
+            pathOf(a) + "/" + ownerPath
+        case NoOrigin ⇒
+          ownerPath
       }
       val fullOwnerPath =
         if (decl.attachments(Attachment.Package))
@@ -148,12 +154,14 @@ object Indexer {
               case origin ⇒ Some(pathOf(origin))
             }
           else
-            Some(s"$origin$ownerPath")
+            Some(origin)
         else if (decl.owner.attachments(Attachment.Package))
           Some(pathOf(file))
         else
-          Some(s"$origin$ownerPath")
-      fullOwnerPath → s"$origin$ownerPath/$paramAtt$n$sig"
+          Some(origin)
+      val originPath = if (origin.isEmpty) "" else origin + "/"
+      val fullPath = s"$originPath$paramAtt$n$sig"
+      fullOwnerPath → fullPath
   }
 
   private def mkModel(projectFile: File)(h: Hierarchy): Vector[JsValue] = h match {
@@ -184,7 +192,6 @@ object Indexer {
       val path = encode(refToDecl.asString).replace('.', '/')
       val f = encode(projectFile.name)
       val h = uniqueRef(ref.position)
-      val u = encode(owner.asString).replace('.', '/')
       val origin = projectFile.origin match {
         case a: Artifact ⇒ pathOf(a) + "/"
         case NoOrigin ⇒ ""
@@ -196,9 +203,12 @@ object Indexer {
         "c:tpe" → JsString("ref"),
         "c:attachment" → attachments(ref),
         "s:name" → JsString(ref.name),
-        "c:reference" → JsString(s"c:$path"),
-        "c:owner" → JsString(s"c:$u")
+        "c:reference" → JsString(s"c:$path")
       )
+      if (owner != Root) {
+        val u = encode(owner.asString).replace('.', '/')
+        m += "c:owner" → JsString(s"c:$u")
+      }
       position(ref.position) foreach (m += _)
       Vector(JsObject(m))
   }
