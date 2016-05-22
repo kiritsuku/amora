@@ -240,7 +240,7 @@ object Indexer {
   def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
     val projectEntry = Map(
       "@id" → JsString(s"c:${pathOf(artifact.project)}"),
-      "@type" → JsString("c:Porject"),
+      "@type" → JsString("c:Project"),
       "c:name" → JsString(artifact.project.name)
     )
 
