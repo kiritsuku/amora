@@ -258,4 +258,21 @@ class ModelIndexerTest {
         }
       """, artifact, file) === Seq(Seq(Data("name", "c")))
   }
+
+  @Test
+  def multiple_files_can_have_the_same_artifact_as_owner() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "n", "v1")
+    val file1 = File(artifact, "pkg/A.scala", Seq(mkClass("A", mkPackage("pkg", Root))))
+    val file2 = File(artifact, "pkg/B.scala", Seq(mkClass("B", mkPackage("pkg", Root))))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        SELECT * WHERE {
+          [a c:Class] c:owner* [a c:Artifact; c:name ?name] .
+        }
+      """, artifact, file1, file2) === Seq(
+          Seq(Data("name", "n")),
+          Seq(Data("name", "n")))
+  }
 }
