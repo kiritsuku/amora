@@ -85,6 +85,11 @@ final class WebService(override implicit val system: ActorSystem)
       )
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
+    pathPrefix("kb" ~ Slash) {
+      extractUri { uri ⇒
+        handleKbPath(uri.toString)
+      }
+    } ~
     path("web-ui-jsdeps.js")(getFromResource("web-ui-jsdeps.js")) ~
     path("web-ui-fastopt.js")(getFromResource("web-ui-fastopt.js")) ~
     path("web-ui-launcher.js")(getFromResource("web-ui-launcher.js")) ~

@@ -12,8 +12,9 @@ import backend.Content
 import backend.indexer.Indexer
 import backend.indexer.IndexerConstants
 import research.converter.protocol.Hierarchy
+import akka.actor.ActorLogging
 
-class IndexerActor extends Actor {
+class IndexerActor extends Actor with ActorLogging {
 
   import Indexer._
   import IndexerConstants._
@@ -28,6 +29,7 @@ class IndexerActor extends Actor {
   }
 
   def handleAskQuery(query: String, fmt: ResultsFormat): Try[String] = {
+    log.info(s"Handle SPARQL query: $query")
     withDataset(IndexDataset) { dataset ⇒
       withModel(dataset, Content.ModelName) { model ⇒
         withQueryService(Content.ModelName, query)(model) map { r ⇒
