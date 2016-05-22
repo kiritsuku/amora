@@ -222,6 +222,11 @@ object Build extends sbt.Build {
       "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"
     ),
 
+    // see https://github.com/sbt/junit-interface for an explanation of the arguments
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s"),
+    // we don't want to run the tests in sbt because they consume lots of resources
+    fork in Test := true,
+
     // add ui JS files to resources: *fastopt.js, *fullopt.js, *launcher.js, *jsdeps.js
     resourceGenerators in Compile <+= (fastOptJS in Compile in ui).map(r => Seq(r.data)),
     //resourceGenerators in Compile <+= (fullOptJS in Compile in ui).map(r => Seq(r.data)),
@@ -304,7 +309,6 @@ object Build extends sbt.Build {
     val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
     val scalaLogging    = "3.1.0"
-    val junit           = "4.12"
     // https://github.com/ochrons/boopickle
     val boopickle       = "1.1.0"
     // https://github.com/msgpack4z/msgpack4z-core
@@ -333,7 +337,7 @@ object Build extends sbt.Build {
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
-      "junit"                          %   "junit"                             % versions.junit            % "test"
+      "com.novocode"                   %   "junit-interface"                   % "0.11"                    % "test"
     ))
 
     lazy val nvim = Def.setting(Seq(

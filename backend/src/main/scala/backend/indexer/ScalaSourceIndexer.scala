@@ -27,7 +27,18 @@ final class ScalaSourceIndexer(logger: Logger) {
    * can be used as dependencies for the Scala files.
    */
   def convertToHierarchy(data: Seq[(String, String)]): Try[Seq[(String, Seq[Hierarchy])]] = Try {
+    def srcOf[A : reflect.ClassTag] = reflect.classTag[A].getClass().getProtectionDomain.getCodeSource
+    val stdlibSrc = srcOf[Unit]
+
     val s = new Settings
+    // - When the tests are run in Eclipse stdlibSrc is null. Luckily, we don't need
+    //   to add the stdlib to the classpath in Eclipse.
+    // - When the tests are run in sbt stdlibSrc is not null and we have to add it
+    //   to the classpath because scalac can't find it otherwise.
+    //   It doesn't even work in sbt when `fork in Test := true` is set.
+    if (stdlibSrc != null)
+      s.bootclasspath.value = stdlibSrc.getLocation.toExternalForm()
+
     val writer = new StringWriter
     val reporter = new ConsoleReporter(s, Console.in, new PrintWriter(writer, /* autoFlush */true))
     val g = new Global(s, reporter)
