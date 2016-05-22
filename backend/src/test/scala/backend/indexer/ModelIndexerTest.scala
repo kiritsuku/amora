@@ -245,22 +245,6 @@ class ModelIndexerTest {
       """, artifact, file) === Seq(Seq(Data("name", "pkg")))
   }
 
-  @org.junit.Ignore("not sure if the owner of an empty file is the package or the artifact")
-  @Test
-  def the_owner_of_an_empty_file_is_a_package() = {
-    val project = Project("p")
-    val artifact = Artifact(project, "o", "n", "v1")
-    val file = File(artifact, "a/b/c/Test.scala", Seq())
-
-    ask(modelName, """
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [a c:File] c:owner [s:name ?name] .
-        }
-      """, artifact, file) === Seq(Seq(Data("name", "c")))
-  }
-
   @Test
   def multiple_files_can_have_the_same_artifact_as_owner() = {
     val project = Project("p")
