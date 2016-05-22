@@ -54,6 +54,9 @@ class ModelIndexerTest {
   def mkClass(name: String, owner: Decl) =
     mkDecl(name, owner, Attachment.Class)
 
+  def mkDef(name: String, owner: Decl) =
+    mkDecl(name, owner, Attachment.Def)
+
   @Test
   def single_project() = {
     val project = Project("project")
@@ -273,5 +276,20 @@ class ModelIndexerTest {
       """, artifact, file1, file2) === Seq(
           Seq(Data("name", "n")),
           Seq(Data("name", "n")))
+  }
+
+  @Test
+  def the_owner_of_a_def_is_a_class() = {
+    val project = Project("p")
+    val artifact = Artifact(project, "o", "a", "v1")
+    val file = File(artifact, "pkg/A.scala", Seq(mkDef("f", mkClass("A", mkPackage("pkg", Root)))))
+
+    ask(modelName, """
+        PREFIX c:<?MODEL?>
+        PREFIX s:<http://schema.org/>
+        SELECT * WHERE {
+          [a c:Def] c:owner [s:name ?name] .
+        }
+      """, artifact, file) === Seq(Seq(Data("name", "A")))
   }
 }

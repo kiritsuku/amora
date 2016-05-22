@@ -172,6 +172,7 @@ object Indexer {
       val tpe = decl.attachments.collectFirst {
         case Attachment.Class ⇒ "Class"
         case Attachment.Package ⇒ "Package"
+        case Attachment.Def ⇒ "Def"
       }.getOrElse("Declaration")
       val (ownerPath, declPath) = mkPath(projectFile, decl)
       var classEntry = Map(
