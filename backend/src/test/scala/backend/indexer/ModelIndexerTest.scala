@@ -126,23 +126,22 @@ class ModelIndexerTest {
           Seq(Data("name", "project")))
   }
 
-  @org.junit.Ignore("Ignore until _root_ package is gone")
   @Test
-  def files_with_same_name_of_different_artifacts() = {
+  def files_with_same_name_can_bolong_to_different_artifacts() = {
     val project = Project("project")
     val artifact1 = Artifact(project, "organization", "name", "v1")
     val artifact2 = Artifact(project, "organization", "name", "v2")
-    val file1 = File(artifact1, "a/b/c/Test.scala", Seq())
-    val file2 = File(artifact2, "a/b/c/Test.scala", Seq())
+    val file1 = File(artifact1, "pkg/Test.scala", Seq(mkClass("Test", mkPackage("pkg", Root))))
+    val file2 = File(artifact2, "pkg/Test.scala", Seq(mkClass("Test", mkPackage("pkg", Root))))
 
     ask(modelName, """
         PREFIX c:<?MODEL?>
         SELECT * WHERE {
-          [a c:File] c:name ?name; c:artifact [c:version ?version] .
+          [a c:File] c:owner* [a c:Artifact; c:version ?version]; c:name ?name .
         }
       """, artifact1, artifact2, file1, file2) === Seq(
-          Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v1")),
-          Seq(Data("name", "a/b/c/Test.scala"), Data("version", "v2")))
+          Seq(Data("name", "pkg/Test.scala"), Data("version", "v1")),
+          Seq(Data("name", "pkg/Test.scala"), Data("version", "v2")))
   }
 
   @Test
