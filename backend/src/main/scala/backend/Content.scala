@@ -20,16 +20,8 @@ object Content {
     )
   }
 
-  def sparql(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
-    val q = s"""
-      |PREFIX kb:<$ModelName>
-      |PREFIX s:<http://schema.org/>
-      |
-      |SELECT * WHERE {
-      |  ?s ?p ?o .
-      |}
-    """.stripMargin.trim.replace("\n", "\\n")
-
+  def sparql(cssDeps: Seq[String], jsDeps: Seq[String], query: String, jsonResponse: String): String = {
+    val q = query.replace("\n", "\\n")
     "<!DOCTYPE html>" + html(
       head(
         meta(charset := "UTF-8"),
@@ -41,8 +33,11 @@ object Content {
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d),
         script(`type` := "text/javascript", raw(s"""
           YASGUI.YASQE.defaults.sparql.endpoint = "http://${Main.ServerAddress}/sparql";
-          YASGUI.YASQE.defaults.value = "$q";
           var yasgui = YASGUI(document.getElementById("yasgui"));
+          yasgui.current().yasr.setResponse({
+            "response": $jsonResponse
+          });
+          yasgui.current().yasqe.setValue('$q');
         """))
       )
     )

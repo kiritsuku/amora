@@ -30,13 +30,18 @@ trait Sparql extends Directives {
   def bs: BackendSystem
 
   def handleKbPathGetRequest(path: String): Route = {
-    val query = s"""
+   val query = s"""
+      |PREFIX kb:<${Content.ModelName}>
+      |PREFIX s:<http://schema.org/>
+      |
       |SELECT * WHERE {
       |  <$path> ?p ?o .
       |}
       |LIMIT 100
     """.stripMargin.trim
-    askQuery(query, `text/plain(UTF-8)`, ResultsFormat.FMT_RS_JSON)
+    askQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
+      complete(showSparqlEditor(query, sparqlResp))
+   }
   }
 
   def handleKbPathPostRequest(path: String): Route = {
@@ -50,8 +55,16 @@ trait Sparql extends Directives {
   }
 
   def handleSparqlGetRequest(params: Map[String, String]): Route = {
+    val query = s"""
+      |PREFIX kb:<${Content.ModelName}>
+      |PREFIX s:<http://schema.org/>
+      |
+      |SELECT * WHERE {
+      |  ?s ?p ?o .
+      |}
+    """.stripMargin.trim
     if (params.isEmpty)
-      complete(showSparqlEditor())
+      complete(showSparqlEditor(query, "{}"))
     else if (params.contains("query")) {
       val (ct, fmt) = params.get("format") collect {
         case "xml"  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
@@ -86,18 +99,26 @@ trait Sparql extends Directives {
     }
   }
 
-  private def showSparqlEditor() = {
+  private def showSparqlEditor(query: String, response: String) = {
     val content = Content.sparql(
       cssDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.css"),
-      jsDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.js")
+      jsDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.js"),
+      query,
+      response
     )
     HttpEntity(`text/html(UTF-8)`, content)
   }
 
-  private def askQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat) = {
+  private def askQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat): Route = {
+    askQuery(query, fmt) { sparqlResp ⇒
+      complete(HttpEntity(ct, sparqlResp))
+    }
+  }
+
+  private def askQuery(query: String, fmt: ResultsFormat)(f: String ⇒ Route): Route = {
     onComplete(bs.askQuery(query, fmt)) {
       case scala.util.Success(s) ⇒
-        complete(HttpEntity(ct, s))
+        f(s)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
