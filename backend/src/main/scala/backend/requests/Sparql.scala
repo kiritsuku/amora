@@ -62,6 +62,7 @@ trait Sparql extends Directives {
       |SELECT * WHERE {
       |  ?s ?p ?o .
       |}
+      |LIMIT 100
     """.stripMargin.trim
     if (params.isEmpty)
       complete(showSparqlEditor(query, "{}"))
