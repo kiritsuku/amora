@@ -25,6 +25,7 @@ import akka.util.CompactByteString
 import backend.requests.Sparql
 import frontend.webui.protocol.RequestFailed
 import frontend.webui.protocol.RequestSucceeded
+import akka.http.javadsl.model.headers.RawRequestURI
 
 final class WebService(override implicit val system: ActorSystem)
     extends Directives
@@ -86,8 +87,15 @@ final class WebService(override implicit val system: ActorSystem)
       complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
     } ~
     pathPrefix("kb" ~ Slash) {
-      extractUri { uri ⇒
-        handleKbPathGetRequest(uri.toString)
+      extractRequest { req ⇒
+        req.header[RawRequestURI] match {
+          case Some(rawUri) ⇒
+            val uri = req.uri
+            val path = s"${uri.scheme}:${uri.authority}${rawUri.uri}"
+            handleKbPathGetRequest(path)
+          case _ ⇒
+            throw new InternalError("Header Raw-Request-URI not found. Enable them in the configuration file.")
+        }
       }
     } ~
     path("web-ui-jsdeps.js")(getFromResource("web-ui-jsdeps.js")) ~
