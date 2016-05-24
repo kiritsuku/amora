@@ -4,14 +4,17 @@ import java.nio.ByteBuffer
 
 import akka.NotUsed
 import akka.actor.ActorSystem
+import akka.http.javadsl.model.headers.RawRequestURI
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.Route
 import akka.stream.Attributes
 import akka.stream.FlowShape
 import akka.stream.Inlet
@@ -25,7 +28,6 @@ import akka.util.CompactByteString
 import backend.requests.Sparql
 import frontend.webui.protocol.RequestFailed
 import frontend.webui.protocol.RequestSucceeded
-import akka.http.javadsl.model.headers.RawRequestURI
 
 final class WebService(override implicit val system: ActorSystem)
     extends Directives
@@ -88,13 +90,8 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractRequest { req ⇒
-        req.header[RawRequestURI] match {
-          case Some(rawUri) ⇒
-            val uri = req.uri
-            val path = s"${uri.scheme}:${uri.authority}${rawUri.uri}"
-            handleKbPathGetRequest(path)
-          case _ ⇒
-            throw new InternalError("Header Raw-Request-URI not found. Enable them in the configuration file.")
+        rawRequestUri(req) { path ⇒
+          handleKbPathGetRequest(path)
         }
       }
     } ~
@@ -175,9 +172,22 @@ final class WebService(override implicit val system: ActorSystem)
       }
     } ~
     pathPrefix("kb" ~ Slash) {
-      extractUri { uri ⇒
-        handleKbPathPostRequest(uri.toString)
+      extractRequest { req ⇒
+        rawRequestUri(req) { path ⇒
+          handleKbPathPostRequest(path)
+        }
       }
+    }
+  }
+
+  private def rawRequestUri(req: HttpRequest)(f: String ⇒ Route): Route = {
+    req.header[RawRequestURI] match {
+      case Some(rawUri) ⇒
+        val uri = req.uri
+        val path = s"${uri.scheme}:${uri.authority}${rawUri.uri}"
+        f(path)
+      case _ ⇒
+        throw new InternalError("Header Raw-Request-URI not found. Enable them in the configuration file.")
     }
   }
 
