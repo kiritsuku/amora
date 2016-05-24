@@ -29,7 +29,7 @@ trait Sparql extends Directives {
 
   def bs: BackendSystem
 
-  def handleKbPath(path: String): Route = {
+  def handleKbPathGetRequest(path: String): Route = {
     val query = s"""
       |SELECT * WHERE {
       |  <$path> ?p ?o .
@@ -37,6 +37,16 @@ trait Sparql extends Directives {
       |LIMIT 100
     """.stripMargin.trim
     askQuery(query, `text/plain(UTF-8)`, ResultsFormat.FMT_RS_JSON)
+  }
+
+  def handleKbPathPostRequest(path: String): Route = {
+    val query = s"""
+      |SELECT * WHERE {
+      |  <$path> ?p ?o .
+      |}
+      |LIMIT 100
+    """.stripMargin.trim
+    askQuery(query, `sparql-results+json(UTF-8)`, ResultsFormat.FMT_RS_JSON)
   }
 
   def handleSparqlGetRequest(params: Map[String, String]): Route = {

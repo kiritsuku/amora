@@ -87,7 +87,7 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractUri { uri ⇒
-        handleKbPath(uri.toString)
+        handleKbPathGetRequest(uri.toString)
       }
     } ~
     path("web-ui-jsdeps.js")(getFromResource("web-ui-jsdeps.js")) ~
@@ -164,6 +164,11 @@ final class WebService(override implicit val system: ActorSystem)
             log.error(f, "Error happened while handling add-json request.")
             complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
         }
+      }
+    } ~
+    pathPrefix("kb" ~ Slash) {
+      extractUri { uri ⇒
+        handleKbPathPostRequest(uri.toString)
       }
     }
   }
