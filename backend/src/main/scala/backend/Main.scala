@@ -20,15 +20,7 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import backend.actors.UnhandledMessagesActor
 
-object Main extends App with AkkaLogging {
-  // Conversion characters: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
-  // TODO This logging stuff is only needed for Jena. We should merge Jena and Akka log output.
-  val layout = new PatternLayout("%d{ISO8601} %5p [%t] %c - %m%n")
-  val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
-  val rootLogger = LogManager.getRootLogger
-  rootLogger.setLevel(Level.INFO)
-  rootLogger.addAppender(consoleAppender)
-
+object Main extends App with AkkaLogging with Log4jLogging {
   override implicit val system = ActorSystem("backend")
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
@@ -62,6 +54,16 @@ object Main extends App with AkkaLogging {
       log.error(e, "Failed to start server")
       system.terminate()
   }
+}
+
+trait Log4jLogging {
+  // Conversion characters: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
+  // TODO This logging stuff is only needed for Jena. We should merge Jena and Akka log output.
+  val layout = new PatternLayout("%d{ISO8601} %5p [%t] %c - %m%n")
+  val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
+  val rootLogger = LogManager.getRootLogger
+  rootLogger.setLevel(Level.INFO)
+  rootLogger.addAppender(consoleAppender)
 }
 
 trait AkkaLogging {
