@@ -1,0 +1,31 @@
+{
+  "@context": "$AMORA/Schema.jsonld",
+  "@graph": [
+    {
+      "@id": "$ID/",
+      "amora:schemaId": [
+        "amora:Artifact/name",
+        "amora:Artifact/organization",
+        "amora:Artifact/version"
+      ],
+      "amora:schemaAuthor": "amora",
+      "amora:schemaVersion": "0.1"
+    },
+    {
+      "@id": "$ID/name",
+      "amora:schemaProperty": "name",
+      "amora:schemaType": "schema:name"
+    },
+    {
+      "@id": "$ID/organization",
+      "amora:schemaProperty": "organization",
+      "amora:schemaType": "schema:Text"
+    },
+    {
+      "@id": "$ID/version",
+      "amora:schemaProperty": "version",
+      "amora:schemaType": "schema:Text"
+    }
+  ]
+}
+

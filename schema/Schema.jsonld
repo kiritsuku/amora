@@ -1,0 +1,22 @@
+{
+  "@context": {
+    "amora": "http://localhost:9999/kb/amora/Schema/",
+    "schema": "http://schema.org/",
+    "amora:schemaProperty": {
+      "@id": "amora:schemaProperty",
+      "@type": "schema:Property"
+    },
+    "amora:schemaType": {
+      "@id": "amora:schemaType",
+      "@type": "@id"
+    },
+    "amora:schemaId": {
+      "@id": "amora:schemaId",
+      "@type": "@id"
+    },
+    "amora:schemaVersion": {
+      "@id": "amora:schemaVersion",
+      "@type": "schema:Text"
+    }
+  }
+}
