@@ -243,6 +243,9 @@ object Build extends sbt.Build {
     // depend on the genElectronMain task but don't add its generated resources since we don't need to route them at runtime
     resourceGenerators in Compile <+= (genElectronMain in Compile in electron).map(_ => Seq()),
 
+    // add schema definitions to resource directories
+    unmanagedResourceDirectories in Compile += (baseDirectory in ThisBuild).value / "schema",
+
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
   ) dependsOn (protocolJvm, nvim, scalacConverter, javacConverter)
