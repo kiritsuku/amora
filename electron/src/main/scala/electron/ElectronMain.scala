@@ -19,7 +19,7 @@ object ElectronMain extends JSApp {
       w = BrowserWindow(width = 1000, height = 800)
       w.maximize()
       // TODO don't hardcode URL and port here
-      w.loadURL("http://localhost:9999")
+      w.loadURL("http://amora.center")
       w.openDevTools()
       w.on("closed", () ⇒ {
         w = null

@@ -1,6 +1,6 @@
 {
   "@context": {
-    "amora": "http://localhost:9999/kb/amora/Schema/",
+    "amora": "http://amora.center/kb/amora/Schema/",
     "schema": "http://schema.org/",
     "amora:schemaProperty": {
       "@id": "amora:schemaProperty",

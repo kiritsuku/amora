@@ -224,7 +224,7 @@ class Ui {
   }
 
   def authenticate() = {
-    val ws = new WebSocket("ws://localhost:9999/auth")
+    val ws = new WebSocket("ws://amora.center/auth")
     ws.binaryType = "arraybuffer"
     ws.onopen = (e: Event) ⇒ {
       println("connection opened")
@@ -258,7 +258,7 @@ class Ui {
   def setupWS() = {
     def websocketUri(name: String): String = {
       val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-      s"$wsProtocol://localhost:9999/communication?name=$name"
+      s"$wsProtocol://amora.center/communication?name=$name"
     }
 
     ws = new WebSocket(websocketUri(clientName))
