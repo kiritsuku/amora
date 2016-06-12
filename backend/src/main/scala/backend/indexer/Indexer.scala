@@ -55,8 +55,6 @@ object Indexer extends backend.Log4jLogging {
     }
   }
 
-  startupIndexer()
-
   def queryResultAsString(modelName: String, query: String, model: Model): Try[String] = {
     withQueryService(modelName, query)(model) map { r ⇒
       val s = new ByteArrayOutputStream
