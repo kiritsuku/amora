@@ -17,8 +17,45 @@ import org.apache.jena.tdb.TDBFactory
 import research.converter.protocol._
 import backend.actors.IndexerMessage._
 import spray.json._
+import backend.Content
 
-object Indexer {
+object Indexer extends backend.Log4jLogging {
+
+  /**
+   * On startup of the indexer, we want to index some predefined data like
+   * schema definitions.
+   */
+  def startupIndexer() = {
+    val res = withDataset(IndexerConstants.IndexDataset) { dataset ⇒
+      withModel(dataset, Content.ModelName) { model ⇒
+        import java.io.File
+        val cl = getClass.getClassLoader
+        val resourceDir = new java.io.File(cl.getResource(".").getPath)
+        val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
+
+        def genJson(file: File) = {
+          val src = io.Source.fromFile(file, "UTF-8")
+          val jsonString = src.mkString
+          src.close()
+          new SchemaGenerator().generate(jsonString)
+        }
+
+        indexableFiles foreach { f ⇒
+          val jsonString = genJson(f)
+          addJsonLd(model, jsonString)
+          log.info(s"Schema file `$f` successfully indexed.")
+        }
+      }
+    }.flatten
+    res match {
+      case util.Success(_) ⇒
+        log.info("Indexer successfully started.")
+      case util.Failure(f) ⇒
+        throw new RuntimeException("An error happened during initialization of the indexer.", f)
+    }
+  }
+
+  startupIndexer()
 
   def queryResultAsString(modelName: String, query: String, model: Model): Try[String] = {
     withQueryService(modelName, query)(model) map { r ⇒
