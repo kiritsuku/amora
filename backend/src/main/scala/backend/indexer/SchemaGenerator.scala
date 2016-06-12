@@ -7,16 +7,23 @@ import spray.json._
 
 class SchemaGenerator {
 
-  def generate(schemaName: String, jsonString: String): JsValue = {
+  def genRawSchema(schemaName: String, jsonString: String): String = {
     // TODO do not hardcode the version of the schema
     val user = "amora"
     val amora = "http://amora.center/kb"
     val schemaVersion = "0.1"
-    val schemaUrl = s"$amora/$user/Schema/$schemaName/"
 
-    val rawSchema = jsonString
+    jsonString
         .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/tooling-research/schema")
-        .replaceAllLiterally("$ID", s"$amora/$schemaName/$schemaVersion")
+        .replaceAllLiterally("$ID", id(amora, user, schemaName, schemaVersion))
+  }
+
+  def generate(schemaName: String, jsonString: String): JsValue = {
+    val amora = "http://amora.center/kb"
+    val schemaVersion = "0.1"
+    val schemaUrl = s"$amora/amora/Schema/0.1/$schemaName/$schemaVersion"
+    val rawSchema = genRawSchema(schemaName, jsonString)
+
     val expandedJson = JsonLdProcessor.expand(JsonUtils.fromString(rawSchema), new JsonLdOptions)
     val ctx = find(rawSchema.parseJson.asJsObject.fields, "@context") {
       case ("@context", v) ⇒ v.compactPrint
@@ -65,6 +72,9 @@ class SchemaGenerator {
 
     JsObject(Map("@context" → JsObject(jsCtx)))
   }
+
+  private def id(prefix: String, user: String, schemaName: String, schemaVersion: String) =
+    s"$prefix/$user/$schemaName/$schemaVersion"
 
   private def find[A, B, C](map: Map[A, B], keyName: String)(pf: PartialFunction[(A, B), C]): C = {
     map.collectFirst(pf) match {

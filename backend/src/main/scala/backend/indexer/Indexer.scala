@@ -32,17 +32,18 @@ object Indexer extends backend.Log4jLogging {
         val cl = getClass.getClassLoader
         val resourceDir = new java.io.File(cl.getResource(".").getPath)
         val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
+        val gen = new SchemaGenerator
 
         def genJson(file: File) = {
           val src = io.Source.fromFile(file, "UTF-8")
           val jsonString = src.mkString
           val schemaName = file.getName.dropRight(".schema.jsonld".length)
           src.close()
-          new SchemaGenerator().generate(schemaName, jsonString)
+          gen.genRawSchema(schemaName, jsonString)
         }
 
         indexableFiles foreach { f ⇒
-          val jsonString = genJson(f)
+          val jsonString = genJson(f).parseJson
           addJsonLd(model, jsonString)
           log.info(s"Schema file `$f` successfully indexed.")
         }
