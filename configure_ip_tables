@@ -1,0 +1,12 @@
+#!/bin/bash
+# Configures the ip tables in a way that request to localhost:80 are forwarded to localhost:9999
+#
+# See http://serverfault.com/questions/112795/how-can-i-run-a-server-on-linux-on-port-80-as-a-normal-user for further description of this script.
+
+[ $EUID -ne 0 ] && echo "script must be run as root" && exit 1
+
+# Create forwarding entries
+iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 9999
+iptables -t nat -I OUTPUT -p tcp -d 127.0.0.1 --dport 80 -j REDIRECT --to-ports 9999
+# Show ip tables
+iptables -t nat --line-numbers -n -L

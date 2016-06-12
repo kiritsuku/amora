@@ -16,7 +16,7 @@ Setup notes:
   127.0.0.1       amora.center
   ```
 
-  This way, we can use URLs to `amora.center` in our code and don't need to worry about Internet loookups. Furthermore, we also want to specify a port redirect from port 80 to the port where the server is listening to. This can be achieved by adding a few entries to the IP table, as described [here](http://serverfault.com/questions/112795/how-can-i-run-a-server-on-linux-on-port-80-as-a-normal-user).
+  This way, we can use URLs to `amora.center` in our code and don't need to worry about Internet loookups. Furthermore, we also want to specify a port redirect from port 80 to the port where the server is listening to. This can be achieved by running the script `./configure_ip_tables` as root.
 
 Important sbt commands:
 
