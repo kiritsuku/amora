@@ -28,7 +28,7 @@ class SchemaGenerator {
     val ctx = find(rawSchema.parseJson.asJsObject.fields, "@context") {
       case ("@context", v) ⇒ v.compactPrint
     }
-    val expandedSchema = s"""{ "@context": $ctx, "@graph": ${JsonUtils.toPrettyString(expandedJson)} }""".parseJson
+    val expandedSchema = s"""{ "@context": $ctx, "@graph": ${JsonUtils.toString(expandedJson)} }""".parseJson
     val fields = expandedSchema.asJsObject.fields
 
     var jsCtx = Map[String, JsValue](
@@ -47,7 +47,6 @@ class SchemaGenerator {
           }
           val prop = find(fields, "/schemaProperty") {
             case (key, value) if key.endsWith("/schemaProperty") ⇒ value match {
-              case JsString(str) ⇒ str
               case JsArray(Vector(JsObject(fields))) ⇒
                 find(fields, "@value") {
                   case ("@value", JsString(str)) ⇒ str
@@ -55,8 +54,7 @@ class SchemaGenerator {
             }
           }
           val tpe = find(fields, "/schemaType") {
-            case (key, value) if key.endsWith("/schemaType") ⇒ value match {
-              case tpe: JsString ⇒ tpe
+            case (key, value) if key.endsWith("/schemaType") ⇒  value match {
               case JsArray(Vector(JsObject(fields))) ⇒
                 find(fields, "@id") {
                   case ("@id", JsString("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) ⇒ JsString("@id")
