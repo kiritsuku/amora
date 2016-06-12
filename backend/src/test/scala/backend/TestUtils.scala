@@ -2,11 +2,7 @@ package backend
 
 import org.junit.ComparisonFailure
 
-import _root_.backend.util.LoggerConfig
-
-object TestUtils
-    extends AnyRef
-    with LoggerConfig {
+object TestUtils {
 
   var debugTests: Boolean = true
 
