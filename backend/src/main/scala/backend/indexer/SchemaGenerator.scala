@@ -59,6 +59,7 @@ class SchemaGenerator {
               case tpe: JsString ⇒ tpe
               case JsArray(Vector(JsObject(fields))) ⇒
                 find(fields, "@id") {
+                  case ("@id", JsString("http://www.w3.org/1999/02/22-rdf-syntax-ns#type")) ⇒ JsString("@id")
                   case ("@id", v: JsString) ⇒ v
                 }
             }
