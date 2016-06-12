@@ -20,7 +20,11 @@ import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import backend.actors.UnhandledMessagesActor
 
-object Main extends App with AkkaLogging with Log4jLogging {
+/**
+ * We need to depend on a log4j root logger because Jena uses log4j internally.
+ * TODO Figure out how to unify Akka logging and Jena logging
+ */
+object Main extends App with AkkaLogging with Log4jRootLogging {
   override implicit val system = ActorSystem("backend")
   implicit val materializer = ActorMaterializer()
   import system.dispatcher
@@ -56,14 +60,25 @@ object Main extends App with AkkaLogging with Log4jLogging {
   }
 }
 
-trait Log4jLogging {
+trait Log4jLoggingConfig {
   // Conversion characters: https://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/PatternLayout.html
-  // TODO This logging stuff is only needed for Jena. We should merge Jena and Akka log output.
-  val layout = new PatternLayout("%d{ISO8601} %5p [%t] %c - %m%n")
-  val consoleAppender = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_OUT)
+  def consoleAppender = new ConsoleAppender(new PatternLayout("%d{ISO8601} %5p [%t] %c - %m%n"), ConsoleAppender.SYSTEM_OUT)
+}
+
+trait Log4jRootLogging extends Log4jLoggingConfig {
   val rootLogger = LogManager.getRootLogger
   rootLogger.setLevel(Level.INFO)
   rootLogger.addAppender(consoleAppender)
+}
+
+trait Log4jLogging extends Log4jLoggingConfig {
+  lazy val log = {
+    val l = LogManager.getLogger(getClass)
+    l.setLevel(Level.INFO)
+    l.setAdditivity(false)
+    l.addAppender(consoleAppender)
+    l
+  }
 }
 
 trait AkkaLogging {
