@@ -7,11 +7,10 @@ import spray.json._
 
 class SchemaGenerator {
 
-  def generate(jsonString: String): JsValue = {
-    // TODO do not hardcode the name and the version of the schema
+  def generate(schemaName: String, jsonString: String): JsValue = {
+    // TODO do not hardcode the version of the schema
     val user = "amora"
     val amora = "http://amora.center/kb"
-    val schemaName = "Artifact"
     val schemaVersion = "0.1"
     val schemaUrl = s"$amora/$user/Schema/$schemaName/"
 
