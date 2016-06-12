@@ -1,0 +1,80 @@
+{
+  "@context": "$AMORA/Schema.jsonld",
+  "@graph": [
+    {
+      "@id": "$ID/",
+      "amora:schemaId": [
+        "amora:Hierarchy/declaration",
+        "amora:Hierarchy/owner",
+        "amora:Hierarchy/attachment",
+        "amora:Hierarchy/reference",
+        "amora:Hierarchy/start",
+        "amora:Hierarchy/end",
+        "amora:Hierarchy/project",
+        "amora:Hierarchy/artifact",
+        "amora:Hierarchy/organization",
+        "amora:Hierarchy/version",
+        "amora:Hierarchy/name"
+      ],
+      "amora:schemaAuthor": "amora",
+      "amora:schemaVersion": "0.1"
+    },
+    {
+      "@id": "$ID/declaration",
+      "amora:schemaProperty": "declaration",
+      "amora:schemaType": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    },
+    {
+      "@id": "$ID/owner",
+      "amora:schemaProperty": "owner",
+      "amora:schemaType": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    },
+    {
+      "@id": "$ID/attachment",
+      "amora:schemaProperty": "attachment",
+      "amora:schemaType": "schema:Text"
+    },
+    {
+      "@id": "$ID/reference",
+      "amora:schemaProperty": "reference",
+      "amora:schemaType": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    },
+    {
+      "@id": "$ID/start",
+      "amora:schemaProperty": "start",
+      "amora:schemaType": "http://www.w3.org/2001/XMLSchema#integer"
+    },
+    {
+      "@id": "$ID/end",
+      "amora:schemaProperty": "end",
+      "amora:schemaType": "http://www.w3.org/2001/XMLSchema#integer"
+    },
+    {
+      "@id": "$ID/project",
+      "amora:schemaProperty": "project",
+      "amora:schemaType": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    },
+    {
+      "@id": "$ID/artifact",
+      "amora:schemaProperty": "artifact",
+      "amora:schemaType": "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    },
+    {
+      "@id": "$ID/organization",
+      "amora:schemaProperty": "organization",
+      "amora:schemaType": "schema:Text"
+    },
+    {
+      "@id": "$ID/version",
+      "amora:schemaProperty": "version",
+      "amora:schemaType": "schema:Text"
+    },
+    {
+      "@id": "$ID/name",
+      "amora:schemaProperty": "name",
+      "amora:schemaType": "schema:Text"
+    }
+  ]
+}
+
+
