@@ -11,6 +11,7 @@ import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.model.Uri.Query
 import akka.http.scaladsl.model.ws.BinaryMessage
 import akka.http.scaladsl.model.ws.Message
 import akka.http.scaladsl.server.Directives
@@ -90,8 +91,16 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractRequest { req ⇒
-        rawRequestUri(req) { path ⇒
-          handleKbPathGetRequest(path)
+        rawRequestUri(req) { (path, query) ⇒
+          query.get("format") match {
+            case Some("jsonld") ⇒
+              handleJsonldTypeRequest(path)
+            case Some(format) ⇒
+              import StatusCodes._
+              complete(HttpResponse(InternalServerError, entity = s"Internal server error: Parameter `format` has invalid value `$format`."))
+            case _ ⇒
+              handleKbPathGetRequest(path)
+          }
         }
       }
     } ~
@@ -173,19 +182,20 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractRequest { req ⇒
-        rawRequestUri(req) { path ⇒
+        rawRequestUri(req) { (path, query) ⇒
           handleKbPathPostRequest(path)
         }
       }
     }
   }
 
-  private def rawRequestUri(req: HttpRequest)(f: String ⇒ Route): Route = {
+  private def rawRequestUri(req: HttpRequest)(f: (String, Query) ⇒ Route): Route = {
     req.header[RawRequestURI] match {
       case Some(rawUri) ⇒
+        val queryLen = "?".length + req.uri.rawQueryString.map(_.length).getOrElse(0)
         val uri = req.uri
-        val path = s"${uri.scheme}:${uri.authority}${rawUri.uri}"
-        f(path)
+        val path = s"${uri.scheme}:${uri.authority}${rawUri.uri.dropRight(queryLen)}"
+        f(path, uri.query())
       case _ ⇒
         throw new InternalError("Header Raw-Request-URI not found. Enable them in the configuration file.")
     }

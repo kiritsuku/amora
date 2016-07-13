@@ -29,8 +29,23 @@ trait Sparql extends Directives {
 
   def bs: BackendSystem
 
+  def handleJsonldTypeRequest(path: String): Route = {
+    // TODO replace `format-jsonld` with real schema definition
+    val query = s"""
+      |PREFIX kb:<${Content.ModelName}>
+      |PREFIX s:<http://schema.org/>
+      |
+      |SELECT str WHERE {
+      |  <$path> kb:format-jsonld ?str .
+      |}
+    """.stripMargin.trim
+    askQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
+      complete(HttpEntity(`text/plain(UTF-8)`, sparqlResp))
+    }
+  }
+
   def handleKbPathGetRequest(path: String): Route = {
-   val query = s"""
+    val query = s"""
       |PREFIX kb:<${Content.ModelName}>
       |PREFIX s:<http://schema.org/>
       |
@@ -41,7 +56,7 @@ trait Sparql extends Directives {
     """.stripMargin.trim
     askQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
       complete(showSparqlEditor(query, sparqlResp))
-   }
+    }
   }
 
   def handleKbPathPostRequest(path: String): Route = {
