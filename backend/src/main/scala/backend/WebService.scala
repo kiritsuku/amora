@@ -192,7 +192,7 @@ final class WebService(override implicit val system: ActorSystem)
   private def rawRequestUri(req: HttpRequest)(f: (String, Query) ⇒ Route): Route = {
     req.header[RawRequestURI] match {
       case Some(rawUri) ⇒
-        val queryLen = "?".length + req.uri.rawQueryString.map(_.length).getOrElse(0)
+        val queryLen = req.uri.rawQueryString.map(_.length + "?".length).getOrElse(0)
         val uri = req.uri
         val path = s"${uri.scheme}:${uri.authority}${rawUri.uri.dropRight(queryLen)}"
         f(path, uri.query())
