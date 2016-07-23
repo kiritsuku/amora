@@ -7,14 +7,14 @@ import spray.json._
 
 class SchemaGenerator {
 
-  def genRawSchema(schemaName: String, jsonString: String): String = {
+  def resolveVariables(schemaName: String, jsonString: String): String = {
     // TODO replace absolute file reference by amora.center URI
     jsonString
         .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/tooling-research/schema")
-        .replaceAllLiterally("$ID", schemaId(schemaName))
+        .replaceAllLiterally("$ID", mkAmoraSchemaId(schemaName))
   }
 
-  def schemaId(schemaName: String) = {
+  def mkAmoraSchemaId(schemaName: String): String = {
     // TODO do not hardcode the version of the schema
     val user = "amora"
     val amora = "http://amora.center/kb"
@@ -22,11 +22,11 @@ class SchemaGenerator {
     id(amora, user, schemaName, schemaVersion)
   }
 
-  def insertFormatQuery(schemaName: String, contentVar: String) = {
+  def mkInsertFormatQuery(schemaName: String, contentVar: String): String = {
     val a = "http://amora.center/kb"
-    val schemaId = this.schemaId(schemaName)
-    val metaSchemaId = id("", "amora", schemaName, "0.1")
-    val formatId = s"${id(a, "amora", "Format", "0.1")}$metaSchemaId/jsonld"
+    val schemaId = mkAmoraSchemaId(schemaName)
+    val noPrefixSchemaId = id("", "amora", schemaName, "0.1")
+    val formatId = s"${id(a, "amora", "Format", "0.1")}$noPrefixSchemaId/jsonld"
     s"""
       PREFIX a:<http://amora.center/kb/amora/Schema/>
       INSERT DATA {
@@ -36,14 +36,13 @@ class SchemaGenerator {
     """
   }
 
-  def generate(schemaName: String, jsonString: String): JsValue = {
+  def mkJsonLdContext(schemaName: String, json: String): JsObject = {
     val amora = "http://amora.center/kb"
     val schemaVersion = "0.1"
     val schemaUrl = s"$amora/amora/Schema/0.1/$schemaName/$schemaVersion"
-    val rawSchema = genRawSchema(schemaName, jsonString)
 
-    val expandedJson = JsonLdProcessor.expand(JsonUtils.fromString(rawSchema), new JsonLdOptions)
-    val ctx = find(rawSchema.parseJson.asJsObject.fields, "@context") {
+    val expandedJson = JsonLdProcessor.expand(JsonUtils.fromString(json), new JsonLdOptions)
+    val ctx = find(json.parseJson.asJsObject.fields, "@context") {
       case ("@context", v) ⇒ v.compactPrint
     }
     val expandedSchema = s"""{ "@context": $ctx, "@graph": ${JsonUtils.toString(expandedJson)} }""".parseJson

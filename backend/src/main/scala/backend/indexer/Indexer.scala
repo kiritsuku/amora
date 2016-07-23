@@ -41,17 +41,16 @@ object Indexer extends backend.Log4jLogging {
 
         def indexFile(file: File) = {
           val src = io.Source.fromFile(file, "UTF-8")
-          val jsonString = src.mkString
+          val rawJson = src.mkString
           val schemaName = file.getName.dropRight(".schema.jsonld".length)
           src.close()
 
-          val raw = gen.genRawSchema(schemaName, jsonString).parseJson
-          addJsonLd(model, raw)
+          val json = gen.resolveVariables(schemaName, rawJson)
+          addJsonLd(model, json.parseJson)
 
           val contentVar = "content"
-          withUpdateService(model, gen.insertFormatQuery(schemaName, contentVar)) { pss ⇒
-            val generated = gen.generate(schemaName, jsonString)
-            pss.setLiteral(contentVar, generated.prettyPrint)
+          withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
+            pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint)
           }
         }
 
