@@ -361,7 +361,7 @@ object Indexer extends backend.Log4jLogging {
       case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} does not have a path.")
   }
 
-  private def addJsonLd(model: Model, data: JsValue) = {
+  def addJsonLd(model: Model, data: JsValue) = {
     val str = data.prettyPrint
     val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
