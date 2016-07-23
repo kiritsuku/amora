@@ -26,7 +26,7 @@ class SchemaGenerator {
     val a = "http://amora.center/kb"
     val schemaId = mkAmoraSchemaId(schemaName)
     val noPrefixSchemaId = id("", "amora", schemaName, "0.1")
-    val formatId = s"${id(a, "amora", "Format", "0.1")}$noPrefixSchemaId/jsonld"
+    val formatId = s"${id(a, "amora", "Format", "0.1")}$noPrefixSchemaId/schema.jsonld"
     s"""
       PREFIX a:<http://amora.center/kb/amora/Schema/>
       INSERT DATA {
