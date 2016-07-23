@@ -1,0 +1,20 @@
+{
+  "@context": "$AMORA/Schema.jsonld",
+  "@graph": [
+    {
+      "@id": "$ID/",
+      "amora:schemaId": [
+        "amora:Format/content"
+      ],
+      "amora:schemaAuthor": "amora",
+      "amora:schemaVersion": "0.1",
+      "@type": "http://amora.center/kb/amora/Schema"
+    },
+    {
+      "@id": "$ID/content",
+      "amora:schemaProperty": "content",
+      "amora:schemaType": "schema:Text"
+    }
+  ]
+}
+
