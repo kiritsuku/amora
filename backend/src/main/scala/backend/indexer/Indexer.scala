@@ -45,19 +45,22 @@ object Indexer extends backend.Log4jLogging {
           val schemaName = file.getName.dropRight(".schema.jsonld".length)
           src.close()
 
-          val json = gen.resolveVariables(schemaName, rawJson)
-          addJsonLd(model, json.parseJson)
+          val alreadyIndexed = doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
+          if (alreadyIndexed)
+            log.info(s"Skip schema file `$file` since it is already indexed.")
+          else {
+            val json = gen.resolveVariables(schemaName, rawJson)
+            addJsonLd(model, json.parseJson)
 
-          val contentVar = "content"
-          withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
-            pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint)
+            val contentVar = "content"
+            withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
+              pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint)
+            }
+            log.info(s"Schema file `$file` successfully indexed.")
           }
         }
 
-        indexableFiles foreach { f ⇒
-          indexFile(f)
-          log.info(s"Schema file `$f` successfully indexed.")
-        }
+        indexableFiles foreach indexFile
       }
     }.flatten
     res match {
@@ -373,6 +376,14 @@ object Indexer extends backend.Log4jLogging {
     f(pss)
     val update = pss.asUpdate()
     UpdateAction.execute(update, model)
+  }
+
+  def doesIdExist(model: Model, id: String): Boolean =
+    Indexer.runAskQuery(model, s"ASK { <$id> ?p ?o }")
+
+  def runAskQuery(model: Model, query: String): Boolean = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+    qexec.execAsk()
   }
 
   def withQueryService(model: Model, query: String): Try[ResultSetRewindable] = Try {
