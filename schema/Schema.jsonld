@@ -21,6 +21,10 @@
     "amora:schemaAuthor": {
       "@id": "amora:schemaAuthor",
       "@type": "schema:Text"
+    },
+    "amora:format": {
+      "@id": "amora:format",
+      "@type": "@id"
     }
   }
 }

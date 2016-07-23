@@ -8,14 +8,32 @@ import spray.json._
 class SchemaGenerator {
 
   def genRawSchema(schemaName: String, jsonString: String): String = {
+    // TODO replace absolute file reference by amora.center URI
+    jsonString
+        .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/tooling-research/schema")
+        .replaceAllLiterally("$ID", schemaId(schemaName))
+  }
+
+  def schemaId(schemaName: String) = {
     // TODO do not hardcode the version of the schema
     val user = "amora"
     val amora = "http://amora.center/kb"
     val schemaVersion = "0.1"
+    id(amora, user, schemaName, schemaVersion)
+  }
 
-    jsonString
-        .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/tooling-research/schema")
-        .replaceAllLiterally("$ID", id(amora, user, schemaName, schemaVersion))
+  def insertFormatQuery(schemaName: String, contentVar: String) = {
+    val a = "http://amora.center/kb"
+    val schemaId = this.schemaId(schemaName)
+    val metaSchemaId = id("", "amora", schemaName, "0.1")
+    val formatId = s"${id(a, "amora", "Format", "0.1")}$metaSchemaId/jsonld"
+    s"""
+      PREFIX a:<http://amora.center/kb/amora/Schema/>
+      INSERT DATA {
+        <$schemaId/> <$a/amora/Schema/0.1/format> <$formatId> .
+        <$formatId> <$a/amora/Schema/0.1/Format/0.1/content> ?$contentVar .
+      }
+    """
   }
 
   def generate(schemaName: String, jsonString: String): JsValue = {

@@ -3,8 +3,11 @@ package backend.indexer
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
+
 import scala.util.Try
+
 import org.apache.jena.query.Dataset
+import org.apache.jena.query.ParameterizedSparqlString
 import org.apache.jena.query.QueryExecutionFactory
 import org.apache.jena.query.QueryFactory
 import org.apache.jena.query.QuerySolution
@@ -14,10 +17,12 @@ import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
-import research.converter.protocol._
-import backend.actors.IndexerMessage._
-import spray.json._
+import org.apache.jena.update.UpdateAction
+
 import backend.Content
+import backend.actors.IndexerMessage._
+import research.converter.protocol._
+import spray.json._
 
 object Indexer extends backend.Log4jLogging {
 
@@ -34,17 +39,24 @@ object Indexer extends backend.Log4jLogging {
         val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
         val gen = new SchemaGenerator
 
-        def genJson(file: File) = {
+        def indexFile(file: File) = {
           val src = io.Source.fromFile(file, "UTF-8")
           val jsonString = src.mkString
           val schemaName = file.getName.dropRight(".schema.jsonld".length)
           src.close()
-          gen.genRawSchema(schemaName, jsonString)
+
+          val raw = gen.genRawSchema(schemaName, jsonString).parseJson
+          addJsonLd(model, raw)
+
+          val contentVar = "content"
+          withUpdateService(model, gen.insertFormatQuery(schemaName, contentVar)) { pss ⇒
+            val generated = gen.generate(schemaName, jsonString)
+            pss.setLiteral(contentVar, generated.prettyPrint)
+          }
         }
 
         indexableFiles foreach { f ⇒
-          val jsonString = genJson(f).parseJson
-          addJsonLd(model, jsonString)
+          indexFile(f)
           log.info(s"Schema file `$f` successfully indexed.")
         }
       }
@@ -354,6 +366,14 @@ object Indexer extends backend.Log4jLogging {
     val str = data.prettyPrint
     val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
+  }
+
+  def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit) = {
+    val pss = new ParameterizedSparqlString
+    pss.setCommandText(query)
+    f(pss)
+    val update = pss.asUpdate()
+    UpdateAction.execute(update, model)
   }
 
   def withQueryService(modelName: String, query: String)(model: Model): Try[ResultSetRewindable] = Try {
