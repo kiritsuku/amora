@@ -87,7 +87,7 @@ class RegionIndexerTest {
           Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
           Indexer.queryResultAsString(modelName, query, model) foreach println
         }
-        Indexer.withQueryService(modelName, query)(model).map { r ⇒
+        Indexer.withQueryService(model, query).map { r ⇒
           import scala.collection.JavaConverters._
           r.asScala.toSeq.map { row ⇒
             val start = row.get("start")

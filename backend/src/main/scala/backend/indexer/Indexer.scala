@@ -69,7 +69,7 @@ object Indexer extends backend.Log4jLogging {
   }
 
   def queryResultAsString(modelName: String, query: String, model: Model): Try[String] = {
-    withQueryService(modelName, query)(model) map { r ⇒
+    withQueryService(model, query) map { r ⇒
       val s = new ByteArrayOutputStream
 
       ResultSetFormatter.out(s, r)
@@ -79,7 +79,7 @@ object Indexer extends backend.Log4jLogging {
 
   def flattenedQueryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
     import scala.collection.JavaConverters._
-    withQueryService(modelName, query)(model) map { r ⇒
+    withQueryService(model, query) map { r ⇒
       val vars = r.getResultVars.asScala.toSeq
 
       for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
@@ -88,7 +88,7 @@ object Indexer extends backend.Log4jLogging {
 
   def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[Seq[A]]] = {
     import scala.collection.JavaConverters._
-    withQueryService(modelName, query)(model) map { r ⇒
+    withQueryService(model, query) map { r ⇒
       val vars = r.getResultVars.asScala.toSeq
 
       for (q ← r.asScala.toSeq) yield
@@ -375,7 +375,7 @@ object Indexer extends backend.Log4jLogging {
     UpdateAction.execute(update, model)
   }
 
-  def withQueryService(modelName: String, query: String)(model: Model): Try[ResultSetRewindable] = Try {
+  def withQueryService(model: Model, query: String): Try[ResultSetRewindable] = Try {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     ResultSetFactory.makeRewindable(qexec.execSelect())
   }

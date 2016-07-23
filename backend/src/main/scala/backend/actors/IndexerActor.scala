@@ -32,7 +32,7 @@ class IndexerActor extends Actor with ActorLogging {
     log.info(s"Handle SPARQL query: $query")
     withDataset(IndexDataset) { dataset ⇒
       withModel(dataset, Content.ModelName) { model ⇒
-        withQueryService(Content.ModelName, query)(model) map { r ⇒
+        withQueryService(model, query) map { r ⇒
           val s = new ByteArrayOutputStream
 
           ResultSetFormatter.output(s, r, fmt)
