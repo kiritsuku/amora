@@ -19,7 +19,7 @@ class SchemaGenerator {
     val user = "amora"
     val amora = "http://amora.center/kb"
     val schemaVersion = "0.1"
-    id(amora, user, schemaName, schemaVersion)
+    s"${id(amora, user, "Schema", "0.1")}/$schemaName/$schemaVersion"
   }
 
   def mkInsertFormatQuery(schemaName: String, contentVar: String): String = {

@@ -4,7 +4,7 @@
     {
       "@id": "$ID/",
       "amora:schemaId": [
-        "amora:Format/content"
+        "$ID/content"
       ],
       "amora:schemaAuthor": "amora",
       "amora:schemaVersion": "0.1",

@@ -4,9 +4,9 @@
     {
       "@id": "$ID/",
       "amora:schemaId": [
-        "amora:Artifact/name",
-        "amora:Artifact/organization",
-        "amora:Artifact/version"
+        "$ID/name",
+        "$ID/organization",
+        "$ID/version"
       ],
       "amora:schemaAuthor": "amora",
       "amora:schemaVersion": "0.1",

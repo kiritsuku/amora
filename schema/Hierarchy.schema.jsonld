@@ -4,17 +4,17 @@
     {
       "@id": "$ID/",
       "amora:schemaId": [
-        "amora:Hierarchy/declaration",
-        "amora:Hierarchy/owner",
-        "amora:Hierarchy/attachment",
-        "amora:Hierarchy/reference",
-        "amora:Hierarchy/start",
-        "amora:Hierarchy/end",
-        "amora:Hierarchy/project",
-        "amora:Hierarchy/artifact",
-        "amora:Hierarchy/organization",
-        "amora:Hierarchy/version",
-        "amora:Hierarchy/name"
+        "$ID/declaration",
+        "$ID/owner",
+        "$ID/attachment",
+        "$ID/reference",
+        "$ID/start",
+        "$ID/end",
+        "$ID/project",
+        "$ID/artifact",
+        "$ID/organization",
+        "$ID/version",
+        "$ID/name"
       ],
       "amora:schemaAuthor": "amora",
       "amora:schemaVersion": "0.1",
