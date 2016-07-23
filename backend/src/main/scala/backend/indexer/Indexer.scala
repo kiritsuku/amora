@@ -6,6 +6,7 @@ import java.net.URLEncoder
 
 import scala.util.Try
 
+import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.ParameterizedSparqlString
 import org.apache.jena.query.QueryExecutionFactory
@@ -54,7 +55,7 @@ object Indexer extends backend.Log4jLogging {
 
             val contentVar = "content"
             withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
-              pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint)
+              pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint, new BaseDatatype("http://schema.org/Text"))
             }
             log.info(s"Schema file `$file` successfully indexed.")
           }
