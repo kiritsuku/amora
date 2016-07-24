@@ -96,8 +96,7 @@ final class WebService(override implicit val system: ActorSystem)
             case Some("jsonld") ⇒
               retrieveJsonLdContext(path)
             case Some(format) ⇒
-              import StatusCodes._
-              complete(HttpResponse(InternalServerError, entity = s"Internal server error: Parameter `format` has invalid value `$format`."))
+              complete(HttpResponse(StatusCodes.BadRequest, entity = s"Parameter `format` has invalid value `$format`."))
             case _ ⇒
               handleKbPathGetRequest(path)
           }
@@ -136,8 +135,7 @@ final class WebService(override implicit val system: ActorSystem)
             complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
 
           case scala.util.Failure(f) ⇒
-            import StatusCodes._
-            complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+            complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
         }
       }
     } ~
@@ -148,8 +146,7 @@ final class WebService(override implicit val system: ActorSystem)
           complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, content))
 
         case scala.util.Failure(f) ⇒
-          import StatusCodes._
-          complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+          complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
       }
     }
   } ~
@@ -170,13 +167,11 @@ final class WebService(override implicit val system: ActorSystem)
           case Success(RequestFailed(msg)) ⇒
             complete(msg)
           case Success(msg) ⇒
-            import StatusCodes._
             log.error(s"Unexpected response for add-json request: $msg")
-            complete(HttpResponse(InternalServerError, entity = s"Internal server error: No valid response provided."))
+            complete(HttpResponse(StatusCodes.BadRequest, entity = s"No valid response provided."))
           case Failure(f) ⇒
-            import StatusCodes._
             log.error(f, "Error happened while handling add-json request.")
-            complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+            complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
         }
       }
     } ~
