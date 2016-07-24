@@ -13,6 +13,7 @@ import backend.indexer.Indexer
 import backend.indexer.IndexerConstants
 import research.converter.protocol.Hierarchy
 import akka.actor.ActorLogging
+import org.apache.jena.query.ResultSetRewindable
 
 class IndexerActor extends Actor with ActorLogging {
 
@@ -23,6 +24,9 @@ class IndexerActor extends Actor with ActorLogging {
   override def receive = {
     case AskQuery(query, fmt) ⇒
       sender ! handleAskQuery(query, fmt)
+
+    case RunQuery(query) ⇒
+      sender ! handleQuery(query)
 
     case AddData(data) ⇒
       handleAddData(data)
@@ -42,6 +46,15 @@ class IndexerActor extends Actor with ActorLogging {
     }.flatten
   }
 
+  def handleQuery(query: String): Try[ResultSetRewindable] = {
+    log.info(s"Handle SPARQL query: $query")
+    withDataset(IndexDataset) { dataset ⇒
+      withModel(dataset, Content.ModelName) { model ⇒
+        withQueryService(model, query)
+      }.flatten
+    }.flatten
+  }
+
   def handleAddData(data: Indexable): Try[Unit] = {
     withDataset(IndexDataset) { dataset ⇒
       withModel(dataset, Content.ModelName) { model ⇒
@@ -54,6 +67,7 @@ class IndexerActor extends Actor with ActorLogging {
 sealed trait IndexerMessage
 object IndexerMessage {
   case class AskQuery(query: String, fmt: ResultsFormat) extends IndexerMessage
+  case class RunQuery(query: String) extends IndexerMessage
   case class AddData(data: Indexable) extends IndexerMessage
 
   sealed trait Indexable extends IndexerMessage

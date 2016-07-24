@@ -94,7 +94,7 @@ final class WebService(override implicit val system: ActorSystem)
         rawRequestUri(req) { (path, query) ⇒
           query.get("format") match {
             case Some("jsonld") ⇒
-              handleJsonldTypeRequest(path)
+              retrieveJsonLdContext(path)
             case Some(format) ⇒
               import StatusCodes._
               complete(HttpResponse(InternalServerError, entity = s"Internal server error: Parameter `format` has invalid value `$format`."))

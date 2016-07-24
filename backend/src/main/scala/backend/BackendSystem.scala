@@ -25,6 +25,7 @@ import frontend.webui.protocol.IndexData
 import backend.actors.IndexerMessage
 import org.apache.jena.sparql.resultset.ResultsFormat
 import scala.util.Try
+import org.apache.jena.query.ResultSetRewindable
 
 final class BackendSystem(implicit system: ActorSystem) {
 
@@ -41,6 +42,10 @@ final class BackendSystem(implicit system: ActorSystem) {
 
   def askQuery(query: String, fmt: ResultsFormat): Future[String] = {
     indexer.ask(IndexerMessage.AskQuery(query, fmt)).mapTo[Try[String]].flatMap(Future.fromTry)
+  }
+
+  def runQuery(query: String): Future[ResultSetRewindable] = {
+    indexer.ask(IndexerMessage.RunQuery(query)).mapTo[Try[ResultSetRewindable]].flatMap(Future.fromTry)
   }
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {

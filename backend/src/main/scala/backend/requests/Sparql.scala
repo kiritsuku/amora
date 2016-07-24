@@ -21,6 +21,7 @@ import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.BackendSystem
 import backend.Content
 import backend.CustomContentTypes
+import org.apache.jena.query.ResultSetRewindable
 
 trait Sparql extends Directives {
   import CustomContentTypes._
@@ -29,18 +30,17 @@ trait Sparql extends Directives {
 
   def bs: BackendSystem
 
-  def handleJsonldTypeRequest(path: String): Route = {
-    // TODO replace `format-jsonld` with real schema definition
+  def retrieveJsonLdContext(path: String): Route = {
     val query = s"""
-      |PREFIX kb:<${Content.ModelName}>
-      |PREFIX s:<http://schema.org/>
-      |
-      |SELECT str WHERE {
-      |  <$path> kb:format-jsonld ?str .
+      |SELECT * WHERE {
+      |  <$path> <http://amora.center/kb/amora/Schema/0.1/Format/0.1/content> ?str .
       |}
     """.stripMargin.trim
-    askQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
-      complete(HttpEntity(`text/plain(UTF-8)`, sparqlResp))
+    runQuery(query) { r ⇒
+      require(r.size == 1, "only one result expected")
+      val str = r.next().get("str")
+      require(str != null, "No field with name `str` found.")
+      complete(HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString))
     }
   }
 
@@ -133,6 +133,16 @@ trait Sparql extends Directives {
 
   private def askQuery(query: String, fmt: ResultsFormat)(f: String ⇒ Route): Route = {
     onComplete(bs.askQuery(query, fmt)) {
+      case scala.util.Success(s) ⇒
+        f(s)
+      case scala.util.Failure(f) ⇒
+        import StatusCodes._
+        complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+    }
+  }
+
+  private def runQuery(query: String)(f: ResultSetRewindable ⇒ Route): Route = {
+    onComplete(bs.runQuery(query)) {
       case scala.util.Success(s) ⇒
         f(s)
       case scala.util.Failure(f) ⇒
