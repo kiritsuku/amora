@@ -39,10 +39,13 @@ trait Sparql extends Directives {
       |}
     """.stripMargin.trim
     runQuery(query) { r ⇒
-      require(r.size == 1, "only one result expected")
-      val str = r.next().get("str")
-      require(str != null, "No field with name `str` found.")
-      complete(HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString))
+      if (r.size == 0)
+        complete(HttpResponse(StatusCodes.NotFound, entity = s"No JSONLD context found for URI `$path`."))
+      else {
+        val str = r.next().get("str")
+        require(str != null, "No field with name `str` found.")
+        complete(HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString))
+      }
     }
   }
 
