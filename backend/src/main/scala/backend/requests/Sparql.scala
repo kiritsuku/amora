@@ -1,7 +1,11 @@
 package backend.requests
 
+import java.io.ByteArrayOutputStream
+
 import java.net.URLDecoder
 
+import org.apache.jena.query.ResultSetFormatter
+import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.sparql.resultset.ResultsFormat
 
 import akka.http.scaladsl.model.ContentType
@@ -13,7 +17,6 @@ import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.ContentNegotiator
-
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
@@ -21,7 +24,6 @@ import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.BackendSystem
 import backend.Content
 import backend.CustomContentTypes
-import org.apache.jena.query.ResultSetRewindable
 
 trait Sparql extends Directives {
   import CustomContentTypes._
@@ -54,7 +56,7 @@ trait Sparql extends Directives {
       |}
       |LIMIT 100
     """.stripMargin.trim
-    askQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
+    runQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
       complete(showSparqlEditor(query, sparqlResp))
     }
   }
@@ -66,7 +68,7 @@ trait Sparql extends Directives {
       |}
       |LIMIT 100
     """.stripMargin.trim
-    askQuery(query, `sparql-results+json(UTF-8)`, ResultsFormat.FMT_RS_JSON)
+    runQuery(query, `sparql-results+json(UTF-8)`, ResultsFormat.FMT_RS_JSON)
   }
 
   def handleSparqlGetRequest(params: Map[String, String]): Route = {
@@ -88,7 +90,7 @@ trait Sparql extends Directives {
         case "csv"  ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
         case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
       } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
-      askQuery(params("query"), ct, fmt)
+      runQuery(params("query"), ct, fmt)
     }
     else
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
@@ -107,7 +109,7 @@ trait Sparql extends Directives {
           reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
         else {
           val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
-          askQuery(query, ct, fmt)
+          runQuery(query, ct, fmt)
         }
     }
     resp.getOrElse {
@@ -125,16 +127,19 @@ trait Sparql extends Directives {
     HttpEntity(`text/html(UTF-8)`, content)
   }
 
-  private def askQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat): Route = {
-    askQuery(query, fmt) { sparqlResp ⇒
+  private def runQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat): Route = {
+    runQuery(query, fmt) { sparqlResp ⇒
       complete(HttpEntity(ct, sparqlResp))
     }
   }
 
-  private def askQuery(query: String, fmt: ResultsFormat)(f: String ⇒ Route): Route = {
-    onComplete(bs.askQuery(query, fmt)) {
-      case scala.util.Success(s) ⇒
-        f(s)
+  private def runQuery(query: String, fmt: ResultsFormat)(f: String ⇒ Route): Route = {
+    onComplete(bs.runQuery(query)) {
+      case scala.util.Success(r) ⇒
+        val s = new ByteArrayOutputStream
+        ResultSetFormatter.output(s, r, fmt)
+        val str = new String(s.toByteArray(), "UTF-8")
+        f(str)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
@@ -143,8 +148,8 @@ trait Sparql extends Directives {
 
   private def runQuery(query: String)(f: ResultSetRewindable ⇒ Route): Route = {
     onComplete(bs.runQuery(query)) {
-      case scala.util.Success(s) ⇒
-        f(s)
+      case scala.util.Success(r) ⇒
+        f(r)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))

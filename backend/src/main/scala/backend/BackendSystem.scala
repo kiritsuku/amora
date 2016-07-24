@@ -4,8 +4,12 @@ import java.nio.ByteBuffer
 
 import scala.concurrent.Future
 import scala.concurrent.duration._
+import scala.util.Try
+
+import org.apache.jena.query.ResultSetRewindable
 
 import akka.NotUsed
+import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
 import akka.stream.OverflowStrategy
@@ -13,19 +17,15 @@ import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
 import akka.util.Timeout
+import backend.actors.IndexerActor
+import backend.actors.IndexerMessage
 import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMessage
-import akka.actor.ActorRef
-import backend.actors.RequestMessage
 import backend.actors.RequestActor
-import backend.actors.IndexerActor
+import backend.actors.RequestMessage
 import frontend.webui.protocol.IndexData
-import backend.actors.IndexerMessage
-import org.apache.jena.sparql.resultset.ResultsFormat
-import scala.util.Try
-import org.apache.jena.query.ResultSetRewindable
 
 final class BackendSystem(implicit system: ActorSystem) {
 
@@ -39,10 +39,6 @@ final class BackendSystem(implicit system: ActorSystem) {
   private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
 
   implicit val timeout = Timeout(5.seconds)
-
-  def askQuery(query: String, fmt: ResultsFormat): Future[String] = {
-    indexer.ask(IndexerMessage.AskQuery(query, fmt)).mapTo[Try[String]].flatMap(Future.fromTry)
-  }
 
   def runQuery(query: String): Future[ResultSetRewindable] = {
     indexer.ask(IndexerMessage.RunQuery(query)).mapTo[Try[ResultSetRewindable]].flatMap(Future.fromTry)
