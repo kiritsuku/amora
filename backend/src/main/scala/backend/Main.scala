@@ -19,7 +19,6 @@ import akka.event.LoggingAdapter
 import akka.http.scaladsl.Http
 import akka.stream.ActorMaterializer
 import backend.actors.UnhandledMessagesActor
-import backend.indexer.Indexer
 
 /**
  * We need to depend on a log4j root logger because Jena uses log4j internally.
@@ -55,7 +54,6 @@ object Main extends App with AkkaLogging with Log4jRootLogging {
     case Success(binding) ⇒
       val addr = binding.localAddress
       log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
-      Indexer.startupIndexer()
     case Failure(e) ⇒
       log.error(e, "Failed to start server")
       system.terminate()

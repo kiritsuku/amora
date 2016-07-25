@@ -14,24 +14,26 @@ class ScalaSourceIndexerTest {
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, data: Seq[(String, String)], query: String): Seq[Data] = {
-    val res = Indexer.withInMemoryDataset { dataset ⇒
-      Indexer.withModel(dataset, modelName) { model ⇒
-        val indexer = new ScalaSourceIndexer(IgnoreLogger)
-        indexer.convertToHierarchy(data) match {
+    val indexer = new Indexer
+    val dataset = indexer.mkInMemoryDataset
+    val res = indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, modelName) { model ⇒
+        val sindexer = new ScalaSourceIndexer(IgnoreLogger)
+        sindexer.convertToHierarchy(data) match {
           case scala.util.Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
+                indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
             }
           case scala.util.Failure(f) ⇒
             throw f
         }
 
         if (debugTests) {
-          Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
-          Indexer.queryResultAsString(modelName, query, model) foreach println
+          indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+          indexer.queryResultAsString(modelName, query, model) foreach println
         }
-        Indexer.flattenedQueryResult(modelName, query, model) { (v, q) ⇒
+        indexer.flattenedQueryResult(modelName, query, model) { (v, q) ⇒
           val res = q.get(v)
           require(res != null, s"The variable `$v` does not exist in the result set.")
           Data(v, res.toString)

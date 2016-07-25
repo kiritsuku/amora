@@ -15,17 +15,19 @@ class ModelIndexerTest {
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, rawQuery: String, data: Indexable*): Seq[Seq[Data]] = {
+    val indexer = new Indexer
+    val dataset = indexer.mkInMemoryDataset
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
-    val res = Indexer.withInMemoryDataset { dataset ⇒
-      Indexer.withModel(dataset, modelName) { model ⇒
-        data foreach (Indexer.add(modelName, model, _))
+    val res = indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, modelName) { model ⇒
+        data foreach (indexer.add(modelName, model, _))
 
         if (debugTests) {
-          Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
-          Indexer.queryResultAsString(modelName, query, model) foreach println
+          indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+          indexer.queryResultAsString(modelName, query, model) foreach println
         }
 
-        Indexer.queryResult(modelName, query, model) { (v, q) ⇒
+        indexer.queryResult(modelName, query, model) { (v, q) ⇒
           val res = q.get(v)
           require(res != null, s"The variable `$v` does not exist in the result set.")
           Data(v, res.toString)
@@ -275,5 +277,38 @@ class ModelIndexerTest {
           [a c:Def] c:owner [s:name ?name] .
         }
       """, artifact, file) === Seq(Seq(Data("name", "A")))
+  }
+
+  @Test
+  def xxx(): Unit = {
+    val indexer = new Indexer
+    val dataset = indexer.mkInMemoryDataset
+    println(indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, modelName) { model ⇒
+        val schemaName = "Format"
+        val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/tooling-research/schema/$schemaName.schema.jsonld", "UTF-8").mkString
+        val gen = new SchemaGenerator
+        import spray.json._
+        val json = gen.resolveVariables(schemaName, rawJson)
+
+        indexer.addJsonLd(model, json.parseJson)
+        val contentVar = "content"
+        indexer.withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
+          val generated = gen.mkJsonLdContext(schemaName, json)
+          import org.apache.jena.datatypes.BaseDatatype
+          pss.setLiteral(contentVar, generated.prettyPrint, new BaseDatatype("http://schema.org/Text"))
+        }
+        indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+        indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
+      }
+    }.flatten)
+    println(indexer.withDataset(dataset) { dataset ⇒
+      val schemaName = "Format"
+      val gen = new SchemaGenerator
+      indexer.withModel(dataset, modelName) { model ⇒
+        indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
+      }
+    }.flatten)
+    dataset.close()
   }
 }

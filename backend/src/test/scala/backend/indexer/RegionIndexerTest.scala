@@ -70,24 +70,26 @@ class RegionIndexerTest {
     val data = dataWithRegions.map { case (filename, src, _) ⇒ (filename, src) }
     val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
 
-    val indexer = new ScalaSourceIndexer(IgnoreLogger)
-    val hierarchyData = indexer.convertToHierarchy(data) match {
+    val sindexer = new ScalaSourceIndexer(IgnoreLogger)
+    val hierarchyData = sindexer.convertToHierarchy(data) match {
       case scala.util.Success(res) ⇒ res
       case scala.util.Failure(f) ⇒ throw f
     }
 
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
-    val foundRegions: Try[Seq[Region]] = Indexer.withInMemoryDataset { dataset ⇒
-      Indexer.withModel(dataset, modelName) { model ⇒
+    val indexer = new Indexer
+    val dataset = indexer.mkInMemoryDataset
+    val foundRegions: Try[Seq[Region]] = indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
-            Indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
+            indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
         }
         if (debugTests) {
-          Indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
-          Indexer.queryResultAsString(modelName, query, model) foreach println
+          indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+          indexer.queryResultAsString(modelName, query, model) foreach println
         }
-        Indexer.withQueryService(model, query).map { r ⇒
+        indexer.withQueryService(model, query).map { r ⇒
           import scala.collection.JavaConverters._
           r.asScala.toSeq.map { row ⇒
             val start = row.get("start")

@@ -25,45 +25,43 @@ import backend.actors.IndexerMessage._
 import research.converter.protocol._
 import spray.json._
 
-object Indexer extends backend.Log4jLogging {
+class Indexer extends backend.Log4jLogging {
 
   /**
    * On startup of the indexer, we want to index some predefined data like
    * schema definitions.
    */
-  def startupIndexer() = {
-    val res = withDataset(IndexerConstants.IndexDataset) { dataset ⇒
-      withModel(dataset, Content.ModelName) { model ⇒
-        import java.io.File
-        val cl = getClass.getClassLoader
-        val resourceDir = new java.io.File(cl.getResource(".").getPath)
-        val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
-        val gen = new SchemaGenerator
+  def startupIndexer(dataset: Dataset) = {
+    val res = withModel(dataset, Content.ModelName) { model ⇒
+      import java.io.File
+      val cl = getClass.getClassLoader
+      val resourceDir = new java.io.File(cl.getResource(".").getPath)
+      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
+      val gen = new SchemaGenerator
 
-        def indexFile(file: File) = {
-          val src = io.Source.fromFile(file, "UTF-8")
-          val rawJson = src.mkString
-          val schemaName = file.getName.dropRight(".schema.jsonld".length)
-          src.close()
+      def indexFile(file: File) = {
+        val src = io.Source.fromFile(file, "UTF-8")
+        val rawJson = src.mkString
+        val schemaName = file.getName.dropRight(".schema.jsonld".length)
+        src.close()
 
-          val alreadyIndexed = doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
-          if (alreadyIndexed)
-            log.info(s"Skip schema file `$file` since it is already indexed.")
-          else {
-            val json = gen.resolveVariables(schemaName, rawJson)
-            addJsonLd(model, json.parseJson)
+        val alreadyIndexed = doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
+        if (alreadyIndexed)
+          log.info(s"Skip schema file `$file` since it is already indexed.")
+        else {
+          val json = gen.resolveVariables(schemaName, rawJson)
+          addJsonLd(model, json.parseJson)
 
-            val contentVar = "content"
-            withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
-              pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint, new BaseDatatype("http://schema.org/Text"))
-            }
-            log.info(s"Schema file `$file` successfully indexed.")
+          val contentVar = "content"
+          withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
+            pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint, new BaseDatatype("http://schema.org/Text"))
           }
+          log.info(s"Schema file `$file` successfully indexed.")
         }
-
-        indexableFiles foreach indexFile
       }
-    }.flatten
+
+      indexableFiles foreach indexFile
+    }
     res match {
       case util.Success(_) ⇒
         log.info("Indexer successfully started.")
@@ -380,7 +378,7 @@ object Indexer extends backend.Log4jLogging {
   }
 
   def doesIdExist(model: Model, id: String): Boolean =
-    Indexer.runAskQuery(model, s"ASK { <$id> ?p ?o }")
+    runAskQuery(model, s"ASK { <$id> ?p ?o }")
 
   def runAskQuery(model: Model, query: String): Boolean = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
@@ -397,14 +395,14 @@ object Indexer extends backend.Log4jLogging {
     ResultSetFactory.makeRewindable(qe.execSelect())
   }
 
-  def withInMemoryDataset[A](f: Dataset ⇒ A): Try[A] = {
-    val dataset = TDBFactory.createDataset()
-    internalWithDataset(dataset)(f)
-  }
+  def mkInMemoryDataset: RawDataset =
+    RawDataset(TDBFactory.createDataset())
 
-  def withDataset[A](location: String)(f: Dataset ⇒ A): Try[A] = {
-    val dataset = TDBFactory.createDataset(location)
-    internalWithDataset(dataset)(f)
+  def mkDataset(location: String): RawDataset =
+    RawDataset(TDBFactory.createDataset(location))
+
+  def withDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): Try[A] = {
+    internalWithDataset(dataset.dataset)(f)
   }
 
   def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): Try[A] = {
@@ -420,7 +418,11 @@ object Indexer extends backend.Log4jLogging {
       .map { _ ⇒ f(dataset) }
       .map { res ⇒ dataset.commit(); res }
       .map { res ⇒ dataset.end(); res }
-      .map { res ⇒ dataset.close(); res }
       .recover { case f ⇒ dataset.abort(); throw f }
   }
+}
+
+final case class RawDataset(dataset: Dataset) {
+  def close(): Unit =
+    dataset.close()
 }

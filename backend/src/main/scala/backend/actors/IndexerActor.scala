@@ -13,9 +13,19 @@ import research.converter.protocol.Hierarchy
 
 class IndexerActor extends Actor with ActorLogging {
 
-  import Indexer._
   import IndexerConstants._
   import IndexerMessage._
+
+  private val indexer = new Indexer
+  private val testMode = context.system.settings.config.getBoolean("app.test-mode")
+  private val dataset =
+    if (testMode)
+      indexer.mkInMemoryDataset
+    else
+      indexer.mkDataset(IndexDataset)
+
+  log.info("Indexer created dataset at: " + (if (testMode) "<memory>" else IndexDataset))
+  indexer.withDataset(dataset)(indexer.startupIndexer)
 
   override def receive = {
     case RunQuery(query) ⇒
@@ -27,19 +37,19 @@ class IndexerActor extends Actor with ActorLogging {
 
   def handleQuery(query: String): Try[ResultSetRewindable] = {
     log.info(s"Handle SPARQL query: $query")
-    withDataset(IndexDataset) { dataset ⇒
-      withModel(dataset, Content.ModelName) { model ⇒
-        withQueryService(model, query)
+    indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, Content.ModelName) { model ⇒
+        indexer.withQueryService(model, query)
       }.flatten
     }.flatten
   }
 
   def handleAddData(data: Indexable): Try[Unit] = {
-    withDataset(IndexDataset) { dataset ⇒
-      withModel(dataset, Content.ModelName) { model ⇒
-        add(Content.ModelName, model, data)
+    indexer.withDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset, Content.ModelName) { model ⇒
+        indexer.add(Content.ModelName, model, data)
       }
-    }
+    }.flatten
   }
 }
 
