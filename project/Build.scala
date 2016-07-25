@@ -222,6 +222,9 @@ object Build extends sbt.Build {
       "-agentlib:jdwp=transport=dt_socket,server=y,address=8000,suspend=n"
     ),
 
+    // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
+    EclipseKeys.eclipseOutput := Some("bin/"),
+
     // see https://github.com/sbt/junit-interface for an explanation of the arguments
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s"),
     // we don't want to run the tests in sbt because they consume lots of resources
