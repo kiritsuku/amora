@@ -10,6 +10,7 @@ import backend.indexer.JavaBytecodeIndexerTest
 import backend.indexer.ScalaSourceIndexerTest
 import backend.indexer.RegionIndexerTest
 import backend.indexer.ModelIndexerTest
+import backend.indexer.IndexerTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -18,6 +19,7 @@ import backend.indexer.ModelIndexerTest
   classOf[RegionIndexerTest],
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
-  classOf[ModelIndexerTest]
+  classOf[ModelIndexerTest],
+  classOf[IndexerTest]
 ))
 class TestSuite

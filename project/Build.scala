@@ -336,14 +336,15 @@ object Build extends sbt.Build {
       "com.typesafe.akka"              %%  "akka-http-experimental"            % versions.akka,
       "com.typesafe.akka"              %%  "akka-http-spray-json-experimental" % versions.akka,
       "com.typesafe.akka"              %%  "akka-stream"                       % versions.akka,
-      "com.typesafe.akka"              %%  "akka-slf4j"                       % versions.akka,
+      "com.typesafe.akka"              %%  "akka-slf4j"                        % versions.akka,
       "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
       "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags,
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
-      "com.novocode"                   %   "junit-interface"                   % "0.11"                    % "test"
+      "com.novocode"                   %   "junit-interface"                   % "0.11"                    % "test",
+      "com.typesafe.akka"              %%  "akka-http-testkit"                 % versions.akka             % "test"
     ))
 
     lazy val nvim = Def.setting(Seq(
