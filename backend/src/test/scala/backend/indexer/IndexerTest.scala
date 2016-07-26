@@ -37,45 +37,48 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   """
 
+  val service = new WebService
+  val route = service.route
+
   @Test
   def jsonld_context_can_be_retrieved(): Unit = {
-    val service = new WebService
-    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=jsonld") ~> service.route ~> check {
-      response.status === StatusCodes.OK
+    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=jsonld") ~> route ~> check {
+      status === StatusCodes.OK
     }
   }
 
   @Test
   def error_for_invalid_format(): Unit = {
-    val service = new WebService
-    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=invalid") ~> service.route ~> check {
-      response.status === StatusCodes.BadRequest
+    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=invalid") ~> route ~> check {
+      status === StatusCodes.BadRequest
     }
   }
 
   @Test
   def error_for_invalid_format_uri(): Unit = {
-    val service = new WebService
-    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/invalid.jsonld?format=jsonld") ~> service.route ~> check {
-      response.status === StatusCodes.NotFound
+    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/invalid.jsonld?format=jsonld") ~> route ~> check {
+      status === StatusCodes.NotFound
     }
   }
 
   @Test
-  def sparql(): Unit = {
-    val service = new WebService
-    post("http://amora.center/sparql", "query=select * where {?s ?p ?o} limit 3") ~> service.route ~> check {
-      response.status === StatusCodes.OK
+  def sparql_post_requests_are_possible(): Unit = {
+    post("http://amora.center/sparql", "query=select * where {?s ?p ?o} limit 3") ~> route ~> check {
+      status === StatusCodes.OK
     }
   }
 
   private def post(uri: String, request: String) = {
     val u = Uri(uri)
-    HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString), Accept(CustomContentTypes.`sparql-results+json`)), request)
+    val r = HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString), Accept(CustomContentTypes.`sparql-results+json`)), request)
+    log.info(s"sending request: $r")
+    r
   }
 
   private def get(uri: String) = {
     val u = Uri(uri)
-    HttpRequest(HttpMethods.GET, u, List(RawRequestURI.create(u.toRelative.toString)))
+    val r = HttpRequest(HttpMethods.GET, u, List(RawRequestURI.create(u.toRelative.toString)))
+    log.info(s"sending request: $r")
+    r
   }
 }
