@@ -44,6 +44,22 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  @Test
+  def error_for_invalid_format(): Unit = {
+    val service = new WebService
+    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=invalid") ~> service.route ~> check {
+      response.status === StatusCodes.BadRequest
+    }
+  }
+
+  @Test
+  def error_for_invalid_format_uri(): Unit = {
+    val service = new WebService
+    get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/invalid.jsonld?format=jsonld") ~> service.route ~> check {
+      response.status === StatusCodes.NotFound
+    }
+  }
+
   private def get(uri: String) = {
     val u = Uri(uri)
     HttpRequest(HttpMethods.GET, u, List(RawRequestURI.create(u.toRelative.toString)))
