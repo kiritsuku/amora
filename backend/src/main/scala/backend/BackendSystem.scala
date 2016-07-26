@@ -3,7 +3,6 @@ package backend
 import java.nio.ByteBuffer
 
 import scala.concurrent.Future
-import scala.util.Try
 
 import org.apache.jena.query.ResultSetRewindable
 
@@ -38,7 +37,7 @@ final class BackendSystem(implicit system: ActorSystem) {
   private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
 
   def runQuery(query: String): Future[ResultSetRewindable] = {
-    indexer.ask(IndexerMessage.RunQuery(query)).mapTo[Try[ResultSetRewindable]].flatMap(Future.fromTry)
+    indexer.ask(IndexerMessage.RunQuery(query)).mapTo[ResultSetRewindable]
   }
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {

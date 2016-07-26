@@ -1,7 +1,5 @@
 package backend.actors
 
-import scala.util.Try
-
 import org.apache.jena.query.ResultSetRewindable
 
 import akka.actor.Actor
@@ -35,13 +33,13 @@ class IndexerActor extends Actor with ActorLogging {
       sender ! handleAddData(data)
   }
 
-  def handleQuery(query: String): Try[ResultSetRewindable] = {
+  def handleQuery(query: String): ResultSetRewindable = {
     log.info(s"Handle SPARQL query: $query")
     indexer.withDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, Content.ModelName) { model ⇒
         indexer.withQueryService(model, query)
-      }.flatten
-    }.flatten
+      }
+    }
   }
 
   def handleAddData(data: Indexable): Unit = {
@@ -49,7 +47,7 @@ class IndexerActor extends Actor with ActorLogging {
       indexer.withModel(dataset, Content.ModelName) { model ⇒
         indexer.add(Content.ModelName, model, data)
       }
-    }.flatten
+    }
   }
 }
 

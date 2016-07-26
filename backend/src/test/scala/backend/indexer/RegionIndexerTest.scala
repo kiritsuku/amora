@@ -1,8 +1,6 @@
 package backend
 package indexer
 
-import scala.util._
-
 import org.junit.Test
 import backend.TestUtils
 import backend.actors.IndexerMessage
@@ -79,7 +77,7 @@ class RegionIndexerTest {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val indexer = new Indexer
     val dataset = indexer.mkInMemoryDataset
-    val foundRegions: Try[Seq[Region]] = indexer.withDataset(dataset) { dataset ⇒
+    val foundRegions: Seq[Region] = indexer.withDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
@@ -89,32 +87,25 @@ class RegionIndexerTest {
           indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
           indexer.queryResultAsString(modelName, query, model) foreach println
         }
-        indexer.withQueryService(model, query).map { r ⇒
-          import scala.collection.JavaConverters._
-          r.asScala.toSeq.map { row ⇒
-            val start = row.get("start")
-            require(start != null, "No field with name `start` found.")
-            val end = row.get("end")
-            require(end != null, "No field with name `end` found.")
-            val name = row.get("name")
-            require(name != null, "No field with name `name` found.")
+        val r = indexer.withQueryService(model, query)
+        import scala.collection.JavaConverters._
+        r.asScala.toSeq.map { row ⇒
+          val start = row.get("start")
+          require(start != null, "No field with name `start` found.")
+          val end = row.get("end")
+          require(end != null, "No field with name `end` found.")
+          val name = row.get("name")
+          require(name != null, "No field with name `name` found.")
 
-            if (start.asLiteral.getInt == end.asLiteral().getInt)
-              Offset(start.asLiteral().getInt, name.toString())
-            else
-              Range(start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
-          }.sortBy(regionOrdering)
-        }
-      }.flatten
-    }.flatten
-
-    foundRegions match {
-      case Success(foundRegions) ⇒
-        foundRegions === expectedRegions
-
-      case Failure(f) ⇒
-        throw new RuntimeException("An error happened during the test.", f)
+          if (start.asLiteral.getInt == end.asLiteral().getInt)
+            Offset(start.asLiteral().getInt, name.toString())
+          else
+            Range(start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
+        }.sortBy(regionOrdering)
+      }
     }
+
+    foundRegions === expectedRegions
   }
 
   def modelName = "http://test.model/"

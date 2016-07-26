@@ -24,6 +24,8 @@ import backend.Content
 import backend.actors.IndexerMessage._
 import research.converter.protocol._
 import spray.json._
+import scala.util.Success
+import scala.util.Failure
 
 class Indexer extends backend.Log4jLogging {
 
@@ -32,7 +34,7 @@ class Indexer extends backend.Log4jLogging {
    * schema definitions.
    */
   def startupIndexer(dataset: Dataset) = {
-    val res = withModel(dataset, Content.ModelName) { model ⇒
+    val res = Try(withModel(dataset, Content.ModelName) { model ⇒
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new java.io.File(cl.getResource(".").getPath)
@@ -61,42 +63,39 @@ class Indexer extends backend.Log4jLogging {
       }
 
       indexableFiles foreach indexFile
-    }
+    })
     res match {
-      case util.Success(_) ⇒
+      case Success(_) ⇒
         log.info("Indexer successfully started.")
-      case util.Failure(f) ⇒
+      case Failure(f) ⇒
         throw new RuntimeException("An error happened during initialization of the indexer.", f)
     }
   }
 
-  def queryResultAsString(modelName: String, query: String, model: Model): Try[String] = {
-    withQueryService(model, query) map { r ⇒
-      val s = new ByteArrayOutputStream
+  def queryResultAsString(modelName: String, query: String, model: Model): String = {
+    val r = withQueryService(model, query)
+    val s = new ByteArrayOutputStream
 
-      ResultSetFormatter.out(s, r)
-      new String(s.toByteArray(), "UTF-8")
-    }
+    ResultSetFormatter.out(s, r)
+    new String(s.toByteArray(), "UTF-8")
   }
 
-  def flattenedQueryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[A]] = {
+  def flattenedQueryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
     import scala.collection.JavaConverters._
-    withQueryService(model, query) map { r ⇒
-      val vars = r.getResultVars.asScala.toSeq
+    val r = withQueryService(model, query)
+    val vars = r.getResultVars.asScala.toSeq
 
-      for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
-    }
+    for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
   }
 
-  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Try[Seq[Seq[A]]] = {
+  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
     import scala.collection.JavaConverters._
-    withQueryService(model, query) map { r ⇒
-      val vars = r.getResultVars.asScala.toSeq
+    val r = withQueryService(model, query)
+    val vars = r.getResultVars.asScala.toSeq
 
-      for (q ← r.asScala.toSeq) yield
-        for (v ← vars) yield
-          f(v, q)
-    }
+    for (q ← r.asScala.toSeq) yield
+      for (v ← vars) yield
+        f(v, q)
   }
 
   private def context(modelName: String) = JsObject(
@@ -385,12 +384,12 @@ class Indexer extends backend.Log4jLogging {
     qexec.execAsk()
   }
 
-  def withQueryService(model: Model, query: String): Try[ResultSetRewindable] = Try {
+  def withQueryService(model: Model, query: String): ResultSetRewindable = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     ResultSetFactory.makeRewindable(qexec.execSelect())
   }
 
-  def withSparqlService(endpoint: String, query: String): Try[ResultSetRewindable] = Try {
+  def withSparqlService(endpoint: String, query: String): ResultSetRewindable = {
     val qe = QueryExecutionFactory.sparqlService(endpoint, query)
     ResultSetFactory.makeRewindable(qe.execSelect())
   }
@@ -401,24 +400,37 @@ class Indexer extends backend.Log4jLogging {
   def mkDataset(location: String): RawDataset =
     RawDataset(TDBFactory.createDataset(location))
 
-  def withDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): Try[A] = {
+  def withDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): A = {
     internalWithDataset(dataset.dataset)(f)
   }
 
-  def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): Try[A] = {
+  def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): A = {
     val model = dataset.getNamedModel(name)
-    Try(model.begin())
-      .map { _ ⇒ f(model) }
-      .map { res ⇒ model.commit(); res }
-      .map { res ⇒ model.close(); res }
+    model.begin()
+    Try(f(model)) match {
+      case Success(res) ⇒
+        model.commit()
+        model.close()
+        res
+      case Failure(t) ⇒
+        // model.abort() -- abort on the model doesn't seem to be supported
+        model.close()
+        throw t
+    }
   }
 
-  private def internalWithDataset[A](dataset: Dataset)(f: Dataset ⇒ A): Try[A] = {
-    Try(dataset.begin(ReadWrite.WRITE))
-      .map { _ ⇒ f(dataset) }
-      .map { res ⇒ dataset.commit(); res }
-      .map { res ⇒ dataset.end(); res }
-      .recover { case f ⇒ dataset.abort(); throw f }
+  private def internalWithDataset[A](dataset: Dataset)(f: Dataset ⇒ A): A = {
+    dataset.begin(ReadWrite.WRITE)
+    Try(f(dataset)) match {
+      case Success(res) ⇒
+        dataset.commit()
+        dataset.end()
+        res
+      case Failure(t) ⇒
+        dataset.abort()
+        dataset.end()
+        throw t
+    }
   }
 }
 

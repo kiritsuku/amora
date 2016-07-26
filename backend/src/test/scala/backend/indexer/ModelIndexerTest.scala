@@ -1,8 +1,5 @@
 package backend.indexer
 
-import scala.util.Failure
-import scala.util.Success
-
 import org.junit.Test
 
 import backend.TestUtils
@@ -32,14 +29,10 @@ class ModelIndexerTest {
           require(res != null, s"The variable `$v` does not exist in the result set.")
           Data(v, res.toString)
         }
-      }.flatten
-    }.flatten
-    res match {
-      case Success(res) ⇒
-        res.map(_.sortBy(d ⇒ (d.varName, d.value)))
-      case Failure(f) ⇒
-        throw new RuntimeException("An error happened during the test.", f)
+      }
     }
+
+    res.map(_.sortBy(d ⇒ (d.varName, d.value)))
   }
 
   def modelName = "http://test.model/"
@@ -301,14 +294,14 @@ class ModelIndexerTest {
         indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
-    }.flatten)
+    })
     println(indexer.withDataset(dataset) { dataset ⇒
       val schemaName = "Format"
       val gen = new SchemaGenerator
       indexer.withModel(dataset, modelName) { model ⇒
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
-    }.flatten)
+    })
     dataset.close()
   }
 }

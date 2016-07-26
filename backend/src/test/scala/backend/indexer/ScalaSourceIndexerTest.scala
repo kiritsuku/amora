@@ -1,8 +1,6 @@
 package backend
 package indexer
 
-import scala.util._
-
 import org.junit.Test
 import backend.TestUtils
 import backend.actors.IndexerMessage
@@ -38,15 +36,10 @@ class ScalaSourceIndexerTest {
           require(res != null, s"The variable `$v` does not exist in the result set.")
           Data(v, res.toString)
         }
-      }.flatten
-    }.flatten
-
-    res match {
-      case Success(res) ⇒
-        res.sortBy(d ⇒ (d.varName, d.value))
-      case Failure(f) ⇒
-        throw new RuntimeException("An error happened during the test.", f)
+      }
     }
+
+    res.sortBy(d ⇒ (d.varName, d.value))
   }
 
   @Test
