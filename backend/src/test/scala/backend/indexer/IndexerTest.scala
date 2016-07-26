@@ -7,10 +7,11 @@ import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
-
+import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.testkit.RouteTest
 import akka.http.scaladsl.testkit.TestFrameworkInterface
 import backend.AkkaLogging
+import backend.CustomContentTypes
 import backend.Log4jRootLogging
 import backend.TestUtils
 import backend.WebService
@@ -58,6 +59,19 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/invalid.jsonld?format=jsonld") ~> service.route ~> check {
       response.status === StatusCodes.NotFound
     }
+  }
+
+  @Test
+  def sparql(): Unit = {
+    val service = new WebService
+    post("http://amora.center/sparql", "query=select * where {?s ?p ?o} limit 3") ~> service.route ~> check {
+      response.status === StatusCodes.OK
+    }
+  }
+
+  private def post(uri: String, request: String) = {
+    val u = Uri(uri)
+    HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString), Accept(CustomContentTypes.`sparql-results+json`)), request)
   }
 
   private def get(uri: String) = {
