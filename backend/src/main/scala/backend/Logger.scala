@@ -7,6 +7,9 @@ import scala.collection.mutable.ListBuffer
 
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
+import akka.event.LogSource
+import akka.event.Logging
+import akka.event.LoggingAdapter
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Source
 
@@ -31,6 +34,15 @@ trait Logger {
 final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   import Logger._
 
+  private lazy val akkaLogger: LoggingAdapter = {
+    implicit val logSource: LogSource[AnyRef] = new LogSource[AnyRef] {
+      override def genString(o: AnyRef): String = o.getClass.getName
+      override def getClazz(o: AnyRef): Class[_] = o.getClass
+    }
+    Logging(system, this)
+  }
+
+  private val forwardLogger = system.settings.config.getBoolean("app.forward-internal-logger-to-akka-logger")
   private var level: LogLevel = Info
   val sources = ListBuffer[ActorRef]()
   val sw = new StringWriter
@@ -41,6 +53,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
       val m = s"[debug] $msg\n"
       pw.append(m)
       sources foreach (_ ! m)
+      if (forwardLogger)
+        akkaLogger.debug(msg)
     }
   }
 
@@ -49,6 +63,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
       val m = s"[warning] $msg\n"
       pw.append(m)
       sources foreach (_ ! m)
+      if (forwardLogger)
+        akkaLogger.warning(msg)
     }
   }
 
@@ -57,6 +73,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
       val m = s"[info] $msg\n"
       pw.append(m)
       sources foreach (_ ! m)
+      if (forwardLogger)
+        akkaLogger.info(msg)
     }
   }
 
@@ -69,6 +87,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
       val m = s"[error] $msg\n${sw.toString}\n"
       pw.append(m)
       sources foreach (_ ! m)
+      if (forwardLogger)
+        akkaLogger.error(t, msg)
     }
   }
 
