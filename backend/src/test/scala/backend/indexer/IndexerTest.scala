@@ -9,10 +9,12 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.testkit.RouteTest
+import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.http.scaladsl.testkit.TestFrameworkInterface
 import backend.AkkaLogging
 import backend.CustomContentTypes
 import backend.Log4jRootLogging
+import backend.PlatformConstants
 import backend.TestUtils
 import backend.WebService
 
@@ -36,6 +38,12 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       test-mode = true
     }
   """
+
+  implicit val timeout = {
+    import scala.concurrent.duration._
+    // wait for the time that is available to the server + some more
+    RouteTestTimeout(PlatformConstants.timeout.duration + 500.millis)
+  }
 
   val service = new WebService
   val route = service.route

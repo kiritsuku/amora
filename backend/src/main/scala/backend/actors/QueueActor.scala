@@ -6,8 +6,8 @@ import scala.concurrent.duration._
 
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.util.Timeout
 import akka.pattern.ask
+import backend.PlatformConstants
 
 final class QueueActor extends Actor {
   import QueueMessage._
@@ -37,7 +37,7 @@ final class QueueActor extends Actor {
         history += item.id → item
         log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
         running = true
-        implicit val timeout = Timeout(5.seconds)
+        import PlatformConstants.timeout
         item.actor ask item.data onComplete { v ⇒
           running = false
           v match {

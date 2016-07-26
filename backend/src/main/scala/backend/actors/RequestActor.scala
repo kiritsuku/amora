@@ -1,7 +1,6 @@
 package backend.actors
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 
 import RequestMessage._
 
@@ -11,7 +10,6 @@ import akka.actor.ActorRef
 import akka.actor.Props
 import akka.pattern.ask
 import akka.stream.ActorMaterializer
-import akka.util.Timeout
 import backend.ActorLogger
 import backend.Content
 import backend.Logger
@@ -19,11 +17,12 @@ import backend.indexer.ArtifactIndexer
 import frontend.webui.protocol._
 import spray.json.DefaultJsonProtocol
 import spray.json.RootJsonFormat
+import backend.PlatformConstants
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
-  implicit val timeout = Timeout(5.seconds)
   import system.dispatcher
+  import PlatformConstants.timeout
 
   private var clients = Map.empty[String, ActorRef]
 

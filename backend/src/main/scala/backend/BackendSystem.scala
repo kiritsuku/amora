@@ -3,7 +3,6 @@ package backend
 import java.nio.ByteBuffer
 
 import scala.concurrent.Future
-import scala.concurrent.duration._
 import scala.util.Try
 
 import org.apache.jena.query.ResultSetRewindable
@@ -16,7 +15,6 @@ import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
 import akka.stream.scaladsl.Source
-import akka.util.Timeout
 import backend.actors.IndexerActor
 import backend.actors.IndexerMessage
 import backend.actors.NvimActor
@@ -32,13 +30,12 @@ final class BackendSystem(implicit system: ActorSystem) {
   import boopickle.Default._
   import akka.pattern.ask
   import system.dispatcher
+  import PlatformConstants.timeout
 
   private val nvim = system.actorOf(Props[NvimActor], "nvim")
   private val queue = system.actorOf(Props[QueueActor], "queue")
   private val indexer = system.actorOf(Props[IndexerActor], "indexer")
   private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
-
-  implicit val timeout = Timeout(5.seconds)
 
   def runQuery(query: String): Future[ResultSetRewindable] = {
     indexer.ask(IndexerMessage.RunQuery(query)).mapTo[Try[ResultSetRewindable]].flatMap(Future.fromTry)
