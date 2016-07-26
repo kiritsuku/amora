@@ -1,24 +1,27 @@
 package backend.indexer
 
 import java.io.ByteArrayOutputStream
-
 import java.io.File
 import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
+import scala.concurrent.Await
+import scala.concurrent.Future
+import scala.util.Failure
 import scala.util.Try
 
-import research.converter.ClassfileConverter
-import scalaz.{ Success ⇒ _, _ }
-import scalaz.concurrent.Task
-import backend.Logger
 import akka.actor.Actor
-import backend.actors.RequestMessage
 import akka.actor.ActorRef
+import akka.pattern.ask
+import backend.Logger
+import backend.PlatformConstants
 import backend.actors.IndexerMessage
 import backend.actors.QueueMessage
-import scala.concurrent.Future
+import backend.actors.RequestMessage
+import research.converter.ClassfileConverter
+import scalaz._
+import scalaz.concurrent.Task
 
 object ArtifactIndexer {
   sealed trait DownloadStatus {
@@ -89,7 +92,12 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
         files.zipWithIndex foreach {
           case (file @ IndexerMessage.File(project, fileName, hierarchy), i) ⇒
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-            indexer ! IndexerMessage.AddData(file)
+            import PlatformConstants.timeout
+            Await.ready((indexer ask IndexerMessage.AddData(file)).mapTo[Unit], timeout.duration) onComplete {
+              case Failure(t) ⇒
+                logger.error(s"Error happened while indexing $fileName.", t)
+              case _ ⇒
+            }
         }
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")

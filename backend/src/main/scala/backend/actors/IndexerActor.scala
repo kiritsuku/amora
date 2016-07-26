@@ -32,7 +32,7 @@ class IndexerActor extends Actor with ActorLogging {
       sender ! handleQuery(query)
 
     case AddData(data) ⇒
-      handleAddData(data)
+      sender ! handleAddData(data)
   }
 
   def handleQuery(query: String): Try[ResultSetRewindable] = {
@@ -44,7 +44,7 @@ class IndexerActor extends Actor with ActorLogging {
     }.flatten
   }
 
-  def handleAddData(data: Indexable): Try[Unit] = {
+  def handleAddData(data: Indexable): Unit = {
     indexer.withDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, Content.ModelName) { model ⇒
         indexer.add(Content.ModelName, model, data)
