@@ -4,7 +4,8 @@ object Content {
   import scalatags.Text.all._
   import scalatags.Text.tags2
 
-  val ModelName = s"http://${Main.ServerAddress}/kb/"
+  val ServerAddress = s"http://amora.center"
+  val ModelName = s"$ServerAddress/kb/"
 
   def indexPage(cssDeps: Seq[String], jsDeps: Seq[String]): String = {
     "<!DOCTYPE html>" + html(
@@ -32,7 +33,7 @@ object Content {
         div(id := "yasgui"),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d),
         script(`type` := "text/javascript", raw(s"""
-          YASGUI.YASQE.defaults.sparql.endpoint = "http://${Main.ServerAddress}/sparql";
+          YASGUI.YASQE.defaults.sparql.endpoint = "$ServerAddress/sparql";
           var yasgui = YASGUI(document.getElementById("yasgui"));
           yasgui.current().yasr.setResponse({
             "response": $jsonResponse
@@ -76,7 +77,7 @@ object Content {
           if (items.isEmpty)
             li("No items")
           else
-            for (i ← items) yield li(a(href := s"${Main.ServerAddress}/queue?item=$i", s"Item $i"))
+            for (i ← items) yield li(a(href := s"$ServerAddress/queue?item=$i", s"Item $i"))
         )
       )
     )
@@ -103,7 +104,7 @@ object Content {
       ),
       body(
         script(`type` := "text/javascript", raw(s"""
-          var ServerAddress = "${Main.ServerAddress}";
+          var ServerAddress = "$ServerAddress";
         """)),
         for (d <- jsDeps) yield script(`type` := "text/javascript", src := d)
       )

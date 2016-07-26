@@ -239,9 +239,15 @@ object Main extends JSApp {
 
   private def websocketUri(path: String): String = {
     // The server address is defined by the server
-    val addr = js.Dynamic.global.ServerAddress
-    val wsProtocol = if (dom.document.location.protocol == "https:") "wss" else "ws"
-    val fullAddr = s"$wsProtocol://$addr/$path"
+    val addr = js.Dynamic.global.ServerAddress.toString
+    val wsAddr =
+      if (addr.startsWith("https:"))
+        addr.replaceFirst("https:", "wss:")
+      else if (addr.startsWith("http:"))
+        addr.replaceFirst("http:", "ws:")
+      else
+        throw new Exception(s"Invalid server address: $addr. It needs to start with https or http.")
+    val fullAddr = s"$wsAddr/$path"
 
     dom.console.log(s"Connecting to `$fullAddr`")
     fullAddr

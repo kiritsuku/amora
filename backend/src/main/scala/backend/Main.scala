@@ -41,8 +41,6 @@ object Main extends App with AkkaLogging with Log4jRootLogging {
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
 
-  def ServerAddress = "amora.center"
-
   system.eventStream.subscribe(
       system.actorOf(Props[UnhandledMessagesActor], "unhandled-messages"),
       classOf[UnhandledMessage])
