@@ -279,7 +279,7 @@ class ModelIndexerTest {
     println(indexer.withDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         val schemaName = "Format"
-        val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/tooling-research/schema/$schemaName.schema.jsonld", "UTF-8").mkString
+        val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/amora/schema/$schemaName.schema.jsonld", "UTF-8").mkString
         val gen = new SchemaGenerator
         import spray.json._
         val json = gen.resolveVariables(schemaName, rawJson)

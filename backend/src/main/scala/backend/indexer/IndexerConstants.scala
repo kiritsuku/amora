@@ -14,7 +14,7 @@ object IndexerConstants {
   val StorageLocation: String = {
     val home = System.getProperty("user.home")
     val xdgPath = ".config"
-    val dir = "tooling-research"
+    val dir = "amora"
 
     val loc = s"$home$sep$xdgPath$sep$dir"
     new File(loc).mkdirs()

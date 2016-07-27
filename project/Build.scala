@@ -71,10 +71,10 @@ object Build extends sbt.Build {
 
       val pkgJson = s"""
       {
-        "title": "tooling-research",
-        "name": "tooling-research-plugin",
+        "title": "amora",
+        "name": "amora-plugin",
         "version": "0.0.1",
-        "description": "tooling-research-plugin",
+        "description": "amora-plugin",
         "main": "$mainJsName",
         "author": "Simon Schäfer",
         "engines": {
@@ -83,7 +83,7 @@ object Build extends sbt.Build {
         "license": "MIT",
         "repository": {
           "type": "git",
-          "url": "https://github.com/sschaef/tooling-research"
+          "url": "https://github.com/sschaef/amora"
         },
         "keywords": [
           "jetpack"
@@ -138,7 +138,7 @@ object Build extends sbt.Build {
         "main": "main.js",
         "repository": {
           "type": "git",
-          "url": "https://github.com/sschaef/tooling-research"
+          "url": "https://github.com/sschaef/amora"
         },
         "license": "MIT"
       }

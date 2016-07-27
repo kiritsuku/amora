@@ -10,7 +10,7 @@ class SchemaGenerator {
   def resolveVariables(schemaName: String, jsonString: String): String = {
     // TODO replace absolute file reference by amora.center URI
     jsonString
-        .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/tooling-research/schema")
+        .replaceAllLiterally("$AMORA", "file:///home/antoras/dev/scala/amora/schema")
         .replaceAllLiterally("$ID", mkAmoraSchemaId(schemaName))
   }
 
