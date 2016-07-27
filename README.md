@@ -1,6 +1,8 @@
-# IDE and Tooling Research Platform
+# Amora
 
-There is nothing here yet - this is not even alpha level yet. There is only documentation on how to use it by myself.
+Amora is a semantic search engine where anyone can define anything anywhere - a technical prowess that is achieved by relying on semantic web technologies. Everything in Amora is [Linked Data](https://en.wikipedia.org/wiki/Linked_data) or in other words a distributed key-value store where every key-value pair is associated with an unique identifier in form of an URI. Amora was created to provide an IDE and tooling research platform whose ambitious goal it is to supersede existing tools by a new being.
+
+So far, there is nothing here yet - this is not even alpha level yet. There is only documentation on how to use it by myself.
 
 ---
 
