@@ -80,6 +80,15 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
   }
 
   def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {
+    def indexData(data: IndexerMessage.Indexable, errMsg: ⇒ String): Unit = {
+      import PlatformConstants.timeout
+      Await.ready((indexer ask IndexerMessage.AddData(data)).mapTo[Unit], timeout.duration) onComplete {
+        case Failure(t) ⇒
+          logger.error(errMsg, t)
+        case _ ⇒
+      }
+    }
+
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
@@ -88,16 +97,11 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
         val files = indexArtifact(a, file).get
 
         logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
-        indexer ! IndexerMessage.AddData(a)
+        indexData(a, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
         files.zipWithIndex foreach {
           case (file @ IndexerMessage.File(project, fileName, hierarchy), i) ⇒
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-            import PlatformConstants.timeout
-            Await.ready((indexer ask IndexerMessage.AddData(file)).mapTo[Unit], timeout.duration) onComplete {
-              case Failure(t) ⇒
-                logger.error(s"Error happened while indexing $fileName.", t)
-              case _ ⇒
-            }
+            indexData(file, s"Error happened while indexing $fileName.")
         }
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
