@@ -6,16 +6,13 @@ import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-import scala.concurrent.Await
 import scala.concurrent.Future
-import scala.util.Failure
 import scala.util.Try
 
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.pattern.ask
 import backend.Logger
-import backend.PlatformConstants
+import backend.actors.DataIndexer
 import backend.actors.IndexerMessage
 import backend.actors.QueueMessage
 import backend.actors.RequestMessage
@@ -35,7 +32,8 @@ object ArtifactIndexer {
   }
 }
 
-final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
+final class ArtifactIndexer(override val indexer: ActorRef, override val logger: Logger)
+    extends Actor with DataIndexer {
   import ArtifactIndexer._
   import coursier._
 
@@ -80,15 +78,6 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
   }
 
   def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {
-    def indexData(data: IndexerMessage.Indexable, errMsg: ⇒ String): Unit = {
-      import PlatformConstants.timeout
-      Await.ready((indexer ask IndexerMessage.AddData(data)).mapTo[Unit], timeout.duration) onComplete {
-        case Failure(t) ⇒
-          logger.error(errMsg, t)
-        case _ ⇒
-      }
-    }
-
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒

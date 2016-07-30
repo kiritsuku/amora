@@ -8,7 +8,8 @@ import akka.actor.ActorRef
 import backend.Logger
 import backend.indexer.ScalaSourceIndexer
 
-final class ScalaSourceIndexerActor(indexer: ActorRef, logger: Logger) extends Actor {
+final class ScalaSourceIndexerActor(override val indexer: ActorRef, override val logger: Logger)
+    extends Actor with DataIndexer {
 
   implicit def dispatcher = context.system.dispatcher
 
@@ -28,7 +29,7 @@ final class ScalaSourceIndexerActor(indexer: ActorRef, logger: Logger) extends A
     res foreach {
       case (fileName, hierarchy) ⇒
         logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
-        this.indexer ! IndexerMessage.AddData(IndexerMessage.File(IndexerMessage.NoOrigin, fileName, hierarchy))
+        indexData(IndexerMessage.File(IndexerMessage.NoOrigin, fileName, hierarchy), s"Error happened while indexing $fileName.")
     }
   }
 
