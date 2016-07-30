@@ -407,29 +407,23 @@ class Indexer extends backend.Log4jLogging {
   def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): A = {
     val model = dataset.getNamedModel(name)
     model.begin()
-    Try(f(model)) match {
-      case Success(res) ⇒
-        model.commit()
-        model.close()
-        res
-      case Failure(t) ⇒
-        // model.abort() -- abort on the model doesn't seem to be supported
-        model.close()
-        throw t
+    try {
+      val res = f(model)
+      model.commit()
+      res
+    } finally {
+      model.close()
     }
   }
 
   private def internalWithDataset[A](dataset: Dataset)(f: Dataset ⇒ A): A = {
     dataset.begin(ReadWrite.WRITE)
-    Try(f(dataset)) match {
-      case Success(res) ⇒
-        dataset.commit()
-        dataset.end()
-        res
-      case Failure(t) ⇒
-        dataset.abort()
-        dataset.end()
-        throw t
+    try {
+      val res = f(dataset)
+      dataset.commit()
+      res
+    } finally {
+      dataset.end()
     }
   }
 }
