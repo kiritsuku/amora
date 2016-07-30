@@ -96,17 +96,17 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
     val msg = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
       case JsString("scala-sources") ⇒
         val files = json.convertTo[Files]
-        val ref = system.actorOf(Props(classOf[ScalaSourceIndexerActor], indexer, new ActorLogger))
+        val ref = system.actorOf(Props(classOf[ScalaSourceIndexerActor], indexer, new ActorLogger), "scala-source-indexer")
         QueueMessage.RunWithData(ref, files)
 
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
-        val ref = system.actorOf(Props(classOf[JavaBytecodeIndexerActor], indexer, new ActorLogger))
+        val ref = system.actorOf(Props(classOf[JavaBytecodeIndexerActor], indexer, new ActorLogger), "java-bytecode-indexer")
         QueueMessage.RunWithData(ref, files)
 
       case JsString("artifact") ⇒
         val artifacts = json.convertTo[Artifacts]
-        val ref = system.actorOf(Props(classOf[ArtifactIndexer], indexer, new ActorLogger))
+        val ref = system.actorOf(Props(classOf[ArtifactIndexer], indexer, new ActorLogger), "artifact-indexer")
         QueueMessage.RunWithData(ref, artifacts)
 
       case v ⇒
