@@ -82,6 +82,7 @@ This document contains a list of references, related projects, articles, blog po
     - [The Rise and Fall of CORBA](https://queue.acm.org/detail.cfm?id=1142044)
   - [Luna lang](http://www.luna-lang.org/)
   - [Functional File Tree Transforms](https://vimeo.com/174669127) (build tool)
+  - [Coati](https://www.coati.io/) (code explorer)
 
 - Discussions:
   - [Standard interface between a text editor and an IDE?](https://www.reddit.com/r/programming/comments/3o4o59/standard_interface_between_a_text_editor_and_an/)
