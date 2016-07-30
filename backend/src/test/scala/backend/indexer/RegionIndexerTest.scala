@@ -77,7 +77,7 @@ class RegionIndexerTest {
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val indexer = new Indexer
     val dataset = indexer.mkInMemoryDataset
-    val foundRegions: Seq[Region] = indexer.withDataset(dataset) { dataset ⇒
+    val foundRegions: Seq[Region] = indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒

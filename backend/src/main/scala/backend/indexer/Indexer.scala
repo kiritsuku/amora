@@ -400,8 +400,12 @@ class Indexer extends backend.Log4jLogging {
   def mkDataset(location: String): RawDataset =
     RawDataset(TDBFactory.createDataset(location))
 
-  def withDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): A = {
-    internalWithDataset(dataset.dataset)(f)
+  def writeDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): A = {
+    internalWithDataset(dataset.dataset, ReadWrite.WRITE)(f)
+  }
+
+  def readDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): A = {
+    internalWithDataset(dataset.dataset, ReadWrite.READ)(f)
   }
 
   def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): A = {
@@ -416,8 +420,8 @@ class Indexer extends backend.Log4jLogging {
     }
   }
 
-  private def internalWithDataset[A](dataset: Dataset)(f: Dataset ⇒ A): A = {
-    dataset.begin(ReadWrite.WRITE)
+  private def internalWithDataset[A](dataset: Dataset, op: ReadWrite)(f: Dataset ⇒ A): A = {
+    dataset.begin(op)
     try {
       val res = f(dataset)
       dataset.commit()

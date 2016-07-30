@@ -14,7 +14,7 @@ class ScalaSourceIndexerTest {
   def ask(modelName: String, data: Seq[(String, String)], query: String): Seq[Data] = {
     val indexer = new Indexer
     val dataset = indexer.mkInMemoryDataset
-    val res = indexer.withDataset(dataset) { dataset ⇒
+    val res = indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         val sindexer = new ScalaSourceIndexer(IgnoreLogger)
         sindexer.convertToHierarchy(data) match {

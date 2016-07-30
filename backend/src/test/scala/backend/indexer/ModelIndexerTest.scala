@@ -15,7 +15,7 @@ class ModelIndexerTest {
     val indexer = new Indexer
     val dataset = indexer.mkInMemoryDataset
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
-    val res = indexer.withDataset(dataset) { dataset ⇒
+    val res = indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         data foreach (indexer.add(modelName, model, _))
 
@@ -276,7 +276,7 @@ class ModelIndexerTest {
   def xxx(): Unit = {
     val indexer = new Indexer
     val dataset = indexer.mkInMemoryDataset
-    println(indexer.withDataset(dataset) { dataset ⇒
+    println(indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, modelName) { model ⇒
         val schemaName = "Format"
         val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/amora/schema/$schemaName.schema.jsonld", "UTF-8").mkString
@@ -295,7 +295,7 @@ class ModelIndexerTest {
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
     })
-    println(indexer.withDataset(dataset) { dataset ⇒
+    println(indexer.readDataset(dataset) { dataset ⇒
       val schemaName = "Format"
       val gen = new SchemaGenerator
       indexer.withModel(dataset, modelName) { model ⇒

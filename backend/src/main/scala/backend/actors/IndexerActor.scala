@@ -22,7 +22,7 @@ class IndexerActor extends Actor with ActorLogging {
       indexer.mkDataset(config.getString("app.storage.index-dataset"))
 
   log.info("Indexer created dataset at: " + (if (testMode) "<memory>" else config.getString("app.storage.index-dataset")))
-  indexer.withDataset(dataset)(indexer.startupIndexer)
+  indexer.writeDataset(dataset)(indexer.startupIndexer)
 
   override def receive = {
     case RunQuery(query) ⇒
@@ -34,7 +34,7 @@ class IndexerActor extends Actor with ActorLogging {
 
   def handleQuery(query: String): ResultSetRewindable = {
     log.info(s"Handle SPARQL query: $query")
-    indexer.withDataset(dataset) { dataset ⇒
+    indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, Content.ModelName) { model ⇒
         indexer.withQueryService(model, query)
       }
@@ -42,7 +42,7 @@ class IndexerActor extends Actor with ActorLogging {
   }
 
   def handleAddData(data: Indexable): Unit = {
-    indexer.withDataset(dataset) { dataset ⇒
+    indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset, Content.ModelName) { model ⇒
         indexer.add(Content.ModelName, model, data)
       }
