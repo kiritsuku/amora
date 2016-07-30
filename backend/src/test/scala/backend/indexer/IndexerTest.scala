@@ -34,7 +34,7 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     throw new RuntimeException(msg)
   }
 
-  override def testConfigSource = """
+  override def testConfigSource = s"""
     akka {
       loglevel = INFO
 
@@ -46,8 +46,17 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       port = 7777
       test-mode = true
       forward-internal-logger-to-akka-logger = true
+
+      storage {
+        location = "$binDir/amora"
+        index-dataset = "$binDir/amora/dataset"
+        artifact-repo = "$binDir/amora/repo"
+      }
     }
   """
+
+  private def binDir =
+    getClass.getClassLoader.getResource(".").getPath
 
   implicit val timeout = {
     import scala.concurrent.duration._

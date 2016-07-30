@@ -106,7 +106,7 @@ final class ArtifactIndexer(indexer: ActorRef, logger: Logger) extends Actor {
   def fetchArtifact(organization: String, name: String, version: String): Seq[DownloadStatus] = {
     val start = Resolution(Set(Dependency(Module(organization, name), version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
-    val cache = new File(IndexerConstants.LocalArtifactRepo)
+    val cache = new File(context.system.settings.config.getString("app.storage.artifact-repo"))
     val fetch = Fetch.from(repos, Cache.fetch(cache = cache, logger = Some(coursierLogger)))
     val resolution = start.process.run(fetch).run
 

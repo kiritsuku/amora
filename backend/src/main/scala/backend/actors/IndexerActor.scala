@@ -6,23 +6,22 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import backend.Content
 import backend.indexer.Indexer
-import backend.indexer.IndexerConstants
 import research.converter.protocol.Hierarchy
 
 class IndexerActor extends Actor with ActorLogging {
 
-  import IndexerConstants._
   import IndexerMessage._
 
   private val indexer = new Indexer
-  private val testMode = context.system.settings.config.getBoolean("app.test-mode")
+  private val config = context.system.settings.config
+  private val testMode = config.getBoolean("app.test-mode")
   private val dataset =
     if (testMode)
       indexer.mkInMemoryDataset
     else
-      indexer.mkDataset(IndexDataset)
+      indexer.mkDataset(config.getString("app.storage.index-dataset"))
 
-  log.info("Indexer created dataset at: " + (if (testMode) "<memory>" else IndexDataset))
+  log.info("Indexer created dataset at: " + (if (testMode) "<memory>" else config.getString("app.storage.index-dataset")))
   indexer.withDataset(dataset)(indexer.startupIndexer)
 
   override def receive = {
