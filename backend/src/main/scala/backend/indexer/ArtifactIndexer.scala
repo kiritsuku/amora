@@ -6,7 +6,6 @@ import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-import scala.concurrent.Future
 import scala.util.Try
 
 import akka.actor.Actor
@@ -14,7 +13,6 @@ import akka.actor.ActorRef
 import backend.Logger
 import backend.actors.DataIndexer
 import backend.actors.IndexerMessage
-import backend.actors.QueueMessage
 import backend.actors.RequestMessage
 import research.converter.ClassfileConverter
 import scalaz._
@@ -37,14 +35,10 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
   import ArtifactIndexer._
   import coursier._
 
-  implicit def dispatcher = context.system.dispatcher
-
   override def receive = {
     case RequestMessage.Artifacts(_, artifacts) ⇒
-      val s = sender
-      Future(handleArtifact(artifacts)).onComplete {
-        case scala.util.Success(_) ⇒ s ! QueueMessage.Completed
-        case scala.util.Failure(f) ⇒ throw f
+      runIndexing(sender) {
+        handleArtifact(artifacts)
       }
     case RequestMessage.GetLogger ⇒
       sender ! logger

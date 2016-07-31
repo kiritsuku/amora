@@ -1,7 +1,5 @@
 package backend.actors
 
-import scala.concurrent.Future
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 
@@ -11,14 +9,10 @@ import backend.indexer.ScalaSourceIndexer
 final class ScalaSourceIndexerActor(override val indexer: ActorRef, override val logger: Logger)
     extends Actor with DataIndexer {
 
-  implicit def dispatcher = context.system.dispatcher
-
   override def receive = {
     case RequestMessage.Files(_, files) ⇒
-      val s = sender
-      Future(handleScalaSource(files, new ScalaSourceIndexer(logger))).onComplete {
-        case scala.util.Success(_) ⇒ s ! QueueMessage.Completed
-        case scala.util.Failure(f) ⇒ throw f
+      runIndexing(sender) {
+        handleScalaSource(files, new ScalaSourceIndexer(logger))
       }
     case RequestMessage.GetLogger ⇒
       sender ! logger
