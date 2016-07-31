@@ -29,6 +29,9 @@ trait Logger {
   def log: Source[String, Unit]
   def logLevel: Logger.LogLevel
   def logLevel_=(level: Logger.LogLevel): Unit
+
+  def close(): Unit
+  def isClosed: Boolean
 }
 
 final class ActorLogger(implicit val system: ActorSystem) extends Logger {
@@ -44,11 +47,14 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
 
   private val forwardLogger = system.settings.config.getBoolean("app.forward-internal-logger-to-akka-logger")
   private var level: LogLevel = Info
+  private var _isClosed = false
   val sources = ListBuffer[ActorRef]()
   val sw = new StringWriter
   val pw = new PrintWriter(sw)
 
   override def debug(msg: String): Unit = {
+    checkIfClosed()
+
     if (level.value >= Debug.value) {
       val m = s"[debug] $msg\n"
       pw.append(m)
@@ -59,6 +65,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   }
 
   override def warning(msg: String): Unit = {
+    checkIfClosed()
+
     if (level.value >= Warning.value) {
       val m = s"[warning] $msg\n"
       pw.append(m)
@@ -69,6 +77,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   }
 
   override def info(msg: String): Unit = {
+    checkIfClosed()
+
     if (level.value >= Info.value) {
       val m = s"[info] $msg\n"
       pw.append(m)
@@ -79,6 +89,8 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   }
 
   override def error(msg: String, t: Throwable): Unit = {
+    checkIfClosed()
+
     if (level.value >= Error.value) {
       val sw = new StringWriter
       val pw = new PrintWriter(sw)
@@ -100,6 +112,19 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
 
   override def logLevel: LogLevel = level
   override def logLevel_=(level: LogLevel): Unit = this.level = level
+
+  override def close() = {
+    _isClosed = true
+
+    sources foreach { ref ⇒
+      ref ! "Logger successfully closed."
+    }
+  }
+
+  override def isClosed = _isClosed
+
+  private def checkIfClosed(): Unit =
+    require(!isClosed, "Logger is closed. It is no longer possible to log anything.")
 }
 
 case object IgnoreLogger extends Logger {
@@ -110,4 +135,7 @@ case object IgnoreLogger extends Logger {
   override def log: Source[String, Unit] = throw new UnsupportedOperationException
   override def logLevel: Logger.LogLevel = throw new UnsupportedOperationException
   override def logLevel_=(level: Logger.LogLevel): Unit = throw new UnsupportedOperationException
+
+  override def close() = throw new UnsupportedOperationException
+  override def isClosed = false
 }

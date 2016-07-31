@@ -33,6 +33,7 @@ trait DataIndexer { this: Actor ⇒
   def runIndexing(sender: ActorRef)(f: ⇒ Unit): Unit = {
     Future(f).onComplete {
       case Success(_) ⇒
+        logger.close()
         sender ! QueueMessage.Completed
       case Failure(f) ⇒
         throw f

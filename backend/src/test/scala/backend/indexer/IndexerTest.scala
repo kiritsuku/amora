@@ -4,12 +4,14 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 import scala.concurrent.Await
+import scala.concurrent.Promise
 
 import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
 import org.junit.Test
 
+import akka.actor.Cancellable
 import akka.http.javadsl.model.headers.RawRequestURI
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.HttpMethods
@@ -111,8 +113,10 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     """)) {
       status === StatusCodes.OK
     }
-    // TODO how to get rid of this timeout here?
-    Thread.sleep(1000)
+    scheduleReq(post("http://amora.center/itemFinished?id=1", "")) {
+      status === StatusCodes.OK
+      respAsString.toBoolean
+    }
     testReq((post("http://amora.center/sparql", """query=
       prefix kb:<http://amora.center/kb/>
       select * where {
@@ -125,7 +129,25 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  private def testReq(req: HttpRequest)(f: ⇒ Unit) = {
+  private def scheduleReq(req: ⇒ HttpRequest)(f: ⇒ Boolean) = {
+    import scala.concurrent.duration._
+    val p = Promise[Unit]
+    var cancellable: Cancellable = null
+    try {
+      cancellable = system.scheduler.schedule(100.millis, 100.millis) {
+        req ~> route ~> check {
+          val res = f
+          if (res)
+            p.success(())
+        }
+      }
+      Await.ready(p.future, Duration.Inf)
+    } finally {
+      cancellable.cancel()
+    }
+  }
+
+  private def testReq(req: ⇒ HttpRequest)(f: ⇒ Unit) = {
     req ~> route ~> check {
       val isJsonResponse = req.header[Accept].flatMap(_.mediaRanges.headOption).exists {
         case m if m matches CustomContentTypes.`sparql-results+json` ⇒ true
@@ -133,7 +155,7 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       }
       if (debugTests && status == StatusCodes.OK && isJsonResponse) {
         val r = respAsResultSet()
-        println(resultSetAsString(r))
+        log.info("response as query result:\n" + resultSetAsString(r))
       }
       f
     }
@@ -145,9 +167,11 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     new String(s.toByteArray(), "UTF-8")
   }
 
+  private def respAsString: String =
+    Await.result(response.entity.dataBytes.runFold("")(_ + _.utf8String), timeout.duration)
+
   private def respAsResultSet(): ResultSet = {
-    val resp = Await.result(response.entity.dataBytes.runFold("")(_ + _.utf8String), timeout.duration)
-    val in = new ByteArrayInputStream(resp.getBytes)
+    val in = new ByteArrayInputStream(respAsString.getBytes)
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 

@@ -2,6 +2,8 @@ package backend
 
 import java.nio.ByteBuffer
 
+import scala.util.Try
+
 import akka.NotUsed
 import akka.actor.ActorSystem
 import akka.http.javadsl.model.headers.RawRequestURI
@@ -179,6 +181,24 @@ final class WebService(override implicit val system: ActorSystem)
       extractRequest { req ⇒
         rawRequestUri(req) { (path, query) ⇒
           handleKbPathPostRequest(path)
+        }
+      }
+    } ~
+    path("itemFinished") {
+      extractRequest { req ⇒
+        rawRequestUri(req) { (path, query) ⇒
+          query.get("id") match {
+            case Some(id) if Try(id.toInt).isSuccess ⇒
+              onComplete(bs.queueItem(id.toInt)) {
+                case scala.util.Success(item) ⇒
+                  complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, item.isClosed.toString))
+                case scala.util.Failure(f) ⇒
+                  log.error(f, s"Error happened while handling `$path?$query` request.")
+                  complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+              }
+            case _ ⇒
+              complete(HttpResponse(StatusCodes.BadRequest, entity = s"Parameter `id` does not exist or has an invalid value."))
+          }
         }
       }
     }
