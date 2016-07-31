@@ -6,8 +6,6 @@ import scala.concurrent.duration._
 
 import akka.actor.Actor
 import akka.actor.ActorRef
-import akka.pattern.ask
-import backend.PlatformConstants
 
 final class QueueActor extends Actor {
   import QueueMessage._
@@ -20,6 +18,7 @@ final class QueueActor extends Actor {
   private var id = 0
   private var running = false
   private val history = Map[Int, Item]()
+  private var processedItem: Item = _
 
   override def receive = {
     case RunWithData(actor, data) ⇒
@@ -33,20 +32,15 @@ final class QueueActor extends Actor {
         cancellable = mkQueueRunner()
     case Check ⇒
       if (!running && queue.nonEmpty) {
-        val item = queue.dequeue()
-        history += item.id → item
-        log.info(s"Queue scheduler handles item with id ${item.id}. ${queue.size} elements remaining.")
+        processedItem = queue.dequeue()
+        history += processedItem.id → processedItem
+        log.info(s"Queue scheduler handles item with id ${processedItem.id}. ${queue.size} elements remaining.")
         running = true
-        import PlatformConstants.timeout
-        item.actor ask item.data onComplete { v ⇒
-          running = false
-          v match {
-            case util.Success(Completed) ⇒ log.info(s"Processing queue item with id ${item.id} finished successfully.")
-            case util.Success(msg) ⇒ log.error(s"Processing queue item with id ${item.id} finished successfully but it sent an unexpected message: $msg")
-            case util.Failure(f) ⇒ log.error(f, s"Processing queue item with id ${item.id} failed.")
-          }
-        }
+        processedItem.actor ! processedItem.data
       }
+    case Completed ⇒
+      running = false
+      log.info(s"Processing queue item with id ${processedItem.id} finished successfully.")
     case GetItems ⇒
       sender ! queue.map(_.id) ++ history.keys
     case GetItem(id) ⇒
