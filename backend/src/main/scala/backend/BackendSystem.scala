@@ -49,9 +49,9 @@ final class BackendSystem(implicit system: ActorSystem) {
   }
 
   def queueItem(id: Int): Future[Logger] = {
-    queue.ask(QueueMessage.GetItem(id)).mapTo[Option[Logger]].map {
+    queue.ask(QueueMessage.GetItem(id)).mapTo[Option[ActorRef]].flatMap {
       case None ⇒ throw new NoSuchElementException(s"Item with id $id doesn't exist.")
-      case Some(logger) ⇒ logger
+      case Some(ref) ⇒ ref.ask(RequestMessage.GetLogger).mapTo[Logger]
     }
   }
 
