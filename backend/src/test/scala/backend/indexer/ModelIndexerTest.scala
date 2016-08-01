@@ -271,37 +271,4 @@ class ModelIndexerTest {
         }
       """, artifact, file) === Seq(Seq(Data("name", "A")))
   }
-
-  @Test
-  def xxx(): Unit = {
-    val indexer = new Indexer(modelName)
-    val dataset = indexer.mkInMemoryDataset
-    println(indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset) { model ⇒
-        val schemaName = "Format"
-        val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/amora/schema/$schemaName.schema.jsonld", "UTF-8").mkString
-        val gen = new SchemaGenerator
-        import spray.json._
-        val json = gen.resolveVariables(schemaName, rawJson)
-
-        indexer.addJsonLd(model, json.parseJson)
-        val contentVar = "content"
-        indexer.withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
-          val generated = gen.mkJsonLdContext(schemaName, json)
-          import org.apache.jena.datatypes.BaseDatatype
-          pss.setLiteral(contentVar, generated.prettyPrint, new BaseDatatype("http://schema.org/Text"))
-        }
-        println(indexer.queryResultAsString("select * { ?s ?p ?o }", model))
-        indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
-      }
-    })
-    println(indexer.readDataset(dataset) { dataset ⇒
-      val schemaName = "Format"
-      val gen = new SchemaGenerator
-      indexer.withModel(dataset) { model ⇒
-        indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
-      }
-    })
-    dataset.close()
-  }
 }
