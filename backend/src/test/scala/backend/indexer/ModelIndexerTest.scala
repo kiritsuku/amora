@@ -12,19 +12,19 @@ class ModelIndexerTest {
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, rawQuery: String, data: Indexable*): Seq[Seq[Data]] = {
-    val indexer = new Indexer
+    val indexer = new Indexer(modelName)
     val dataset = indexer.mkInMemoryDataset
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset, modelName) { model ⇒
-        data foreach (indexer.add(modelName, model, _))
+      indexer.withModel(dataset) { model ⇒
+        data foreach (indexer.add(model, _))
 
         if (debugTests) {
-          println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
-          println(indexer.queryResultAsString(modelName, query, model))
+          println(indexer.queryResultAsString("select * { ?s ?p ?o }", model))
+          println(indexer.queryResultAsString(query, model))
         }
 
-        indexer.queryResult(modelName, query, model) { (v, q) ⇒
+        indexer.queryResult(query, model) { (v, q) ⇒
           val res = q.get(v)
           require(res != null, s"The variable `$v` does not exist in the result set.")
           Data(v, res.toString)
@@ -274,10 +274,10 @@ class ModelIndexerTest {
 
   @Test
   def xxx(): Unit = {
-    val indexer = new Indexer
+    val indexer = new Indexer(modelName)
     val dataset = indexer.mkInMemoryDataset
     println(indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset, modelName) { model ⇒
+      indexer.withModel(dataset) { model ⇒
         val schemaName = "Format"
         val rawJson = io.Source.fromFile(s"/home/antoras/dev/scala/amora/schema/$schemaName.schema.jsonld", "UTF-8").mkString
         val gen = new SchemaGenerator
@@ -291,14 +291,14 @@ class ModelIndexerTest {
           import org.apache.jena.datatypes.BaseDatatype
           pss.setLiteral(contentVar, generated.prettyPrint, new BaseDatatype("http://schema.org/Text"))
         }
-        println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
+        println(indexer.queryResultAsString("select * { ?s ?p ?o }", model))
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
     })
     println(indexer.readDataset(dataset) { dataset ⇒
       val schemaName = "Format"
       val gen = new SchemaGenerator
-      indexer.withModel(dataset, modelName) { model ⇒
+      indexer.withModel(dataset) { model ⇒
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
     })

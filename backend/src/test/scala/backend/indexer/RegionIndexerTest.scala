@@ -75,17 +75,17 @@ class RegionIndexerTest {
     }
 
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
-    val indexer = new Indexer
+    val indexer = new Indexer(modelName)
     val dataset = indexer.mkInMemoryDataset
     val foundRegions: Seq[Region] = indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset, modelName) { model ⇒
+      indexer.withModel(dataset) { model ⇒
         hierarchyData foreach {
           case (filename, data) ⇒
-            indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
+            indexer.addFile(IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
         }
         if (debugTests) {
-          println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
-          println(indexer.queryResultAsString(modelName, query, model))
+          println(indexer.queryResultAsString("select * { ?s ?p ?o }", model))
+          println(indexer.queryResultAsString(query, model))
         }
         val r = indexer.withQueryService(model, query)
         import scala.collection.JavaConverters._

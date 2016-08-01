@@ -20,21 +20,20 @@ import org.apache.jena.rdf.model.Model
 import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
-import backend.Content
 import backend.actors.IndexerMessage._
 import research.converter.protocol._
 import spray.json._
 import scala.util.Success
 import scala.util.Failure
 
-class Indexer extends backend.Log4jLogging {
+class Indexer(modelName: String) extends backend.Log4jLogging {
 
   /**
    * On startup of the indexer, we want to index some predefined data like
    * schema definitions.
    */
   def startupIndexer(dataset: Dataset) = {
-    val res = Try(withModel(dataset, Content.ModelName) { model ⇒
+    val res = Try(withModel(dataset) { model ⇒
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new java.io.File(cl.getResource(".").getPath)
@@ -72,7 +71,7 @@ class Indexer extends backend.Log4jLogging {
     }
   }
 
-  def queryResultAsString(modelName: String, query: String, model: Model): String = {
+  def queryResultAsString(query: String, model: Model): String = {
     val r = withQueryService(model, query)
     val s = new ByteArrayOutputStream
 
@@ -80,7 +79,7 @@ class Indexer extends backend.Log4jLogging {
     new String(s.toByteArray(), "UTF-8")
   }
 
-  def flattenedQueryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
+  def flattenedQueryResult[A](query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
     import scala.collection.JavaConverters._
     val r = withQueryService(model, query)
     val vars = r.getResultVars.asScala.toSeq
@@ -88,7 +87,7 @@ class Indexer extends backend.Log4jLogging {
     for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
   }
 
-  def queryResult[A](modelName: String, query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
+  def queryResult[A](query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
     import scala.collection.JavaConverters._
     val r = withQueryService(model, query)
     val vars = r.getResultVars.asScala.toSeq
@@ -98,7 +97,7 @@ class Indexer extends backend.Log4jLogging {
         f(v, q)
   }
 
-  private def context(modelName: String) = JsObject(
+  private def context = JsObject(
       "c" → JsString(modelName),
       "s" → JsString("http://schema.org/"),
       "c:declaration" → JsObject(
@@ -263,30 +262,30 @@ class Indexer extends backend.Log4jLogging {
       Vector(JsObject(m))
   }
 
-  def add(modelName: String, model: Model, data: Indexable): Unit = {
+  def add(model: Model, data: Indexable): Unit = {
     data match {
-      case project: Project ⇒ addProject(modelName, project)(model).get
-      case artifact: Artifact ⇒ addArtifact(modelName, artifact)(model).get
-      case file: File ⇒ addFile(modelName, file)(model).get
+      case project: Project ⇒ addProject(project)(model).get
+      case artifact: Artifact ⇒ addArtifact(artifact)(model).get
+      case file: File ⇒ addFile(file)(model).get
       case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} can't be indexed.")
     }
   }
 
-  def addProject(modelName: String, project: Project)(model: Model): Try[Unit] = Try {
+  def addProject(project: Project)(model: Model): Try[Unit] = Try {
     val projectEntry = Map(
       "@id" → JsString(s"c:${pathOf(project)}"),
       "@type" → JsString("c:Project"),
       "c:name" → JsString(project.name)
     )
     val contextEntry = Map(
-      "@context" → context(modelName),
+      "@context" → context,
       "@graph" → JsArray(Vector(JsObject(projectEntry)))
     )
 
     addJsonLd(model, JsObject(contextEntry))
   }
 
-  def addArtifact(modelName: String, artifact: Artifact)(model: Model): Try[Unit] = Try {
+  def addArtifact(artifact: Artifact)(model: Model): Try[Unit] = Try {
     val projectEntry = Map(
       "@id" → JsString(s"c:${pathOf(artifact.project)}"),
       "@type" → JsString("c:Project"),
@@ -303,14 +302,14 @@ class Indexer extends backend.Log4jLogging {
     )
 
     val contextEntry = Map(
-      "@context" → context(modelName),
+      "@context" → context,
       "@graph" → JsArray(Vector(JsObject(projectEntry), JsObject(artifactEntry)))
     )
 
     addJsonLd(model, JsObject(contextEntry))
   }
 
-  def addFile(modelName: String, projectFile: File)(model: Model): Try[Unit] = Try {
+  def addFile(projectFile: File)(model: Model): Try[Unit] = Try {
     val pkg = projectFile.data.headOption.flatMap { h ⇒
       def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
       def isPkg = h.owner.attachments(Attachment.Package)
@@ -332,7 +331,7 @@ class Indexer extends backend.Log4jLogging {
     val modelEntries: Vector[JsValue] = projectFile.data.flatMap(mkModel(projectFile))(collection.breakOut)
 
     val contextEntry = Map(
-      "@context" → context(modelName),
+      "@context" → context,
       "@graph" → JsArray(JsObject(fileEntry) +: modelEntries)
     )
 
@@ -408,8 +407,8 @@ class Indexer extends backend.Log4jLogging {
     internalWithDataset(dataset.dataset, ReadWrite.READ)(f)
   }
 
-  def withModel[A](dataset: Dataset, name: String)(f: Model ⇒ A): A = {
-    val model = dataset.getNamedModel(name)
+  def withModel[A](dataset: Dataset)(f: Model ⇒ A): A = {
+    val model = dataset.getNamedModel(modelName)
     model.begin()
     try {
       val res = f(model)

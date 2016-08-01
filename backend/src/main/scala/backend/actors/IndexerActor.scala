@@ -12,7 +12,7 @@ class IndexerActor extends Actor with ActorLogging {
 
   import IndexerMessage._
 
-  private val indexer = new Indexer
+  private val indexer = new Indexer(Content.ModelName)
   private val config = context.system.settings.config
   private val testMode = config.getBoolean("app.test-mode")
   private val dataset =
@@ -35,7 +35,7 @@ class IndexerActor extends Actor with ActorLogging {
   def handleQuery(query: String): ResultSetRewindable = {
     log.info(s"Handle SPARQL query: $query")
     indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset, Content.ModelName) { model ⇒
+      indexer.withModel(dataset) { model ⇒
         indexer.withQueryService(model, query)
       }
     }
@@ -43,8 +43,8 @@ class IndexerActor extends Actor with ActorLogging {
 
   def handleAddData(data: Indexable): Unit = {
     indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset, Content.ModelName) { model ⇒
-        indexer.add(Content.ModelName, model, data)
+      indexer.withModel(dataset) { model ⇒
+        indexer.add(model, data)
       }
     }
   }
