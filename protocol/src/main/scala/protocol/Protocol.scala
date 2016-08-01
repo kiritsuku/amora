@@ -5,7 +5,6 @@ import ui.WindowTree
 case class BufferRef(id: Int)
 
 sealed trait Request
-case class Interpret(id: String, code: String) extends Request
 case class Control(winId: Int, bufferId: Int, controlSeq: String) extends Request
 case class TextChange(winId: Int, bufferId: Int, text: String) extends Request
 case class SelectionChange(winId: Int, bufferId: Int, cursorRow: Int, cursorColumn: Int) extends Request
@@ -13,7 +12,6 @@ case class SelectionChange(winId: Int, bufferId: Int, cursorRow: Int, cursorColu
 sealed trait Response
 case class ConnectionSuccessful(name: String) extends Response
 case object ConnectionFailure extends Response
-case class InterpretedResult(id: String, res: String) extends Response
 case class TextChangeAnswer(winId: Int, bufferId: Int, lines: Seq[String], sel: Selection) extends Response
 case class SelectionChangeAnswer(winId: Int, bufferId: Int, sel: Selection) extends Response
 case class WindowUpdate(winId: Int, bufId: Int, lines: Seq[String], dim: WinDim) extends Response {

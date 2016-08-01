@@ -3,7 +3,6 @@ package backend.actors
 import akka.actor.Actor
 import akka.actor.ActorRef
 import backend.NvimAccessor
-import backend.Repl
 import protocol._
 import akka.actor.ActorLogging
 
@@ -11,7 +10,6 @@ final class NvimActor extends Actor with ActorLogging {
   import context.system
   import NvimMsg._
 
-  private val repl = new Repl
   private var clients = Map.empty[String, ActorRef]
   private lazy val nvim = new NvimAccessor(self)
 
@@ -36,10 +34,6 @@ final class NvimActor extends Actor with ActorLogging {
 
     case ReceivedMessage(sender, msg) ⇒
       msg match {
-        case Interpret(id, expr) ⇒
-          val res = repl.interpret(expr)
-          clients(sender) ! InterpretedResult(id, res)
-
         case change: SelectionChange ⇒
           nvim.handleSelectionChange(change, sender)
 

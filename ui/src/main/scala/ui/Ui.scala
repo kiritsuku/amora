@@ -301,12 +301,6 @@ class Ui {
       println("connection failure")
       // TODO what to do here?
 
-    case InterpretedResult(id, res) ⇒
-      val resultBuf = bm.resultBufOf(BufferRef(id.toInt)) // TODO remove BufferRef construction here
-      println(s"retrieved interpreted result for id '$id', put it into '${resultBuf.ref.id}'")
-      $(s"#${resultBuf.ref.id}").html(s"<pre><code>$res</code></pre>")
-      mkEditor()
-
     case change @ TextChangeAnswer(winId, bufferId, lines, sel) ⇒
       println(s"> received: $change")
       updateBuffer(bufferId, lines)
@@ -491,30 +485,6 @@ class Ui {
     data.arrayBuffer
   }
 
-  private def mkKeyMap(buf: Buffer): js.Object = {
-    js.Dynamic.literal(
-      "Ctrl-Enter" → { (e: Editor) ⇒
-        mkResult(buf.ref)
-        val resultBuf = bm.resultBufOf(buf.ref)
-        // TODO replace by spinner
-        $(s"#${resultBuf.ref.id}").html(s"<pre><code>...</code></pre>")
-
-        /*
-        val opts = js.Dynamic.literal(
-          color = "#fff",
-          lines = 12
-        )
-        jsnew(jsg.Spinner)(opts).spin(dom.document.getElementById(resultBuf.ref.id))
-        */
-
-        import boopickle.Default._
-        val code = e.getDoc().getValue()
-        val msg = Pickle.intoBytes[Request](Interpret(buf.ref.id.toString, code))
-        ws.send(toArrayBuffer(msg))
-      }
-    )
-  }
-
   def mkResult(editorRef: BufferRef): Unit = {
     val buf = bm.mkResultBuf(editorRef)
 
@@ -539,7 +509,6 @@ class Ui {
 
     divType match {
       case DivType.Editor(div, editor) ⇒
-        editor.addKeyMap(mkKeyMap(buf))
         $("body").append(div)
 
       case res ⇒
