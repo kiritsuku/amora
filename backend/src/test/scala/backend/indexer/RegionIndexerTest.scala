@@ -84,8 +84,8 @@ class RegionIndexerTest {
             indexer.addFile(modelName, IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
         }
         if (debugTests) {
-          indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
-          indexer.queryResultAsString(modelName, query, model) foreach println
+          println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
+          println(indexer.queryResultAsString(modelName, query, model))
         }
         val r = indexer.withQueryService(model, query)
         import scala.collection.JavaConverters._

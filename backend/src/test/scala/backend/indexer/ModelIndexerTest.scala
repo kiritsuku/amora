@@ -20,8 +20,8 @@ class ModelIndexerTest {
         data foreach (indexer.add(modelName, model, _))
 
         if (debugTests) {
-          indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
-          indexer.queryResultAsString(modelName, query, model) foreach println
+          println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
+          println(indexer.queryResultAsString(modelName, query, model))
         }
 
         indexer.queryResult(modelName, query, model) { (v, q) ⇒
@@ -291,7 +291,7 @@ class ModelIndexerTest {
           import org.apache.jena.datatypes.BaseDatatype
           pss.setLiteral(contentVar, generated.prettyPrint, new BaseDatatype("http://schema.org/Text"))
         }
-        indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model) foreach println
+        println(indexer.queryResultAsString(modelName, "select * { ?s ?p ?o }", model))
         indexer.doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
       }
     })
