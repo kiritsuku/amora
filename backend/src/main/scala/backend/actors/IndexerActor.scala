@@ -34,7 +34,7 @@ class IndexerActor extends Actor with ActorLogging {
 
   def handleQuery(query: String): ResultSetRewindable = {
     log.info(s"Handle SPARQL query: $query")
-    indexer.writeDataset(dataset) { dataset ⇒
+    indexer.readDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         indexer.withQueryService(model, query)
       }
