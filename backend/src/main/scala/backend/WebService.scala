@@ -201,6 +201,13 @@ final class WebService(override implicit val system: ActorSystem)
           }
         }
       }
+    } ~
+    path("sparql-update") {
+      entity(as[String]) { encodedPostReq ⇒
+        extractRequest { req ⇒
+          handleSparqlUpdatePostRequest(req, encodedPostReq)
+        }
+      }
     }
   }
 

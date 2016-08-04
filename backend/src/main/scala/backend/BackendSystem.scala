@@ -40,6 +40,10 @@ final class BackendSystem(implicit system: ActorSystem) {
     indexer.ask(IndexerMessage.RunQuery(query)).mapTo[ResultSetRewindable]
   }
 
+  def runUpdate(query: String): Future[Unit] = {
+    indexer.ask(IndexerMessage.RunUpdate(query)).mapTo[Unit]
+  }
+
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {
     requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]
   }

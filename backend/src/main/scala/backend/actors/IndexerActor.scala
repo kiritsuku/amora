@@ -28,6 +28,9 @@ class IndexerActor extends Actor with ActorLogging {
     case RunQuery(query) ⇒
       sender ! handleQuery(query)
 
+    case RunUpdate(query) ⇒
+      sender ! handleUpdate(query)
+
     case AddData(data) ⇒
       sender ! handleAddData(data)
   }
@@ -37,6 +40,15 @@ class IndexerActor extends Actor with ActorLogging {
     indexer.readDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         indexer.withQueryService(model, query)
+      }
+    }
+  }
+
+  def handleUpdate(query: String): Unit = {
+    log.info(s"Handle SPARQL update: $query")
+    indexer.writeDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset) { model ⇒
+        indexer.withUpdateService(model, query)(_ ⇒ ())
       }
     }
   }
@@ -53,6 +65,7 @@ class IndexerActor extends Actor with ActorLogging {
 sealed trait IndexerMessage
 object IndexerMessage {
   case class RunQuery(query: String) extends IndexerMessage
+  case class RunUpdate(query: String) extends IndexerMessage
   case class AddData(data: Indexable) extends IndexerMessage
 
   sealed trait Indexable extends IndexerMessage

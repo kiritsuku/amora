@@ -361,13 +361,13 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} does not have a path.")
   }
 
-  def addJsonLd(model: Model, data: JsValue) = {
+  def addJsonLd(model: Model, data: JsValue): Unit = {
     val str = data.prettyPrint
     val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
-  def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit) = {
+  def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString
     pss.setCommandText(query)
     f(pss)

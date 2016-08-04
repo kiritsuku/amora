@@ -21,11 +21,14 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
+import backend.AkkaLogging
 import backend.BackendSystem
 import backend.Content
 import backend.CustomContentTypes
+import scala.util.Failure
+import scala.util.Success
 
-trait Sparql extends Directives {
+trait Sparql extends Directives with AkkaLogging {
   import CustomContentTypes._
   import ContentTypes._
   import MediaTypes._
@@ -120,6 +123,21 @@ trait Sparql extends Directives {
     }
   }
 
+  def handleSparqlUpdatePostRequest(req: HttpRequest, encodedPostReq: String): Route = {
+    if (!encodedPostReq.startsWith("query="))
+      reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+    else {
+      val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
+      onComplete(bs.runUpdate(query)) {
+        case Success(()) ⇒
+          complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful."))
+        case Failure(f) ⇒
+          log.error(f, "Error happened while handling SPARQL update request.")
+          complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+      }
+    }
+  }
+
   private def showSparqlEditor(query: String, response: String) = {
     val content = Content.sparql(
       cssDeps = Seq("http://cdn.jsdelivr.net/yasgui/2.2.1/yasgui.min.css"),
@@ -145,6 +163,7 @@ trait Sparql extends Directives {
         f(str)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
+        log.error(f, "Error happened while handling SPARQL query request.")
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
     }
   }
@@ -155,6 +174,7 @@ trait Sparql extends Directives {
         f(r)
       case scala.util.Failure(f) ⇒
         import StatusCodes._
+        log.error(f, "Error happened while handling SPARQL query request.")
         complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
     }
   }

@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import scala.concurrent.Await
 import scala.concurrent.Promise
 
+import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
@@ -28,6 +29,8 @@ import backend.Log4jRootLogging
 import backend.PlatformConstants
 import backend.TestUtils
 import backend.WebService
+import backend.schema.Project
+import backend.schema.Schema
 
 class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import TestUtils._
@@ -127,6 +130,41 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       status === StatusCodes.OK
       r.next().get("name").asLiteral().getString === "hello-world"
     }
+  }
+
+  @Test
+  def add_single_project(): Unit = {
+    val q = Schema.mkSparqlUpdate(Project("p"))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      select * where {
+        [a <http://amora.center/kb/amora/Schema/0.1/Project/0.1/>] <http://amora.center/kb/amora/Schema/0.1/Project/0.1/name> ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(Seq(Data("name", "p")))
+    }
+  }
+
+  private case class Data(varName: String, value: String)
+
+  private def resultSetAsData(r: ResultSet): Seq[Seq[Data]] = {
+    transformResultSet(r) { (v, q) ⇒
+      val res = q.get(v)
+      require(res != null, s"The variable `$v` does not exist in the result set.")
+      Data(v, res.asLiteral().getString)
+    }
+  }
+
+  private def transformResultSet[A](r: ResultSet)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
+    import scala.collection.JavaConverters._
+    val vars = r.getResultVars.asScala.toSeq
+
+    for (q ← r.asScala.toSeq) yield
+      for (v ← vars) yield
+        f(v, q)
   }
 
   private def scheduleReq(req: ⇒ HttpRequest)(f: ⇒ Boolean) = {
