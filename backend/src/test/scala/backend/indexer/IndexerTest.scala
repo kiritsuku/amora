@@ -31,6 +31,7 @@ import backend.TestUtils
 import backend.WebService
 import backend.schema.Project
 import backend.schema.Schema
+import backend.schema.Artifact
 
 class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import TestUtils._
@@ -157,7 +158,7 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
     testReq((post("http://amora.center/sparql", """query=
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      select * where {
+      select ?name where {
         [a p:] p:name ?name .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
@@ -165,6 +166,47 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "p1")),
           Seq(Data("name", "p2")))
+    }
+  }
+
+  @Test
+  def add_single_artifact(): Unit = {
+    val a = Artifact(Project("p"), "o", "n", "v1")
+    val q = Schema.mkSparqlUpdate(Seq(a))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select ?organization ?name ?version where {
+        [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("organization", "o"), Data("name", "n"), Data("version", "v1")))
+    }
+  }
+
+  @Test
+  def add_multiple_artifacts(): Unit = {
+    val p = Project("p")
+    val a1 = Artifact(p, "o1", "n1", "v1")
+    val a2 = Artifact(p, "o2", "n2", "v2")
+    val q = Schema.mkSparqlUpdate(Seq(a1, a2))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select ?organization ?name ?version where {
+        [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("organization", "o1"), Data("name", "n1"), Data("version", "v1")),
+          Seq(Data("organization", "o2"), Data("name", "n2"), Data("version", "v2")))
     }
   }
 
