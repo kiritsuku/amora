@@ -6,25 +6,21 @@ final case class Project(name: String) extends Schema
 object Schema {
 
   def mkSparqlUpdate(schemas: Seq[Schema]): String = {
-    def mk(o: Schema, sb: StringBuilder, indent: String) = o match {
+    val sb = new StringBuilder
+
+    def mk(o: Schema, indent: String): Unit = o match {
       case Project(name) ⇒
-        sb.append(indent)
-        sb.append("<http://amora.center/kb/amora/Project/0.1/")
-        sb.append(name)
-        sb.append("> a <http://amora.center/kb/amora/Schema/0.1/Project/0.1/> .\n")
-        sb.append(indent)
-        sb.append("<http://amora.center/kb/amora/Project/0.1/")
-        sb.append(name)
-        sb.append("> <http://amora.center/kb/amora/Schema/0.1/Project/0.1/name> ")
-        sb.append("\"")
-        sb.append(name)
-        sb.append("\" .\n")
+        val id = s"http://amora.center/kb/amora/Project/0.1/$name"
+        val defn = "http://amora.center/kb/amora/Schema/0.1/Project/0.1"
+        val tpe = "http://schema.org/Text"
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/name> "$name"^^<$tpe> .
+        |""".stripMargin)
     }
 
-    val sb = new StringBuilder
     sb.append("INSERT DATA {\n")
     schemas foreach {
-      mk(_, sb, "  ")
+      mk(_, "  ")
     }
     sb.append("}")
     sb.toString()
