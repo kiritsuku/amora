@@ -5,7 +5,7 @@ final case class Project(name: String) extends Schema
 
 object Schema {
 
-  def mkSparqlUpdate(schema: Schema): String = {
+  def mkSparqlUpdate(schemas: Seq[Schema]): String = {
     def mk(o: Schema, sb: StringBuilder, indent: String) = o match {
       case Project(name) ⇒
         sb.append(indent)
@@ -23,7 +23,9 @@ object Schema {
 
     val sb = new StringBuilder
     sb.append("INSERT DATA {\n")
-    mk(schema, sb, "  ")
+    schemas foreach {
+      mk(_, sb, "  ")
+    }
     sb.append("}")
     sb.toString()
   }

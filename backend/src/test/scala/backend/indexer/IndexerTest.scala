@@ -134,17 +134,37 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   @Test
   def add_single_project(): Unit = {
-    val q = Schema.mkSparqlUpdate(Project("p"))
+    val q = Schema.mkSparqlUpdate(Seq(Project("p")))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """query=
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
       select * where {
-        [a <http://amora.center/kb/amora/Schema/0.1/Project/0.1/>] <http://amora.center/kb/amora/Schema/0.1/Project/0.1/name> ?name .
+        [a p:] p:name ?name .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(Seq(Data("name", "p")))
+    }
+  }
+
+  @Test
+  def add_multiple_projects(): Unit = {
+    val q = Schema.mkSparqlUpdate(Seq(Project("p1"), Project("p2")))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      select * where {
+        [a p:] p:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "p1")),
+          Seq(Data("name", "p2")))
     }
   }
 
