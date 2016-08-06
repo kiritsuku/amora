@@ -3,6 +3,7 @@ package backend.schema
 trait Schema
 final case class Project(name: String) extends Schema
 final case class Artifact(owner: Project, organization: String, name: String, version: String) extends Schema
+final case class File(owner: Schema, name: String) extends Schema
 
 object Schema {
 
@@ -28,6 +29,16 @@ object Schema {
                       |  <$id> <$defn/organization> "$organization"^^<$tpe> .
                       |  <$id> <$defn/name> "$name"^^<$tpe> .
                       |  <$id> <$defn/version> "$version"^^<$tpe> .
+        |""".stripMargin)
+        id
+      case File(owner @ Artifact(_, organization, name, version), fname) ⇒
+        val oid = mk(owner, indent)
+        val id = s"http://amora.center/kb/amora/File/0.1/$organization/$name/$version/$fname"
+        val defn = "http://amora.center/kb/amora/Schema/0.1/File/0.1"
+        val tpe = "http://schema.org/Text"
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$fname"^^<$tpe> .
         |""".stripMargin)
         id
     }

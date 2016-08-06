@@ -32,6 +32,7 @@ import backend.WebService
 import backend.schema.Project
 import backend.schema.Schema
 import backend.schema.Artifact
+import backend.schema.File
 
 class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import TestUtils._
@@ -265,6 +266,25 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Project/0.1/")))
+    }
+  }
+
+  @Test
+  def add_single_file(): Unit = {
+    val f = File(Artifact(Project("p"), "o", "n", "v1"), "pkg/A.scala")
+    val q = Schema.mkSparqlUpdate(Seq(f))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      select ?name where {
+        [a f:] f:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "pkg/A.scala")))
     }
   }
 
