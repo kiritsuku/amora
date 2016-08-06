@@ -15,8 +15,8 @@ object Schema {
     def mkShortId(s: Schema): String = s match {
       case Project(name) ⇒
         name
-      case Artifact(_, organization, name, version) ⇒
-        s"$organization/$name/$version"
+      case Artifact(owner, organization, name, version) ⇒
+        s"${mkShortId(owner)}/$organization/$name/$version"
       case File(owner, name, _) ⇒
         s"${mkShortId(owner)}/$name"
       case Package(name, owner) ⇒
