@@ -227,4 +227,45 @@ class IndexerTest extends RestApiTest {
           Seq(Data("name", "pkg/A.scala")))
     }
   }
+
+  @Test
+  def add_multiple_files(): Unit = {
+    val a = Artifact(Project("p"), "o", "n", "v1")
+    val f1 = File(a, "pkg/A.scala")
+    val f2 = File(a, "pkg/B.scala")
+    val q = Schema.mkSparqlUpdate(Seq(f1, f2))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      select ?name where {
+        [a f:] f:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "pkg/A.scala")),
+          Seq(Data("name", "pkg/B.scala")))
+    }
+  }
+
+  @Test
+  def the_owner_of_a_file_is_an_artifact(): Unit = {
+    val f = File(Artifact(Project("p"), "o", "n", "v1"), "pkg/A.scala")
+    val q = Schema.mkSparqlUpdate(Seq(f))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      select ?tpe where {
+        [a f:] f:owner [a ?tpe] .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/")))
+    }
+  }
 }
