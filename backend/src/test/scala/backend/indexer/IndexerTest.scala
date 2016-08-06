@@ -210,6 +210,28 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  @Test
+  def multiple_artifacts_can_belong_to_the_same_project(): Unit = {
+    val p = Project("p")
+    val a1 = Artifact(p, "o1", "n1", "v1")
+    val a2 = Artifact(p, "o2", "n2", "v2")
+    val q = Schema.mkSparqlUpdate(Seq(a1, a2))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select distinct ?name where {
+        [a a:] a:owner [p:name ?name] .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "p")))
+    }
+  }
+
   private case class Data(varName: String, value: String)
 
   private def resultSetAsData(r: ResultSet): Seq[Seq[Data]] = {
