@@ -232,13 +232,54 @@ class IndexerTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  @Test
+  def the_owner_of_a_project_does_not_exist(): Unit = {
+    val q = Schema.mkSparqlUpdate(Seq(Project("p")))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      select ?owner where {
+        [a p:] p:owner ?owner .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq()
+    }
+  }
+
+  @Test
+  def the_owner_of_an_artifact_is_a_project(): Unit = {
+    val a = Artifact(Project("p"), "o", "n", "v1")
+    val q = Schema.mkSparqlUpdate(Seq(a))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select ?tpe where {
+        [a a:] a:owner [a ?tpe] .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Project/0.1/")))
+    }
+  }
+
   private case class Data(varName: String, value: String)
 
   private def resultSetAsData(r: ResultSet): Seq[Seq[Data]] = {
     transformResultSet(r) { (v, q) ⇒
       val res = q.get(v)
       require(res != null, s"The variable `$v` does not exist in the result set.")
-      Data(v, res.asLiteral().getString)
+      val value =
+        if (res.isLiteral())
+          res.asLiteral().getString
+        else
+          res.toString()
+      Data(v, value)
     }
   }
 
