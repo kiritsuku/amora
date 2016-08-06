@@ -349,4 +349,24 @@ class IndexerTest extends RestApiTest {
           Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
     }
   }
+
+  @Test
+  def add_single_class(): Unit = {
+    val a = Artifact(Project("p"), "o", "n", "v1")
+    val f = File(a, "pkg/A.scala", Seq(Class("A", Package("pkg", a))))
+    val q = Schema.mkSparqlUpdate(Seq(f))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      select ?name where {
+        [a c:] c:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "A")))
+    }
+  }
 }

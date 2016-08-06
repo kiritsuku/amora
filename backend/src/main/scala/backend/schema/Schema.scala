@@ -5,6 +5,7 @@ final case class Project(name: String) extends Schema
 final case class Artifact(owner: Project, organization: String, name: String, version: String) extends Schema
 final case class File(owner: Schema, name: String, data: Seq[Schema]) extends Schema
 final case class Package(name: String, owner: Schema) extends Schema
+final case class Class(name: String, owner: Schema) extends Schema
 
 object Schema {
 
@@ -20,6 +21,8 @@ object Schema {
         s"${mkShortId(owner)}/$name"
       case Package(name, owner) ⇒
         s"${mkShortId(owner)}/$name"
+      case Class(name, owner) ⇒
+        s"${mkShortId(owner)}/$name"
     }
 
     def mkId(o: Schema) = o match {
@@ -31,6 +34,8 @@ object Schema {
         s"http://amora.center/kb/amora/File/0.1/${mkShortId(o)}"
       case _: Package ⇒
         s"http://amora.center/kb/amora/Package/0.1/${mkShortId(o)}"
+      case _: Class ⇒
+        s"http://amora.center/kb/amora/Class/0.1/${mkShortId(o)}"
     }
 
     def mkDefn(o: Schema) = o match {
@@ -42,6 +47,8 @@ object Schema {
         s"http://amora.center/kb/amora/Schema/0.1/File/0.1"
       case _: Package ⇒
         s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
+      case _: Class ⇒
+        s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
     }
 
     def mk(o: Schema, indent: String): String = o match {
@@ -82,6 +89,15 @@ object Schema {
         val oid = mk(parent, indent)
         val id = mkId(o)
         val defn = s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
+        |""".stripMargin)
+        id
+      case Class(name, parent) ⇒
+        val oid = mk(parent, indent)
+        val id = mkId(o)
+        val defn = mkDefn(o)
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
                       |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
