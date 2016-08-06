@@ -249,6 +249,30 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def files_with_same_name_can_bolong_to_different_artifacts(): Unit = {
+    val a1 = Artifact(Project("p1"), "o1", "n1", "v1")
+    val a2 = Artifact(Project("p2"), "o2", "n2", "v2")
+    val f1 = File(a1, "pkg/A.scala", Seq())
+    val f2 = File(a2, "pkg/A.scala", Seq())
+    val q = Schema.mkSparqlUpdate(Seq(f1, f2))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select ?name ?version where {
+        [a f:] f:owner* [a a:; a:version ?version]; f:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("name", "pkg/A.scala"), Data("version", "v1")),
+          Seq(Data("name", "pkg/A.scala"), Data("version", "v2")))
+    }
+  }
+
+  @Test
   def the_owner_of_a_file_is_an_artifact(): Unit = {
     val f = File(Artifact(Project("p"), "o", "n", "v1"), "pkg/A.scala", Seq())
     val q = Schema.mkSparqlUpdate(Seq(f))
