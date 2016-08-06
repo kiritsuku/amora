@@ -4,6 +4,7 @@
     {
       "@id": "$ID/",
       "amora:schemaId": [
+        "$ID/owner",
         "$ID/name",
         "$ID/organization",
         "$ID/version"
