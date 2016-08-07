@@ -3,7 +3,7 @@ package backend.schema
 trait Schema
 final case class Project(name: String) extends Schema
 final case class Artifact(owner: Project, organization: String, name: String, version: String) extends Schema
-final case class File(owner: Schema, name: String, data: Seq[Schema]) extends Schema
+final case class File(owner: Schema, name: String) extends Schema
 final case class Package(name: String, owner: Schema) extends Schema
 final case class Class(name: String, owner: Schema) extends Schema
 
@@ -17,7 +17,7 @@ object Schema {
         name
       case Artifact(owner, organization, name, version) ⇒
         s"${mkShortId(owner)}/$organization/$name/$version"
-      case File(owner, name, _) ⇒
+      case File(owner, name) ⇒
         s"${mkShortId(owner)}/$name"
       case Package(name, owner) ⇒
         s"${mkShortId(owner)}/$name"
@@ -72,7 +72,7 @@ object Schema {
                       |  <$id> <$defn/version> "$version"^^<$tpe> .
         |""".stripMargin)
         id
-      case File(owner, fname, data) ⇒
+      case File(owner, fname) ⇒
         val oid = mk(owner)
         val id = mkId(s)
         val defn = mkDefn(s)
@@ -81,7 +81,6 @@ object Schema {
                       |  <$id> <$defn/owner> <$oid> .
                       |  <$id> <$defn/name> "$fname"^^<$tpe> .
         |""".stripMargin)
-        data foreach mk
         id
       case Package(name, parent) ⇒
         val oid = mk(parent)

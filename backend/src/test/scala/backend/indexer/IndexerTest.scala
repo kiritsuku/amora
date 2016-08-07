@@ -208,7 +208,7 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def add_single_file(): Unit = {
-    val f = File(Artifact(Project("p"), "o", "n", "v1"), "pkg/A.scala", Seq())
+    val f = File(Package("pkg", Artifact(Project("p"), "o", "n", "v1")), "pkg/A.scala")
     val q = Schema.mkSparqlUpdate(Seq(f))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
@@ -227,9 +227,9 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def add_multiple_files(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val f1 = File(a, "pkg/A.scala", Seq())
-    val f2 = File(a, "pkg/B.scala", Seq())
+    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
+    val f1 = File(p, "pkg/A.scala")
+    val f2 = File(p, "pkg/B.scala")
     val q = Schema.mkSparqlUpdate(Seq(f1, f2))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
@@ -248,20 +248,21 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
-  def files_with_same_name_can_bolong_to_different_artifacts(): Unit = {
-    val a1 = Artifact(Project("p1"), "o1", "n1", "v1")
-    val a2 = Artifact(Project("p2"), "o2", "n2", "v2")
-    val f1 = File(a1, "pkg/A.scala", Seq())
-    val f2 = File(a2, "pkg/A.scala", Seq())
+  def files_with_same_name_can_belong_to_different_artifacts(): Unit = {
+    val a1 = Package("pkg", Artifact(Project("p1"), "o1", "n1", "v1"))
+    val a2 = Package("pkg", Artifact(Project("p2"), "o2", "n2", "v2"))
+    val f1 = File(a1, "pkg/A.scala")
+    val f2 = File(a2, "pkg/A.scala")
     val q = Schema.mkSparqlUpdate(Seq(f1, f2))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """query=
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
       select ?name ?version where {
-        [a f:] f:owner* [a a:; a:version ?version]; f:name ?name .
+        [a f:] f:owner [p:owner [a a:; a:version ?version]]; f:name ?name .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
@@ -275,51 +276,31 @@ class IndexerTest extends RestApiTest {
   def artifacts_with_same_name_can_bolong_to_different_projects(): Unit = {
     val a1 = Artifact(Project("p1"), "o", "n", "v")
     val a2 = Artifact(Project("p2"), "o", "n", "v")
-    val f1 = File(a1, "pkg/A.scala", Seq())
-    val f2 = File(a2, "pkg/B.scala", Seq())
-    val q = Schema.mkSparqlUpdate(Seq(f1, f2))
+    val p1 = Package("pkg1", a1)
+    val p2 = Package("pkg2", a2)
+    val q = Schema.mkSparqlUpdate(Seq(p1, p2))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """query=
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      prefix pkg:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
       prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-      select ?pname ?fname where {
-        [a f:] f:owner [a:owner [p:name ?pname]]; f:name ?fname .
+      select ?pname ?pkgname where {
+        [a pkg:] pkg:owner [a:owner [p:name ?pname]]; pkg:name ?pkgname .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("pname", "p1"), Data("fname", "pkg/A.scala")),
-          Seq(Data("pname", "p2"), Data("fname", "pkg/B.scala")))
-    }
-  }
-
-  @Test
-  def the_owner_of_a_file_is_an_artifact(): Unit = {
-    val f = File(Artifact(Project("p"), "o", "n", "v1"), "pkg/A.scala", Seq())
-    val q = Schema.mkSparqlUpdate(Seq(f))
-    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
-      status === StatusCodes.OK
-    }
-    testReq((post("http://amora.center/sparql", """query=
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
-      select ?tpe where {
-        [a f:] f:owner [a ?tpe] .
-      }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
-      status === StatusCodes.OK
-      resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/")))
+          Seq(Data("pname", "p1"), Data("pkgname", "pkg1")),
+          Seq(Data("pname", "p2"), Data("pkgname", "pkg2")))
     }
   }
 
   @Test
   def add_single_package(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val f = File(a, "pkg/A.scala", Seq(Package("pkg", a)))
-    val q = Schema.mkSparqlUpdate(Seq(f))
+    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
+    val q = Schema.mkSparqlUpdate(Seq(p))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
@@ -337,9 +318,8 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def the_owner_of_the_top_package_is_an_artifact(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val f = File(a, "pkg/A.scala", Seq(Package("pkg", a)))
-    val q = Schema.mkSparqlUpdate(Seq(f))
+    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
+    val q = Schema.mkSparqlUpdate(Seq(p))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
@@ -358,8 +338,8 @@ class IndexerTest extends RestApiTest {
   @Test
   def the_owner_of_a_non_top_package_is_a_package(): Unit = {
     val a = Artifact(Project("p"), "o", "n", "v1")
-    val f = File(a, "pkg/A.scala", Seq(Package("inner", Package("pkg", a))))
-    val q = Schema.mkSparqlUpdate(Seq(f))
+    val p = Package("inner", Package("pkg", a))
+    val q = Schema.mkSparqlUpdate(Seq(p))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
@@ -378,8 +358,8 @@ class IndexerTest extends RestApiTest {
   @Test
   def add_single_class(): Unit = {
     val a = Artifact(Project("p"), "o", "n", "v1")
-    val f = File(a, "pkg/A.scala", Seq(Class("A", Package("pkg", a))))
-    val q = Schema.mkSparqlUpdate(Seq(f))
+    val c = Class("A", File(Package("pkg", a), "pkg/A.scala"))
+    val q = Schema.mkSparqlUpdate(Seq(c))
     testReq(post("http://amora.center/sparql-update", s"query=$q")) {
       status === StatusCodes.OK
     }
@@ -392,6 +372,45 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "A")))
+    }
+  }
+
+  @Test
+  def the_owner_of_a_top_level_class_is_a_file(): Unit = {
+    val a = Artifact(Project("p"), "o", "n", "v1")
+    val c = Class("A", File(a, "A.scala"))
+    val q = Schema.mkSparqlUpdate(Seq(c))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      select ?tpe where {
+        [a c:] c:owner [a ?tpe] .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/File/0.1/")))
+    }
+  }
+
+  @Test
+  def the_owner_of_a_file_is_a_package(): Unit = {
+    val f = File(Package("pkg", Artifact(Project("p"), "o", "n", "v1")), "pkg/A.scala")
+    val q = Schema.mkSparqlUpdate(Seq(f))
+    testReq(post("http://amora.center/sparql-update", s"query=$q")) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """query=
+      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      select ?tpe where {
+        [a f:] f:owner [a ?tpe] .
+      }
+    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
     }
   }
 }
