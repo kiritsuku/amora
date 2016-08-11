@@ -1,11 +1,11 @@
 package toolplugin
 
 import scala.scalajs.js
-import scala.scalajs.js.Dynamic.{ global ⇒ jsg }
-import org.scalajs.dom
-import org.scalajs.jquery.jQuery
 import scala.scalajs.js.JSApp
+
+import org.scalajs.dom
 import org.scalajs.dom.raw.Element
+import org.scalajs.jquery.jQuery
 
 object Main extends JSApp {
 
@@ -32,7 +32,7 @@ object Main extends JSApp {
         println(s"branch: $branch")
         println(s"filename: $filename")
 
-        import dom.ext._
+        import org.scalajs.dom.ext._
         val h = dom.document.getElementsByClassName("highlight").head
         val tbody = h.asInstanceOf[Element].children.head
         val lines = tbody.children.zipWithIndex map { case (e, i) ⇒

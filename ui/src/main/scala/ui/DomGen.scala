@@ -8,7 +8,6 @@ import org.denigma.codemirror.extensions.EditorConfig
 import org.scalajs.dom.raw.HTMLTextAreaElement
 
 class DomGen {
-  import scalatags.JsDom.all
   import scalatags.JsDom.all._
 
   def editorDiv(divId: String, taId: String) = {

@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 import org.apache.jena.datatypes.BaseDatatype
@@ -23,8 +25,6 @@ import org.apache.jena.update.UpdateAction
 import backend.actors.IndexerMessage._
 import research.converter.protocol._
 import spray.json._
-import scala.util.Success
-import scala.util.Failure
 
 class Indexer(modelName: String) extends backend.Log4jLogging {
 

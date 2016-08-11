@@ -10,9 +10,9 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import backend.Logger
 import research.converter.ScalacConverter
 import research.converter.protocol.Hierarchy
-import backend.Logger
 
 /**
  * Provides functionality to extract information out of Scala source code.

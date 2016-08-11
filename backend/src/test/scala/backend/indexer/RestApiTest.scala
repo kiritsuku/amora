@@ -21,17 +21,16 @@ import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.testkit.RouteTest
 import akka.http.scaladsl.testkit.RouteTestTimeout
-
 import akka.http.scaladsl.testkit.TestFrameworkInterface
+
 import backend.AkkaLogging
 import backend.CustomContentTypes
 import backend.Log4jRootLogging
 import backend.PlatformConstants
-import backend.TestUtils
 import backend.WebService
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
-  import TestUtils._
+  import backend.TestUtils._
 
   override def failTest(msg: String): Nothing = {
     throw new RuntimeException(msg)

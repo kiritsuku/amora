@@ -14,7 +14,7 @@ import org.objectweb.asm.Opcodes
 
 final class ClassfileConverter {
   import converter.{ protocol ⇒ h }
-  import h.{ Attachment ⇒ a }
+  import research.converter.protocol.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
 

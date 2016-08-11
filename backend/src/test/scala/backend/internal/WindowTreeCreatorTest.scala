@@ -9,7 +9,7 @@ import protocol.ui.Window
 
 class WindowTreeCreatorTest {
   import WindowTreeCreator._
-  import TestUtils._
+  import backend.TestUtils._
 
   /** Takes (x, y, w, h). */
   private def dims(dim: (Int, Int, Int, Int)*): Seq[WinInfo] = {

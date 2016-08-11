@@ -259,7 +259,7 @@ object Main extends JSApp {
   }
 
   private def toArrayBuffer(data: ByteBuffer): js.typedarray.ArrayBuffer = {
-    import js.typedarray.TypedArrayBufferOps._
+    import scala.scalajs.js.typedarray.TypedArrayBufferOps._
     data.arrayBuffer
   }
 }

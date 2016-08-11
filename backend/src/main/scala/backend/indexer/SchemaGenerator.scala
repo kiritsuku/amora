@@ -1,8 +1,9 @@
 package backend.indexer
 
-import com.github.jsonldjava.utils.JsonUtils
 import com.github.jsonldjava.core.JsonLdOptions
 import com.github.jsonldjava.core.JsonLdProcessor
+import com.github.jsonldjava.utils.JsonUtils
+
 import spray.json._
 
 class SchemaGenerator {

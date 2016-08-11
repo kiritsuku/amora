@@ -14,7 +14,7 @@ import scala.util.Try
 final class ScalacConverter[G <: Global](val global: G) {
   import global.{ Try ⇒ TTry, _ }
   import converter.{ protocol ⇒ h }
-  import h.{ Attachment ⇒ a }
+  import research.converter.protocol.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
 
@@ -423,7 +423,7 @@ final class ScalacConverter[G <: Global](val global: G) {
 
     val anns = sym.annotations
     if (anns.nonEmpty) {
-      import Movements._
+      import scala.tools.refactoring.util.SourceWithMarker.Movements._
       val mvnt = until('@', skipping = comment | inBrackets('(', ')')).backward
       val startPos = if (sym.isParameter || sym.isParamAccessor) pos.point else pos.start
       val annPos = (1 to anns.length foldLeft startPos) { (p, _) ⇒
@@ -606,7 +606,7 @@ final class ScalacConverter[G <: Global](val global: G) {
 
   private def setPosition(d: h.Hierarchy, pos: Position, skipping: Movement = Movements.none) = {
     if (pos.isRange) {
-      import Movements._
+      import scala.tools.refactoring.util.SourceWithMarker.Movements._
       val mvnt = until(id, skipping)
       mvnt(SourceWithMarker(pos.source.content, pos.point)) match {
         case Some(start) ⇒

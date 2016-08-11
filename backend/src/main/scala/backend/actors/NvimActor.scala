@@ -1,10 +1,10 @@
 package backend.actors
 
 import akka.actor.Actor
+import akka.actor.ActorLogging
 import akka.actor.ActorRef
 import backend.NvimAccessor
 import protocol._
-import akka.actor.ActorLogging
 
 final class NvimActor extends Actor with ActorLogging {
   import context.system

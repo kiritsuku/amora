@@ -2,12 +2,14 @@ package backend
 package indexer
 
 import scala.util._
+
 import org.junit.Test
+
 import backend.actors.IndexerMessage
 
 class JavaBytecodeIndexerTest {
 
-  import TestUtils._
+  import backend.TestUtils._
 
   case class Data(varName: String, value: String)
 

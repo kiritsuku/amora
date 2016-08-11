@@ -1,8 +1,10 @@
 package backend.requests
 
 import java.io.ByteArrayOutputStream
-
 import java.net.URLDecoder
+
+import scala.util.Failure
+import scala.util.Success
 
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
@@ -13,7 +15,6 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
-import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.ContentNegotiator
@@ -24,14 +25,11 @@ import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.AkkaLogging
 import backend.BackendSystem
 import backend.Content
-import backend.CustomContentTypes
-import scala.util.Failure
-import scala.util.Success
 
 trait Sparql extends Directives with AkkaLogging {
-  import CustomContentTypes._
-  import ContentTypes._
-  import MediaTypes._
+  import akka.http.scaladsl.model.ContentTypes._
+  import akka.http.scaladsl.model.MediaTypes._
+  import backend.CustomContentTypes._
 
   def bs: BackendSystem
 

@@ -2,12 +2,12 @@ package backend
 package indexer
 
 import org.junit.Test
-import backend.TestUtils
+
 import backend.actors.IndexerMessage
 
 class RegionIndexerTest {
 
-  import TestUtils._
+  import backend.TestUtils._
 
   sealed trait Region {
     def len: Int

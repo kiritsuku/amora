@@ -26,10 +26,10 @@ import frontend.webui.protocol.IndexData
 
 final class BackendSystem(implicit system: ActorSystem) {
 
-  import boopickle.Default._
-  import akka.pattern.ask
   import system.dispatcher
   import PlatformConstants.timeout
+  import akka.pattern.ask
+  import boopickle.Default._
 
   private val nvim = system.actorOf(Props[NvimActor], "nvim")
   private val queue = system.actorOf(Props[QueueActor], "queue")
@@ -60,17 +60,17 @@ final class BackendSystem(implicit system: ActorSystem) {
   }
 
   def authNvimUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import NvimMsg._
+    import backend.actors.NvimMsg._
     authFlow[protocol.Response](nvim ! NewClient(_))
   }
 
   def authWebUi(): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import RequestMessage._
+    import backend.actors.RequestMessage._
     authFlow[frontend.webui.protocol.Response](requestHandler ! ClientAuthorizationRequest(_))
   }
 
   def nvimFlow(sender: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import NvimMsg._
+    import backend.actors.NvimMsg._
     import protocol._
 
     val in = Flow[ByteBuffer]
@@ -84,7 +84,7 @@ final class BackendSystem(implicit system: ActorSystem) {
   }
 
   def webUiFlow(clientId: String): Flow[ByteBuffer, ByteBuffer, NotUsed] = {
-    import RequestMessage._
+    import backend.actors.RequestMessage._
     import frontend.webui.protocol._
 
     val in = Flow[ByteBuffer]

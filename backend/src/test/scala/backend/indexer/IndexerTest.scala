@@ -5,11 +5,10 @@ import org.junit.Test
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import backend.CustomContentTypes
-import backend.TestUtils
 import backend.schema._
 
 class IndexerTest extends RestApiTest {
-  import TestUtils._
+  import backend.TestUtils._
 
   @Test
   def jsonld_context_can_be_retrieved(): Unit = {

@@ -1,6 +1,6 @@
 package protocol
 
-import ui.WindowTree
+import protocol.ui.WindowTree
 
 case class BufferRef(id: Int)
 

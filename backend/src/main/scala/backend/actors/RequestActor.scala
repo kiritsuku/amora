@@ -3,7 +3,6 @@ package backend.actors
 import scala.concurrent.Future
 
 import RequestMessage._
-
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import akka.actor.ActorRef
@@ -15,14 +14,13 @@ import backend.Content
 import backend.Logger
 import backend.indexer.ArtifactIndexer
 import frontend.webui.protocol._
-import spray.json.DefaultJsonProtocol
 import spray.json.RootJsonFormat
-import backend.PlatformConstants
+import spray.json.DefaultJsonProtocol
 
 class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
   import system.dispatcher
-  import PlatformConstants.timeout
+  import backend.PlatformConstants.timeout
 
   private var clients = Map.empty[String, ActorRef]
 
@@ -88,8 +86,8 @@ class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorL
   }
 
   def handleIndexData(sender: ActorRef, jsonString: String) = {
-    import spray.json._
     import RequestMessage.JsonProtocols._
+    import spray.json._
 
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields

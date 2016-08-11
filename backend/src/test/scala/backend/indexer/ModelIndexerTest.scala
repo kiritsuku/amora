@@ -2,12 +2,11 @@ package backend.indexer
 
 import org.junit.Test
 
-import backend.TestUtils
 import backend.actors.IndexerMessage._
 import research.converter.protocol._
 
 class ModelIndexerTest {
-  import TestUtils._
+  import backend.TestUtils._
 
   case class Data(varName: String, value: String)
 
