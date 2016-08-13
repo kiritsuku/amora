@@ -4,7 +4,6 @@ import java.nio.ByteBuffer
 
 import scala.concurrent.Future
 import scala.concurrent.Promise
-import scala.util.Try
 
 import akka.NotUsed
 import akka.actor.ActorRef
@@ -43,9 +42,8 @@ final class BackendSystem(implicit system: ActorSystem) {
   def runQuery(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunQuery(query), errorMessage, onSuccess)
 
-  def runUpdate(query: String): Future[Unit] = {
-    indexer.ask(IndexerMessage.RunUpdate(query)).mapTo[Try[Unit]].flatMap(Future.fromTry)
-  }
+  def runUpdate(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.RunUpdate(query), errorMessage, onSuccess)
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {
     requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[frontend.webui.protocol.Response]

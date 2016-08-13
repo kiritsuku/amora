@@ -133,12 +133,9 @@ trait Sparql extends Directives with AkkaLogging {
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
     else {
       val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
-      onComplete(bs.runUpdate(query)) {
-        case Success(()) ⇒
-          complete(HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful."))
-        case Failure(f) ⇒
-          log.error(f, "Error happened while handling SPARQL update request.")
-          complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
+      bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
+        case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+        case Failure(t) ⇒ throw t
       }
     }
   }
