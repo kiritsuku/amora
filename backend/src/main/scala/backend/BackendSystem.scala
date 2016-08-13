@@ -3,13 +3,16 @@ package backend
 import java.nio.ByteBuffer
 
 import scala.concurrent.Future
-
-import org.apache.jena.query.ResultSetRewindable
+import scala.concurrent.Promise
+import scala.util.Try
 
 import akka.NotUsed
 import akka.actor.ActorRef
 import akka.actor.ActorSystem
 import akka.actor.Props
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
+import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.RouteResult
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl.Flow
 import akka.stream.scaladsl.Sink
@@ -20,8 +23,9 @@ import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMessage
-import backend.actors.WebSocketRequestActor
+import backend.actors.RequestActor
 import backend.actors.RequestMessage
+import backend.actors.WebSocketRequestActor
 import frontend.webui.protocol.IndexData
 
 final class BackendSystem(implicit system: ActorSystem) {
@@ -36,12 +40,11 @@ final class BackendSystem(implicit system: ActorSystem) {
   private val indexer = system.actorOf(Props[IndexerActor], "indexer")
   private val requestHandler = system.actorOf(Props(classOf[WebSocketRequestActor], queue, indexer), "request-handler")
 
-  def runQuery(query: String): Future[ResultSetRewindable] = {
-    indexer.ask(IndexerMessage.RunQuery(query)).mapTo[ResultSetRewindable]
-  }
+  def runQuery(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.RunQuery(query), errorMessage, onSuccess)
 
   def runUpdate(query: String): Future[Unit] = {
-    indexer.ask(IndexerMessage.RunUpdate(query)).mapTo[Unit]
+    indexer.ask(IndexerMessage.RunUpdate(query)).mapTo[Try[Unit]].flatMap(Future.fromTry)
   }
 
   def indexData(json: String): Future[frontend.webui.protocol.Response] = {
@@ -103,5 +106,17 @@ final class BackendSystem(implicit system: ActorSystem) {
       .mapMaterializedValue(f)
       .map(Pickle.intoBytes(_))
     Flow.fromSinkAndSource(Sink.ignore, out)
+  }
+
+  private def mkRequestRoute(target: ActorRef, msg: Any, errorMessage: String, onSuccess: Any ⇒ ToResponseMarshallable): Route = { rctx ⇒
+    val p = Promise[RouteResult]
+    system.actorOf(Props {
+      val a = new RequestActor(rctx, target, msg, errorMessage, onSuccess)
+      // trying to be smart here. I had to get the future out of the actor and
+      // this was the best way I could find to do so
+      p.completeWith(a.future)
+      a
+    }, "request-actor" + System.currentTimeMillis)
+    p.future
   }
 }

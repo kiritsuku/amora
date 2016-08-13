@@ -39,6 +39,13 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def syntax_error_in_sparql_post_request(): Unit = {
+    testReq(post("http://amora.center/sparql", "query=syntax error", header = Accept(CustomContentTypes.`sparql-results+json`))) {
+      status === StatusCodes.InternalServerError
+    }
+  }
+
+  @Test
   def add_json_post_requests_are_possible(): Unit = {
     testReq(post("http://amora.center/add-json", """
       {
@@ -67,6 +74,13 @@ class IndexerTest extends RestApiTest {
       val r = respAsResultSet()
       status === StatusCodes.OK
       r.next().get("name").asLiteral().getString === "hello-world"
+    }
+  }
+
+  @Test
+  def syntax_error_in_sparql_update(): Unit = {
+    testReq(post("http://amora.center/sparql-update", s"query=syntax error")) {
+      status === StatusCodes.InternalServerError
     }
   }
 

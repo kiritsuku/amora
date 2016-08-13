@@ -1,5 +1,7 @@
 package backend.actors
 
+import scala.util.Try
+
 import org.apache.jena.query.ResultSetRewindable
 
 import akka.actor.Actor
@@ -26,10 +28,10 @@ class IndexerActor extends Actor with ActorLogging {
 
   override def receive = {
     case RunQuery(query) ⇒
-      sender ! handleQuery(query)
+      sender ! Try(handleQuery(query))
 
     case RunUpdate(query) ⇒
-      sender ! handleUpdate(query)
+      sender ! Try(handleUpdate(query))
 
     case AddData(data) ⇒
       sender ! handleAddData(data)

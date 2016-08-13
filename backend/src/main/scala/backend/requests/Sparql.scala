@@ -22,7 +22,6 @@ import akka.http.scaladsl.server.ContentNegotiator
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.RouteResult
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.AkkaLogging
 import backend.BackendSystem
@@ -161,7 +160,9 @@ trait Sparql extends Directives with AkkaLogging {
   }
 
   private def runQuery(query: String)(f: ResultSetRewindable ⇒ ToResponseMarshallable): Route = {
-    implicit val d = system.dispatcher
-    rctx ⇒ bs.runQuery(query).flatMap(f(_)(rctx.request).map(RouteResult.Complete))
+    bs.runQuery(query, "Error happened while handling SPARQL query request.") {
+      case Success(r: ResultSetRewindable) ⇒ f(r)
+      case Failure(t) ⇒ throw t
+    }
   }
 }
