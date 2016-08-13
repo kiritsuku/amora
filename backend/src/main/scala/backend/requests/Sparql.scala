@@ -6,11 +6,12 @@ import java.net.URLDecoder
 import scala.util.Failure
 import scala.util.Success
 
+import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.sparql.resultset.ResultsFormat
 
-import akka.http.scaladsl.model.ContentType
+import akka.http.scaladsl.marshalling.ToResponseMarshallable
 import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
@@ -21,6 +22,7 @@ import akka.http.scaladsl.server.ContentNegotiator
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.RouteResult
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.AkkaLogging
 import backend.BackendSystem
@@ -41,11 +43,11 @@ trait Sparql extends Directives with AkkaLogging {
     """.stripMargin.trim
     runQuery(query) { r ⇒
       if (r.size == 0)
-        complete(HttpResponse(StatusCodes.NotFound, entity = s"No JSONLD context found for URI `$path`."))
+        HttpResponse(StatusCodes.NotFound, entity = s"No JSONLD context found for URI `$path`.")
       else {
         val str = r.next().get("str")
         require(str != null, "No field with name `str` found.")
-        complete(HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString))
+        HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString)
       }
     }
   }
@@ -60,8 +62,8 @@ trait Sparql extends Directives with AkkaLogging {
       |}
       |LIMIT 100
     """.stripMargin.trim
-    runQuery(query, ResultsFormat.FMT_RS_JSON) { sparqlResp ⇒
-      complete(showSparqlEditor(query, sparqlResp))
+    runQuery(query) { r ⇒
+      showSparqlEditor(query, resultSetAsString(r, ResultsFormat.FMT_RS_JSON))
     }
   }
 
@@ -72,7 +74,9 @@ trait Sparql extends Directives with AkkaLogging {
       |}
       |LIMIT 100
     """.stripMargin.trim
-    runQuery(query, `sparql-results+json(UTF-8)`, ResultsFormat.FMT_RS_JSON)
+    runQuery(query) { r ⇒
+      HttpEntity(`sparql-results+json(UTF-8)`, resultSetAsString(r, ResultsFormat.FMT_RS_JSON))
+    }
   }
 
   def handleSparqlGetRequest(params: Map[String, String]): Route = {
@@ -94,7 +98,9 @@ trait Sparql extends Directives with AkkaLogging {
         case "csv"  ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
         case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
       } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
-      runQuery(params("query"), ct, fmt)
+      runQuery(params("query")) { r ⇒
+        HttpEntity(ct, resultSetAsString(r, fmt))
+      }
     }
     else
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
@@ -113,7 +119,9 @@ trait Sparql extends Directives with AkkaLogging {
           reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
         else {
           val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
-          runQuery(query, ct, fmt)
+          runQuery(query) { r ⇒
+            HttpEntity(ct, resultSetAsString(r, fmt))
+          }
         }
     }
     resp.getOrElse {
@@ -146,34 +154,14 @@ trait Sparql extends Directives with AkkaLogging {
     HttpEntity(`text/html(UTF-8)`, content)
   }
 
-  private def runQuery(query: String, ct: ContentType.WithCharset, fmt: ResultsFormat): Route = {
-    runQuery(query, fmt) { sparqlResp ⇒
-      complete(HttpEntity(ct, sparqlResp))
-    }
+  private def resultSetAsString(r: ResultSet, fmt: ResultsFormat): String = {
+    val s = new ByteArrayOutputStream
+    ResultSetFormatter.output(s, r, fmt)
+    new String(s.toByteArray(), "UTF-8")
   }
 
-  private def runQuery(query: String, fmt: ResultsFormat)(f: String ⇒ Route): Route = {
-    onComplete(bs.runQuery(query)) {
-      case scala.util.Success(r) ⇒
-        val s = new ByteArrayOutputStream
-        ResultSetFormatter.output(s, r, fmt)
-        val str = new String(s.toByteArray(), "UTF-8")
-        f(str)
-      case scala.util.Failure(f) ⇒
-        import StatusCodes._
-        log.error(f, "Error happened while handling SPARQL query request.")
-        complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
-    }
-  }
-
-  private def runQuery(query: String)(f: ResultSetRewindable ⇒ Route): Route = {
-    onComplete(bs.runQuery(query)) {
-      case scala.util.Success(r) ⇒
-        f(r)
-      case scala.util.Failure(f) ⇒
-        import StatusCodes._
-        log.error(f, "Error happened while handling SPARQL query request.")
-        complete(HttpResponse(InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
-    }
+  private def runQuery(query: String)(f: ResultSetRewindable ⇒ ToResponseMarshallable): Route = {
+    implicit val d = system.dispatcher
+    rctx ⇒ bs.runQuery(query).flatMap(f(_)(rctx.request).map(RouteResult.Complete))
   }
 }
