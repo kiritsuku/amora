@@ -112,8 +112,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def testReq(req: ⇒ HttpRequest)(f: ⇒ Unit) = {
-    req ~> route ~> check {
-      val isJsonResponse = req.header[Accept].flatMap(_.mediaRanges.headOption).exists {
+    val r = req
+    r ~> route ~> check {
+      val isJsonResponse = r.header[Accept].flatMap(_.mediaRanges.headOption).exists {
         case m if m matches CustomContentTypes.`sparql-results+json` ⇒ true
         case _ ⇒ false
       }
