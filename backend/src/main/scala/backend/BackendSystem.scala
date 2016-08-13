@@ -20,7 +20,7 @@ import backend.actors.NvimActor
 import backend.actors.NvimMsg
 import backend.actors.QueueActor
 import backend.actors.QueueMessage
-import backend.actors.RequestActor
+import backend.actors.WebSocketRequestActor
 import backend.actors.RequestMessage
 import frontend.webui.protocol.IndexData
 
@@ -34,7 +34,7 @@ final class BackendSystem(implicit system: ActorSystem) {
   private val nvim = system.actorOf(Props[NvimActor], "nvim")
   private val queue = system.actorOf(Props[QueueActor], "queue")
   private val indexer = system.actorOf(Props[IndexerActor], "indexer")
-  private val requestHandler = system.actorOf(Props(classOf[RequestActor], queue, indexer), "request-handler")
+  private val requestHandler = system.actorOf(Props(classOf[WebSocketRequestActor], queue, indexer), "request-handler")
 
   def runQuery(query: String): Future[ResultSetRewindable] = {
     indexer.ask(IndexerMessage.RunQuery(query)).mapTo[ResultSetRewindable]

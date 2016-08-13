@@ -17,7 +17,7 @@ import frontend.webui.protocol._
 import spray.json.RootJsonFormat
 import spray.json.DefaultJsonProtocol
 
-class RequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
+class WebSocketRequestActor(queue: ActorRef, indexer: ActorRef) extends Actor with ActorLogging {
   implicit val system = context.system
   import system.dispatcher
   import backend.PlatformConstants.timeout
