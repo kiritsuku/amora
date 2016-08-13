@@ -35,6 +35,10 @@ class IndexerActor extends Actor with ActorLogging {
       sender ! handleAddData(data)
   }
 
+  override def postStop() = {
+    dataset.close()
+  }
+
   def handleQuery(query: String): ResultSetRewindable = {
     log.info(s"Handle SPARQL query: $query")
     indexer.readDataset(dataset) { dataset ⇒
