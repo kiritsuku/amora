@@ -9,7 +9,6 @@ import research.converter.ScalacConverterTest
 import backend.indexer.JavaBytecodeIndexerTest
 import backend.indexer.ScalaSourceIndexerTest
 import backend.indexer.RegionIndexerTest
-import backend.indexer.ModelIndexerTest
 import backend.indexer.IndexerTest
 
 @RunWith(classOf[Suite])
@@ -19,7 +18,6 @@ import backend.indexer.IndexerTest
   classOf[RegionIndexerTest],
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
-  classOf[ModelIndexerTest],
   classOf[IndexerTest]
 ))
 class TestSuite
