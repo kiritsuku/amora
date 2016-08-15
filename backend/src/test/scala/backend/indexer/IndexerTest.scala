@@ -274,8 +274,9 @@ class IndexerTest extends RestApiTest {
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
       select ?name ?version where {
-        [a f:] f:owner [p:owner [a a:; a:version ?version]]; f:name ?name .
+        [a f:] amora:owner* [a a:; a:version ?version]; amora:name ?name .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
@@ -286,7 +287,7 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
-  def artifacts_with_same_name_can_bolong_to_different_projects(): Unit = {
+  def artifacts_with_same_name_can_belong_to_different_projects(): Unit = {
     val a1 = Artifact(Project("p1"), "o", "n", "v")
     val a2 = Artifact(Project("p2"), "o", "n", "v")
     val p1 = Package("pkg1", a1)
@@ -298,9 +299,9 @@ class IndexerTest extends RestApiTest {
     testReq((post("http://amora.center/sparql", """query=
       prefix pkg:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
       select ?pname ?pkgname where {
-        [a pkg:] pkg:owner [a:owner [p:name ?pname]]; pkg:name ?pkgname .
+        [a pkg:] amora:owner* [a p:; amora:name ?pname]; amora:name ?pkgname .
       }
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
