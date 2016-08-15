@@ -2,14 +2,17 @@ package backend.indexer
 
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.nio.charset.StandardCharsets
 
 import scala.concurrent.Await
 import scala.concurrent.Promise
+import scala.concurrent.duration.Duration
 
 import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
+import org.junit.After
 
 import akka.actor.Cancellable
 import akka.http.javadsl.model.headers.RawRequestURI
@@ -129,14 +132,14 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def resultSetAsString(r: ResultSet): String = {
     val s = new ByteArrayOutputStream
     ResultSetFormatter.out(s, r)
-    new String(s.toByteArray(), "UTF-8")
+    new String(s.toByteArray(), StandardCharsets.UTF_8)
   }
 
   def respAsString: String =
     Await.result(response.entity.dataBytes.runFold("")(_ + _.utf8String), timeout.duration)
 
   def respAsResultSet(): ResultSet = {
-    val in = new ByteArrayInputStream(respAsString.getBytes)
+    val in = new ByteArrayInputStream(respAsString.getBytes(StandardCharsets.UTF_8))
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 
@@ -165,5 +168,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
     }
+  }
+
+  @After
+  def waitForTermination(): Unit = {
+    Await.result(system.terminate(), Duration.Inf)
   }
 }
