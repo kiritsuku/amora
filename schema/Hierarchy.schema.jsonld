@@ -3,6 +3,7 @@
   "@graph": [
     {
       "@id": "$ID/",
+      "amora:schemaName": "Hierarchy",
       "amora:schemaId": [
         "$ID/declaration",
         "$ID/owner",

@@ -25,6 +25,10 @@
     "amora:format": {
       "@id": "amora:format",
       "@type": "@id"
+    },
+    "amora:schemaName": {
+      "@id": "amora:schemaName",
+      "@type": "schema:Text"
     }
   }
 }

@@ -59,7 +59,30 @@ class SchemaGenerator {
     graph.foreach {
       case JsObject(fields) ⇒
         val isMetaInformation = fields.keys.exists(_.endsWith("/schemaId"))
-        if (!isMetaInformation) {
+        if (isMetaInformation) {
+          val id = find(fields, "@id") {
+            case ("@id", v) ⇒ v
+          }
+          val name = find(fields, "/schemaName") {
+            case (key, value) if key.endsWith("/schemaName") ⇒ value match {
+              case JsArray(Vector(JsObject(fields))) ⇒
+                find(fields, "@value") {
+                  case ("@value", JsString(str)) ⇒ str
+                }
+            }
+          }
+          val version = find(fields, "/schemaVersion") {
+            case (key, value) if key.endsWith("/schemaVersion") ⇒ value match {
+              case JsArray(Vector(JsObject(fields))) ⇒
+                find(fields, "@value") {
+                  case ("@value", JsString(str)) ⇒ str
+                }
+            }
+          }
+          jsCtx += name → JsObject(Map("@id" → id))
+          jsCtx += version → JsObject(Map("@id" → id))
+        }
+        else {
           val id = find(fields, "@id") {
             case ("@id", v) ⇒ v
           }

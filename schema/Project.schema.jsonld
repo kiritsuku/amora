@@ -3,6 +3,7 @@
   "@graph": [
     {
       "@id": "$ID/",
+      "amora:schemaName": "Project",
       "amora:schemaId": [
         "$ID/name"
       ],
