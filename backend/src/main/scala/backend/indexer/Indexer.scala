@@ -36,7 +36,6 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
         prefix s:<http://amora.center/kb/amora/Schema/0.1/>
         select * where {
           ?uri a s: .
-          # [a s:] s:schemaName ?name ; s:schemaVersion ?version .
         }
       """)
       val names = r.asScala.toSeq.flatMap { q ⇒
