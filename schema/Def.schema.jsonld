@@ -1,0 +1,27 @@
+{
+  "@context": "$AMORA/Schema.jsonld",
+  "@graph": [
+    {
+      "@id": "$ID/",
+      "amora:schemaName": "Def",
+      "amora:schemaId": [
+        "$ID/owner",
+        "$ID/name"
+      ],
+      "amora:schemaAuthor": "amora",
+      "amora:schemaVersion": "0.1",
+      "@type": "http://amora.center/kb/amora/Schema/0.1/"
+    },
+    {
+      "@id": "$ID/owner",
+      "amora:schemaProperty": "owner",
+      "amora:schemaType": "http://amora.center/kb/amora/Schema/0.1/"
+    },
+    {
+      "@id": "$ID/name",
+      "amora:schemaProperty": "name",
+      "amora:schemaType": "schema:Text"
+    }
+  ]
+}
+

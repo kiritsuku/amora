@@ -6,6 +6,7 @@ final case class Artifact(owner: Project, organization: String, name: String, ve
 final case class File(owner: Schema, name: String) extends Schema
 final case class Package(name: String, owner: Schema) extends Schema
 final case class Class(name: String, owner: Schema) extends Schema
+final case class Def(name: String, owner: Schema) extends Schema
 
 object Schema {
 
@@ -23,6 +24,8 @@ object Schema {
         s"${mkShortId(owner)}/$name"
       case Class(name, owner) ⇒
         s"${mkShortId(owner)}/$name"
+      case Def(name, owner) ⇒
+        s"${mkShortId(owner)}/$name"
     }
 
     def mkId(s: Schema) = s match {
@@ -36,6 +39,8 @@ object Schema {
         s"http://amora.center/kb/amora/Package/0.1/${mkShortId(s)}"
       case _: Class ⇒
         s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
+      case _: Def ⇒
+        s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
     }
 
     def mkDefn(s: Schema) = s match {
@@ -49,6 +54,8 @@ object Schema {
         s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
       case _: Class ⇒
         s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
+      case _: Def ⇒
+        s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
     }
 
     def mk(s: Schema): String = s match {
@@ -92,6 +99,15 @@ object Schema {
         |""".stripMargin)
         id
       case Class(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
+        |""".stripMargin)
+        id
+      case Def(name, parent) ⇒
         val oid = mk(parent)
         val id = mkId(s)
         val defn = mkDefn(s)
