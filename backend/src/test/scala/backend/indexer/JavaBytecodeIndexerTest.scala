@@ -24,7 +24,7 @@ class JavaBytecodeIndexerTest {
           case Success(data) ⇒
             data foreach {
               case (filename, data) ⇒
-                indexer.addFile(IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model).get
+                indexer.addFile(IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
             }
           case Failure(f) ⇒
             throw f

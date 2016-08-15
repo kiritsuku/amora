@@ -4,10 +4,6 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 
-import scala.util.Failure
-import scala.util.Success
-import scala.util.Try
-
 import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.ParameterizedSparqlString
@@ -32,8 +28,8 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
    * On startup of the indexer, we want to index some predefined data like
    * schema definitions.
    */
-  def startupIndexer(dataset: Dataset) = {
-    val res = Try(withModel(dataset) { model ⇒
+  def startupIndexer(dataset: Dataset): Unit = {
+    try withModel(dataset) { model ⇒
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new java.io.File(cl.getResource(".").getPath)
@@ -62,12 +58,10 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       }
 
       indexableFiles foreach indexFile
-    })
-    res match {
-      case Success(_) ⇒
-        log.info("Indexer successfully started.")
-      case Failure(f) ⇒
-        throw new RuntimeException("An error happened during initialization of the indexer.", f)
+      log.info("Indexer successfully started.")
+    } catch {
+      case t: Throwable ⇒
+        throw new RuntimeException("An error happened during initialization of the indexer.", t)
     }
   }
 
@@ -264,14 +258,14 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
 
   def add(model: Model, data: Indexable): Unit = {
     data match {
-      case project: Project ⇒ addProject(project)(model).get
-      case artifact: Artifact ⇒ addArtifact(artifact)(model).get
-      case file: File ⇒ addFile(file)(model).get
+      case project: Project ⇒ addProject(project)(model)
+      case artifact: Artifact ⇒ addArtifact(artifact)(model)
+      case file: File ⇒ addFile(file)(model)
       case _ ⇒ throw new UnsupportedOperationException(s"${data.getClass} can't be indexed.")
     }
   }
 
-  def addProject(project: Project)(model: Model): Try[Unit] = Try {
+  def addProject(project: Project)(model: Model): Unit = {
     val projectEntry = Map(
       "@id" → JsString(s"c:${pathOf(project)}"),
       "@type" → JsString("c:Project"),
@@ -285,7 +279,7 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
     addJsonLd(model, JsObject(contextEntry))
   }
 
-  def addArtifact(artifact: Artifact)(model: Model): Try[Unit] = Try {
+  def addArtifact(artifact: Artifact)(model: Model): Unit = {
     val projectEntry = Map(
       "@id" → JsString(s"c:${pathOf(artifact.project)}"),
       "@type" → JsString("c:Project"),
@@ -309,7 +303,7 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
     addJsonLd(model, JsObject(contextEntry))
   }
 
-  def addFile(projectFile: File)(model: Model): Try[Unit] = Try {
+  def addFile(projectFile: File)(model: Model): Unit = {
     val pkg = projectFile.data.headOption.flatMap { h ⇒
       def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
       def isPkg = h.owner.attachments(Attachment.Package)
