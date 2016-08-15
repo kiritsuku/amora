@@ -15,6 +15,7 @@ import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
@@ -29,6 +30,33 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
    * schema definitions.
    */
   def startupIndexer(dataset: Dataset): Unit = {
+    def mkInferenceRules(model: Model) = {
+      import scala.collection.JavaConverters._
+      val r = withQueryService(model, """
+        prefix s:<http://amora.center/kb/amora/Schema/0.1/>
+        select * where {
+          ?uri a s: .
+          # [a s:] s:schemaName ?name ; s:schemaVersion ?version .
+        }
+      """)
+      val names = r.asScala.toSeq.flatMap { q ⇒
+        val uri = q.get("uri").toString
+        Seq(
+          s"  <${uri}name> rdfs:subPropertyOf amora:name .",
+          s"  <${uri}owner> rdfs:subPropertyOf amora:owner ."
+        )
+      }.mkString("\n")
+      withUpdateService(model, s"""
+        |prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+        |prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+        |insert data {
+        |$names
+        |}
+      """.trim.stripMargin) { pss ⇒
+        log.info("Creating inference rules:\n" + pss.getCommandText)
+      }
+    }
+
     try withModel(dataset) { model ⇒
       import java.io.File
       val cl = getClass.getClassLoader
@@ -58,6 +86,8 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       }
 
       indexableFiles foreach indexFile
+      mkInferenceRules(model)
+
       log.info("Indexer successfully started.")
     } catch {
       case t: Throwable ⇒
@@ -402,7 +432,7 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
   }
 
   def withModel[A](dataset: Dataset)(f: Model ⇒ A): A = {
-    val model = dataset.getNamedModel(modelName)
+    val model = ModelFactory.createRDFSModel(dataset.getNamedModel(modelName))
     model.begin()
     try {
       val res = f(model)
