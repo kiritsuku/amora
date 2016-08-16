@@ -104,7 +104,7 @@ trait Sparql extends Directives with AkkaLogging {
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
   }
 
-  def handleSparqlPostRequest(req: HttpRequest, encodedPostReq: String): Route = {
+  def handleSparqlPostRequest(req: HttpRequest, query: String): Route = {
     val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
       case m if m matches `sparql-results+xml`  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
       case m if m matches `sparql-results+json` ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
@@ -113,13 +113,8 @@ trait Sparql extends Directives with AkkaLogging {
     }
     val resp = ct.map {
       case (ct, fmt) ⇒
-        if (!encodedPostReq.startsWith("query="))
-          reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
-        else {
-          val query = encodedPostReq.drop("query=".length)
-          runQuery(query) { r ⇒
-            HttpEntity(ct, resultSetAsString(r, fmt))
-          }
+        runQuery(query) { r ⇒
+          HttpEntity(ct, resultSetAsString(r, fmt))
         }
     }
     resp.getOrElse {
@@ -127,15 +122,10 @@ trait Sparql extends Directives with AkkaLogging {
     }
   }
 
-  def handleSparqlUpdatePostRequest(req: HttpRequest, encodedPostReq: String): Route = {
-    if (!encodedPostReq.startsWith("query="))
-      reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
-    else {
-      val query = encodedPostReq.drop("query=".length)
-      bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
-        case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
-        case Failure(t) ⇒ throw t
-      }
+  def handleSparqlUpdatePostRequest(req: HttpRequest, query: String): Route = {
+    bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
+      case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+      case Failure(t) ⇒ throw t
     }
   }
 
