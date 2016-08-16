@@ -313,11 +313,10 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def add_single_package(): Unit = {
-    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
-    val q = Schema.mkSparqlUpdate(Seq(p))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       select ?name where {
@@ -371,12 +370,11 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def add_single_class(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val c = Class("A", File(Package("pkg", a), "pkg/A.scala"))
-    val q = Schema.mkSparqlUpdate(Seq(c))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+        class A
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
       select ?name where {
