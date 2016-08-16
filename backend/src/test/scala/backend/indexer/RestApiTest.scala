@@ -157,14 +157,15 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     r
   }
 
-  def showAmoraIndexContent(limit: Int = 100): Unit = {
-    require(limit > 0, "limit needs to be greater than zero")
-    testReq(post("http://amora.center/sparql", s"""query=
+  def showAmoraIndexContent(entries: Int = 100, prefix: String = "http://amora.center/kb/"): Unit = {
+    require(entries > 0, "limit needs to be greater than zero")
+    testReq(post("http://amora.center/sparql", s"""
       select * where {
         ?s ?p ?o .
-        filter regex(str(?s), "^http://amora.center/kb/")
+        filter regex(str(?s), "^$prefix")
       }
-      limit $limit
+      order by ?s ?p
+      limit $entries
     """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
     }
