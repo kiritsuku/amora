@@ -31,6 +31,10 @@ import backend.CustomContentTypes
 import backend.Log4jRootLogging
 import backend.PlatformConstants
 import backend.WebService
+import backend.IgnoreLogger
+import research.converter.protocol.Hierarchy
+import research.converter.protocol.Attachment
+import backend.schema._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import backend.TestUtils._
@@ -168,6 +172,31 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       limit $entries
     """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
+    }
+  }
+
+  def indexData(origin: Schema, data: (String, String)*) = {
+    testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(origin)))) {
+      status === StatusCodes.OK
+    }
+    val indexer = new ScalaSourceIndexer(IgnoreLogger)
+    indexer.convertToHierarchy(data) match {
+      case scala.util.Success(data) ⇒
+        data foreach {
+          case (filename, data) ⇒
+            val pkg = data.collectFirst {
+              case d if d.attachments(Attachment.Package) ⇒ d
+            }
+            val s = pkg.map(_.asString).map(pkg ⇒ File(Package(pkg, origin), filename)).getOrElse(origin)
+            val prefix = Schema.mkId(s)
+            val id = Schema.mkDefn(s)
+            val query = Hierarchy.mkSparqlUpdate(prefix, id, data)
+            testReq(post("http://amora.center/sparql-update", query)) {
+              status === StatusCodes.OK
+            }
+        }
+      case scala.util.Failure(f) ⇒
+        throw f
     }
   }
 

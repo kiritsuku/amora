@@ -1,5 +1,7 @@
 package research.converter.protocol
 
+import java.net.URLEncoder
+
 sealed trait Hierarchy {
 
   private var _attachments = Set[Attachment]()
@@ -48,6 +50,84 @@ sealed trait Hierarchy {
    * been defined and where it can be accessed.
    */
   def owner: Hierarchy
+}
+
+object Hierarchy {
+
+  def mkSparqlUpdate(prefix: String, origin: String, data: Seq[Hierarchy]): String = {
+    val sb = new StringBuilder
+
+    def loop(h: Hierarchy): Unit = h match {
+      case Root ⇒
+      case decl @ Decl(name, owner) ⇒
+        val n = encode(name)
+        val path = prefix + "/" + mkPath(decl)
+        val tpe = decl.attachments.collectFirst {
+          case Attachment.Class ⇒ "Class"
+          case Attachment.Package ⇒ "Package"
+          case Attachment.Def ⇒ "Def"
+        }.getOrElse("Decl")
+
+        val tpeString = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
+        sb.append(s"  <$path> a <$tpeString/> .\n")
+        sb.append(s"""  <$path> <$tpeString/name> "$n" .""" + "\n")
+
+        if (h.attachments.nonEmpty) {
+          val elems = h.attachments.map("\"" + _.asString + "\"").mkString(", ")
+          sb.append(s"  <$path> <$tpeString/attachment> $elems .\n")
+        }
+
+        owner match {
+          case Root ⇒
+            sb.append(s"  <$path> <$tpeString/owner> <$origin> .\n")
+          case _: Decl ⇒
+            val o = encode(owner.asString).replace('.', '/')
+            sb.append(s"  <$path> <$tpeString/owner> <$prefix/$o> .\n")
+          case _: Ref ⇒
+        }
+      case Ref(name, refToDecl, owner, qualifier) ⇒
+    }
+
+    sb.append("INSERT DATA {\n")
+    data foreach loop
+    sb.append("}")
+    sb.toString
+  }
+
+  private def uniqueRef(pos: Position) = pos match {
+    case RangePosition(start, _) ⇒
+      s"/$start"
+    case _ ⇒
+      ""
+  }
+
+  def encode(str: String): String =
+    URLEncoder.encode(str, "UTF-8")
+
+  private def mkPath(decl: Decl) = {
+    val Decl(name, owner) = decl
+    val n = encode(name)
+    val ownerPath = owner match {
+      case Root ⇒
+        ""
+      case _: Decl ⇒
+        encode(owner.asString).replace('.', '/')
+      case _: Ref ⇒
+        val path = encode(owner.asString).replace('.', '/')
+        val h = uniqueRef(owner.position)
+        s"$path/$h"
+    }
+    val sig = decl.attachments.collectFirst {
+      case Attachment.JvmSignature(signature) ⇒ encode(signature)
+    }.getOrElse("")
+    val paramAtt = encode(decl.attachments.collectFirst {
+      case Attachment.Param ⇒ "<param>"
+      case Attachment.TypeParam ⇒ "<tparam>"
+    }.getOrElse(""))
+    val originPath = if (ownerPath.isEmpty) "" else ownerPath + "/"
+    val fullPath = s"$originPath$paramAtt$n$sig"
+    fullPath
+  }
 }
 
 /**

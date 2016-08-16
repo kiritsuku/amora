@@ -10,53 +10,53 @@ final case class Def(name: String, owner: Schema) extends Schema
 
 object Schema {
 
+  private def mkShortId(s: Schema): String = s match {
+    case Project(name) ⇒
+      name
+    case Artifact(owner, organization, name, version) ⇒
+      s"${mkShortId(owner)}/$organization/$name/$version"
+    case File(owner, name) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Package(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Class(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Def(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+  }
+
+  def mkId(s: Schema): String = s match {
+    case _: Project ⇒
+      s"http://amora.center/kb/amora/Project/0.1/${mkShortId(s)}"
+    case _: Artifact ⇒
+      s"http://amora.center/kb/amora/Artifact/0.1/${mkShortId(s)}"
+    case _: File ⇒
+      s"http://amora.center/kb/amora/File/0.1/${mkShortId(s)}"
+    case _: Package ⇒
+      s"http://amora.center/kb/amora/Package/0.1/${mkShortId(s)}"
+    case _: Class ⇒
+      s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
+    case _: Def ⇒
+      s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
+  }
+
+  def mkDefn(s: Schema): String = s match {
+    case _: Project ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Project/0.1"
+    case _: Artifact ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Artifact/0.1"
+    case _: File ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/File/0.1"
+    case _: Package ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
+    case _: Class ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
+    case _: Def ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
+  }
+
   def mkSparqlUpdate(schemas: Seq[Schema]): String = {
     val sb = new StringBuilder
-
-    def mkShortId(s: Schema): String = s match {
-      case Project(name) ⇒
-        name
-      case Artifact(owner, organization, name, version) ⇒
-        s"${mkShortId(owner)}/$organization/$name/$version"
-      case File(owner, name) ⇒
-        s"${mkShortId(owner)}/$name"
-      case Package(name, owner) ⇒
-        s"${mkShortId(owner)}/$name"
-      case Class(name, owner) ⇒
-        s"${mkShortId(owner)}/$name"
-      case Def(name, owner) ⇒
-        s"${mkShortId(owner)}/$name"
-    }
-
-    def mkId(s: Schema) = s match {
-      case _: Project ⇒
-        s"http://amora.center/kb/amora/Project/0.1/${mkShortId(s)}"
-      case _: Artifact ⇒
-        s"http://amora.center/kb/amora/Artifact/0.1/${mkShortId(s)}"
-      case _: File ⇒
-        s"http://amora.center/kb/amora/File/0.1/${mkShortId(s)}"
-      case _: Package ⇒
-        s"http://amora.center/kb/amora/Package/0.1/${mkShortId(s)}"
-      case _: Class ⇒
-        s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
-      case _: Def ⇒
-        s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
-    }
-
-    def mkDefn(s: Schema) = s match {
-      case _: Project ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/Project/0.1"
-      case _: Artifact ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/Artifact/0.1"
-      case _: File ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/File/0.1"
-      case _: Package ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
-      case _: Class ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
-      case _: Def ⇒
-        s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
-    }
 
     def mk(s: Schema): String = s match {
       case Project(name) ⇒
