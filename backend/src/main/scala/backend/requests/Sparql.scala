@@ -1,7 +1,6 @@
 package backend.requests
 
 import java.io.ByteArrayOutputStream
-import java.net.URLDecoder
 
 import scala.util.Failure
 import scala.util.Success
@@ -117,7 +116,7 @@ trait Sparql extends Directives with AkkaLogging {
         if (!encodedPostReq.startsWith("query="))
           reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
         else {
-          val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
+          val query = encodedPostReq.drop("query=".length)
           runQuery(query) { r ⇒
             HttpEntity(ct, resultSetAsString(r, fmt))
           }
@@ -132,7 +131,7 @@ trait Sparql extends Directives with AkkaLogging {
     if (!encodedPostReq.startsWith("query="))
       reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
     else {
-      val query = URLDecoder.decode(encodedPostReq.drop("query=".length), "UTF-8")
+      val query = encodedPostReq.drop("query=".length)
       bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
         case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
         case Failure(t) ⇒ throw t
