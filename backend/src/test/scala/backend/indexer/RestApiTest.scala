@@ -28,13 +28,12 @@ import akka.http.scaladsl.testkit.TestFrameworkInterface
 
 import backend.AkkaLogging
 import backend.CustomContentTypes
+import backend.IgnoreLogger
 import backend.Log4jRootLogging
 import backend.PlatformConstants
 import backend.WebService
-import backend.IgnoreLogger
-import research.converter.protocol.Hierarchy
-import research.converter.protocol.Attachment
 import backend.schema._
+import research.converter.protocol.Attachment
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import backend.TestUtils._
@@ -190,7 +189,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
             val s = pkg.map(_.asString).map(pkg ⇒ File(Package(pkg, origin), filename)).getOrElse(origin)
             val prefix = Schema.mkId(s)
             val id = Schema.mkDefn(s)
-            val query = Hierarchy.mkSparqlUpdate(prefix, id, data)
+            val query = HierarchySchema.mkSparqlUpdate(prefix, id, data)
             testReq(post("http://amora.center/sparql-update", query)) {
               status === StatusCodes.OK
             }
