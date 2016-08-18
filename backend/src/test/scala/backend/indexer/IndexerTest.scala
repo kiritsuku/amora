@@ -221,11 +221,10 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def add_single_file(): Unit = {
-    val f = File(Package("pkg", Artifact(Project("p"), "o", "n", "v1")), "pkg/A.scala")
-    val q = Schema.mkSparqlUpdate(Seq(f))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       select ?name where {
@@ -234,19 +233,19 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "pkg/A.scala")))
+          Seq(Data("name", "A.scala")))
     }
   }
 
   @Test
   def add_multiple_files(): Unit = {
-    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
-    val f1 = File(p, "pkg/A.scala")
-    val f2 = File(p, "pkg/B.scala")
-    val q = Schema.mkSparqlUpdate(Seq(f1, f2))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+      """,
+      "B.scala" → """
+        package pkg
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       select ?name where {
@@ -255,8 +254,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "pkg/A.scala")),
-          Seq(Data("name", "pkg/B.scala")))
+          Seq(Data("name", "A.scala")),
+          Seq(Data("name", "B.scala")))
     }
   }
 
@@ -331,11 +330,10 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def the_owner_of_the_top_package_is_an_artifact(): Unit = {
-    val p = Package("pkg", Artifact(Project("p"), "o", "n", "v1"))
-    val q = Schema.mkSparqlUpdate(Seq(p))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       select ?tpe where {
@@ -409,17 +407,16 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def the_owner_of_a_file_is_a_package(): Unit = {
-    val f = File(Package("pkg", Artifact(Project("p"), "o", "n", "v1")), "pkg/A.scala")
-    val q = Schema.mkSparqlUpdate(Seq(f))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
-    testReq((post("http://amora.center/sparql", """
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+      """)
+    testReq(post("http://amora.center/sparql", """
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       select ?tpe where {
         [a f:] f:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))

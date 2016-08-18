@@ -14,7 +14,7 @@ final case class Def(name: String, owner: Schema) extends Schema
 
 object Schema {
 
-  private def mkShortId(s: Schema): String = s match {
+  def mkShortId(s: Schema): String = s match {
     case Project(name) ⇒
       name
     case Artifact(owner, organization, name, version) ⇒
@@ -129,35 +129,48 @@ object Schema {
 
 object HierarchySchema {
 
-  def mkSparqlUpdate(prefix: String, origin: String, data: Seq[Hierarchy]): String = {
+  def mkSparqlUpdate(schema: Schema, data: Seq[Hierarchy]): String = {
     val sb = new StringBuilder
+
+    def mkFullPath(decl: Decl) = schema match {
+      case File(Package(_, a: Artifact), _) ⇒
+        val tpe = decl.attachments.collectFirst {
+          case Attachment.Class ⇒ "Class"
+          case Attachment.Package ⇒ "Package"
+          case Attachment.Def ⇒ "Def"
+        }.getOrElse("Decl")
+        s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
+      case _ ⇒
+        ???
+    }
 
     def loop(h: Hierarchy): Unit = h match {
       case Root ⇒
       case decl @ Decl(name, owner) ⇒
         val n = encode(name)
-        val path = prefix + "/" + mkPath(decl)
         val tpe = decl.attachments.collectFirst {
           case Attachment.Class ⇒ "Class"
           case Attachment.Package ⇒ "Package"
           case Attachment.Def ⇒ "Def"
         }.getOrElse("Decl")
 
-        val tpeString = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
-        sb.append(s"  <$path> a <$tpeString/> .\n")
-        sb.append(s"""  <$path> <$tpeString/name> "$n" .""" + "\n")
+        val path = mkFullPath(decl)
+        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
+        sb.append(s"  <$path> a <$schemaPath/> .\n")
+        sb.append(s"""  <$path> <$schemaPath/name> "$n" .""" + "\n")
 
         if (h.attachments.nonEmpty) {
           val elems = h.attachments.map("\"" + _.asString + "\"").mkString(", ")
-          sb.append(s"  <$path> <$tpeString/attachment> $elems .\n")
+          sb.append(s"  <$path> <$schemaPath/attachment> $elems .\n")
         }
 
         owner match {
           case Root ⇒
-            sb.append(s"  <$path> <$tpeString/owner> <$origin> .\n")
-          case _: Decl ⇒
-            val o = encode(owner.asString).replace('.', '/')
-            sb.append(s"  <$path> <$tpeString/owner> <$prefix/$o> .\n")
+            val ownerPath = Schema.mkDefn(schema)
+            sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+          case owner: Decl ⇒
+            val ownerPath = mkFullPath(owner)
+            sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
           case _: Ref ⇒
         }
       case Ref(name, refToDecl, owner, qualifier) ⇒
@@ -179,7 +192,7 @@ object HierarchySchema {
   def encode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 
-  private def mkPath(decl: Decl) = {
+  private def mkShortPath(decl: Decl) = {
     val Decl(name, owner) = decl
     val n = encode(name)
     val ownerPath = owner match {

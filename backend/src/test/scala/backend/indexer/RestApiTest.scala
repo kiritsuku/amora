@@ -175,9 +175,6 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def indexData(origin: Schema, data: (String, String)*) = {
-    testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(origin)))) {
-      status === StatusCodes.OK
-    }
     val indexer = new ScalaSourceIndexer(IgnoreLogger)
     indexer.convertToHierarchy(data) match {
       case scala.util.Success(data) ⇒
@@ -187,9 +184,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
               case d if d.attachments(Attachment.Package) ⇒ d
             }
             val s = pkg.map(_.asString).map(pkg ⇒ File(Package(pkg, origin), filename)).getOrElse(origin)
-            val prefix = Schema.mkId(s)
-            val id = Schema.mkDefn(s)
-            val query = HierarchySchema.mkSparqlUpdate(prefix, id, data)
+            testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(s)))) {
+              status === StatusCodes.OK
+            }
+            val query = HierarchySchema.mkSparqlUpdate(s, data)
             testReq(post("http://amora.center/sparql-update", query)) {
               status === StatusCodes.OK
             }
