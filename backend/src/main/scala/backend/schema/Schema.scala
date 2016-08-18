@@ -66,31 +66,28 @@ object Schema {
       case Project(name) ⇒
         val id = mkId(s)
         val defn = mkDefn(s)
-        val tpe = "http://schema.org/Text"
         sb.append(s"""|  <$id> a <$defn/> .
-                      |  <$id> <$defn/name> "$name"^^<$tpe> .
+                      |  <$id> <$defn/name> "$name" .
         |""".stripMargin)
         id
       case Artifact(owner, organization, name, version) ⇒
         val oid = mk(owner)
         val id = mkId(s)
         val defn = mkDefn(s)
-        val tpe = "http://schema.org/Text"
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
-                      |  <$id> <$defn/organization> "$organization"^^<$tpe> .
-                      |  <$id> <$defn/name> "$name"^^<$tpe> .
-                      |  <$id> <$defn/version> "$version"^^<$tpe> .
+                      |  <$id> <$defn/organization> "$organization" .
+                      |  <$id> <$defn/name> "$name" .
+                      |  <$id> <$defn/version> "$version" .
         |""".stripMargin)
         id
       case File(owner, fname) ⇒
         val oid = mk(owner)
         val id = mkId(s)
         val defn = mkDefn(s)
-        val tpe = "http://schema.org/Text"
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
-                      |  <$id> <$defn/name> "$fname"^^<$tpe> .
+                      |  <$id> <$defn/name> "$fname" .
         |""".stripMargin)
         id
       case Package(name, parent) ⇒
@@ -99,7 +96,7 @@ object Schema {
         val defn = mkDefn(s)
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
-                      |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
+                      |  <$id> <$defn/name> "$name" .
         |""".stripMargin)
         id
       case Class(name, parent) ⇒
@@ -108,7 +105,7 @@ object Schema {
         val defn = mkDefn(s)
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
-                      |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
+                      |  <$id> <$defn/name> "$name" .
         |""".stripMargin)
         id
       case Def(name, parent) ⇒
@@ -117,7 +114,7 @@ object Schema {
         val defn = mkDefn(s)
         sb.append(s"""|  <$id> a <$defn/> .
                       |  <$id> <$defn/owner> <$oid> .
-                      |  <$id> <$defn/name> "$name"^^<http://schema.org/Text> .
+                      |  <$id> <$defn/name> "$name" .
         |""".stripMargin)
         id
     }
