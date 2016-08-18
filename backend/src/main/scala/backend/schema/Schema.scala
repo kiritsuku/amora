@@ -169,7 +169,16 @@ object HierarchySchema {
             val ownerPath = Schema.mkDefn(schema)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
           case owner: Decl ⇒
-            val ownerPath = mkFullPath(owner)
+            val isTopLevelDecl = {
+              def isTopLevelDecl = decl.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
+              def isPkg = owner.attachments(Attachment.Package)
+              isTopLevelDecl && isPkg
+            }
+            val ownerPath =
+              if (isTopLevelDecl)
+                Schema.mkId(schema)
+              else
+                mkFullPath(owner)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
           case _: Ref ⇒
         }

@@ -387,12 +387,11 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def the_owner_of_a_top_level_class_is_a_file(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val c = Class("A", File(a, "A.scala"))
-    val q = Schema.mkSparqlUpdate(Seq(c))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+        class A
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
       select ?tpe where {
