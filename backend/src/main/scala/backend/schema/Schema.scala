@@ -180,6 +180,8 @@ object HierarchySchema {
               else
                 mkFullPath(owner)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+
+            loop(owner)
           case _: Ref ⇒
         }
       case Ref(name, refToDecl, owner, qualifier) ⇒

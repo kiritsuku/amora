@@ -348,12 +348,10 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def the_owner_of_a_non_top_package_is_a_package(): Unit = {
-    val a = Artifact(Project("p"), "o", "n", "v1")
-    val p = Package("inner", Package("pkg", a))
-    val q = Schema.mkSparqlUpdate(Seq(p))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg.inner
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       select ?name ?tpe where {
