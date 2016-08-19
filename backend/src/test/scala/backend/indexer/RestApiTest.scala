@@ -99,7 +99,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
         f(v, q)
   }
 
-  def scheduleReq(req: ⇒ HttpRequest)(f: ⇒ Boolean) = {
+  def scheduleReq(req: ⇒ HttpRequest)(f: ⇒ Boolean): Unit = {
     import scala.concurrent.duration._
     val p = Promise[Unit]
     var cancellable: Cancellable = null
@@ -117,7 +117,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  def testReq(req: ⇒ HttpRequest)(f: ⇒ Unit) = {
+  def testReq[A](req: ⇒ HttpRequest)(f: ⇒ A): A = {
     val r = req
     r ~> route ~> check {
       val isJsonResponse = r.header[Accept].flatMap(_.mediaRanges.headOption).exists {
@@ -146,14 +146,14 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 
-  def post(uri: String, request: String, header: HttpHeader*) = {
+  def post(uri: String, request: String, header: HttpHeader*): HttpRequest = {
     val u = Uri(uri)
     val r = HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString)) ++ header, request)
     log.info(s"sending request: $r")
     r
   }
 
-  def get(uri: String) = {
+  def get(uri: String): HttpRequest = {
     val u = Uri(uri)
     val r = HttpRequest(HttpMethods.GET, u, List(RawRequestURI.create(u.toRelative.toString)))
     log.info(s"sending request: $r")
@@ -174,7 +174,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  def indexData(origin: Schema, data: (String, String)*) = {
+  def indexData(origin: Schema, data: (String, String)*): Unit = {
     val indexer = new ScalaSourceIndexer(IgnoreLogger)
     indexer.convertToHierarchy(data) match {
       case scala.util.Success(data) ⇒
@@ -194,6 +194,13 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
         }
       case scala.util.Failure(f) ⇒
         throw f
+    }
+  }
+
+  def sparqlRequest(query: String): Seq[Seq[Data]] = {
+    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet())
     }
   }
 

@@ -2,9 +2,6 @@ package backend.indexer
 
 import org.junit.Test
 
-import akka.http.scaladsl.model.StatusCodes
-import akka.http.scaladsl.model.headers.Accept
-import backend.CustomContentTypes
 import backend.schema.Artifact
 import backend.schema.Project
 
@@ -20,18 +17,15 @@ class ScalaSourceIndexerTest extends RestApiTest {
         class C2
         class C3
       """)
-    testReq(post("http://amora.center/sparql", """
+    sparqlRequest("""
       prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
       select ?name where {
         [a c:] c:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
-      status === StatusCodes.OK
-      resultSetAsData(respAsResultSet()) === Seq(
+    """) === Seq(
         Seq(Data("name", "C1")),
         Seq(Data("name", "C2")),
         Seq(Data("name", "C3")))
-    }
   }
 
   @Test
@@ -49,18 +43,15 @@ class ScalaSourceIndexerTest extends RestApiTest {
           def m3 = 0
         }
       """)
-    testReq(post("http://amora.center/sparql", """
+    sparqlRequest("""
       prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
       select ?name where {
         [a d:] d:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
-      status === StatusCodes.OK
-      resultSetAsData(respAsResultSet()) === Seq(
+    """) === Seq(
         Seq(Data("name", "m1")),
         Seq(Data("name", "m2")),
         Seq(Data("name", "m3")))
-    }
   }
 
   @Test
@@ -79,19 +70,16 @@ class ScalaSourceIndexerTest extends RestApiTest {
           def m3 = 0
         }
       """)
-    testReq(post("http://amora.center/sparql", """
+    sparqlRequest("""
       prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
       prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
       select ?name where {
         ?class a c:; c:name "C1" .
         [d:owner ?class] d:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
-      status === StatusCodes.OK
-      resultSetAsData(respAsResultSet()) === Seq(
+    """) === Seq(
         Seq(Data("name", "m11")),
         Seq(Data("name", "m12")))
-    }
   }
 
   @Test
@@ -107,17 +95,14 @@ class ScalaSourceIndexerTest extends RestApiTest {
         class D1
         class D2
       """)
-    testReq(post("http://amora.center/sparql", """
+    sparqlRequest("""
       prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
       prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
       select * where {
         [a c:] amora:owner [amora:name "f1.scala"]; amora:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
-      status === StatusCodes.OK
-      resultSetAsData(respAsResultSet()) === Seq(
+    """) === Seq(
         Seq(Data("name", "C1")),
         Seq(Data("name", "C2")))
-    }
   }
 }
