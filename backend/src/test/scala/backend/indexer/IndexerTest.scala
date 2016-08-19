@@ -261,14 +261,14 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def files_with_same_name_can_belong_to_different_artifacts(): Unit = {
-    val a1 = Package("pkg", Artifact(Project("p1"), "o1", "n1", "v1"))
-    val a2 = Package("pkg", Artifact(Project("p2"), "o2", "n2", "v2"))
-    val f1 = File(a1, "pkg/A.scala")
-    val f2 = File(a2, "pkg/A.scala")
-    val q = Schema.mkSparqlUpdate(Seq(f1, f2))
-    testReq(post("http://amora.center/sparql-update", q)) {
-      status === StatusCodes.OK
-    }
+    indexData(Artifact(Project("p1"), "o1", "n1", "v1"),
+      "A.scala" → """
+        package pkg
+      """)
+    indexData(Artifact(Project("p2"), "o2", "n2", "v2"),
+      "A.scala" → """
+        package pkg
+      """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
       prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
@@ -280,8 +280,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "pkg/A.scala"), Data("version", "v1")),
-          Seq(Data("name", "pkg/A.scala"), Data("version", "v2")))
+          Seq(Data("name", "A.scala"), Data("version", "v1")),
+          Seq(Data("name", "A.scala"), Data("version", "v2")))
     }
   }
 
