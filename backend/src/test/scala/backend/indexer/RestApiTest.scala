@@ -33,7 +33,7 @@ import backend.Log4jRootLogging
 import backend.PlatformConstants
 import backend.WebService
 import backend.schema._
-import research.converter.protocol.Attachment
+import research.converter.protocol._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import backend.TestUtils._
@@ -180,12 +180,17 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       case scala.util.Success(data) ⇒
         data foreach {
           case (filename, data) ⇒
+            def asSchemaPackage(decl: Hierarchy): Schema = decl match {
+              case Root ⇒ origin
+              case Decl(name, owner) ⇒ Package(name, asSchemaPackage(owner))
+              case _ ⇒ ???
+            }
             val pkg = data.collectFirst {
               case d if d.attachments(Attachment.Package) ⇒ d
             }
-            val s = pkg.map(_.asString).map(pkg ⇒ File(Package(pkg, origin), filename)).getOrElse(origin)
-            testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(s)))) {
-              status === StatusCodes.OK
+            val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, filename)).getOrElse(origin)
+            testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(s)))) {(
+              status === StatusCodes.OK)
             }
             val query = HierarchySchema.mkSparqlUpdate(s, data)
             testReq(post("http://amora.center/sparql-update", query)) {

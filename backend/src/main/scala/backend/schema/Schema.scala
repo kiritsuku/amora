@@ -132,16 +132,20 @@ object HierarchySchema {
   def mkSparqlUpdate(schema: Schema, data: Seq[Hierarchy]): String = {
     val sb = new StringBuilder
 
-    def mkFullPath(decl: Decl) = schema match {
-      case File(Package(_, a: Artifact), _) ⇒
-        val tpe = decl.attachments.collectFirst {
-          case Attachment.Class ⇒ "Class"
-          case Attachment.Package ⇒ "Package"
-          case Attachment.Def ⇒ "Def"
-        }.getOrElse("Decl")
-        s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
-      case _ ⇒
-        ???
+    def mkFullPath(decl: Decl) = {
+      def findArtifact(schema: Schema): Artifact = schema match {
+        case a: Artifact ⇒ a
+        case p: Package ⇒ findArtifact(p.owner)
+        case f: File ⇒ findArtifact(f.owner)
+        case _ ⇒ ???
+      }
+      val a = findArtifact(schema)
+      val tpe = decl.attachments.collectFirst {
+        case Attachment.Class ⇒ "Class"
+        case Attachment.Package ⇒ "Package"
+        case Attachment.Def ⇒ "Def"
+      }.getOrElse("Decl")
+      s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
     }
 
     def loop(h: Hierarchy): Unit = h match {

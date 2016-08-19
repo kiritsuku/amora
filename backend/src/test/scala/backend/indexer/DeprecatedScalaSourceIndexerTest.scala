@@ -73,25 +73,6 @@ class DeprecatedScalaSourceIndexerTest {
   }
 
   @Test
-  def find_package_declarations() = {
-    val modelName = "http://test.model/"
-    ask(modelName, Seq(
-      "<memory>" → """
-        package a.b.c
-        class X
-      """), s"""
-        PREFIX c:<$modelName>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "package"] s:name ?name .
-        }
-      """) === Seq(
-        Data("name", "a"),
-        Data("name", "b"),
-        Data("name", "c"))
-    }
-
-  @Test
   def find_vals_and_lazy_vals() = {
     val modelName = "http://test.model/"
     ask(modelName, Seq(

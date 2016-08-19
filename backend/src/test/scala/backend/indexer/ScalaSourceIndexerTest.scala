@@ -105,4 +105,23 @@ class ScalaSourceIndexerTest extends RestApiTest {
         Seq(Data("name", "C1")),
         Seq(Data("name", "C2")))
   }
+
+  @Test
+  def find_package_declarations() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package a.b.c
+        class X
+      """)
+    showAmoraIndexContent()
+    sparqlRequest("""
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+      select ?name where {
+        [a p:] p:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "a")),
+        Seq(Data("name", "b")),
+        Seq(Data("name", "c")))
+  }
 }
