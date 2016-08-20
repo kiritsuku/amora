@@ -288,6 +288,7 @@ object HierarchySchema {
         val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
         sb.append(s"  <$path> a <$schemaPath/> .\n")
         sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
+        sb.append(s"  <$path> <$schemaPath/refToDecl> <$declPath> .\n")
 
         ref.position match {
           case RangePosition(start, end) ⇒

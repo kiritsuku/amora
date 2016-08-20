@@ -111,24 +111,6 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def refs_of_parameter() = {
-    ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "ref"] c:reference [c:attachment "param"] ; s:name ?name ; c:start ?start ; c:end ?end .
-        }
-      """,
-      "<memory>" → """
-        class X {
-          def f(i: Int) = {
-            [[i]]
-          }
-        }
-      """)
-  }
-
-  @Test
   def refs_of_local_value_with_same_name_as_parameter() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
