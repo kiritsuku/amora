@@ -11,6 +11,7 @@ import backend.indexer.DeprecatedScalaSourceIndexerTest
 import backend.indexer.RegionIndexerTest
 import backend.indexer.IndexerTest
 import backend.indexer.ScalaSourceIndexerTest
+import backend.indexer.ScalaSourceRegionIndexerTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -20,6 +21,7 @@ import backend.indexer.ScalaSourceIndexerTest
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
   classOf[IndexerTest],
-  classOf[ScalaSourceIndexerTest]
+  classOf[ScalaSourceIndexerTest],
+  classOf[ScalaSourceRegionIndexerTest]
 ))
 class TestSuite

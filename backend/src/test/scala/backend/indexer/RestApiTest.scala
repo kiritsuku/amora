@@ -202,6 +202,87 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  sealed trait Region extends Product with Serializable {
+    def len: Int
+  }
+  case class Range(start: Int, end: Int, str: String) extends Region {
+    override def len = "[[]]".length
+  }
+  case class Offset(offset: Int, str: String) extends Region {
+    override def len = "[[!]]".length + str.length
+  }
+
+  /**
+   * Runs a test against the indexer.
+   *
+   * `rawData` are tuples of the form `(filename, source)`. The sources will be
+   * typechecked and indexed and once this is done the query will run against
+   * the index.
+   *
+   * The sources can contain markers that start with `[[` and end with `]]`.
+   * These markers are the start and end position of a range, which shall be
+   * returned by the query. If the first character after the `[[` marker is a
+   * exclamation mark, the range will become an offset region, whose start and
+   * end position are the same. Offset regions need to be used when implicit
+   * regions need to be tested for their existence (for example implicit return
+   * types of methods). The sources are freed of the region markers before they
+   * are passed to the typechecker to make it convenient to write tests.
+   */
+  def indexRegionData(query: String, origin: Schema, rawData: (String, String)*): Unit = {
+    def findRegions(src: String, prevStart: Int, prevEnd: Int, regions: IndexedSeq[Region]): IndexedSeq[Region] = {
+      val start = src.indexOf("[[", prevEnd)
+      if (start < 0)
+        regions
+      else {
+        val end = src.indexOf("]]", start)
+        val len = regions.map(_.len).sum
+        val isOffset = src(start + 2) == '!'
+        val range =
+          if (isOffset)
+            Offset(start - len, src.substring(start + 3, end))
+          else
+            Range(start - len, end - len - "[[".length, src.substring(start + 2, end))
+        findRegions(src, start, end, regions :+ range)
+      }
+    }
+    val dataWithRegions = rawData map {
+      case (filename, rawSrc) ⇒
+        val regions = findRegions(rawSrc, 0, 0, Vector())
+        val src = rawSrc.replaceAll("""\[\[!.*?\]\]|\[\[|\]\]""", "")
+        (filename, src, regions)
+    }
+    val data = dataWithRegions.map { case (filename, src, _) ⇒ (filename, src) }
+    indexData(origin, data: _*)
+
+    val regionOrdering: Region ⇒ (Int, Int, String) = {
+      case Range(start, end, text) ⇒ (start, end, text)
+      case Offset(offset, text) ⇒ (offset, offset, text)
+    }
+    val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
+
+    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+      status === StatusCodes.OK
+      val r = respAsResultSet()
+
+      import scala.collection.JavaConverters._
+      val foundRegions = r.asScala.toSeq.map { row ⇒
+        val start = row.get("start")
+        require(start != null, "No field with name `start` found.")
+        val end = row.get("end")
+        require(end != null, "No field with name `end` found.")
+        val name = row.get("name")
+        require(name != null, "No field with name `name` found.")
+
+        if (start.asLiteral().getInt == end.asLiteral().getInt)
+          Offset(start.asLiteral().getInt, name.toString())
+        else
+          Range(start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
+      }.sortBy(regionOrdering)
+
+      foundRegions === expectedRegions
+    }
+  }
+
   def sparqlRequest(query: String): Seq[Seq[Data]] = {
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
