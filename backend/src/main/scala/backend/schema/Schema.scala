@@ -240,10 +240,6 @@ object HierarchySchema {
         sb.append(s"  <$path> a <$schemaPath/> .\n")
         sb.append(s"""  <$path> <$schemaPath/name> "$n" .""" + "\n")
 
-        if (h.attachments.nonEmpty) {
-          val elems = h.attachments.map("\"" + _.asString + "\"").mkString(", ")
-          sb.append(s"  <$path> <$schemaPath/attachment> $elems .\n")
-        }
         if (h.attachments(Attachment.Param)) {
           sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
         }
