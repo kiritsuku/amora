@@ -235,6 +235,24 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """)
   }
 
+  @Test
+  def multiple_lambda_decls() = {
+    indexRegionData("""
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        select * where {
+          [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f([[i]]: Int ⇒ Int) = i
+          f([[v]] ⇒ v)
+          f([[v]] ⇒ v)
+        }
+      """)
+  }
+
   // ====================================================================
   // Ref tests
   // ====================================================================
@@ -689,6 +707,97 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         @[[Ann]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
         class X
         class Ann(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
+      """)
+  }
+
+  @Test
+  def multiple_annotations() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
+        @[[Ann2]]
+        @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
+        class X
+        class Ann1(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
+        class Ann2 extends [[scala]].[[annotation]].[[StaticAnnotation]]
+      """)
+  }
+
+  @Test
+  def refs_of_lambda_decl() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_function_decl() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Function1]][ [[Int]], [[Int]] ]) = [[i]]
+        }
+      """)
+  }
+
+  @Test
+  def multiple_lambda_refs() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
+          [[f]]([[!Int]]v ⇒ [[v]])
+          [[f]]([[!Int]]value ⇒ [[value]])
+        }
+      """)
+  }
+
+  @Test
+  def ref_with_qualifier() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "f1.scala" → """
+        package a.b
+        import [[d]].[[e]]
+        class X {
+          val f: [[e]].[[Y]] = null
+        }
+      """,
+      "f2.scala" → """
+        package d.e
+        class Y
       """)
   }
 }

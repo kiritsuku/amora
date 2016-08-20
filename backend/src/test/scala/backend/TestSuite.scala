@@ -8,7 +8,6 @@ import research.converter.ClassfileConverterTest
 import research.converter.ScalacConverterTest
 import backend.indexer.JavaBytecodeIndexerTest
 import backend.indexer.DeprecatedScalaSourceIndexerTest
-import backend.indexer.RegionIndexerTest
 import backend.indexer.IndexerTest
 import backend.indexer.ScalaSourceIndexerTest
 import backend.indexer.ScalaSourceRegionIndexerTest
@@ -17,7 +16,6 @@ import backend.indexer.ScalaSourceRegionIndexerTest
 @SuiteClasses(Array(
   classOf[ScalacConverterTest],
   classOf[DeprecatedScalaSourceIndexerTest],
-  classOf[RegionIndexerTest],
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
   classOf[IndexerTest],
