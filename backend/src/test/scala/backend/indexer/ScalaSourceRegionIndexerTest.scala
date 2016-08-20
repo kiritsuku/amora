@@ -235,6 +235,10 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """)
   }
 
+  // ====================================================================
+  // Ref tests
+  // ====================================================================
+
   @Test
   def return_type_at_members() = {
     indexRegionData("""
@@ -250,6 +254,165 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
           var b: [[Int]] = 0
           def c: [[Int]] = 0
           lazy val d: [[Int]] = 0
+        }
+      """)
+  }
+
+  @Test
+  def return_type_at_nested_members() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def x: [[Int]] = {
+            val a: [[Int]] = {
+              val a: [[Int]] = 0
+              [[a]]
+            }
+            var b: [[Int]] = {
+              var a: [[Int]] = 0
+              [[a]]
+            }
+            def c: [[Int]] = {
+              def a: [[Int]] = 0
+              [[a]]
+            }
+            [[a]]
+          }
+        }
+      """)
+  }
+
+  @Test
+  def return_type_at_nested_lazy_vals() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          lazy val a: [[Int]] = {
+            lazy val a: [[Int]] = {
+              lazy val a: [[Int]] = 0
+              [[a]]
+            }
+            [[a]]
+          }
+        }
+      """)
+  }
+
+  @Test
+  def member_ref() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[!Int]]a = 0
+          def [[!Int]]b = [[a]]
+          var [[!Int]]c = [[b]]
+          lazy val [[!Int]]d = [[c]]
+        }
+      """)
+  }
+
+  @Test
+  def classOf_ref() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[!Class]]a = [[classOf]][ /* Int */ [[Int]] ]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_imports() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        import [[scala]].[[collection]].[[mutable]].[[Buffer]]
+        import [[scala]].[[collection]].[[mutable]].[[ListBuffer]]
+        class X {
+          [[Buffer]]
+          [[ListBuffer]]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_rename_imports() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        import [[scala]].[[collection]].[[mutable]].{ [[Buffer]] ⇒ [[B]], [[ListBuffer]] }
+        class X {
+          [[B]]
+          [[ListBuffer]]
+        }
+      """)
+  }
+
+  @Test
+  def self_ref_with_fully_qualified_name() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X {
+          self: [[scala]].[[collection]].[[mutable]].[[AbstractSet]][ [[java]].[[io]].[[File]] ] ⇒
+        }
+      """)
+  }
+
+  @Test
+  def refs_in_if_expr() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[!Boolean]]b1 = true
+          val [[!Boolean]]b2 = true
+          val [[!Boolean]]b3 = true
+          def [[!Boolean]]f = if ([[b1]]) [[b2]] else [[b3]]
         }
       """)
   }
