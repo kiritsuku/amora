@@ -73,62 +73,6 @@ class DeprecatedScalaSourceIndexerTest {
   }
 
   @Test
-  def class_parameters_can_be_vars() = {
-    val modelName = "http://test.model/"
-    ask(modelName, Seq(
-      "<memory>" → """
-        class X(val i: Int, var j: String) {
-          val k = 0
-        }
-      """), s"""
-        PREFIX c:<$modelName>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "var"] s:name ?name .
-        }
-      """) === Seq(
-        Data("name", "j"))
-    }
-
-  @Test
-  def method_parameters_are_vals() = {
-    val modelName = "http://test.model/"
-    ask(modelName, Seq(
-      "<memory>" → """
-        class X {
-          def f(i: Int, j: String) = 0
-        }
-      """), s"""
-        PREFIX c:<$modelName>
-        PREFIX s:<http://schema.org/>
-        SELECT ?name WHERE {
-          [c:attachment "val"] s:name ?name .
-        }
-      """) === Seq(
-        Data("name", "i"),
-        Data("name", "j"))
-    }
-
-  @Test
-  def method_parameters() = {
-    val modelName = "http://test.model/"
-    ask(modelName, Seq(
-      "<memory>" → """
-        class X {
-          def f(i: Int, j: String) = 0
-        }
-      """), s"""
-        PREFIX c:<$modelName>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "param"] s:name ?name .
-        }
-      """) === Seq(
-        Data("name", "i"),
-        Data("name", "j"))
-  }
-
-  @Test
   def owner_of_refs_in_if_expr() = {
     val modelName = "http://test.model/"
     ask(modelName, Seq(
