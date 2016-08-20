@@ -12,10 +12,16 @@ insert data {
   schema: amora:schemaAuthor "amora" .
   schema: amora:schemaId schema:name .
   schema: amora:schemaId schema:owner .
+  schema: amora:schemaId schema:flag .
+  schema: amora:schemaId schema:posStart .
+  schema: amora:schemaId schema:posEnd .
   schema: amora:format <http://amora.center/kb/amora/Format/0.1/amora/Trait/0.1/schema.jsonld> .
 
   # inference rules
   schema:name rdfs:subPropertyOf decl:name .
   schema:owner rdfs:subPropertyOf decl:owner .
+  schema:flag rdfs:subPropertyOf decl:flag .
+  schema:posStart rdfs:subPropertyOf decl:posStart .
+  schema:posEnd rdfs:subPropertyOf decl:posEnd .
   schema: rdfs:subClassOf decl: .
 }
