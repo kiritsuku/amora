@@ -11,6 +11,9 @@ final case class File(owner: Schema, name: String) extends Schema
 final case class Package(name: String, owner: Schema) extends Schema
 final case class Class(name: String, owner: Schema) extends Schema
 final case class Def(name: String, owner: Schema) extends Schema
+final case class Val(name: String, owner: Schema) extends Schema
+final case class Var(name: String, owner: Schema) extends Schema
+final case class LazyVal(name: String, owner: Schema) extends Schema
 
 object Schema {
 
@@ -27,6 +30,12 @@ object Schema {
       s"${mkShortId(owner)}/$name"
     case Def(name, owner) ⇒
       s"${mkShortId(owner)}/$name"
+    case Val(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Var(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case LazyVal(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
   }
 
   def mkId(s: Schema): String = s match {
@@ -42,6 +51,12 @@ object Schema {
       s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
     case _: Def ⇒
       s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
+    case _: Val ⇒
+      s"http://amora.center/kb/amora/Val/0.1/${mkShortId(s)}"
+    case _: Var ⇒
+      s"http://amora.center/kb/amora/Var/0.1/${mkShortId(s)}"
+    case _: LazyVal ⇒
+      s"http://amora.center/kb/amora/LazyVal/0.1/${mkShortId(s)}"
   }
 
   def mkDefn(s: Schema): String = s match {
@@ -57,6 +72,12 @@ object Schema {
       s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
     case _: Def ⇒
       s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
+    case _: Val ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Val/0.1"
+    case _: Var ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Var/0.1"
+    case _: LazyVal ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1"
   }
 
   def mkSparqlUpdate(schemas: Seq[Schema]): String = {
@@ -117,6 +138,33 @@ object Schema {
                       |  <$id> <$defn/name> "$name" .
         |""".stripMargin)
         id
+      case Val(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$name" .
+        |""".stripMargin)
+        id
+      case Var(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$name" .
+        |""".stripMargin)
+        id
+      case LazyVal(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        sb.append(s"""|  <$id> a <$defn/> .
+                      |  <$id> <$defn/owner> <$oid> .
+                      |  <$id> <$defn/name> "$name" .
+        |""".stripMargin)
+        id
     }
 
     sb.append("INSERT DATA {\n")
@@ -132,6 +180,19 @@ object HierarchySchema {
   def mkSparqlUpdate(schema: Schema, data: Seq[Hierarchy]): String = {
     val sb = new StringBuilder
 
+    def mkTpe(decl: Decl) = {
+      if (decl.attachments(Attachment.Lazy) && decl.attachments(Attachment.Val))
+        "LazyVal"
+      else
+        decl.attachments.collectFirst {
+          case Attachment.Class ⇒ "Class"
+          case Attachment.Package ⇒ "Package"
+          case Attachment.Def ⇒ "Def"
+          case Attachment.Val ⇒ "Val"
+          case Attachment.Var ⇒ "Var"
+        }.getOrElse("Decl")
+    }
+
     def mkFullPath(decl: Decl) = {
       def findArtifact(schema: Schema): Artifact = schema match {
         case a: Artifact ⇒ a
@@ -140,11 +201,7 @@ object HierarchySchema {
         case _ ⇒ ???
       }
       val a = findArtifact(schema)
-      val tpe = decl.attachments.collectFirst {
-        case Attachment.Class ⇒ "Class"
-        case Attachment.Package ⇒ "Package"
-        case Attachment.Def ⇒ "Def"
-      }.getOrElse("Decl")
+      val tpe = mkTpe(decl)
       s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
     }
 
@@ -152,12 +209,7 @@ object HierarchySchema {
       case Root ⇒
       case decl @ Decl(name, owner) ⇒
         val n = encode(name)
-        val tpe = decl.attachments.collectFirst {
-          case Attachment.Class ⇒ "Class"
-          case Attachment.Package ⇒ "Package"
-          case Attachment.Def ⇒ "Def"
-        }.getOrElse("Decl")
-
+        val tpe = mkTpe(decl)
         val path = mkFullPath(decl)
         val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
         sb.append(s"  <$path> a <$schemaPath/> .\n")

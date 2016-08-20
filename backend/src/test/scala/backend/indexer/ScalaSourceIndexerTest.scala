@@ -124,4 +124,119 @@ class ScalaSourceIndexerTest extends RestApiTest {
         Seq(Data("name", "b")),
         Seq(Data("name", "c")))
   }
+
+  @Test
+  def find_vals_and_lazy_vals() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix l:<http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1/>
+      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+      select ?name where {
+        values ?tpes {v: l:}
+        [a ?tpes] amora:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "b")),
+        Seq(Data("name", "e")))
+  }
+
+  @Test
+  def find_lazy_vals() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix l:<http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1/>
+      select ?name where {
+        [a l:] l:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "e")))
+  }
+
+  @Test
+  def find_vals() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      select ?name where {
+        [a v:] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "b")))
+  }
+
+  @Test
+  def find_vars() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+      select ?name where {
+        [a v:] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "d")))
+  }
+
+  @Test
+  def find_defs() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class X {
+          def a = 0
+          val b = 0
+          def c = 0
+          var d = 0
+          lazy val e = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      select ?name where {
+        [a d:] d:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "a")),
+        Seq(Data("name", "c")))
+  }
 }
