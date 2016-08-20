@@ -315,4 +315,76 @@ class ScalaSourceIndexerTest extends RestApiTest {
     """) === Seq(
         Seq(Data("name", "D")))
   }
+
+  @Test
+  def find_private_class_parameters() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X(i: Int, j: String)
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      select ?name where {
+        [v:flag "param"] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")))
+  }
+
+  @Test
+  def find_public_class_parameters() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X(val i: Int, val j: String) {
+          val k = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      select ?name where {
+        [v:flag "param"] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")))
+  }
+
+  @Test
+  def public_class_parameters_are_vals() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X(val i: Int, val j: String) {
+          val k = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      select ?name where {
+        [a v:] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
+        Seq(Data("name", "k")))
+  }
+
+  @Test
+  def private_class_parameters_are_vals() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X(i: Int, j: String) {
+          val k = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      select ?name where {
+        [a v:] v:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
+        Seq(Data("name", "k")))
+  }
 }

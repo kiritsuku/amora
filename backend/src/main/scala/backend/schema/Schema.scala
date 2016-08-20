@@ -244,6 +244,9 @@ object HierarchySchema {
           val elems = h.attachments.map("\"" + _.asString + "\"").mkString(", ")
           sb.append(s"  <$path> <$schemaPath/attachment> $elems .\n")
         }
+        if (h.attachments(Attachment.Param)) {
+          sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
+        }
 
         owner match {
           case Root ⇒
