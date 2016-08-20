@@ -454,4 +454,49 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_local_value_with_same_name_as_parameter() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        select * where {
+          [a ref:] ref:refToDecl [decl:flag "param"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f(i: Int) = {
+            val i = 0
+            // i doesn't point to the parameter
+            i
+          }
+        }
+      """)
+  }
+
+  @Test
+  def refs_to_local_value_when_parameter_of_same_name_exists() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        select * where {
+          ?val a v: .
+          FILTER NOT EXISTS {
+            ?val v:flag "param" .
+          }
+          [a ref:] ref:refToDecl ?val ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f(i: Int) = {
+            val i = 0
+            [[i]]
+          }
+        }
+      """)
+  }
 }
