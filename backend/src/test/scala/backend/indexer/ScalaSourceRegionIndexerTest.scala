@@ -416,4 +416,23 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_single_method() = {
+    indexRegionData("""
+        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          ?def def:jvmSignature "(IF)I" .
+          [a ref:] ref:owner ?def ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f(i: Int) = i
+          def [[!Int]]f(i: Int, s: Float) = [[i]]
+        }
+      """)
+  }
 }

@@ -111,24 +111,6 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def refs_of_single_method() = {
-    ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          ?def c:attachment "def", "(IF)I" .
-          [c:attachment "ref"] c:owner ?def ; s:name ?name ; c:start ?start ; c:end ?end .
-        }
-      """,
-      "<memory>" → """
-        class X {
-          def f(i: Int) = i
-          def [[!Int]]f(i: Int, s: Float) = [[i]]
-        }
-      """)
-  }
-
-  @Test
   def refs_of_parameter() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>

@@ -255,6 +255,11 @@ object HierarchySchema {
           sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
         }
 
+        decl.attachments.collectFirst {
+          case Attachment.JvmSignature(signature) ⇒
+            sb.append(s"""  <$path> <$schemaPath/jvmSignature> "$signature" .""" + "\n")
+        }
+
         decl.position match {
           case RangePosition(start, end) ⇒
             sb.append(s"  <$path> <$schemaPath/posStart> $start .\n")

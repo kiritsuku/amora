@@ -15,6 +15,7 @@ insert data {
   schema: amora:schemaId schema:flag .
   schema: amora:schemaId schema:posStart .
   schema: amora:schemaId schema:posEnd .
+  schema: amora:schemaId schema:jvmSignature .
   schema: amora:format <http://amora.center/kb/amora/Format/0.1/amora/Def/0.1/schema.jsonld> .
 
   # inference rules
