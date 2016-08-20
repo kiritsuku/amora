@@ -10,6 +10,9 @@ final case class Artifact(owner: Project, organization: String, name: String, ve
 final case class File(owner: Schema, name: String) extends Schema
 final case class Package(name: String, owner: Schema) extends Schema
 final case class Class(name: String, owner: Schema) extends Schema
+final case class AbstractClass(name: String, owner: Schema) extends Schema
+final case class Object(name: String, owner: Schema) extends Schema
+final case class Trait(name: String, owner: Schema) extends Schema
 final case class Def(name: String, owner: Schema) extends Schema
 final case class Val(name: String, owner: Schema) extends Schema
 final case class Var(name: String, owner: Schema) extends Schema
@@ -27,6 +30,12 @@ object Schema {
     case Package(name, owner) ⇒
       s"${mkShortId(owner)}/$name"
     case Class(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case AbstractClass(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Object(name, owner) ⇒
+      s"${mkShortId(owner)}/$name"
+    case Trait(name, owner) ⇒
       s"${mkShortId(owner)}/$name"
     case Def(name, owner) ⇒
       s"${mkShortId(owner)}/$name"
@@ -49,6 +58,12 @@ object Schema {
       s"http://amora.center/kb/amora/Package/0.1/${mkShortId(s)}"
     case _: Class ⇒
       s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
+    case _: AbstractClass ⇒
+      s"http://amora.center/kb/amora/AbstractClass/0.1/${mkShortId(s)}"
+    case _: Object ⇒
+      s"http://amora.center/kb/amora/Object/0.1/${mkShortId(s)}"
+    case _: Trait ⇒
+      s"http://amora.center/kb/amora/Trait/0.1/${mkShortId(s)}"
     case _: Def ⇒
       s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
     case _: Val ⇒
@@ -70,6 +85,12 @@ object Schema {
       s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
     case _: Class ⇒
       s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
+    case _: AbstractClass ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/AbstractClass/0.1"
+    case _: Object ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Object/0.1"
+    case _: Trait ⇒
+      s"http://amora.center/kb/amora/Schema/0.1/Trait/0.1"
     case _: Def ⇒
       s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
     case _: Val ⇒
@@ -183,9 +204,13 @@ object HierarchySchema {
     def mkTpe(decl: Decl) = {
       if (decl.attachments(Attachment.Lazy) && decl.attachments(Attachment.Val))
         "LazyVal"
+      else if (decl.attachments(Attachment.Abstract) && decl.attachments(Attachment.Class))
+        "AbstractClass"
       else
         decl.attachments.collectFirst {
           case Attachment.Class ⇒ "Class"
+          case Attachment.Object ⇒ "Object"
+          case Attachment.Trait ⇒ "Trait"
           case Attachment.Package ⇒ "Package"
           case Attachment.Def ⇒ "Def"
           case Attachment.Val ⇒ "Val"

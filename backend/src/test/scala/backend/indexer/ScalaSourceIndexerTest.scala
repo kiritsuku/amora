@@ -239,4 +239,80 @@ class ScalaSourceIndexerTest extends RestApiTest {
         Seq(Data("name", "a")),
         Seq(Data("name", "c")))
   }
+
+  @Test
+  def find_classes() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """)
+    sparqlRequest("""
+      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      select ?name where {
+        [a c:] c:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "A")))
+  }
+
+  @Test
+  def find_abstract_classes() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """)
+    sparqlRequest("""
+      prefix c:<http://amora.center/kb/amora/Schema/0.1/AbstractClass/0.1/>
+      select ?name where {
+        [a c:] c:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "B")))
+  }
+
+  @Test
+  def find_traits() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """)
+    sparqlRequest("""
+      prefix t:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+      select ?name where {
+        [a t:] t:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "C")))
+  }
+
+  @Test
+  def find_objects() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package pkg
+        class A
+        abstract class B
+        trait C
+        object D
+      """)
+    sparqlRequest("""
+      prefix o:<http://amora.center/kb/amora/Schema/0.1/Object/0.1/>
+      select ?name where {
+        [a o:] o:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "D")))
+  }
 }
