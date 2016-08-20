@@ -1,0 +1,14 @@
+# Schema file for class "Format"
+
+prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+prefix schema:<http://amora.center/kb/amora/Schema/0.1/Format/0.1/>
+
+insert data {
+  # schema data
+  schema: amora:schemaName "Format" .
+  schema: amora:schemaVersion "0.1" .
+  schema: amora:schemaAuthor "amora" .
+  schema: amora:schemaId schema:content .
+  schema: amora:format <http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld> .
+}

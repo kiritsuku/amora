@@ -1,0 +1,21 @@
+# Schema file for class "Artifact"
+
+prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+prefix schema:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+
+insert data {
+  # schema data
+  schema: amora:schemaName "Artifact" .
+  schema: amora:schemaVersion "0.1" .
+  schema: amora:schemaAuthor "amora" .
+  schema: amora:schemaId schema:name .
+  schema: amora:schemaId schema:owner .
+  schema: amora:schemaId schema:organization .
+  schema: amora:schemaId schema:version .
+  schema: amora:format <http://amora.center/kb/amora/Format/0.1/amora/Artifact/0.1/schema.jsonld> .
+
+  # inference rules
+  schema:name rdfs:subPropertyOf amora:name .
+  schema:owner rdfs:subPropertyOf amora:owner .
+}
