@@ -516,4 +516,163 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_type_parameter_without_shadowed_type_parameter_refs() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix t:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+        select * where {
+          # find type parameter
+          ?tparam decl:owner [a t:] ; decl:flag "tparam" .
+          # find references of type parameter
+          [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X[A] {
+          def f(a: [[A]], b: [[A]]): [[A]]
+          def f[A](a: A): A
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_shadowed_type_parameter() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        select * where {
+          # find type parameter
+          ?tparam decl:owner [a def:; def:jvmSignature "(Ljava/lang/Object;)Ljava/lang/Object;"] ; decl:flag "tparam" .
+          # find references of type parameter
+          [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X[A] {
+          def f(a: A, b: A): A
+          def f[A](a: [[A]]): [[A]]
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_type_parameter_when_parameter_of_same_name_exists() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        select * where {
+          # find type parameter
+          ?tparam decl:owner [a def:] ; decl:flag "tparam" .
+          # find references of type parameter
+          [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!A]]f[A](A: [[A]]) = {
+            A
+          }
+        }
+      """)
+  }
+
+  @Test
+  def refs_of_type_parameter_when_local_val_decl_of_same_name_exists() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        select * where {
+          # find type parameter
+          ?tparam decl:owner [a def:] ; decl:flag "tparam" .
+          # find references of type parameter
+          [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f[A](A: [[A]]) = {
+            val A = 0
+            A
+          }
+        }
+      """)
+  }
+
+  @Test
+  def multiple_calls_to_def() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!Int]]f(i: [[Int]]) = 0
+          [[f]](0)
+          [[f]](0)
+        }
+      """)
+  }
+
+  @Test
+  def multiple_blocks_with_same_name() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def [[!Int]]f(i: [[Int]]) = 0
+          [[f]]({val [[!Int]]i = 0; [[i]]})
+          [[f]]({val [[!Int]]i = 0; [[i]]})
+        }
+      """)
+  }
+
+  @Test
+  def explicit_apply_method() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[!Option]]a = [[Option]].[[!Int]][[apply]](1)
+        }
+      """)
+  }
+
+  @Test
+  def implicit_apply_method() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[!Option]]a = [[!apply]][[!Int]][[Option]](1)
+        }
+      """)
+  }
 }
