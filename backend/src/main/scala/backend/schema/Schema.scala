@@ -233,15 +233,21 @@ object HierarchySchema {
     def loop(h: Hierarchy): Unit = h match {
       case Root ⇒
       case decl @ Decl(name, owner) ⇒
-        val n = encode(name)
         val tpe = mkTpe(decl)
         val path = mkFullPath(decl)
         val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
         sb.append(s"  <$path> a <$schemaPath/> .\n")
-        sb.append(s"""  <$path> <$schemaPath/name> "$n" .""" + "\n")
+        sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
 
         if (h.attachments(Attachment.Param)) {
           sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
+        }
+
+        decl.position match {
+          case RangePosition(start, end) ⇒
+            sb.append(s"  <$path> <$schemaPath/posStart> $start .\n")
+            sb.append(s"  <$path> <$schemaPath/posEnd> $end .\n")
+          case _ ⇒
         }
 
         owner match {
