@@ -188,7 +188,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
             val pkg = data.collectFirst {
               case d if d.attachments(Attachment.Package) ⇒ d
             }
-            val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, filename)).getOrElse(origin)
+            val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, filename)).getOrElse(File(origin, filename))
             testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(s)))) {(
               status === StatusCodes.OK)
             }

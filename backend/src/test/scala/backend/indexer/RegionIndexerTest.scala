@@ -111,25 +111,6 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def return_type_at_members() = {
-    ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "ref"] s:name ?name ; c:start ?start ; c:end ?end .
-        }
-      """,
-      "<memory>" → """
-        class X {
-          val a: [[Int]] = 0
-          var b: [[Int]] = 0
-          def c: [[Int]] = 0
-          lazy val d: [[Int]] = 0
-        }
-      """)
-  }
-
-  @Test
   def return_type_at_nested_members() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>

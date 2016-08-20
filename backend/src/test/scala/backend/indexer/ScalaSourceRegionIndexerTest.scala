@@ -234,4 +234,23 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def return_type_at_members() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val a: [[Int]] = 0
+          var b: [[Int]] = 0
+          def c: [[Int]] = 0
+          lazy val d: [[Int]] = 0
+        }
+      """)
+  }
 }

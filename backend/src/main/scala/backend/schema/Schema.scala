@@ -230,6 +230,18 @@ object HierarchySchema {
       s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
     }
 
+    def mkOwnerPath(h: Hierarchy, owner: Decl) = {
+      val isTopLevelDecl = {
+        def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
+        def isPkg = owner.attachments(Attachment.Package)
+        isTopLevelDecl && isPkg
+      }
+      if (isTopLevelDecl)
+        Schema.mkId(schema)
+      else
+        mkFullPath(owner)
+    }
+
     def loop(h: Hierarchy): Unit = h match {
       case Root ⇒
       case decl @ Decl(name, owner) ⇒
@@ -255,22 +267,41 @@ object HierarchySchema {
             val ownerPath = Schema.mkDefn(schema)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
           case owner: Decl ⇒
-            val isTopLevelDecl = {
-              def isTopLevelDecl = decl.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
-              def isPkg = owner.attachments(Attachment.Package)
-              isTopLevelDecl && isPkg
-            }
-            val ownerPath =
-              if (isTopLevelDecl)
-                Schema.mkId(schema)
-              else
-                mkFullPath(owner)
+            val ownerPath = mkOwnerPath(decl, owner)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
 
             loop(owner)
           case _: Ref ⇒
         }
-      case Ref(name, refToDecl, owner, qualifier) ⇒
+
+      case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
+        val declPath = refToDecl match {
+          case d: Decl ⇒ mkFullPath(d)
+          case _ ⇒ ???
+        }
+        val path = s"$declPath/${Schema.mkShortId(schema)}${uniqueRef(ref.position)}"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
+        sb.append(s"  <$path> a <$schemaPath/> .\n")
+        sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
+
+        ref.position match {
+          case RangePosition(start, end) ⇒
+            sb.append(s"  <$path> <$schemaPath/posStart> $start .\n")
+            sb.append(s"  <$path> <$schemaPath/posEnd> $end .\n")
+          case _ ⇒
+        }
+
+        owner match {
+          case Root ⇒
+            val ownerPath = Schema.mkDefn(schema)
+            sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+          case owner: Decl ⇒
+            val ownerPath = mkOwnerPath(ref, owner)
+            sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+
+            loop(owner)
+          case _: Ref ⇒
+        }
     }
 
     sb.append("INSERT DATA {\n")
