@@ -111,22 +111,6 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def class_annotation() = {
-    ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:tpe "ref"] s:name ?name ; c:start ?start ; c:end ?end .
-        }
-      """,
-      "<memory>" → """
-        @[[Ann]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
-        class X
-        class Ann(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
-      """)
-  }
-
-  @Test
   def multiple_annotations() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>

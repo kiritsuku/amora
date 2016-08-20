@@ -285,7 +285,8 @@ object HierarchySchema {
       case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
         val declPath = refToDecl match {
           case d: Decl ⇒ mkFullPath(d)
-          case _ ⇒ ???
+          // TODO replace this with a real implementation
+          case _ ⇒ "???"
         }
         val path = s"$declPath/${Schema.mkShortId(schema)}${uniqueRef(ref.position)}"
         val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
