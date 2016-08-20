@@ -254,6 +254,9 @@ object HierarchySchema {
         if (h.attachments(Attachment.Param)) {
           sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
         }
+        if (h.attachments(Attachment.TypeParam)) {
+          sb.append(s"""  <$path> <$schemaPath/flag> "tparam" .""" + "\n")
+        }
 
         decl.attachments.collectFirst {
           case Attachment.JvmSignature(signature) ⇒

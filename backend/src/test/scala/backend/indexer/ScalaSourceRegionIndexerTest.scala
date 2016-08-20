@@ -499,4 +499,21 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def refs_of_type_parameter() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        select * where {
+          [a ref:] ref:refToDecl [decl:flag "tparam"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X[A] {
+          def f[B](a: [[A]], b: [[B]]): [[A]]
+        }
+      """)
+  }
 }

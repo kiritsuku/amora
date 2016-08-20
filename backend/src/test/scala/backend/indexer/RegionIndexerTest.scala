@@ -111,22 +111,6 @@ class RegionIndexerTest {
   def modelName = "http://test.model/"
 
   @Test
-  def refs_of_type_parameter() = {
-    ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "ref"] c:reference [c:attachment "tparam"] ; s:name ?name ; c:start ?start ; c:end ?end .
-        }
-      """,
-      "<memory>" → """
-        trait X[A] {
-          def f[B](a: [[A]], b: [[B]]): [[A]]
-        }
-      """)
-  }
-
-  @Test
   def refs_of_type_parameter_without_shadowed_type_parameter_refs() = {
     ask(modelName, s"""
         PREFIX c:<?MODEL?>
