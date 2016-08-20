@@ -457,4 +457,28 @@ class ScalaSourceIndexerTest extends RestApiTest {
         Seq(Data("name", "i")),
         Seq(Data("name", "j")))
   }
+
+  @Test
+  def owner_of_refs_in_if_expr() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val b1 = true
+          val b2 = true
+          val b3 = true
+          def f = if (b1) b2 else b3
+        }
+      """)
+    sparqlRequest("""
+      prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+      prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      select ?name where {
+        [ref:owner [a def:]] ref:name ?name .
+      }
+    """) === Seq(
+        Seq(Data("name", "Boolean")),
+        Seq(Data("name", "b1")),
+        Seq(Data("name", "b2")),
+        Seq(Data("name", "b3")))
+  }
 }
