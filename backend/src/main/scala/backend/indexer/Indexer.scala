@@ -30,36 +30,35 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
    * schema definitions.
    */
   def startupIndexer(dataset: Dataset): Unit = {
-    def mkInferenceRules(model: Model) = {
-      import scala.collection.JavaConverters._
-      val r = withQueryService(model, """
-        prefix s:<http://amora.center/kb/amora/Schema/0.1/>
-        select * where {
-          ?uri a s: .
+    def indexSchemas(model: Model) = {
+      import java.io.File
+      val cl = getClass.getClassLoader
+      val resourceDir = new File(cl.getResource(".").getPath)
+      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.sparql"))
+      indexableFiles foreach { file ⇒
+        val src = io.Source.fromFile(file, "UTF-8")
+        val query = src.mkString
+        val schemaName = file.getName.dropRight(".schema.jsonld".length)
+        src.close()
+        val alreadyIndexed = runAskQuery(model, s"""
+          ASK {
+            <http://amora.center/kb/amora/Schema/0.1/$schemaName/0.1/> <http://amora.center/kb/amora/Schema/0.1/schemaVersion> ?o
+          }
+        """)
+        if (alreadyIndexed)
+          log.info(s"Skip schema file `$file` since it is already indexed.")
+        else {
+          withUpdateService(model, query) { pss ⇒
+            log.info(s"Schema file `$file` successfully indexed.")
+          }
         }
-      """)
-      val names = r.asScala.toSeq.flatMap { q ⇒
-        val uri = q.get("uri").toString
-        Seq(
-          s"  <${uri}name> rdfs:subPropertyOf amora:name .",
-          s"  <${uri}owner> rdfs:subPropertyOf amora:owner ."
-        )
-      }.mkString("\n")
-      withUpdateService(model, s"""
-        |prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-        |prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-        |insert data {
-        |$names
-        |}
-      """.trim.stripMargin) { pss ⇒
-        log.info("Creating inference rules:\n" + pss.getCommandText)
       }
     }
 
-    try withModel(dataset) { model ⇒
+    def indexJsonLdFormat(model: Model) = {
       import java.io.File
       val cl = getClass.getClassLoader
-      val resourceDir = new java.io.File(cl.getResource(".").getPath)
+      val resourceDir = new File(cl.getResource(".").getPath)
       val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
       val gen = new SchemaGenerator
 
@@ -74,8 +73,6 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
           log.info(s"Skip schema file `$file` since it is already indexed.")
         else {
           val json = gen.resolveVariables(schemaName, rawJson)
-          addJsonLd(model, json.parseJson)
-
           val contentVar = "content"
           withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
             pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint, new BaseDatatype("http://schema.org/Text"))
@@ -85,7 +82,11 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       }
 
       indexableFiles foreach indexFile
-      mkInferenceRules(model)
+    }
+
+    try withModel(dataset) { model ⇒
+      indexJsonLdFormat(model)
+      indexSchemas(model)
 
       log.info("Indexer successfully started.")
     } catch {

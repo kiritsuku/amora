@@ -360,7 +360,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
+          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")),
+          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")))
     }
   }
 
@@ -416,7 +417,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")),
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")))
     }
   }
 
@@ -437,7 +439,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Class/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Class/0.1/")),
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")))
     }
   }
 }
