@@ -231,20 +231,20 @@ object Build extends sbt.Build {
     fork in Test := true,
 
     // add ui JS files to resources: *fastopt.js, *fullopt.js, *launcher.js, *jsdeps.js
-    resourceGenerators in Compile <+= (fastOptJS in Compile in ui).map(r => Seq(r.data)),
-    //resourceGenerators in Compile <+= (fullOptJS in Compile in ui).map(r => Seq(r.data)),
-    resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in ui).map(r => Seq(r.data)),
-    resourceGenerators in Compile <+= (packageJSDependencies in Compile in ui).map(Seq(_)),
+    resourceGenerators in Compile += (fastOptJS in Compile in ui).map(r => Seq(r.data)).taskValue,
+    //resourceGenerators in Compile += ((fullOptJS in Compile in ui).map(r => Seq(r.data)).taskValue,
+    resourceGenerators in Compile += (packageScalaJSLauncher in Compile in ui).map(r => Seq(r.data)).taskValue,
+    resourceGenerators in Compile += (packageJSDependencies in Compile in ui).map(Seq(_)).taskValue,
     // add folder of webjars to resources
     unmanagedResourceDirectories in Compile += (WebKeys.webTarget in Compile in ui).value / "web-modules" / "main" / "webjars" / "lib",
 
     // add webUi JS files to resources: *fastopt.js, *fullopt.js, *launcher.js, *jsdeps.js
-    resourceGenerators in Compile <+= (fastOptJS in Compile in webUi).map(r => Seq(r.data)),
-    resourceGenerators in Compile <+= (packageScalaJSLauncher in Compile in webUi).map(r => Seq(r.data)),
-    resourceGenerators in Compile <+= (packageJSDependencies in Compile in webUi).map(Seq(_)),
+    resourceGenerators in Compile += (fastOptJS in Compile in webUi).map(r => Seq(r.data)).taskValue,
+    resourceGenerators in Compile += (packageScalaJSLauncher in Compile in webUi).map(r => Seq(r.data)).taskValue,
+    resourceGenerators in Compile += (packageJSDependencies in Compile in webUi).map(Seq(_)).taskValue,
 
     // depend on the genElectronMain task but don't add its generated resources since we don't need to route them at runtime
-    resourceGenerators in Compile <+= (genElectronMain in Compile in electron).map(_ => Seq()),
+    resourceGenerators in Compile += (genElectronMain in Compile in electron).map(_ => Seq()).taskValue,
 
     // add schema definitions to resource directories
     unmanagedResourceDirectories in Compile += (baseDirectory in ThisBuild).value / "schema",
@@ -261,10 +261,10 @@ object Build extends sbt.Build {
 
     // add plugin timestamp to compiler options to trigger recompile of
     // code after editing the plugin. (Otherwise a 'clean' is needed.)
-    scalacOptions in Test <++= (Keys.`package` in Compile) map { (jar: File) =>
+    scalacOptions in Test ++= ((Keys.`package` in Compile) map { (jar: File) =>
       System.setProperty("sbt.paths.plugin.jar", jar.getAbsolutePath)
       Seq("-Xplugin:" + jar.getAbsolutePath, "-Jdummy=" + jar.lastModified)
-    },
+    }).value,
 
     // adds project depedencies to JAR file of compiler plugin. If we don't do this,
     // the dependencies are not available when the compiler plugin is executed.
@@ -281,7 +281,7 @@ object Build extends sbt.Build {
       println("Using sbt-assembly to package library dependencies into a fat jar for publication")
       (art, slimJar)
     },
-    test in Test <<= (test in Test).dependsOn(packagedArtifacts),
+    test in Test := (test in Test).dependsOn(packagedArtifacts).value,
 
     // show stack traces up to first sbt stack frame
     traceLevel in Test := 0
