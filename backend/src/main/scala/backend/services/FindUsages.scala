@@ -1,28 +1,9 @@
 package backend.services
 
-import java.io.ByteArrayInputStream
-import java.nio.charset.StandardCharsets
-
-import org.apache.jena.query.ResultSetFactory
-
-import scalaj.http.Http
-import scalaj.http.HttpOptions
-
-class FindUsages {
-
-//  def uri = "http://amora.center/sparql"
-  def uri = "http://localhost:7777/sparql"
-
-  def response(str: String): String = {
-    str
-  }
-
-  def requestId: String = {
-    "#reqId"
-  }
+class FindUsages extends ScalaService {
 
   def run(offset: Int): String = {
-    val query = s"""
+    val r = sparqlRequest(s"""
       prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
 
       select ?uStart ?uEnd where {
@@ -32,17 +13,7 @@ class FindUsages {
         ?usages ref:refToDecl ?decl .
         ?usages ref:posStart ?uStart; ref:posEnd ?uEnd .
       }
-    """
-
-    val req = Http(uri)
-      .postData(query)
-      .header("Accept", "application/sparql-results+json")
-      .header("Charset", "UTF-8")
-      .option(HttpOptions.connTimeout(1000))
-      .asString
-
-    val in = new ByteArrayInputStream(req.body.getBytes(StandardCharsets.UTF_8))
-    val r = ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
+    """)
     import scala.collection.JavaConverters._
     val positions = r.asScala.map { qs ⇒
       qs.get("uStart").asLiteral().getInt → qs.get("uEnd").asLiteral().getInt
