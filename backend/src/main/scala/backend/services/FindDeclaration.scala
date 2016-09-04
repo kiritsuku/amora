@@ -24,6 +24,7 @@ class FindDeclaration extends ScalaService {
 
         ?decl decl:posStart ?declStart; decl:posEnd ?declEnd .
       }
+      limit 1
     """)
     import scala.collection.JavaConverters._
     val position = r.asScala.map { qs ⇒
