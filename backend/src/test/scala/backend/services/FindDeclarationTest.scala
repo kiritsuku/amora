@@ -11,15 +11,15 @@ class FindDeclarationTest extends RestApiTest {
 
   @Test
   def it_is_possible_to_call_FindDeclaration(): Unit = {
-    indexData(Artifact(Project("p"), "o", "n", "v1"),
-      "f1.scala" → """
-        class Decl
-        class X {
-          def decl: Decl = ???
-        }
-      """)
+    val CursorData(cursorPos, src) = cursorData("""
+      class Decl
+      class X {
+        def decl: De^cl = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
 
-    val m = serviceRequest("""
+    val m = serviceRequest(s"""
       @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       @prefix registry: <http://amora.center/kb/Service/0.1/>
       @prefix request: <http://amora.center/kb/ServiceRequest/0.1/>
@@ -30,7 +30,7 @@ class FindDeclarationTest extends RestApiTest {
           service:name "run" ;
           service:param [
             service:name "offset" ;
-            service:value 59 ;
+            service:value $cursorPos ;
           ] ;
         ] ;
       .
@@ -45,7 +45,7 @@ class FindDeclarationTest extends RestApiTest {
         ?s service:result [decl:posStart ?start ; decl:posEnd ?end]
       }
     """) === Seq(
-        Seq(Data("start", "15"), Data("end", "19")))
+        Seq(Data("start", "13"), Data("end", "17")))
   }
 
 }

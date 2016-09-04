@@ -334,6 +334,19 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     m
   }
 
+  case class CursorData(cursorPos: Int, src: String)
+
+  /**
+   * Takes a string as input that contains the '^' character, which donates the
+   * position of a cursor. The index of the cursor is returned together with the
+   * string that no longer contains the cursor.
+   */
+  def cursorData(rawSrc: String): CursorData = {
+    val i = rawSrc.indexOf('^')
+    require(i >= 0, "No cursor marker found.")
+    CursorData(i, rawSrc.substring(0, i) + rawSrc.substring(i+1))
+  }
+
   @After
   def waitForTermination(): Unit = {
     Await.result(system.terminate(), Duration.Inf)

@@ -11,19 +11,19 @@ class FindUsagesTest extends RestApiTest {
 
   @Test
   def it_is_possible_to_call_FindUsages(): Unit = {
-    indexData(Artifact(Project("p"), "o", "n", "v1"),
-      "f1.scala" → """
-        package backend.services
-        class X {
-          def f: List[Int] = {
-            val xs: List[Int] = List(1)
-            xs
-          }
-          val xs: List[Int] = f
+    val CursorData(cursorPos, src) = cursorData("""
+      package backend.services
+      class X {
+        def f: Li^st[Int] = {
+          val xs: List[Int] = List(1)
+          xs
         }
-      """)
+        val xs: List[Int] = f
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
 
-    val m = serviceRequest("""
+    val m = serviceRequest(s"""
       @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       @prefix registry: <http://amora.center/kb/Service/0.1/>
       @prefix request: <http://amora.center/kb/ServiceRequest/0.1/>
@@ -34,7 +34,7 @@ class FindUsagesTest extends RestApiTest {
           service:name "run" ;
           service:param [
             service:name "offset" ;
-            service:value 72 ;
+            service:value $cursorPos ;
           ] ;
         ] ;
       .
@@ -49,9 +49,9 @@ class FindUsagesTest extends RestApiTest {
         ?s service:result/rdf:rest*/rdf:first [decl:posStart ?start ; decl:posEnd ?end]
       }
     """) === Seq(
-        Seq(Data("start", "69"), Data("end", "73")),
-        Seq(Data("start", "103"), Data("end", "107")),
-        Seq(Data("start", "168"), Data("end", "172")))
+        Seq(Data("start", "63"), Data("end", "67")),
+        Seq(Data("start", "95"), Data("end", "99")),
+        Seq(Data("start", "154"), Data("end", "158")))
   }
 
 }
