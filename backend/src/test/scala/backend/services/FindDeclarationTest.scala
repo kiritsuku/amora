@@ -79,4 +79,17 @@ class FindDeclarationTest extends RestApiTest {
     serviceResult(cursorPos) === Seq(
         Seq(Data("start", "13"), Data("end", "17")))
   }
+
+  @Test
+  def do_not_find_anything_when_cursor_does_not_point_to_an_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class Decl
+      class X {
+        d^ef decl: Decl = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq()
+  }
 }

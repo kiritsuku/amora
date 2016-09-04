@@ -15,9 +15,9 @@ class FindDeclaration extends ScalaService {
       }
     """)
     import scala.collection.JavaConverters._
-    val (start, end) = r.asScala.map { qs ⇒
+    val position = r.asScala.map { qs ⇒
       qs.get("declStart").asLiteral().getInt → qs.get("declEnd").asLiteral().getInt
-    }.toSeq.head
+    }.toSeq
 
     response(s"""
       @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
@@ -26,10 +26,12 @@ class FindDeclaration extends ScalaService {
       <#this>
         a response: ;
         service:requestId <$requestId> ;
-        service:result [
+        service:result ${ position.map{
+          case (start, end) ⇒ s"""[
           decl:posStart $start ;
           decl:posEnd $end ;
-        ] ;
+        ] ;"""
+        }.headOption.getOrElse("[]")}
       .
     """)
   }
