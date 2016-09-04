@@ -28,6 +28,7 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
+import backend.requests.Service
 import backend.requests.Sparql
 import frontend.webui.protocol.RequestFailed
 import frontend.webui.protocol.RequestSucceeded
@@ -35,6 +36,7 @@ import frontend.webui.protocol.RequestSucceeded
 final class WebService(override implicit val system: ActorSystem)
     extends Directives
     with Sparql
+    with Service
     with AkkaLogging {
 
   override val bs = new BackendSystem()
@@ -207,6 +209,11 @@ final class WebService(override implicit val system: ActorSystem)
         extractRequest { req ⇒
           handleSparqlUpdatePostRequest(req, encodedPostReq)
         }
+      }
+    } ~
+    path("service") {
+      entity(as[String]) { req ⇒
+        complete(HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, serviceRequest(req)))
       }
     }
   }
