@@ -9,17 +9,8 @@ class FindDeclarationTest extends RestApiTest {
 
   import backend.TestUtils._
 
-  @Test
-  def it_is_possible_to_call_FindDeclaration(): Unit = {
-    val CursorData(cursorPos, src) = cursorData("""
-      class Decl
-      class X {
-        def decl: De^cl = ???
-      }
-    """)
-    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
-
-    val m = serviceRequest(s"""
+  def serviceResult(cursorPos: Int) = {
+   val m = serviceRequest(s"""
       @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       @prefix registry: <http://amora.center/kb/Service/0.1/>
       @prefix request: <http://amora.center/kb/ServiceRequest/0.1/>
@@ -44,8 +35,48 @@ class FindDeclarationTest extends RestApiTest {
       select ?start ?end where {
         ?s service:result [decl:posStart ?start ; decl:posEnd ?end]
       }
-    """) === Seq(
+    """)
+  }
+
+  @Test
+  def find_decl_when_cursor_is_in_the_middle_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class Decl
+      class X {
+        def decl: De^cl = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
         Seq(Data("start", "13"), Data("end", "17")))
   }
 
+  @Test
+  def find_decl_when_cursor_is_at_beginning_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class Decl
+      class X {
+        def decl: ^Decl = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "13"), Data("end", "17")))
+  }
+
+  @Test
+  def find_decl_when_cursor_is_at_end_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class Decl
+      class X {
+        def decl: Decl^ = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "13"), Data("end", "17")))
+  }
 }
