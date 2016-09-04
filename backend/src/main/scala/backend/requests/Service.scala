@@ -84,9 +84,7 @@ trait Service extends AkkaLogging {
         })
     }
 
-    val res = run(serviceClassName, serviceMethod, param)
-    println(res)
-    res.toString()
+    run(serviceClassName, serviceMethod, param).toString()
   }
 
   private def run(className: String, methodName: String, param: Map[String, Param]): Any = {
