@@ -11,6 +11,7 @@ import backend.indexer.IndexerTest
 import backend.indexer.ScalaSourceIndexerTest
 import backend.indexer.ScalaSourceRegionIndexerTest
 import backend.services.FindUsagesTest
+import backend.services.FindDeclarationTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -20,6 +21,7 @@ import backend.services.FindUsagesTest
   classOf[IndexerTest],
   classOf[ScalaSourceIndexerTest],
   classOf[ScalaSourceRegionIndexerTest],
-  classOf[FindUsagesTest]
+  classOf[FindUsagesTest],
+  classOf[FindDeclarationTest]
 ))
 class TestSuite
