@@ -7,19 +7,19 @@ import org.junit.runners.Suite.SuiteClasses
 import research.converter.ClassfileConverterTest
 import research.converter.ScalacConverterTest
 import backend.indexer.JavaBytecodeIndexerTest
-import backend.indexer.DeprecatedScalaSourceIndexerTest
 import backend.indexer.IndexerTest
 import backend.indexer.ScalaSourceIndexerTest
 import backend.indexer.ScalaSourceRegionIndexerTest
+import backend.services.FindUsagesTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
   classOf[ScalacConverterTest],
-  classOf[DeprecatedScalaSourceIndexerTest],
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
   classOf[IndexerTest],
   classOf[ScalaSourceIndexerTest],
-  classOf[ScalaSourceRegionIndexerTest]
+  classOf[ScalaSourceRegionIndexerTest],
+  classOf[FindUsagesTest]
 ))
 class TestSuite

@@ -7,18 +7,27 @@ import java.nio.charset.StandardCharsets
 import scala.concurrent.Await
 import scala.concurrent.Promise
 import scala.concurrent.duration.Duration
+import scala.util.Failure
+import scala.util.Success
 
+import org.apache.jena.query.QueryExecutionFactory
+import org.apache.jena.query.QueryFactory
 import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
+import org.apache.jena.rdf.model.Model
+import org.apache.jena.rdf.model.ModelFactory
 import org.junit.After
 
 import akka.actor.Cancellable
 import akka.http.javadsl.model.headers.RawRequestURI
+import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.HttpMethods
 import akka.http.scaladsl.model.HttpRequest
+import akka.http.scaladsl.model.RequestEntity
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.model.headers.Accept
@@ -74,6 +83,18 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   val service = new WebService
   val route = service.route
+  val config = system.settings.config
+  val interface = config.getString("app.interface")
+  val port = config.getInt("app.port")
+  val binding = Http().bindAndHandle(route, interface, port)
+  binding.onComplete {
+    case Success(binding) ⇒
+      val addr = binding.localAddress
+      log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
+    case Failure(e) ⇒
+      log.error(e, "Failed to start server")
+      system.terminate()
+  }
 
   case class Data(varName: String, value: String)
 
@@ -146,7 +167,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 
-  def post(uri: String, request: String, header: HttpHeader*): HttpRequest = {
+  def post(uri: String, request: RequestEntity, header: HttpHeader*): HttpRequest = {
     val u = Uri(uri)
     val r = HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString)) ++ header, request)
     log.info(s"sending request: $r")
@@ -288,6 +309,29 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet())
     }
+  }
+
+  def serviceRequest(query: String): Model = {
+    testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, query), header = Accept(CustomContentTypes.n3))) {
+      status === StatusCodes.OK
+      fillModel(ModelFactory.createDefaultModel(), respAsString)
+    }
+  }
+
+  def modelAsData(model: Model, query: String): Seq[Seq[Data]] = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+    val rs = ResultSetFactory.makeRewindable(qexec.execSelect())
+    if (debugTests) {
+      log.info("response as query result:\n" + resultSetAsString(rs))
+      rs.reset()
+    }
+    resultSetAsData(rs)
+  }
+
+  def fillModel(m: Model, n3Data: String): Model = {
+    val in = new ByteArrayInputStream(n3Data.getBytes)
+    m.read(in, null, "N3")
+    m
   }
 
   @After
