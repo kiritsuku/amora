@@ -92,4 +92,18 @@ class FindDeclarationTest extends RestApiTest {
 
     serviceResult(cursorPos) === Seq()
   }
+
+  @Test
+  def find_decl_when_cursor_points_at_decl(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class De^cl
+      class X {
+        def decl: Decl = ???
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "13"), Data("end", "17")))
+  }
 }
