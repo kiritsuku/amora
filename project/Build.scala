@@ -343,6 +343,8 @@ object Build extends sbt.Build {
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
       "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
+      // https://github.com/scalaj/scalaj-http
+      "org.scalaj"                     %%  "scalaj-http"                       % "2.3.0",
       "com.novocode"                   %   "junit-interface"                   % "0.11"                    % "test",
       "com.typesafe.akka"              %%  "akka-http-testkit"                 % versions.akka             % "test"
     ))
