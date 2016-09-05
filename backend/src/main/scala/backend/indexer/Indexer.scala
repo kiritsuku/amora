@@ -34,14 +34,11 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
-      val indexableFiles = resourceDir.listFiles().filter { file ⇒
-        val name = file.getName
-        name.endsWith(".schema.sparql") || name.endsWith(".schema.n3")
-      }
+      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.n3"))
       indexableFiles foreach { file ⇒
         val src = io.Source.fromFile(file, "UTF-8")
         val content = src.mkString
-        val schemaName = file.getName.dropRight(".schema.jsonld".length)
+        val schemaName = file.getName.dropRight(".schema.n3".length)
         src.close()
         val alreadyIndexed = runAskQuery(model, s"""
           ASK {
@@ -50,11 +47,6 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
         """)
         if (alreadyIndexed)
           log.info(s"Skip schema file `$file` since it is already indexed.")
-        else if (file.getName.endsWith(".sparql")) {
-          withUpdateService(model, content) { pss ⇒
-            log.info(s"Schema file `$file` successfully indexed.")
-          }
-        }
         else {
           addN3(model, content)
           log.info(s"Schema file `$file` successfully indexed.")
