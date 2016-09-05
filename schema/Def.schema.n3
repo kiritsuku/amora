@@ -1,0 +1,28 @@
+# Schema file for class "Def"
+
+@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+@prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+
+# schema data
+schema:
+  amora:schemaName "Def" ;
+  amora:schemaVersion "0.1" ;
+  amora:schemaAuthor "amora" ;
+  amora:schemaId schema:name ;
+  amora:schemaId schema:owner ;
+  amora:schemaId schema:flag ;
+  amora:schemaId schema:posStart ;
+  amora:schemaId schema:posEnd ;
+  amora:schemaId schema:jvmSignature ;
+  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Def/0.1/schema.jsonld>
+.
+
+# inference rules
+schema:name rdfs:subPropertyOf decl:name .
+schema:owner rdfs:subPropertyOf decl:owner .
+schema:flag rdfs:subPropertyOf decl:flag .
+schema:posStart rdfs:subPropertyOf decl:posStart .
+schema:posEnd rdfs:subPropertyOf decl:posEnd .
+schema: rdfs:subClassOf decl: .

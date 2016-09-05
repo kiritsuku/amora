@@ -1,0 +1,25 @@
+# Schema file for class "Ref"
+
+@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
+@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+
+schema:
+  amora:schemaName "Ref" ;
+  amora:schemaVersion "0.1" ;
+  amora:schemaAuthor "amora" ;
+  amora:schemaId schema:name ;
+  amora:schemaId schema:owner ;
+  amora:schemaId schema:refToDecl ;
+  amora:schemaId schema:qualifier ;
+  amora:schemaId schema:flag ;
+  amora:schemaId schema:posStart ;
+  amora:schemaId schema:posEnd ;
+  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Ref/0.1/schema.jsonld>
+.
+
+schema:name rdfs:subPropertyOf amora:name .
+schema:owner rdfs:subPropertyOf amora:owner .
+schema:flag rdfs:subPropertyOf amora:flag .
+schema:posStart rdfs:subPropertyOf amora:posStart .
+schema:posEnd rdfs:subPropertyOf amora:posEnd .
