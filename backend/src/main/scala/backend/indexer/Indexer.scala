@@ -34,10 +34,13 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
-      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.sparql"))
+      val indexableFiles = resourceDir.listFiles().filter { file ⇒
+        val name = file.getName
+        name.endsWith(".schema.sparql") || name.endsWith(".schema.n3")
+      }
       indexableFiles foreach { file ⇒
         val src = io.Source.fromFile(file, "UTF-8")
-        val query = src.mkString
+        val content = src.mkString
         val schemaName = file.getName.dropRight(".schema.jsonld".length)
         src.close()
         val alreadyIndexed = runAskQuery(model, s"""
@@ -47,10 +50,14 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
         """)
         if (alreadyIndexed)
           log.info(s"Skip schema file `$file` since it is already indexed.")
-        else {
-          withUpdateService(model, query) { pss ⇒
+        else if (file.getName.endsWith(".sparql")) {
+          withUpdateService(model, content) { pss ⇒
             log.info(s"Schema file `$file` successfully indexed.")
           }
+        }
+        else {
+          addN3(model, content)
+          log.info(s"Schema file `$file` successfully indexed.")
         }
       }
     }
@@ -389,6 +396,11 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
     val str = data.prettyPrint
     val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "JSON-LD")
+  }
+
+  def addN3(model: Model, str: String): Unit = {
+    val in = new ByteArrayInputStream(str.getBytes)
+    model.read(in, /* base = */ null, "N3")
   }
 
   def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {

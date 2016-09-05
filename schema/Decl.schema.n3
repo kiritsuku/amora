@@ -1,0 +1,23 @@
+# Schema file for class "Decl"
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+@prefix amora: <http://amora.center/kb/amora/Schema/0.1/>
+@prefix schema: <http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+
+schema:
+  amora:schemaName "Decl" ;
+  amora:schemaVersion "0.1" ;
+  amora:schemaAuthor "amora" ;
+  amora:schemaId schema:name ;
+  amora:schemaId schema:owner ;
+  amora:schemaId schema:flag ;
+  amora:schemaId schema:posStart ;
+  amora:schemaId schema:posEnd ;
+  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Decl/0.1/schema.jsonld> ;
+.
+
+schema:name rdfs:subPropertyOf amora:name .
+schema:owner rdfs:subPropertyOf amora:owner .
+schema:flag rdfs:subPropertyOf amora:flag .
+schema:posStart rdfs:subPropertyOf amora:posStart .
+schema:posEnd rdfs:subPropertyOf amora:posEnd .
