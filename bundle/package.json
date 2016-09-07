@@ -1,0 +1,12 @@
+{
+  "name": "static",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:sschaef/amora.git"
+  },
+  "dependencies": {
+    "browserify": "13.0.0",
+    "rdfstore": "0.9.17"
+  }
+}

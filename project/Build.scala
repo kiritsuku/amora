@@ -2,8 +2,9 @@ import sbt._
 import sbt.Keys._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
+import com.typesafe.sbt.jse.SbtJsEngine
 import com.typesafe.sbt.web.SbtWeb
-import com.typesafe.sbt.web.Import.WebKeys
+import com.typesafe.sbt.web.Import._
 import com.typesafe.sbteclipse.core.EclipsePlugin._
 import spray.revolver.RevolverPlugin._
 import sbtassembly.AssemblyKeys._
@@ -12,6 +13,7 @@ object Build extends sbt.Build {
 
   val genElectronMain = TaskKey[Unit]("gen-electron-main", "Generates Electron application's main file.")
   val genFirefoxPlugin = TaskKey[Unit]("gen-firefox-plugin", "Generates the Firefox plugin.")
+  val genBundle = TaskKey[File]("gen-bundle", "Generates a bundle that contains all NPM dependencies to be used in the browser.")
 
   lazy val commonSettings = Seq(
     scalaVersion := "2.11.8",
@@ -193,6 +195,38 @@ object Build extends sbt.Build {
   ) dependsOn (protocolJs)
 
   /**
+   * This plugin makes it possible to include NPM dependencies in our sbt build. It provides the `genBundle` task,
+   * which downloads the dependencies and creates a file called "bundle.js", which contains all of the dependencies.
+   * The `getBundle` task returns the location of the bundled JS file,
+   */
+  lazy val bundle = project in file("bundle") enablePlugins(SbtWeb, SbtJsEngine) settings commonSettings ++ Seq(
+    name := "bundle",
+
+    genBundle := {
+      import com.typesafe.sbt.jse.JsEngineImport.JsEngineKeys._
+      import com.typesafe.sbt.jse.SbtJsTask._
+      import com.typesafe.sbt.jse.SbtJsEngine.autoImport.JsEngineKeys._
+      import scala.concurrent.duration._
+
+      (npmNodeModules in Assets).value
+      val log = streams.value.log
+      val in = (baseDirectory.value / "dependencies.js").getAbsolutePath
+      val out = (baseDirectory.value / "target" / "bundle.js").getAbsolutePath
+      val modules =  (baseDirectory.value / "node_modules").getAbsolutePath
+      log.info(s"Bundling NPM dependencies into file '$out'.")
+      executeJs(
+        state.value,
+        engineType.value,
+        None,
+        Seq(modules),
+        baseDirectory.value / "browserify.js",
+        Seq(in, out),
+        30.seconds)
+      file(out)
+    }
+  )
+
+  /**
    * The web interface of the backend.
    */
   lazy val webUi = project in file("web-ui") enablePlugins(ScalaJSPlugin, SbtWeb) settings commonSettings ++ Seq(
@@ -200,6 +234,11 @@ object Build extends sbt.Build {
     scalaJSStage in Global := FastOptStage,
 
     libraryDependencies ++= deps.webUi.value,
+
+    // add bundle JS files to resources
+    resourceGenerators in Compile += (genBundle in bundle).map(r => Seq(r)).taskValue,
+    // mae bundled JS file availabl to Scala.js
+    jsDependencies += ProvidedJS / "bundle.js",
 
     skip in packageJSDependencies := false,
 
