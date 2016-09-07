@@ -52,6 +52,9 @@ object Main extends JSApp {
           Future {
             setupWS()
             showMainPage()
+          } onFailure {
+            case t ⇒
+              throw t
           }
 
         case msg ⇒
