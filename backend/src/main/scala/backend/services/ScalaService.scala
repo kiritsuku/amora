@@ -28,6 +28,7 @@ trait ScalaService {
   def sparqlRequest(query: String): ResultSetRewindable = {
     val req = Http(uri)
       .postData(query)
+      .header("Content-Type", "application/sparql-query")
       .header("Accept", "application/sparql-results+json")
       .header("Charset", "UTF-8")
       .option(timeout)
