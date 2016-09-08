@@ -1,6 +1,7 @@
 package backend.requests
 
 import java.io.ByteArrayOutputStream
+import java.net.URLDecoder
 
 import scala.util.Failure
 import scala.util.Success
@@ -15,6 +16,7 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.ContentNegotiator
@@ -25,6 +27,7 @@ import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
 import backend.AkkaLogging
 import backend.BackendSystem
 import backend.Content
+import backend.CustomContentTypes
 
 trait Sparql extends Directives with AkkaLogging {
   import akka.http.scaladsl.model.ContentTypes._
@@ -113,8 +116,19 @@ trait Sparql extends Directives with AkkaLogging {
     }
     val resp = ct.map {
       case (ct, fmt) ⇒
-        runQuery(query) { r ⇒
-          HttpEntity(ct, resultSetAsString(r, fmt))
+        req.entity.contentType.mediaType match {
+          case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+            runQuery(query) { r ⇒
+              HttpEntity(ct, resultSetAsString(r, fmt))
+            }
+
+          case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
+            if (!query.startsWith("query="))
+              reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+            else
+              runQuery(URLDecoder.decode(query.drop("query=".length), "UTF-8")) { r ⇒
+                HttpEntity(ct, resultSetAsString(r, fmt))
+              }
         }
     }
     resp.getOrElse {
@@ -124,10 +138,23 @@ trait Sparql extends Directives with AkkaLogging {
   }
 
   def handleSparqlUpdatePostRequest(req: HttpRequest, query: String): Route = {
-    bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
-      case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
-      case Failure(t) ⇒ throw t
+    req.entity.contentType.mediaType match {
+      case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+        bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
+          case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+          case Failure(t) ⇒ throw t
+        }
+
+      case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
+        if (!query.startsWith("query="))
+          reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+        else
+          bs.runUpdate(URLDecoder.decode(query.drop("query=".length), "UTF-8"), "Error happened while handling SPARQL update request.") {
+            case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+            case Failure(t) ⇒ throw t
+          }
     }
+
   }
 
   private def showSparqlEditor(query: String, response: String) = {
