@@ -31,9 +31,11 @@ trait ScalaService {
       .header("Accept", "application/sparql-results+json")
       .header("Charset", "UTF-8")
       .option(timeout)
-      .asString
+    val resp = req.asString
+    if (resp.code != 200)
+      throw new IllegalStateException(s"SPARQL request responded with an error.\nRequest: $req\nResponse: $resp")
 
-    val in = new ByteArrayInputStream(req.body.getBytes(StandardCharsets.UTF_8))
+    val in = new ByteArrayInputStream(resp.body.getBytes(StandardCharsets.UTF_8))
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 }
