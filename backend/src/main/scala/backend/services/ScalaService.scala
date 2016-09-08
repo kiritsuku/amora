@@ -11,8 +11,8 @@ import scalaj.http.HttpOptions
 
 trait ScalaService {
 
-//  def uri = "http://amora.center/sparql"
-  def uri = "http://localhost:7777/sparql"
+  // This value is injected at runtime
+  val uri: String = null
 
   def response(str: String): String = {
     str

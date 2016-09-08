@@ -26,6 +26,10 @@ import backend.CustomContentTypes
 trait Service extends Directives with AkkaLogging {
 
   private implicit val d = system.dispatcher
+  private val config = system.settings.config
+  private val testMode = config.getBoolean("app.test-mode")
+  private val interface = config.getString("app.interface")
+  private val port = config.getInt("app.port")
 
   /**
    * Expects a request encoded in N3 and returns a response encoded in N3.
@@ -112,6 +116,9 @@ trait Service extends Directives with AkkaLogging {
   private def run(className: String, methodName: String, param: Map[String, Param]): Any = {
     val cls = Class.forName(className)
     val obj = cls.newInstance()
+    val uriField = cls.getDeclaredField("uri")
+    uriField.setAccessible(true)
+    uriField.set(obj, if (testMode) s"http://$interface:$port/sparql" else "http://amora.center/sparql")
     // TODO get rid of the ??? here
     val m = cls.getMethods.find(_.getName == methodName).getOrElse(???)
     val hasNoJavaParameterNames = m.getParameters.headOption.exists(_.getName == "arg0")
