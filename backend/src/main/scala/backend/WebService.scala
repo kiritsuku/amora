@@ -11,6 +11,7 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.Uri.Query
@@ -158,7 +159,18 @@ final class WebService(override implicit val system: ActorSystem)
     path("sparql") {
       entity(as[String]) { encodedPostReq ⇒
         extractRequest { req ⇒
-          handleSparqlPostRequest(req, encodedPostReq)
+          def acceptContentTypes(contentTypes: MediaType*)(f: ⇒ Route): Route = {
+            val m = req.entity.contentType.mediaType
+            val isDefined = contentTypes.exists(_ matches m)
+            if (isDefined)
+              f
+            else
+              complete(HttpResponse(StatusCodes.UnsupportedMediaType,
+                  entity = s"SPARQL requests require one of the following media types:\n${contentTypes.map(_.toString).mkString("\n")}\n"))
+          }
+          acceptContentTypes(MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`sparql-query`) {
+            handleSparqlPostRequest(req, encodedPostReq)
+          }
         }
       }
     } ~

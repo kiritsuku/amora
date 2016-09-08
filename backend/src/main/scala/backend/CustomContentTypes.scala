@@ -11,6 +11,7 @@ object CustomContentTypes {
   val `sparql-results+xml` = reg("sparql-results+xml")
   val `sparql-results+json` = reg("sparql-results+json")
   val n3 = MediaType.text("n3")
+  val `sparql-query` = MediaType.applicationWithOpenCharset("sparql-query")
   mt += MediaTypes.`text/csv`
   mt += MediaTypes.`text/tab-separated-values`
 
