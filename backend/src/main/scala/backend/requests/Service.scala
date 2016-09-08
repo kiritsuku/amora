@@ -3,6 +3,10 @@ package backend.requests
 import java.io.ByteArrayInputStream
 import java.io.File
 
+import scala.concurrent.Future
+import scala.util.Failure
+import scala.util.Success
+
 import org.apache.jena.query.QueryExecutionFactory
 import org.apache.jena.query.QueryFactory
 import org.apache.jena.query.QuerySolution
@@ -11,14 +15,32 @@ import org.apache.jena.rdf.model.Model
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.RiotException
 
+import akka.http.scaladsl.model.HttpEntity
+import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.StatusCodes
+import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.Route
 import backend.AkkaLogging
+import backend.CustomContentTypes
 
-trait Service extends AkkaLogging {
+trait Service extends Directives with AkkaLogging {
+
+  private implicit val d = system.dispatcher
 
   /**
    * Expects a request encoded in N3 and returns a response encoded in N3.
    */
-  def serviceRequest(n3Request: String): String = {
+  def mkServiceRequest(n3Request: String): Route = {
+    onComplete(Future(serviceRequest(n3Request))) {
+      case Success(resp) ⇒
+        complete(HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, resp))
+      case Failure(t) ⇒
+        log.error(t, "Error happened while handling service request.")
+        complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${t.getMessage}"))
+    }
+  }
+
+  private def serviceRequest(n3Request: String): String = {
     val reqModel = fillModel(ModelFactory.createDefaultModel(), n3Request)
     val (serviceRequest, serviceName) = execQuery(reqModel, """
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>

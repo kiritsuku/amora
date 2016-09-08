@@ -213,7 +213,7 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     path("service") {
       entity(as[String]) { req ⇒
-        complete(HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, serviceRequest(req)))
+        mkServiceRequest(req)
       }
     }
   }
