@@ -118,7 +118,8 @@ trait Sparql extends Directives with AkkaLogging {
         }
     }
     resp.getOrElse {
-      reject(UnacceptedResponseContentTypeRejection(allMediaTypes.map(ContentNegotiator.Alternative(_))))
+      val mediaTypes = Set(`application/sparql-results+xml`, `application/sparql-results+json`, `text/csv`, `text/tab-separated-values`)
+      reject(UnacceptedResponseContentTypeRejection(mediaTypes.map(ContentNegotiator.Alternative(_))))
     }
   }
 
