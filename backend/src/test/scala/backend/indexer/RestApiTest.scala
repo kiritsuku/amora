@@ -142,7 +142,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     val r = req
     r ~> route ~> check {
       val isJsonResponse = r.header[Accept].flatMap(_.mediaRanges.headOption).exists {
-        case m if m matches CustomContentTypes.`sparql-results+json` ⇒ true
+        case m if m matches CustomContentTypes.`application/sparql-results+json` ⇒ true
         case _ ⇒ false
       }
       if (debugTests && status == StatusCodes.OK && isJsonResponse) {
@@ -190,7 +190,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       }
       order by ?s ?p
       limit $entries
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
     }
   }
@@ -281,7 +281,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
     val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
 
-    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       val r = respAsResultSet()
 
@@ -305,14 +305,14 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def sparqlRequest(query: String): Seq[Seq[Data]] = {
-    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet())
     }
   }
 
   def serviceRequest(query: String): Model = {
-    testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, query), header = Accept(CustomContentTypes.n3))) {
+    testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, query), header = Accept(CustomContentTypes.`text/n3`))) {
       status === StatusCodes.OK
       fillModel(ModelFactory.createDefaultModel(), respAsString)
     }

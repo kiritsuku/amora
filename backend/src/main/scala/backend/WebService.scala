@@ -168,7 +168,7 @@ final class WebService(override implicit val system: ActorSystem)
               complete(HttpResponse(StatusCodes.UnsupportedMediaType,
                   entity = s"SPARQL requests require one of the following media types:\n${contentTypes.map(_.toString).mkString("\n")}\n"))
           }
-          acceptContentTypes(MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`sparql-query`) {
+          acceptContentTypes(MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`) {
             handleSparqlPostRequest(req, encodedPostReq)
           }
         }

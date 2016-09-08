@@ -73,7 +73,7 @@ trait Sparql extends Directives with AkkaLogging {
       |LIMIT 100
     """.stripMargin.trim
     runQuery(query) { r ⇒
-      HttpEntity(`sparql-results+json(UTF-8)`, resultSetAsString(r, ResultsFormat.FMT_RS_JSON))
+      HttpEntity(`application/sparql-results+json(UTF-8)`, resultSetAsString(r, ResultsFormat.FMT_RS_JSON))
     }
   }
 
@@ -91,11 +91,11 @@ trait Sparql extends Directives with AkkaLogging {
       complete(showSparqlEditor(query, "{}"))
     else if (params.contains("query")) {
       val (ct, fmt) = params.get("format") collect {
-        case "xml"  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
-        case "json" ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
+        case "xml"  ⇒ `application/sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
+        case "json" ⇒ `application/sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
         case "csv"  ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
         case "tsv"  ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
-      } getOrElse (`sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
+      } getOrElse (`application/sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON)
       runQuery(params("query")) { r ⇒
         HttpEntity(ct, resultSetAsString(r, fmt))
       }
@@ -106,8 +106,8 @@ trait Sparql extends Directives with AkkaLogging {
 
   def handleSparqlPostRequest(req: HttpRequest, query: String): Route = {
     val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
-      case m if m matches `sparql-results+xml`  ⇒ `sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
-      case m if m matches `sparql-results+json` ⇒ `sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
+      case m if m matches `application/sparql-results+xml`  ⇒ `application/sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
+      case m if m matches `application/sparql-results+json` ⇒ `application/sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
       case m if m matches `text/csv` ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
       case m if m matches `text/tab-separated-values` ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
     }

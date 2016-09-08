@@ -33,14 +33,14 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def sparql_post_requests_are_possible(): Unit = {
-    testReq(post("http://amora.center/sparql", "select * where {?s ?p ?o} limit 3", header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    testReq(post("http://amora.center/sparql", "select * where {?s ?p ?o} limit 3", header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
     }
   }
 
   @Test
   def syntax_error_in_sparql_post_request(): Unit = {
-    testReq(post("http://amora.center/sparql", "syntax error", header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    testReq(post("http://amora.center/sparql", "syntax error", header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.InternalServerError
     }
   }
@@ -70,7 +70,7 @@ class IndexerTest extends RestApiTest {
       select * where {
         [a kb:Project] kb:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       val r = respAsResultSet()
       status === StatusCodes.OK
       r.next().get("name").asLiteral().getString === "hello-world"
@@ -95,7 +95,7 @@ class IndexerTest extends RestApiTest {
       select * where {
         [a p:] p:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(Seq(Data("name", "p")))
     }
@@ -112,7 +112,7 @@ class IndexerTest extends RestApiTest {
       select ?name where {
         [a p:] p:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "p1")),
@@ -132,7 +132,7 @@ class IndexerTest extends RestApiTest {
       select ?organization ?name ?version where {
         [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("organization", "o"), Data("name", "n"), Data("version", "v1")))
@@ -153,7 +153,7 @@ class IndexerTest extends RestApiTest {
       select ?organization ?name ?version where {
         [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("organization", "o1"), Data("name", "n1"), Data("version", "v1")),
@@ -176,7 +176,7 @@ class IndexerTest extends RestApiTest {
       select distinct ?name where {
         [a a:] a:owner [p:name ?name] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "p")))
@@ -194,7 +194,7 @@ class IndexerTest extends RestApiTest {
       select ?owner where {
         [a p:] p:owner ?owner .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq()
     }
@@ -212,7 +212,7 @@ class IndexerTest extends RestApiTest {
       select ?tpe where {
         [a a:] a:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Project/0.1/")))
@@ -230,7 +230,7 @@ class IndexerTest extends RestApiTest {
       select ?name where {
         [a f:] f:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "A.scala")))
@@ -251,7 +251,7 @@ class IndexerTest extends RestApiTest {
       select ?name where {
         [a f:] f:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "A.scala")),
@@ -277,7 +277,7 @@ class IndexerTest extends RestApiTest {
       select ?name ?version where {
         [a f:] amora:owner* [a a:; a:version ?version]; amora:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "A.scala"), Data("version", "v1")),
@@ -302,7 +302,7 @@ class IndexerTest extends RestApiTest {
       select ?pname ?pkgname where {
         [a pkg:] amora:owner* [a p:; amora:name ?pname]; amora:name ?pkgname .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("pname", "p1"), Data("pkgname", "pkg1")),
@@ -321,7 +321,7 @@ class IndexerTest extends RestApiTest {
       select ?name where {
         [a p:] p:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "pkg")))
@@ -339,7 +339,7 @@ class IndexerTest extends RestApiTest {
       select ?tpe where {
         [a p:] p:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/")))
@@ -357,7 +357,7 @@ class IndexerTest extends RestApiTest {
       select ?name ?tpe where {
         [p:owner [a p:]] p:name ?name ; a ?tpe .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")),
@@ -377,7 +377,7 @@ class IndexerTest extends RestApiTest {
       select ?name where {
         [a c:] c:name ?name .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("name", "A")))
@@ -396,7 +396,7 @@ class IndexerTest extends RestApiTest {
       select ?tpe where {
         [a c:] c:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`)))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/File/0.1/")))
@@ -414,7 +414,7 @@ class IndexerTest extends RestApiTest {
       select ?tpe where {
         [a f:] f:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")),
@@ -436,7 +436,7 @@ class IndexerTest extends RestApiTest {
       select ?tpe where {
         [a d:] d:owner [a ?tpe] .
       }
-    """, header = Accept(CustomContentTypes.`sparql-results+json`))) {
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Class/0.1/")),
