@@ -77,8 +77,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   implicit val timeout = {
     import scala.concurrent.duration._
-    // wait for the time that is available to the server + some more
-    RouteTestTimeout(PlatformConstants.timeout.duration + 500.millis)
+    // - Wait for the time that is available to the server + some more
+    // - The API doesn't allow us to wait for forever in debug mode, therefore just a very long timeout
+    RouteTestTimeout(if (PlatformConstants.runsInDebugMode) 24.hours else PlatformConstants.timeout.duration + 500.millis)
   }
 
   val service = new WebService

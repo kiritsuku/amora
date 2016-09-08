@@ -8,11 +8,14 @@ import org.apache.jena.query.ResultSetRewindable
 
 import scalaj.http.Http
 import scalaj.http.HttpOptions
+import backend.PlatformConstants
 
 trait ScalaService {
 
   // This value is injected at runtime
   val uri: String = null
+
+  private val timeout = HttpOptions.connTimeout(if (PlatformConstants.runsInDebugMode) 0 else 1000)
 
   def response(str: String): String = {
     str
@@ -27,7 +30,7 @@ trait ScalaService {
       .postData(query)
       .header("Accept", "application/sparql-results+json")
       .header("Charset", "UTF-8")
-      .option(HttpOptions.connTimeout(1000))
+      .option(timeout)
       .asString
 
     val in = new ByteArrayInputStream(req.body.getBytes(StandardCharsets.UTF_8))
