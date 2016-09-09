@@ -35,6 +35,22 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def sparql_get_requests_are_possible(): Unit = {
+    val query = "query="+URLEncoder.encode("select * where {?s ?p ?o} limit 3", "UTF-8")
+    testReq(get(s"http://amora.center/sparql?$query")) {
+      status === StatusCodes.OK
+    }
+  }
+
+  @Test
+  def sparql_get_request_misses_query_param(): Unit = {
+    val query = URLEncoder.encode("select * where {?s ?p ?o} limit 3", "UTF-8")
+    testReq(get(s"http://amora.center/sparql?$query")) {
+      status === StatusCodes.BadRequest
+    }
+  }
+
+  @Test
   def sparql_post_requests_are_possible(): Unit = {
     testReq(post("http://amora.center/sparql", "select * where {?s ?p ?o} limit 3", header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK

@@ -103,7 +103,7 @@ trait Sparql extends Directives with AkkaLogging {
       }
     }
     else
-      reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+      rejectMissingParam("query")
   }
 
   def handleSparqlPostRequest(req: HttpRequest, query: String): Route = {
@@ -185,6 +185,9 @@ trait Sparql extends Directives with AkkaLogging {
       case Failure(t) ⇒ throw t
     }
   }
+
+  private def rejectMissingParam(param: String): Route =
+    complete(HttpResponse(StatusCodes.BadRequest, entity = s"The parameter `$param` could not be found."))
 
   private def rejectContentType(actualContentType: MediaType, expectedContentTypes: MediaType*): Route = {
     complete(HttpResponse(StatusCodes.UnsupportedMediaType,
