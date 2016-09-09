@@ -123,7 +123,7 @@ trait Sparql extends Directives with AkkaLogging {
 
           case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
             if (!query.startsWith("query="))
-              reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+              rejectMissingParam("query")
             else
               runQuery(URLDecoder.decode(query.drop("query=".length), "UTF-8")) { r ⇒
                 HttpEntity(ct, resultSetAsString(r, fmt))

@@ -74,6 +74,15 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def encoded_sparql_post_request_misses_query_param(): Unit = {
+    val query = URLEncoder.encode("select * where {?s ?p ?o} limit 3", "UTF-8")
+    val e = HttpEntity(CustomContentTypes.`application/x-www-form-urlencoded(UTF-8)`, query)
+    testReq(post("http://amora.center/sparql", e, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
+      status === StatusCodes.BadRequest
+    }
+  }
+
+  @Test
   def invalid_content_type_for_sparql_post_requests(): Unit = {
     val e = HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, "invalid query")
     testReq(post("http://amora.center/sparql", e, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
