@@ -150,7 +150,7 @@ trait Sparql extends Directives with AkkaLogging {
 
       case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
         if (!query.startsWith("query="))
-          reject(MalformedRequestContentRejection("The parameter `query` could not be found."))
+          rejectMissingParam("query")
         else
           bs.runUpdate(URLDecoder.decode(query.drop("query=".length), "UTF-8"), "Error happened while handling SPARQL update request.") {
             case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")

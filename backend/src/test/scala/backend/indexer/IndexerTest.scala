@@ -172,6 +172,16 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def encoded_sparql_update_post_request_misses_query_param(): Unit = {
+    val q = Schema.mkSparqlUpdate(Seq(Project("p")))
+    val query = URLEncoder.encode(q, "UTF-8")
+    val e = HttpEntity(CustomContentTypes.`application/x-www-form-urlencoded(UTF-8)`, query)
+    testReq(post("http://amora.center/sparql-update", e)) {
+      status === StatusCodes.BadRequest
+    }
+  }
+
+  @Test
   def add_multiple_projects(): Unit = {
     val q = Schema.mkSparqlUpdate(Seq(Project("p1"), Project("p2")))
     testReq(post("http://amora.center/sparql-update", q)) {
