@@ -103,27 +103,32 @@ final class ScalacConverter[G <: Global](val global: G) {
       else
         decodedName(sym.name)
     val decl = h.Decl(name, owner)
-    if (sym.isTrait)
-      decl.addAttachments(a.Trait)
-    else if (sym.isClass) {
-      decl.addAttachments(a.Class)
-      if (sym.isAbstract)
-        decl.addAttachments(a.Abstract)
+
+    def classify(sym: Symbol): Unit = {
+      if (sym.isTrait)
+        decl.addAttachments(a.Trait)
+      else if (sym.isClass) {
+        decl.addAttachments(a.Class)
+        if (sym.isAbstract)
+          decl.addAttachments(a.Abstract)
+      }
+      else if (sym.isModule && !sym.hasPackageFlag)
+        decl.addAttachments(a.Object)
+      else if (sym.isMethod && !sym.asMethod.isGetter)
+        decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
+      else if (sym.isLazy)
+        decl.addAttachments(a.Lazy, a.Val)
+      else if (sym.isTypeParameterOrSkolem)
+        decl.addAttachments(a.TypeParam)
+      else if (sym.isParameter || sym.isParamAccessor)
+        decl.addAttachments(if (sym.isVar) a.Var else a.Val, a.Param)
+      else if (sym.isVal)
+        decl.addAttachments(a.Val)
+      else if (sym.isVar)
+        decl.addAttachments(a.Var)
     }
-    else if (sym.isModule && !sym.hasPackageFlag)
-      decl.addAttachments(a.Object)
-    else if (sym.isMethod && !sym.asMethod.isGetter)
-      decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
-    else if (sym.isLazy)
-      decl.addAttachments(a.Lazy, a.Val)
-    else if (sym.isTypeParameterOrSkolem)
-      decl.addAttachments(a.TypeParam)
-    else if (sym.isParameter || sym.isParamAccessor)
-      decl.addAttachments(if (sym.isVar) a.Var else a.Val, a.Param)
-    else if (sym.isVal)
-      decl.addAttachments(a.Val)
-    else if (sym.isVar)
-      decl.addAttachments(a.Var)
+
+    classify(sym)
     decl
   }
 
