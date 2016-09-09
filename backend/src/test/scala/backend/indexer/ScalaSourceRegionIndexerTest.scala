@@ -800,4 +800,22 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         class Y
       """)
   }
+
+  @Test
+  def ref_to_val_from_within_another_val() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        select * where {
+          [a ref:] ref:name "xs" ; ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val [[xs]] = 0
+          val ys = xs
+        }
+      """)
+  }
 }

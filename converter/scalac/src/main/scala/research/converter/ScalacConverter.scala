@@ -114,10 +114,14 @@ final class ScalacConverter[G <: Global](val global: G) {
       }
       else if (sym.isModule && !sym.hasPackageFlag)
         decl.addAttachments(a.Object)
-      else if (sym.isMethod && !sym.asMethod.isGetter)
-        decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
       else if (sym.isLazy)
         decl.addAttachments(a.Lazy, a.Val)
+      else if (sym.isMethod) {
+        if (sym.asMethod.isGetter)
+          classify(sym.accessed)
+        else
+          decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
+      }
       else if (sym.isTypeParameterOrSkolem)
         decl.addAttachments(a.TypeParam)
       else if (sym.isParameter || sym.isParamAccessor)
