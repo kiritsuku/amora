@@ -168,6 +168,14 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 
+  def post(uri: String, request: String, header: HttpHeader*): HttpRequest = {
+    val u = Uri(uri)
+    val e = HttpEntity(CustomContentTypes.`application/sparql-query(UTF-8)`, request)
+    val r = HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString)) ++ header, e)
+    log.info(s"sending request: $r")
+    r
+  }
+
   def post(uri: String, request: RequestEntity, header: HttpHeader*): HttpRequest = {
     val u = Uri(uri)
     val r = HttpRequest(HttpMethods.POST, u, List(RawRequestURI.create(u.toRelative.toString)) ++ header, request)

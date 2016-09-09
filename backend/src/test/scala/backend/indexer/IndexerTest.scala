@@ -1,7 +1,10 @@
 package backend.indexer
 
+import java.net.URLEncoder
+
 import org.junit.Test
 
+import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import backend.CustomContentTypes
@@ -34,6 +37,15 @@ class IndexerTest extends RestApiTest {
   @Test
   def sparql_post_requests_are_possible(): Unit = {
     testReq(post("http://amora.center/sparql", "select * where {?s ?p ?o} limit 3", header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
+      status === StatusCodes.OK
+    }
+  }
+
+  @Test
+  def encoded_sparql_post_requests_are_possible(): Unit = {
+    val query = "query="+URLEncoder.encode("select * where {?s ?p ?o} limit 3", "UTF-8")
+    val e = HttpEntity(CustomContentTypes.`application/x-www-form-urlencoded(UTF-8)`, query)
+    testReq(post("http://amora.center/sparql", e, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
     }
   }
@@ -88,6 +100,25 @@ class IndexerTest extends RestApiTest {
   def add_single_project(): Unit = {
     val q = Schema.mkSparqlUpdate(Seq(Project("p")))
     testReq(post("http://amora.center/sparql-update", q)) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      select * where {
+        [a p:] p:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(Seq(Data("name", "p")))
+    }
+  }
+
+  @Test
+  def encoded_sparql_update_post_requests_are_possible(): Unit = {
+    val q = Schema.mkSparqlUpdate(Seq(Project("p")))
+    val query = "query="+URLEncoder.encode(q, "UTF-8")
+    val e = HttpEntity(CustomContentTypes.`application/x-www-form-urlencoded(UTF-8)`, query)
+    testReq(post("http://amora.center/sparql-update", e)) {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
