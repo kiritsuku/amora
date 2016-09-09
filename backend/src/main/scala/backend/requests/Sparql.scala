@@ -16,6 +16,7 @@ import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
+import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
@@ -24,6 +25,7 @@ import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
 import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
+
 import backend.AkkaLogging
 import backend.BackendSystem
 import backend.Content
@@ -129,6 +131,9 @@ trait Sparql extends Directives with AkkaLogging {
               runQuery(URLDecoder.decode(query.drop("query=".length), "UTF-8")) { r ⇒
                 HttpEntity(ct, resultSetAsString(r, fmt))
               }
+
+          case m ⇒
+            rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
         }
     }
     resp.getOrElse {
@@ -153,6 +158,9 @@ trait Sparql extends Directives with AkkaLogging {
             case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
             case Failure(t) ⇒ throw t
           }
+
+      case m ⇒
+        rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
     }
 
   }
@@ -178,5 +186,10 @@ trait Sparql extends Directives with AkkaLogging {
       case Success(r: ResultSetRewindable) ⇒ f(r)
       case Failure(t) ⇒ throw t
     }
+  }
+
+  private def rejectContentType(actualContentType: MediaType, expectedContentTypes: MediaType*): Route = {
+    complete(HttpResponse(StatusCodes.UnsupportedMediaType,
+        entity = s"The media type was `$actualContentType` but one of the following media types is required:\n${expectedContentTypes.map(_.toString).mkString("\n")}\n"))
   }
 }

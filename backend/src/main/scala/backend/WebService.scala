@@ -159,18 +159,7 @@ final class WebService(override implicit val system: ActorSystem)
     path("sparql") {
       entity(as[String]) { encodedPostReq ⇒
         extractRequest { req ⇒
-          def acceptContentTypes(contentTypes: MediaType*)(f: ⇒ Route): Route = {
-            val m = req.entity.contentType.mediaType
-            val isDefined = contentTypes.exists(_ matches m)
-            if (isDefined)
-              f
-            else
-              complete(HttpResponse(StatusCodes.UnsupportedMediaType,
-                  entity = s"SPARQL requests require one of the following media types:\n${contentTypes.map(_.toString).mkString("\n")}\n"))
-          }
-          acceptContentTypes(MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`) {
-            handleSparqlPostRequest(req, encodedPostReq)
-          }
+          handleSparqlPostRequest(req, encodedPostReq)
         }
       }
     } ~
