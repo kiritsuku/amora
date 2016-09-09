@@ -20,12 +20,9 @@ import akka.http.scaladsl.model.MediaType
 import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
-import akka.http.scaladsl.server.ContentNegotiator
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.UnacceptedResponseContentTypeRejection
-
 import backend.AkkaLogging
 import backend.BackendSystem
 import backend.Content
@@ -138,7 +135,8 @@ trait Sparql extends Directives with AkkaLogging {
     }
     resp.getOrElse {
       val mediaTypes = Set(`application/sparql-results+xml`, `application/sparql-results+json`, `text/csv`, `text/tab-separated-values`)
-      reject(UnacceptedResponseContentTypeRejection(mediaTypes.map(ContentNegotiator.Alternative(_))))
+      complete(HttpResponse(StatusCodes.NotAcceptable,
+          entity = s"Resource representation is only available with these types:\n${mediaTypes.map(_.toString).mkString("\n")}\n"))
     }
   }
 
