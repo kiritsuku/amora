@@ -20,9 +20,9 @@ class FindUsages extends ScalaService {
     }
 
     response(s"""
-      @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-      @prefix response: <http://amora.center/kb/ServiceResponse/0.1/>
-      @prefix decl: <http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix response:<http://amora.center/kb/ServiceResponse/0.1/> .
+      @prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/> .
       <#this>
         a response: ;
         service:requestId <$requestId> ;

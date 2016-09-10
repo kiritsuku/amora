@@ -4,9 +4,9 @@ class FindDeclaration extends ScalaService {
 
   def run(offset: Int): String = {
     val r = sparqlRequest(s"""
-      prefix decl: <http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-      prefix ref: <http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-      prefix amora: <http://amora.center/kb/amora/Schema/0.1/>
+      prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+      prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
 
       select ?declStart ?declEnd where {
         ?ident amora:posStart ?start; amora:posEnd ?end .
@@ -32,9 +32,9 @@ class FindDeclaration extends ScalaService {
     }.toSeq
 
     response(s"""
-      @prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-      @prefix response: <http://amora.center/kb/ServiceResponse/0.1/>
-      @prefix decl: <http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix response:<http://amora.center/kb/ServiceResponse/0.1/> .
+      @prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/> .
       <#this>
         a response: ;
         service:requestId <$requestId> ;
