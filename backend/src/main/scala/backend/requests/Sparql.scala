@@ -21,7 +21,6 @@ import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.Directives
-import akka.http.scaladsl.server.MalformedRequestContentRejection
 import akka.http.scaladsl.server.Route
 import backend.AkkaLogging
 import backend.BackendSystem

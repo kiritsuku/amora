@@ -28,7 +28,6 @@ class FindDeclarationTest extends RestApiTest {
     """)
 
     modelAsData(m, """
-      prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
 
