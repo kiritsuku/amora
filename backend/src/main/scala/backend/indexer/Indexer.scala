@@ -45,9 +45,7 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
             <http://amora.center/kb/amora/Schema/0.1/$schemaName/0.1/> <http://amora.center/kb/amora/Schema/0.1/schemaVersion> ?o
           }
         """)
-        if (alreadyIndexed)
-          log.info(s"Skip schema file `$file` since it is already indexed.")
-        else {
+        if (!alreadyIndexed) {
           addN3(model, content)
           log.info(s"Schema file `$file` successfully indexed.")
         }
@@ -68,9 +66,7 @@ class Indexer(modelName: String) extends backend.Log4jLogging {
         src.close()
 
         val alreadyIndexed = doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
-        if (alreadyIndexed)
-          log.info(s"Skip schema file `$file` since it is already indexed.")
-        else {
+        if (!alreadyIndexed) {
           val json = gen.resolveVariables(schemaName, rawJson)
           val contentVar = "content"
           withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
