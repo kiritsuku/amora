@@ -111,4 +111,19 @@ class FindUsagesTest extends RestApiTest {
     serviceResult(cursorPos) === Seq(
         Seq(Data("start", "125"), Data("end", "129")))
   }
+
+  @Test
+  def find_usages_when_cursor_is_at_declaration(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        val x^s: List[Int] = List(1)
+        val ys: List[Int] = xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "29"), Data("end", "31")),
+        Seq(Data("start", "81"), Data("end", "83")))
+  }
 }
