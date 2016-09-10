@@ -96,4 +96,19 @@ class FindUsagesTest extends RestApiTest {
     serviceResult(cursorPos) === Seq(
         Seq(Data("start", "50"), Data("end", "53")))
   }
+
+  @Test
+  def do_not_use_inferred_references_as_search_object(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        // we have an inferred type `Int` here but we want to search for `List`
+        val xs: List[Int] = ^List(1)
+        val ys: List[Int] = xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "125"), Data("end", "129")))
+  }
 }

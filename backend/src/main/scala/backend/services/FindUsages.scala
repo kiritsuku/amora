@@ -8,7 +8,7 @@ class FindUsages extends ScalaService {
 
       select ?uStart ?uEnd where {
         ?ref ref:posStart ?start; ref:posEnd ?end .
-        filter ($offset >= ?start && $offset <= ?end)
+        filter ($offset >= ?start && $offset <= ?end && ?start != ?end)
         ?ref ref:refToDecl ?decl .
         ?usages ref:refToDecl ?decl .
         ?usages ref:posStart ?uStart; ref:posEnd ?uEnd .
