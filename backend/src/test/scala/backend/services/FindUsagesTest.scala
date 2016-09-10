@@ -9,20 +9,7 @@ import backend.schema.Project
 class FindUsagesTest extends RestApiTest {
   import backend.TestUtils._
 
-  @Test
-  def it_is_possible_to_call_FindUsages(): Unit = {
-    val CursorData(cursorPos, src) = cursorData("""
-      package backend.services
-      class X {
-        def f: Li^st[Int] = {
-          val xs: List[Int] = List(1)
-          xs
-        }
-        val xs: List[Int] = f
-      }
-    """)
-    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
-
+  def serviceResult(cursorPos: Int) = {
     val m = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
       @prefix registry:<http://amora.center/kb/Service/0.1/> .
@@ -48,10 +35,51 @@ class FindUsagesTest extends RestApiTest {
       select ?start ?end where {
         ?s service:result/rdf:rest*/rdf:first [decl:posStart ?start ; decl:posEnd ?end]
       }
-    """) === Seq(
-        Seq(Data("start", "63"), Data("end", "67")),
-        Seq(Data("start", "95"), Data("end", "99")),
-        Seq(Data("start", "154"), Data("end", "158")))
+    """)
   }
 
+  @Test
+  def find_usages_when_cursor_is_in_the_middle_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        val xs: Li^st[Int] = List(1)
+        val ys: List[Int] = xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "33"), Data("end", "37")),
+        Seq(Data("start", "69"), Data("end", "73")))
+  }
+
+  @Test
+  def find_usages_when_cursor_is_at_the_beginning_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        val xs: ^List[Int] = List(1)
+        val ys: List[Int] = xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "33"), Data("end", "37")),
+        Seq(Data("start", "69"), Data("end", "73")))
+  }
+
+  @Test
+  def find_usages_when_cursor_is_at_the_end_of_ident(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        val xs: List^[Int] = List(1)
+        val ys: List[Int] = xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "33"), Data("end", "37")),
+        Seq(Data("start", "69"), Data("end", "73")))
+  }
 }
