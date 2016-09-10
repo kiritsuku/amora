@@ -3,10 +3,15 @@ package frontend.webui
 import java.nio.ByteBuffer
 
 import scala.concurrent.Future
+import scala.concurrent.Promise
+import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 import scala.scalajs.js
+import scala.scalajs.js.Dynamic.{ global ⇒ jsg }
 import scala.scalajs.js.JSApp
 import scala.scalajs.js.JSON
 import scala.scalajs.js.annotation.JSExport
+import scala.util.Failure
+import scala.util.Success
 
 import org.scalajs.dom
 import org.scalajs.dom.raw._
@@ -17,10 +22,14 @@ import frontend.webui.protocol.QueueItem
 @JSExport
 object Main extends JSApp {
   private val $ = org.scalajs.jquery.jQuery
+  private val log = dom.console
 
   implicit class AsDynamic[A](private val a: A) extends AnyVal {
     def jsg: js.Dynamic = a.asInstanceOf[js.Dynamic]
   }
+
+  def f2[R](f: (js.Any, js.Any) ⇒ R): js.Function2[js.Any, js.Any, R] =
+    js.Any.fromFunction2((arg0: js.Any, arg1: js.Any) ⇒ f(arg0, arg1))
 
   /** The socket to the server */
   private var ws: WebSocket = _
@@ -48,7 +57,6 @@ object Main extends JSApp {
           dom.console.info(s"Server assigned id `$id`.")
           this.clientId = id
 
-          import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
           Future {
             setupWS()
             showMainPage()
@@ -127,12 +135,174 @@ object Main extends JSApp {
           li(id := "li1", a(href := "", "Show queue", onclick := "return false;")),
           li(id := "li2", a(href := "", "Show schemas", onclick := "return false;"))
         ),
-        div(id := "content")
+        div(id := "content"),
+        div(id := "editor", pre(code("""
+          |class X {
+          |  val xs: List[Int] = List(1)
+          |  val ys: List[Int] = xs
+          |}
+        """.stripMargin.trim())))
     ).render
     $("body").append(content)
 
     handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
     handleClickEvent("li2")(_ ⇒ send(GetSchemas))
+    val d = htmlElem("editor")
+    d.onmouseup = (e: MouseEvent) ⇒ {
+      val sel = selection("editor")
+
+      onSuccess(findDeclaration(sel.start)) { range ⇒
+        range.foreach { range ⇒
+          log.info("findDeclaration: " + range)
+        }
+      }
+    }
+
+    def findDeclaration(offset: Int): Future[Option[Range]] = {
+      val n3Resp = serviceRequest(s"""
+        @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+        @prefix registry:<http://amora.center/kb/Service/0.1/> .
+        @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+        <#this>
+          a request: ;
+          service:serviceId registry:FindDeclaration ;
+          service:method [
+            service:name "run" ;
+            service:param [
+              service:name "offset" ;
+              service:value $offset ;
+            ] ;
+          ] ;
+        .
+      """)
+
+      val model = n3Resp flatMap { n3Resp ⇒
+        modelAsData(n3Resp, """
+          prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+          prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+          select ?start ?end where {
+            ?s service:result ?r .
+            ?r decl:posStart ?start ; decl:posEnd ?end .
+          }
+        """)
+      }
+
+      model map { model ⇒
+        val arr = model.asInstanceOf[js.Array[js.Any]]
+        if (arr.isEmpty)
+          None
+        else {
+          val start = arr(0).jsg.start.value.toString.toInt
+          val end = arr(0).jsg.end.value.toString.toInt
+          Some(Range(start, end))
+        }
+      }
+    }
+  }
+
+  def modelAsData(n3Model: String, query: String): Future[js.Any] = {
+    val p = Promise[js.Any]
+
+    def handleErr(err: js.Any, msg: String)(onSuccess: ⇒ Unit): Unit = {
+      if (err == null)
+        onSuccess
+      else
+        p.failure(new IllegalStateException(s"$msg\n$err"))
+    }
+
+    jsg.Bundle.rdfstore.create(f2 { (err, store) ⇒
+      handleErr(err, "Error occurred while loading rdfstore.") {
+        store.jsg.load("text/n3", n3Model, f2 { (err, loadedTriples) ⇒
+          handleErr(err, "Error occurred while loading n3 data.") {
+            // we can't inline `?r`, see https://github.com/antoniogarrote/rdfstore-js/issues/141
+            store.jsg.execute(query, f2 { (err, graph) ⇒
+              handleErr(err, "Error occurred while executing SPARQL query.") {
+                p.success(graph)
+              }
+            })
+          }
+        })
+      }
+    })
+    p.future
+  }
+
+  def htmlElem(id: String): HTMLElement =
+    dom.document.getElementById(id).asInstanceOf[HTMLElement]
+
+  /**
+   * Returns the selection that belongs to a HTML element of a given `id` as an
+   * instance of [[Range]], whose `start` and `end` are relative to the
+   * beginning of the HTML element.
+   */
+  def selection(id: String): Range = {
+    val range = dom.window.getSelection().getRangeAt(0)
+    val content = range.cloneRange()
+    content.selectNodeContents(htmlElem(id))
+    content.setEnd(range.startContainer, range.startOffset)
+    val start = content.toString().length()
+
+    content.setStart(range.startContainer, range.startOffset)
+    content.setEnd(range.endContainer, range.endOffset)
+    val len = content.toString().length()
+    Range(start, start+len)
+  }
+
+  case class Range(start: Int, end: Int)
+
+  /**
+   * Sends a SPARQL request. The response is encoded in
+   * `application/sparql-results+json`.
+   */
+  def sparqlRequest(query: String): Future[String] = {
+    val p = Promise[String]
+    val r = new XMLHttpRequest
+    r.open("POST", "http://amora.center/sparql", async = true)
+    r.setRequestHeader("Content-type", "application/sparql-query")
+    r.setRequestHeader("Accept", "application/sparql-results+json")
+    r.setRequestHeader("Charset", "UTF-8")
+    r.onreadystatechange = (e: Event) ⇒ {
+      if (r.readyState == XMLHttpRequest.DONE) {
+        if (r.status == 200)
+          p.success(r.responseText)
+        else
+          p.failure(new IllegalStateException(s"Server responded with an error to SPARQL request.\nRequest: $query\nResponse (error code: ${r.status}): ${r.responseText}"))
+      }
+    }
+    r.send(query)
+    p.future
+  }
+
+  def onSuccess[A](fut: Future[A])(f: A ⇒ Unit): Unit = {
+    fut onComplete {
+      case Success(s) ⇒
+        f(s)
+      case Failure(f) ⇒
+        dom.console.error(f.getMessage)
+    }
+  }
+
+  /**
+   * Sends a service request, which needs to be encoded in `text/n3`. The
+   * response is also encoded in `text/n3`.
+   */
+  def serviceRequest(n3Req: String): Future[String] = {
+    val p = Promise[String]
+    val r = new XMLHttpRequest
+    r.open("POST", "http://amora.center/service", async = true)
+    r.setRequestHeader("Content-type", "text/n3")
+    r.setRequestHeader("Accept", "text/n3")
+    r.setRequestHeader("Charset", "UTF-8")
+    r.onreadystatechange = (e: Event) ⇒ {
+      if (r.readyState == XMLHttpRequest.DONE) {
+        if (r.status == 200)
+          p.success(r.responseText)
+        else
+          p.failure(new IllegalStateException(s"Server responded with an error to service request.\nRequest: $n3Req\nResponse (error code: ${r.status}): ${r.responseText}"))
+      }
+    }
+    r.send(n3Req)
+    p.future
   }
 
   def handleRequestSucceeded(succ: RequestSucceeded) = {
@@ -236,7 +406,7 @@ object Main extends JSApp {
   }
 
   private def handleClickEvent(id: String)(f: MouseEvent ⇒ Unit) = {
-    val d = dom.document.getElementById(id).asInstanceOf[dom.html.Link]
+    val d = htmlElem(id)
     d.onclick = (e: MouseEvent) ⇒ f(e)
   }
 
