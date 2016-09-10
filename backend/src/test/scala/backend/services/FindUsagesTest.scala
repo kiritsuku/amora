@@ -82,4 +82,18 @@ class FindUsagesTest extends RestApiTest {
         Seq(Data("start", "33"), Data("end", "37")),
         Seq(Data("start", "69"), Data("end", "73")))
   }
+
+  @Test
+  def do_not_find_inferred_usages(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class X {
+        val x = 0
+        val y: I^nt = 0
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"), "f1.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "50"), Data("end", "53")))
+  }
 }

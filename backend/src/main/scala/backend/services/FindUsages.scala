@@ -12,6 +12,7 @@ class FindUsages extends ScalaService {
         ?ref ref:refToDecl ?decl .
         ?usages ref:refToDecl ?decl .
         ?usages ref:posStart ?uStart; ref:posEnd ?uEnd .
+        filter (?uStart != ?uEnd)
       }
     """)
     import scala.collection.JavaConverters._
