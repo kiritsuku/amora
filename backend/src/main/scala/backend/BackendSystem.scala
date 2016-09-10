@@ -114,7 +114,7 @@ final class BackendSystem(implicit system: ActorSystem) {
       // this was the best way I could find to do so
       p.completeWith(a.future)
       a
-    }, "request-actor" + System.currentTimeMillis)
+    }, "request-actor-" + System.nanoTime)
     p.future
   }
 }
