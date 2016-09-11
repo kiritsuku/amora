@@ -126,4 +126,27 @@ class FindUsagesTest extends RestApiTest {
         Seq(Data("start", "29"), Data("end", "31")),
         Seq(Data("start", "81"), Data("end", "83")))
   }
+
+  @Test
+  def find_usages_only_of_current_file(): Unit = {
+    val CursorData(cursorPos, src) = cursorData("""
+      class Y {
+        val x = new X
+        val xs = x.x^s
+        val ys = x.xs
+      }
+    """)
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+        "f1.scala" → """
+          class X {
+            val xs: List[Int] = List(1)
+            val ys: List[Int] = xs
+          }
+        """,
+        "f2.scala" → src)
+
+    serviceResult(cursorPos) === Seq(
+        Seq(Data("start", "58"), Data("end", "60")),
+        Seq(Data("start", "80"), Data("end", "82")))
+  }
 }

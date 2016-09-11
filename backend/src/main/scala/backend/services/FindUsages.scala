@@ -4,6 +4,7 @@ class FindUsages extends ScalaService {
 
   def run(offset: Int): String = {
     val r = sparqlRequest(s"""
+      prefix file:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
       prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
       prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
       prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
@@ -33,6 +34,15 @@ class FindUsages extends ScalaService {
 
         ?usages amora:posStart ?uStart; amora:posEnd ?uEnd .
         filter (?uStart != ?uEnd)
+
+        # Find only the usages that are in the same file where ?ident is
+        ?ident amora:owner+ ?identOwner .
+        ?identOwner a file: .
+
+        ?usages amora:owner+ ?usagesOwner .
+        ?usagesOwner a file: .
+
+        filter (?identOwner = ?usagesOwner)
       }
     """)
     import scala.collection.JavaConverters._
