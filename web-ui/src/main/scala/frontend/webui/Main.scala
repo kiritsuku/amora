@@ -152,9 +152,50 @@ object Main extends JSApp {
       val sel = selection("editor")
 
       onSuccess(findDeclaration(sel.start)) { range ⇒
-        range.foreach { range ⇒
-          log.info("findDeclaration: " + range)
+        log.info("findDeclaration: " + range)
+      }
+      onSuccess(findUsages(sel.start)) { ranges ⇒
+        log.info("findUsages: " + ranges)
+      }
+    }
+
+    def findUsages(offset: Int): Future[Seq[Range]] = {
+      val n3Resp = serviceRequest(s"""
+        @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+        @prefix registry:<http://amora.center/kb/Service/0.1/> .
+        @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+        <#this>
+          a request: ;
+          service:serviceId registry:FindUsages ;
+          service:method [
+            service:name "run" ;
+            service:param [
+              service:name "offset" ;
+              service:value $offset ;
+            ] ;
+          ] ;
+        .
+      """)
+
+      val model = n3Resp flatMap { n3Resp ⇒
+        modelAsData(n3Resp, """
+          prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+          prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+          prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+          select ?start ?end where {
+            ?s service:result ?r .
+            ?r decl:posStart ?start ; decl:posEnd ?end .
+          }
+        """)
+      }
+
+      model map { model ⇒
+        val res = for (elem ← model.asInstanceOf[js.Array[js.Any]]) yield {
+          val start = elem.jsg.start.value.toString.toInt
+          val end = elem.jsg.end.value.toString.toInt
+          Range(start, end)
         }
+        res.toList
       }
     }
 
