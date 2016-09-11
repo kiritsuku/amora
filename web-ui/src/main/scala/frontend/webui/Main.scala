@@ -161,7 +161,18 @@ object Main extends JSApp {
         log.info("findDeclaration: " + range)
       }
       onSuccess(findUsages(sel.start)) { ranges ⇒
-        log.info("findUsages: " + ranges)
+        val text = $("#editor").text()
+        val sb = new StringBuilder
+        var begin = 0
+        for (Range(start, end) ← ranges) {
+          sb.append(text.substring(begin, start))
+          sb.append("""<span style="background-color: #84C202">""")
+          sb.append(text.substring(start, end))
+          sb.append("</span>")
+          begin = end
+        }
+        sb.append(text.substring(begin, text.length))
+        $("#editor").html(sb.toString())
       }
     }
 
@@ -192,6 +203,7 @@ object Main extends JSApp {
             ?s service:result ?r .
             ?r decl:posStart ?start ; decl:posEnd ?end .
           }
+          order by ?start ?end
         """)
       }
 
