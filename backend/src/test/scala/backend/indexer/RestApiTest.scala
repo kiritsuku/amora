@@ -53,7 +53,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   override def testConfigSource = s"""
     akka {
-      loglevel = INFO
+      loglevel = WARNING
+
+      # do not log anything on system startup or shutdown
+      stdout-loglevel = OFF
 
       # We need to access the raw URIs because they are used as keys in the index.
       http.server.raw-request-uri-header = on
