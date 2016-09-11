@@ -59,14 +59,14 @@ class FindUsages extends ScalaService {
       <#this>
         a response: ;
         service:requestId <$requestId> ;
-        service:result ([${
+        service:result [${
           positions.map {
             case (start, end) ⇒ s"""
           decl:posStart $start ;
           decl:posEnd $end ;
-        ] ["""
+        ], ["""
           }.mkString
-        }]) ;
+        }] ;
       .
     """)
   }

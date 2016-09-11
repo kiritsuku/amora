@@ -33,8 +33,9 @@ class FindUsagesTest extends RestApiTest {
       prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
 
       select ?start ?end where {
-        ?s service:result/rdf:rest*/rdf:first [decl:posStart ?start ; decl:posEnd ?end]
+        ?s service:result [decl:posStart ?start ; decl:posEnd ?end]
       }
+      order by ?start ?end
     """)
   }
 
