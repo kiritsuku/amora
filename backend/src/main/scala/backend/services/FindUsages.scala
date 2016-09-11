@@ -9,7 +9,8 @@ class FindUsages extends ScalaService {
       prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
       prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
 
-      select ?uStart ?uEnd where {
+      select ?usageStart ?usageEnd where {
+        # Find the identifier at an offset but exclude inferred references
         ?ident amora:posStart ?start; amora:posEnd ?end .
         filter ($offset >= ?start && $offset <= ?end && ?start != ?end)
 
@@ -32,8 +33,9 @@ class FindUsages extends ScalaService {
           ?usages ref:refToDecl ?decl .
         }
 
-        ?usages amora:posStart ?uStart; amora:posEnd ?uEnd .
-        filter (?uStart != ?uEnd)
+        # Find the regions of all usages but exclude inferred references
+        ?usages amora:posStart ?usageStart; amora:posEnd ?usageEnd .
+        filter (?usageStart != ?usageEnd)
 
         # Find only the usages that are in the same file where ?ident is
         ?ident amora:owner+ ?identOwner .
@@ -47,7 +49,7 @@ class FindUsages extends ScalaService {
     """)
     import scala.collection.JavaConverters._
     val positions = r.asScala.map { qs ⇒
-      qs.get("uStart").asLiteral().getInt → qs.get("uEnd").asLiteral().getInt
+      qs.get("usageStart").asLiteral().getInt → qs.get("usageEnd").asLiteral().getInt
     }
 
     response(s"""
