@@ -292,6 +292,20 @@ object Build extends sbt.Build {
     resourceGenerators in Test := (resourceGenerators in Compile).value,
     unmanagedResourceDirectories in Test := (unmanagedResourceDirectories in Compile).value,
 
+    // We want to have a slightly different configuration when the tests run in the build tool
+    // than when they run in the IDE. `test-application.conf` is loaded during the tests and
+    // therefore gives us the possibility to override the default configuration.
+    resourceGenerators in Test += (classDirectory in Test).map { dir =>
+      IO.write(dir / "test-application.conf", """
+        akka {
+          # Do not log anything - we are only interested in the test results
+          loglevel = OFF
+        }
+      """)
+
+      Nil
+    }.taskValue,
+
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
   ) dependsOn (protocolJvm, nvim, scalacConverter, javacConverter)

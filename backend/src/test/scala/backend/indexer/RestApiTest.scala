@@ -20,6 +20,8 @@ import org.apache.jena.rdf.model.Model
 import org.apache.jena.rdf.model.ModelFactory
 import org.junit.After
 
+import com.typesafe.config.ConfigFactory
+
 import akka.actor.Cancellable
 import akka.http.javadsl.model.headers.RawRequestURI
 import akka.http.scaladsl.Http
@@ -53,7 +55,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   override def testConfigSource = s"""
     akka {
-      loglevel = WARNING
+      loglevel = INFO
 
       # do not log anything on system startup or shutdown
       stdout-loglevel = OFF
@@ -74,6 +76,19 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       }
     }
   """
+
+  override def testConfig = {
+    val c = super.testConfig
+
+    // We want to have a slightly different configuration when the tests run in
+    // the IDE or in the build tool. `test-application.conf` is generated in the
+    // build tool in order to override the default configuration.
+    val f = new java.io.File(s"$binDir/test-application.conf")
+    if (f.exists())
+      ConfigFactory.parseFile(f).withFallback(c)
+    else
+      c
+  }
 
   private def binDir =
     getClass.getClassLoader.getResource(".").getPath
