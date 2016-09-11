@@ -288,6 +288,10 @@ object Build extends sbt.Build {
     // add schema definitions to resource directories
     unmanagedResourceDirectories in Compile += (baseDirectory in ThisBuild).value / "schema",
 
+    // use resoure generators also in Test config
+    resourceGenerators in Test := (resourceGenerators in Compile).value,
+    unmanagedResourceDirectories in Test := (unmanagedResourceDirectories in Compile).value,
+
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
   ) dependsOn (protocolJvm, nvim, scalacConverter, javacConverter)
