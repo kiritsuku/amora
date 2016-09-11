@@ -69,6 +69,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       test-mode = true
       forward-internal-logger-to-akka-logger = true
 
+      # If we want to be able to disable the logging of additional data, we can
+      # do so with this config value.
+      log-additional-debug-data-in-tests = true
+
       storage {
         location = "$binDir/amora"
         index-dataset = "$binDir/amora/dataset"
@@ -92,6 +96,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   private def binDir =
     getClass.getClassLoader.getResource(".").getPath
+
+  private def debugTests =
+    system.settings.config.getBoolean("app.log-additional-debug-data-in-tests")
 
   implicit val timeout = {
     import scala.concurrent.duration._
@@ -160,7 +167,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def testReq[A](req: ⇒ HttpRequest)(f: ⇒ A): A = {
     val r = req
     r ~> route ~> check {
-      val isJsonResponse = r.header[Accept].flatMap(_.mediaRanges.headOption).exists {
+      def isJsonResponse = r.header[Accept].flatMap(_.mediaRanges.headOption).exists {
         case m if m matches CustomContentTypes.`application/sparql-results+json` ⇒ true
         case _ ⇒ false
       }

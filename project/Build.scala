@@ -301,6 +301,10 @@ object Build extends sbt.Build {
           # Do not log anything - we are only interested in the test results
           loglevel = OFF
         }
+        app {
+          # We do not need additional logging during the build
+          log-additional-debug-data-in-tests = false
+        }
       """)
 
       Nil

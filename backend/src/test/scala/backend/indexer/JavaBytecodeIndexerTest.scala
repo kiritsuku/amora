@@ -11,6 +11,8 @@ class JavaBytecodeIndexerTest {
 
   import backend.TestUtils._
 
+  val debugTests = true
+
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, rawQuery: String, data: (String, String)*): Seq[Data] = {

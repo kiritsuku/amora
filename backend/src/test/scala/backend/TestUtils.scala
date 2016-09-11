@@ -4,8 +4,6 @@ import org.junit.ComparisonFailure
 
 object TestUtils {
 
-  var debugTests: Boolean = true
-
   final implicit class Assert_===[A](private val actual: A) extends AnyVal {
     def ===(expected: A): Unit = {
       if (actual != expected) {
