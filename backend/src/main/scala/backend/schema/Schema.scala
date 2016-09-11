@@ -272,8 +272,12 @@ object HierarchySchema {
 
         owner match {
           case Root ⇒
-            val ownerPath = Schema.mkDefn(schema)
-            sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+            // The owner of a package is an artifact but this can't be represented
+            // in the Hierarchy structure. Thus, we index this information separately.
+            if (!decl.attachments(Attachment.Package)) {
+              val ownerPath = Schema.mkId(schema)
+              sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
+            }
           case owner: Decl ⇒
             val ownerPath = mkOwnerPath(decl, owner)
             sb.append(s"  <$path> <$schemaPath/owner> <$ownerPath> .\n")
