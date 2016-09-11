@@ -147,6 +147,12 @@ object Main extends JSApp {
 
     handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
     handleClickEvent("li2")(_ ⇒ send(GetSchemas))
+    handleClickEvent("editorButton") { _ ⇒
+      val text = $("#editor").text()
+      onSuccess(indexScalaSrc(text)) { resp ⇒
+        log.log(resp)
+      }
+    }
     val d = htmlElem("editor")
     d.onmouseup = (e: MouseEvent) ⇒ {
       val sel = selection("editor")
@@ -290,6 +296,33 @@ object Main extends JSApp {
   }
 
   case class Range(start: Int, end: Int)
+
+  def indexScalaSrc(src: String): Future[String] = {
+    val data = s"""{
+      |  "tpe": "scala-sources",
+      |  "files": [
+      |    {
+      |      "fileName": "test.scala",
+      |      "src": "${src.replace("\n", "\\n").replace("\"", "\\\"")}"
+      |    }
+      |  ]
+      |}""".stripMargin
+    val p = Promise[String]
+    val r = new XMLHttpRequest
+    r.open("POST", "http://amora.center/add-json", async = true)
+    r.setRequestHeader("Content-type", "text/plain")
+    r.setRequestHeader("Charset", "UTF-8")
+    r.onreadystatechange = (e: Event) ⇒ {
+      if (r.readyState == XMLHttpRequest.DONE) {
+        if (r.status == 200)
+          p.success(r.responseText)
+        else
+          p.failure(new IllegalStateException(s"Server responded with an error to add-json request.\nRequest: $data\nResponse (error code: ${r.status}): ${r.responseText}"))
+      }
+    }
+    r.send(data)
+    p.future
+  }
 
   /**
    * Sends a SPARQL request. The response is encoded in
