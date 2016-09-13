@@ -33,6 +33,13 @@ object Main extends JSApp {
 
   private val connection = new Connection(handleResponse)
 
+  /**
+   * If a new web page is created, this is `false`. Once some content has been
+   * loaded, this needs to be set to `true` in order to signal that new state
+   * shall not override already existing state but update it.
+   */
+  private var hasState = false
+
   override def main(): Unit = {
     connection.setup()
   }
@@ -40,7 +47,10 @@ object Main extends JSApp {
   def handleResponse(response: Response): Unit = response match {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
-      showMainPage()
+      if (!hasState) {
+        hasState = true
+        mkMainPage()
+      }
 
     case resp: QueueItems ⇒
       handleQueueItems(resp)
@@ -64,7 +74,7 @@ object Main extends JSApp {
       dom.console.error(s"Unexpected message arrived: $msg")
   }
 
-  def showMainPage() = {
+  def mkMainPage() = {
     import scalatags.JsDom.all._
 
     val content = div(
