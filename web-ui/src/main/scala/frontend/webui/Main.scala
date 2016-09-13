@@ -136,12 +136,22 @@ object Main extends JSApp {
           li(id := "li2", a(href := "", "Show schemas", onclick := "return false;"))
         ),
         div(id := "content"),
-        div(id := "editor", pre(code("""
+        div(pre(code(id := "editor", """
           |class X {
           |  val xs: List[Int] = List(1)
           |  val ys: List[Int] = xs
           |}
-        """.stripMargin.trim())))
+          |class Y {
+          |  val x = new X
+          |  def f() = {
+          |    val xs = x.xs
+          |    xs
+          |  }
+          |  import x._
+          |  val zs = xs
+          |}
+        """.stripMargin.trim()))),
+        button(id := "editorButton", `type` := "button", "index code")
     ).render
     $("body").append(content)
 
