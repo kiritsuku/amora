@@ -34,10 +34,10 @@ final class BackendSystem(implicit system: ActorSystem) {
   import akka.pattern.ask
   import boopickle.Default._
 
-  private val nvim = system.actorOf(Props[NvimActor], "nvim")
-  private val queue = system.actorOf(Props[QueueActor], "queue")
-  private val indexer = system.actorOf(Props[IndexerActor], "indexer")
-  private val requestHandler = system.actorOf(Props(classOf[WebSocketRequestActor], queue, indexer), "request-handler")
+  private val nvim = system.actorOf(Props(new NvimActor), "nvim")
+  private val queue = system.actorOf(Props(new QueueActor), "queue")
+  private val indexer = system.actorOf(Props(new IndexerActor), "indexer")
+  private val requestHandler = system.actorOf(Props(new WebSocketRequestActor(queue, indexer)), "request-handler")
 
   def runQuery(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunQuery(query), errorMessage, onSuccess)
