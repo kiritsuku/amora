@@ -4,8 +4,8 @@ import org.junit.runner.RunWith
 import org.junit.runners.Suite
 import org.junit.runners.Suite.SuiteClasses
 
-import amora.research.converter.ClassfileConverterTest
-import amora.research.converter.ScalacConverterTest
+import amora.converter.ClassfileConverterTest
+import amora.converter.ScalacConverterTest
 import amora.backend.indexer.JavaBytecodeIndexerTest
 import amora.backend.indexer.IndexerTest
 import amora.backend.indexer.ScalaSourceIndexerTest

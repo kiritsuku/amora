@@ -5,7 +5,7 @@ import akka.actor.ActorRef
 import amora.backend.Logger
 import amora.backend.indexer.ScalaSourceIndexer
 import amora.backend.schema._
-import amora.research.converter.protocol._
+import amora.converter.protocol._
 
 final class ScalaSourceIndexerActor(override val indexer: ActorRef, override val logger: Logger)
     extends Actor with DataIndexer {

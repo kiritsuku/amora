@@ -8,7 +8,7 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import amora.backend.Content
 import amora.backend.indexer.Indexer
-import amora.research.converter.protocol.Hierarchy
+import amora.converter.protocol.Hierarchy
 
 class IndexerActor extends Actor with ActorLogging {
 

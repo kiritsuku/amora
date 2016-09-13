@@ -2,7 +2,7 @@ package amora.backend.schema
 
 import java.net.URLEncoder
 
-import amora.research.converter.protocol._
+import amora.converter.protocol._
 
 trait Schema
 final case class Project(name: String) extends Schema

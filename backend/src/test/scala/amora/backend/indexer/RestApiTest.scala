@@ -44,7 +44,7 @@ import amora.backend.Log4jRootLogging
 import amora.backend.PlatformConstants
 import amora.backend.WebService
 import amora.backend.schema._
-import amora.research.converter.protocol._
+import amora.converter.protocol._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
   import amora.backend.TestUtils._

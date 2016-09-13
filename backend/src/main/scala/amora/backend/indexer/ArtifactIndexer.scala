@@ -14,7 +14,7 @@ import amora.backend.Logger
 import amora.backend.actors.DataIndexer
 import amora.backend.actors.IndexerMessage
 import amora.backend.actors.RequestMessage
-import amora.research.converter.ClassfileConverter
+import amora.converter.ClassfileConverter
 import scalaz._
 import scalaz.concurrent.Task
 

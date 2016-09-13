@@ -21,7 +21,7 @@ import org.apache.jena.update.UpdateAction
 
 import amora.backend.Log4jLogging
 import amora.backend.actors.IndexerMessage._
-import amora.research.converter.protocol._
+import amora.converter.protocol._
 import spray.json._
 
 class Indexer(modelName: String) extends Log4jLogging {

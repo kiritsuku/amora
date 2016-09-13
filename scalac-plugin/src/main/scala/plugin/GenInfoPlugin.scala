@@ -7,7 +7,7 @@ import scala.tools.nsc.plugins.PluginComponent
 import scala.util.Failure
 import scala.util.Success
 
-import amora.research.converter.ScalacConverter
+import amora.converter.ScalacConverter
 
 class GenInfoPlugin(override val global: Global) extends Plugin {
   override val name = "GenInfoPlugin"

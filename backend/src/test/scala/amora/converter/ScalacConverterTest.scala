@@ -1,5 +1,4 @@
-package amora.research
-package converter
+package amora.converter
 
 import org.junit.Test
 

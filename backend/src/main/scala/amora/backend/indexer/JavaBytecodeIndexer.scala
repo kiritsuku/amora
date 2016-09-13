@@ -15,8 +15,8 @@ import javax.tools.JavaFileObject
 import javax.tools.SimpleJavaFileObject
 import javax.tools.StandardJavaFileManager
 import javax.tools.ToolProvider
-import amora.research.converter.ClassfileConverter
-import amora.research.converter.protocol.Hierarchy
+import amora.converter.ClassfileConverter
+import amora.converter.protocol.Hierarchy
 
 /**
  * Provides functionality to extract information out of Java bytecode.

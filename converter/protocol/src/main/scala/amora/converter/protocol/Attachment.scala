@@ -1,4 +1,4 @@
-package amora.research.converter.protocol
+package amora.converter.protocol
 
 trait Attachment {
   def asString: String

@@ -11,8 +11,8 @@ import scala.util.Success
 import scala.util.Try
 
 import amora.backend.Logger
-import amora.research.converter.ScalacConverter
-import amora.research.converter.protocol.Hierarchy
+import amora.converter.ScalacConverter
+import amora.converter.protocol.Hierarchy
 
 /**
  * Provides functionality to extract information out of Scala source code.

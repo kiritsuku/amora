@@ -1,5 +1,4 @@
-package amora.research
-package converter
+package amora.converter
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Failure
@@ -13,8 +12,8 @@ import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 final class ClassfileConverter {
-  import converter.{ protocol ⇒ h }
-  import amora.research.converter.protocol.{ Attachment ⇒ a }
+  import amora.converter.{ protocol ⇒ h }
+  import amora.converter.protocol.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
 
