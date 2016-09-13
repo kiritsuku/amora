@@ -59,7 +59,6 @@ object Main extends JSApp {
 
           Future {
             setupWS()
-            showMainPage()
           } onFailure {
             case t ⇒
               throw t
@@ -103,6 +102,7 @@ object Main extends JSApp {
   def handleResponse(response: Response) = response match {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
+      showMainPage()
 
     case resp: QueueItems ⇒
       handleQueueItems(resp)
