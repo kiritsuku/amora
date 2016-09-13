@@ -1,7 +1,5 @@
 package amora.frontend.webui
 
-import java.nio.ByteBuffer
-
 import scala.concurrent.Future
 import scala.concurrent.Promise
 import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
@@ -14,10 +12,12 @@ import scala.util.Failure
 import scala.util.Success
 
 import org.scalajs.dom
-import org.scalajs.dom.raw._
+import org.scalajs.dom.raw.Event
+import org.scalajs.dom.raw.HTMLElement
+import org.scalajs.dom.raw.MouseEvent
+import org.scalajs.dom.raw.XMLHttpRequest
 
 import amora.frontend.webui.protocol._
-import amora.frontend.webui.protocol.QueueItem
 
 @JSExport
 object Main extends JSApp {
@@ -31,75 +31,13 @@ object Main extends JSApp {
   def f2[R](f: (js.Any, js.Any) ⇒ R): js.Function2[js.Any, js.Any, R] =
     js.Any.fromFunction2((arg0: js.Any, arg1: js.Any) ⇒ f(arg0, arg1))
 
-  /** The socket to the server */
-  private var ws: WebSocket = _
-  /** The ID of the client which is assigned by the server after authorization. */
-  private var clientId: String = _
+  private val connection = new Connection(handleResponse)
 
   override def main(): Unit = {
-    authorize()
+    connection.setup()
   }
 
-  def authorize() = {
-    val ws = new WebSocket(websocketUri("auth-web"))
-    ws.binaryType = "arraybuffer"
-    ws.onopen = (e: Event) ⇒ {
-      dom.console.info("Connection for client authorization opened")
-    }
-    ws.onerror = (e: ErrorEvent) ⇒ {
-      dom.console.error(s"Couldn't create connection to server: ${JSON.stringify(e)}")
-    }
-    ws.onmessage = (e: MessageEvent) ⇒ {
-      import boopickle.Default._
-      val bytes = toByteBuffer(e.data)
-      Unpickle[Response].fromBytes(bytes) match {
-        case AuthorizationGranted(id) ⇒
-          dom.console.info(s"Server assigned id `$id`.")
-          this.clientId = id
-
-          Future {
-            setupWS()
-          } onFailure {
-            case t ⇒
-              throw t
-          }
-
-        case msg ⇒
-          dom.console.error(s"Unexpected message arrived: $msg")
-      }
-      ws.close()
-      dom.console.info("Connection for client authorization closed")
-    }
-  }
-
-  def setupWS(): Unit = {
-    ws = new WebSocket(websocketUri(s"kbws?id=$clientId"))
-    ws.binaryType = "arraybuffer"
-    ws.onopen = (e: Event) ⇒ {
-      dom.console.info("Connection for server communication opened")
-    }
-    ws.onerror = (e: ErrorEvent) ⇒ {
-      dom.console.error(s"Couldn't create connection to server: ${JSON.stringify(e)}")
-    }
-    ws.onmessage = (e: MessageEvent) ⇒ {
-      import boopickle.Default._
-      val bytes = toByteBuffer(e.data)
-      val resp = Unpickle[Response].fromBytes(bytes)
-      dom.console.info(s"Received response from server: $resp")
-      handleResponse(resp)
-    }
-    ws.onclose = (e: CloseEvent) ⇒ {
-      val reason = if (e.reason.isEmpty) "" else s" Reason: ${e.reason}"
-      dom.console.info(s"Connection for server communication closed.$reason")
-      dom.window.setTimeout({ () ⇒
-        // when the connection is closed automatically, we want to reconnect
-        dom.console.info("Recreating connection for server communication")
-        setupWS()
-      }, 100)
-    }
-  }
-
-  def handleResponse(response: Response) = response match {
+  def handleResponse(response: Response): Unit = response match {
     case ConnectionSuccessful ⇒
       dom.console.info(s"Connection to server established. Communication is now possible.")
       showMainPage()
@@ -155,8 +93,8 @@ object Main extends JSApp {
     ).render
     $("body").append(content)
 
-    handleClickEvent("li1")(_ ⇒ send(GetQueueItems))
-    handleClickEvent("li2")(_ ⇒ send(GetSchemas))
+    handleClickEvent("li1")(_ ⇒ connection.send(GetQueueItems))
+    handleClickEvent("li2")(_ ⇒ connection.send(GetSchemas))
     handleClickEvent("editorButton") { _ ⇒
       val text = $("#editor").text()
       onSuccess(indexScalaSrc(text)) { resp ⇒
@@ -428,7 +366,7 @@ object Main extends JSApp {
     ).render
     $("#content").empty().append(content)
 
-    for (i ← items.items) handleClickEvent(s"item$i")(_ ⇒ send(GetQueueItem(i)))
+    for (i ← items.items) handleClickEvent(s"item$i")(_ ⇒ connection.send(GetQueueItem(i)))
   }
 
   def handleQueueItem(item: QueueItem) = {
@@ -465,7 +403,7 @@ object Main extends JSApp {
     val d = dom.document.getElementById("schemas").asInstanceOf[dom.html.Select]
     d.onchange = (_: Event) ⇒ {
       val selectedSchema = d.options(d.selectedIndex).textContent
-      send(GetSchema(selectedSchema))
+      connection.send(GetSchema(selectedSchema))
     }
   }
 
@@ -475,7 +413,7 @@ object Main extends JSApp {
   def handleFormSubmit(elem: js.Object) = {
     val value = elem.jsg.getValue()
     val formattedJson = JSON.stringify(value, null: js.Function2[String, js.Any, js.Any], "  ")
-    send(IndexData(formattedJson))
+    connection.send(IndexData(formattedJson))
   }
 
   def handleSchema(schema: Schema) = {
@@ -494,41 +432,8 @@ object Main extends JSApp {
     $("#schema").empty().append(content)
   }
 
-  def send(req: Request): Unit = {
-    import boopickle.Default._
-    val msg = Pickle.intoBytes(req)
-    ws.send(toArrayBuffer(msg))
-    dom.console.info(s"Sent request: $req")
-  }
-
   private def handleClickEvent(id: String)(f: MouseEvent ⇒ Unit) = {
     val d = htmlElem(id)
     d.onclick = (e: MouseEvent) ⇒ f(e)
-  }
-
-  private def websocketUri(path: String): String = {
-    // The server address is defined by the server
-    val addr = js.Dynamic.global.ServerAddress.toString
-    val wsAddr =
-      if (addr.startsWith("https:"))
-        addr.replaceFirst("https:", "wss:")
-      else if (addr.startsWith("http:"))
-        addr.replaceFirst("http:", "ws:")
-      else
-        throw new Exception(s"Invalid server address: $addr. It needs to start with https or http.")
-    val fullAddr = s"$wsAddr/$path"
-
-    dom.console.log(s"Connecting to `$fullAddr`")
-    fullAddr
-  }
-
-  private def toByteBuffer(data: Any): ByteBuffer = {
-    val ab = data.asInstanceOf[js.typedarray.ArrayBuffer]
-    js.typedarray.TypedArrayBuffer.wrap(ab)
-  }
-
-  private def toArrayBuffer(data: ByteBuffer): js.typedarray.ArrayBuffer = {
-    import scala.scalajs.js.typedarray.TypedArrayBufferOps._
-    data.arrayBuffer
   }
 }
