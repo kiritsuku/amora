@@ -3,7 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 
 registry:FindUsages
-  service:name "backend.services.FindUsages" ;
+  service:name "amora.backend.services.FindUsages" ;
   service:method [
     service:name "run" ;
     service:param [

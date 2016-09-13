@@ -3,7 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 
 registry:FindDeclaration
-  service:name "backend.services.FindDeclaration" ;
+  service:name "amora.backend.services.FindDeclaration" ;
   service:method [
     service:name "run" ;
     service:param [
