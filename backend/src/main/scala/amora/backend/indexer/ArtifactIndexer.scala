@@ -6,15 +6,14 @@ import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
-import scala.util.Try
-
 import akka.actor.Actor
 import akka.actor.ActorRef
 import amora.backend.Logger
 import amora.backend.actors.DataIndexer
-import amora.backend.actors.IndexerMessage
 import amora.backend.actors.RequestMessage
+import amora.backend.schema
 import amora.converter.ClassfileConverter
+import amora.converter.protocol.Hierarchy
 import scalaz._
 import scalaz.concurrent.Task
 
@@ -75,16 +74,20 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
-        val p = IndexerMessage.Project(artifact.name)
-        val a = IndexerMessage.Artifact(p, artifact.organization, artifact.name, artifact.version)
-        val files = indexArtifact(a, file).get
-
+        val a = schema.Artifact(schema.Project(artifact.name), artifact.organization, artifact.name, artifact.version)
+        val files = indexArtifact(a, file)
+        val artifactQuery = schema.Schema.mkSparqlUpdate(Seq(a))
         logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
-        indexData(a, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
+        sparqlUpdate(artifactQuery, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
+
         files.zipWithIndex foreach {
-          case (file @ IndexerMessage.File(project, fileName, hierarchy), i) ⇒
+          case ((file @ schema.File(_, fileName), hierarchy), i) ⇒
+            // TODO
+            val fileQuery = schema.Schema.mkSparqlUpdate(Seq(file))
+            val dataQuery = schema.HierarchySchema.mkSparqlUpdate(file, hierarchy)
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-            indexData(file, s"Error happened while indexing $fileName.")
+            sparqlUpdate(fileQuery, s"Error happened while indexing $fileName.")
+            sparqlUpdate(dataQuery, s"Error happened while indexing $fileName.")
         }
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
@@ -117,14 +120,14 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
     }
   }
 
-  def indexArtifact(artifact: IndexerMessage.Artifact, file: File): Try[Seq[IndexerMessage.File]] = Try {
+  def indexArtifact(artifact: schema.Artifact, file: File): Seq[(schema.File, Seq[Hierarchy])] = {
     import scala.collection.JavaConverters._
     require(file.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
       val hierarchy = new ClassfileConverter().convert(bytes).get
-      IndexerMessage.File(artifact, entry.getName, hierarchy)
+      schema.File(artifact, entry.getName) → hierarchy
     }
 
     def zipToHierarchy(zip: ZipFile) = {
