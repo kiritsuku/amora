@@ -5,7 +5,8 @@ import scala.util._
 
 import org.junit.Test
 
-import amora.backend.actors.IndexerMessage
+import amora.backend.schema._
+import amora.converter.protocol._
 
 class JavaBytecodeIndexerTest {
 
@@ -22,11 +23,23 @@ class JavaBytecodeIndexerTest {
     val res = indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         val jindexer = new JavaBytecodeIndexer(IgnoreLogger)
+        val origin = Artifact(Project("testProject"), "o", "n", "v1")
         jindexer.bytecodeToHierarchy(data) match {
           case Success(data) ⇒
             data foreach {
-              case (filename, data) ⇒
-                indexer.addFile(IndexerMessage.File(IndexerMessage.NoOrigin, filename, data))(model)
+              case (fileName, data) ⇒
+
+                def asSchemaPackage(decl: Hierarchy): Schema = decl match {
+                  case Root ⇒ origin
+                  case Decl(name, owner) ⇒ Package(name, asSchemaPackage(owner))
+                  case _ ⇒ ???
+                }
+                val pkg = data.collectFirst {
+                  case d if d.attachments(Attachment.Package) ⇒ d
+                }
+                val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, fileName)).getOrElse(File(origin, fileName))
+                indexer.withUpdateService(model, Schema.mkSparqlUpdate(Seq(s)))(_ ⇒ ())
+                indexer.withUpdateService(model, HierarchySchema.mkSparqlUpdate(s, data))(_ ⇒ ())
             }
           case Failure(f) ⇒
             throw f
@@ -52,10 +65,9 @@ class JavaBytecodeIndexerTest {
   @Test
   def classes() = {
     ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "class"] s:name ?name .
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+        select * where {
+          [a c:] c:name ?name .
         }
       """,
       "X.java" → """
@@ -66,10 +78,9 @@ class JavaBytecodeIndexerTest {
   @Test
   def methods() = {
     ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "def"] s:name ?name .
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        select * where {
+          [a c:] c:name ?name .
         }
       """,
       "X.java" → """
@@ -87,10 +98,9 @@ class JavaBytecodeIndexerTest {
   @Test
   def fields() = {
     ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "var"] s:name ?name .
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        select * where {
+          [a c:] c:name ?name .
         }
       """,
       "X.java" → """
@@ -104,10 +114,9 @@ class JavaBytecodeIndexerTest {
   @Test
   def index_method_parameter_as_vars() = {
     ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "var"] s:name ?name .
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        select * where {
+          [a c:] c:name ?name .
         }
       """,
       "X.java" → """
@@ -120,10 +129,9 @@ class JavaBytecodeIndexerTest {
   @Test
   def index_method_parameter_as_params() = {
     ask(modelName, s"""
-        PREFIX c:<?MODEL?>
-        PREFIX s:<http://schema.org/>
-        SELECT * WHERE {
-          [c:attachment "param"] s:name ?name .
+        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        select * where {
+          [c:flag "param"] c:name ?name .
         }
       """,
       "X.java" → """
