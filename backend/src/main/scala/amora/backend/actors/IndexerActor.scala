@@ -8,7 +8,6 @@ import akka.actor.Actor
 import akka.actor.ActorLogging
 import amora.backend.Content
 import amora.backend.indexer.Indexer
-import amora.converter.protocol.Hierarchy
 
 class IndexerActor extends Actor with ActorLogging {
 
@@ -32,9 +31,6 @@ class IndexerActor extends Actor with ActorLogging {
 
     case RunUpdate(query) ⇒
       sender ! Try(handleUpdate(query))
-
-    case AddData(data) ⇒
-      sender ! handleAddData(data)
   }
 
   override def postStop() = {
@@ -58,26 +54,10 @@ class IndexerActor extends Actor with ActorLogging {
       }
     }
   }
-
-  def handleAddData(data: Indexable): Unit = {
-    indexer.writeDataset(dataset) { dataset ⇒
-      indexer.withModel(dataset) { model ⇒
-        indexer.add(model, data)
-      }
-    }
-  }
 }
 
 sealed trait IndexerMessage
 object IndexerMessage {
   case class RunQuery(query: String) extends IndexerMessage
   case class RunUpdate(query: String) extends IndexerMessage
-  case class AddData(data: Indexable) extends IndexerMessage
-
-  sealed trait Indexable extends IndexerMessage
-  sealed trait Origin extends Indexable
-  final case class Artifact(project: Project, organization: String, name: String, version: String) extends Origin
-  case object NoOrigin extends Origin
-  final case class Project(name: String) extends Indexable
-  final case class File(origin: Origin, name: String, data: Seq[Hierarchy]) extends Indexable
 }

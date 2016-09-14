@@ -33,15 +33,6 @@ trait DataIndexer { this: Actor ⇒
     }
   }
 
-  def indexData(data: IndexerMessage.Indexable, errMsg: ⇒ String): Unit = {
-    import amora.backend.PlatformConstants.timeout
-    Await.ready((indexer ask IndexerMessage.AddData(data)).mapTo[Unit], timeout.duration) onComplete {
-      case Failure(t) ⇒
-        logger.error(errMsg, t)
-      case _ ⇒
-    }
-  }
-
   def runIndexing(sender: ActorRef)(f: ⇒ Unit): Unit = {
     Future(f).onComplete {
       case Success(_) ⇒
