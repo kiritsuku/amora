@@ -118,9 +118,9 @@ class IndexerTest extends RestApiTest {
       respAsString.toBoolean
     }
     testReq((post("http://amora.center/sparql", """
-      prefix kb:<http://amora.center/kb/>
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
       select * where {
-        [a kb:Project] kb:name ?name .
+        [a p:] p:name ?name .
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       val r = respAsResultSet()
