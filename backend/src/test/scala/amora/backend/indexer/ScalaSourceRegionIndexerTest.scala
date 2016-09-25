@@ -2,8 +2,8 @@ package amora.backend.indexer
 
 import org.junit.Test
 
-import amora.backend.schema.Artifact
-import amora.backend.schema.Project
+import amora.converter.protocol.Artifact
+import amora.converter.protocol.Project
 
 class ScalaSourceRegionIndexerTest extends RestApiTest {
 

@@ -9,6 +9,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import amora.backend.CustomContentTypes
 import amora.backend.schema._
+import amora.converter.protocol._
 
 class IndexerTest extends RestApiTest {
   import amora.backend.TestUtils._

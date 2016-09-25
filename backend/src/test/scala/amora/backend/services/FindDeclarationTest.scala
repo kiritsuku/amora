@@ -2,8 +2,8 @@ package amora.backend.services
 
 import amora.backend.indexer.RestApiTest
 import org.junit.Test
-import amora.backend.schema.Project
-import amora.backend.schema.Artifact
+import amora.converter.protocol.Artifact
+import amora.converter.protocol.Project
 
 class FindDeclarationTest extends RestApiTest {
 

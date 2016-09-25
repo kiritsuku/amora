@@ -3,8 +3,8 @@ package amora.backend.services
 import org.junit.Test
 
 import amora.backend.indexer.RestApiTest
-import amora.backend.schema.Artifact
-import amora.backend.schema.Project
+import amora.converter.protocol.Artifact
+import amora.converter.protocol.Project
 
 class FindUsagesTest extends RestApiTest {
   import amora.backend.TestUtils._

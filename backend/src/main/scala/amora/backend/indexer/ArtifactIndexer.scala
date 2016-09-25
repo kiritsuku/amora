@@ -1,7 +1,7 @@
 package amora.backend.indexer
 
 import java.io.ByteArrayOutputStream
-import java.io.File
+import java.io.{File ⇒ JFile}
 import java.io.InputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
@@ -13,7 +13,7 @@ import amora.backend.actors.DataIndexer
 import amora.backend.actors.RequestMessage
 import amora.backend.schema
 import amora.converter.ClassfileConverter
-import amora.converter.protocol.Hierarchy
+import amora.converter.protocol._
 import scalaz._
 import scalaz.concurrent.Task
 
@@ -21,7 +21,7 @@ object ArtifactIndexer {
   sealed trait DownloadStatus {
     def isError: Boolean
   }
-  case class DownloadSuccess(artifact: RequestMessage.Artifact, file: File) extends DownloadStatus {
+  case class DownloadSuccess(artifact: RequestMessage.Artifact, file: JFile) extends DownloadStatus {
     override def isError = false
   }
   case class DownloadError(artifactName: String, reason: Option[String]) extends DownloadStatus {
@@ -32,7 +32,6 @@ object ArtifactIndexer {
 final class ArtifactIndexer(override val indexer: ActorRef, override val logger: Logger)
     extends Actor with DataIndexer {
   import ArtifactIndexer._
-  import coursier._
 
   override def receive = {
     case RequestMessage.Artifacts(_, artifacts) ⇒
@@ -74,14 +73,14 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
-        val a = schema.Artifact(schema.Project(artifact.name), artifact.organization, artifact.name, artifact.version)
+        val a = Artifact(Project(artifact.name), artifact.organization, artifact.name, artifact.version)
         val files = indexArtifact(a, file)
         val artifactQuery = schema.Schema.mkSparqlUpdate(Seq(a))
         logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
         sparqlUpdate(artifactQuery, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
 
         files.zipWithIndex foreach {
-          case ((file @ schema.File(_, fileName), hierarchy), i) ⇒
+          case ((file @ File(_, fileName), hierarchy), i) ⇒
             // TODO
             val fileQuery = schema.Schema.mkSparqlUpdate(Seq(file))
             val dataQuery = schema.HierarchySchema.mkSparqlUpdate(file, hierarchy)
@@ -94,9 +93,10 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
   }
 
   def fetchArtifact(organization: String, name: String, version: String): Seq[DownloadStatus] = {
+    import coursier._
     val start = Resolution(Set(Dependency(Module(organization, name), version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
-    val cache = new File(context.system.settings.config.getString("app.storage.artifact-repo"))
+    val cache = new JFile(context.system.settings.config.getString("app.storage.artifact-repo"))
     val fetch = Fetch.from(repos, Cache.fetch(cache = cache, logger = Some(coursierLogger)))
     val resolution = start.process.run(fetch).run
 
@@ -120,14 +120,14 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
     }
   }
 
-  def indexArtifact(artifact: schema.Artifact, file: File): Seq[(schema.File, Seq[Hierarchy])] = {
+  def indexArtifact(artifact: Artifact, file: JFile): Seq[(File, Seq[Hierarchy])] = {
     import scala.collection.JavaConverters._
     require(file.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
       val hierarchy = new ClassfileConverter().convert(bytes).get
-      schema.File(artifact, entry.getName) → hierarchy
+      File(artifact, entry.getName) → hierarchy
     }
 
     def zipToHierarchy(zip: ZipFile) = {
@@ -153,12 +153,12 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
   private def using[A <: { def close(): Unit }, B](closeable: A)(f: A ⇒ B): B =
     try f(closeable) finally closeable.close()
 
-  private val coursierLogger = new Cache.Logger {
-    override def foundLocally(url: String, file: File): Unit = {
+  private val coursierLogger = new coursier.Cache.Logger {
+    override def foundLocally(url: String, file: JFile): Unit = {
       logger.info(s"[found-locally] url: $url, file: $file")
     }
 
-    override def downloadingArtifact(url: String, file: File): Unit = {
+    override def downloadingArtifact(url: String, file: JFile): Unit = {
       logger.info(s"[downloading-artifact] url: $url, file: $file")
     }
 
