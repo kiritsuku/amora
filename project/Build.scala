@@ -367,6 +367,15 @@ object Build extends sbt.Build {
     libraryDependencies ++= deps.javacConverter.value
   ) dependsOn (converterProtocol)
 
+  lazy val dotcConverter = project in file("converter/dotc") settings commonSettings ++ Seq(
+    name := "dotc-converter",
+
+    // dotc ships with a fork of scalac, we therefore don't want to use the compiler that is bundled with Eclipse
+    EclipseKeys.withBundledScalaContainers := false,
+
+    libraryDependencies ++= deps.dotcConverter.value
+  ) dependsOn (converterProtocol)
+
   object versions {
     // https://github.com/lihaoyi/scalatags
     val scalatags       = "0.5.2"
@@ -451,6 +460,11 @@ object Build extends sbt.Build {
     lazy val javacConverter = Def.setting(Seq(
       "org.ow2.asm"                    %   "asm-commons"                       % "5.0.4",
       "org.ow2.asm"                    %   "asm-util"                          % "5.0.4"
+    ))
+
+    lazy val dotcConverter = Def.setting(Seq(
+      "ch.epfl.lamp"                   %%  "dotty"                             % "0.1-20160923-28940d3-NIGHTLY",
+      "me.d-d"                         %   "scala-compiler"                    % "2.11.5-20160322-171045-e19b30b3cd"
     ))
   }
 }
