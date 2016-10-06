@@ -91,8 +91,8 @@ object Main extends JSApp with Requests {
     handleClickEvent("li2")(_ ⇒ connection.send(GetSchemas))
     handleClickEvent("editorButton") { _ ⇒
       val text = $("#editor").text()
-      onSuccess(indexScalaSrc(text)) { resp ⇒
-        log.log(resp)
+      onSuccess(indexScalaSrc(text)) { _ ⇒
+        log.log("Data indexed")
       }
     }
     val d = htmlElem("editor")

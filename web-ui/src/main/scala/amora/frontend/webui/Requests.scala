@@ -15,6 +15,30 @@ trait Requests {
 
   case class Range(start: Int, end: Int)
 
+  def indexScalaSrc(src: String): Future[Unit] = {
+    val n3Resp = serviceRequest(s"""
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix registry:<http://amora.center/kb/Service/0.1/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+      <#this>
+        a request: ;
+        service:serviceId registry:ScalaSourceIndexer ;
+        service:method [
+          service:name "run" ;
+          service:param [
+            service:name "data" ;
+            service:value [
+              cu:fileName "x.scala" ;
+              cu:source "${src.replace("\n", "\\n").replace("\"", "\\\"")}" ;
+            ] ;
+          ] ;
+        ] ;
+      .
+    """)
+    n3Resp.map(_ ⇒ ())
+  }
+
   def findUsages(offset: Int): Future[Seq[Range]] = {
     val n3Resp = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
@@ -121,33 +145,6 @@ trait Requests {
         })
       }
     })
-    p.future
-  }
-
-  def indexScalaSrc(src: String): Future[String] = {
-    val data = s"""{
-      |  "tpe": "scala-sources",
-      |  "files": [
-      |    {
-      |      "fileName": "test.scala",
-      |      "src": "${src.replace("\n", "\\n").replace("\"", "\\\"")}"
-      |    }
-      |  ]
-      |}""".stripMargin
-    val p = Promise[String]
-    val r = new XMLHttpRequest
-    r.open("POST", "http://amora.center/add-json", async = true)
-    r.setRequestHeader("Content-type", "text/plain")
-    r.setRequestHeader("Charset", "UTF-8")
-    r.onreadystatechange = (e: Event) ⇒ {
-      if (r.readyState == XMLHttpRequest.DONE) {
-        if (r.status == 200)
-          p.success(r.responseText)
-        else
-          p.failure(new IllegalStateException(s"Server responded with an error to add-json request.\nRequest: $data\nResponse (error code: ${r.status}): ${r.responseText}"))
-      }
-    }
-    r.send(data)
     p.future
   }
 
