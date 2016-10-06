@@ -376,6 +376,16 @@ object Build extends sbt.Build {
     libraryDependencies ++= deps.dotcConverter.value
   ) dependsOn (converterProtocol)
 
+  lazy val scalaCompilerService = project in file("services/scala-compiler") settings commonSettings ++ Seq(
+    name := "scala-compiler-service",
+
+    libraryDependencies ++= deps.scalaCompilerService.value
+  ) dependsOn (backend)
+
+  lazy val scalacService = project in file("services/scalac") settings commonSettings ++ Seq(
+    name := "scalac-service"
+  ) dependsOn (scalacConverter, scalaCompilerService)
+
   object versions {
     // https://github.com/lihaoyi/scalatags
     val scalatags       = "0.5.2"
@@ -394,6 +404,7 @@ object Build extends sbt.Build {
     // https://github.com/antonkulaga/codemirror-facade
     val codemirror      = "5.5-0.5"
     val jquery          = "0.8.0"
+    val junitInterface  = "0.11"
   }
 
   object deps {
@@ -415,7 +426,7 @@ object Build extends sbt.Build {
       "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
       // https://github.com/scalaj/scalaj-http
       "org.scalaj"                     %%  "scalaj-http"                       % "2.3.0",
-      "com.novocode"                   %   "junit-interface"                   % "0.11"                    % "test",
+      "com.novocode"                   %   "junit-interface"                   % versions.junitInterface   % "test",
       "com.typesafe.akka"              %%  "akka-http-testkit"                 % versions.akka             % "test"
     ))
 
@@ -465,6 +476,10 @@ object Build extends sbt.Build {
     lazy val dotcConverter = Def.setting(Seq(
       "ch.epfl.lamp"                   %%  "dotty"                             % "0.1-20160923-28940d3-NIGHTLY",
       "me.d-d"                         %   "scala-compiler"                    % "2.11.5-20160322-171045-e19b30b3cd"
+    ))
+
+    lazy val scalaCompilerService = Def.setting(Seq(
+      "com.novocode"                   %   "junit-interface"                   % versions.junitInterface   % "test"
     ))
   }
 }

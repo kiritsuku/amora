@@ -2,25 +2,14 @@ package amora.converter
 
 import org.junit.Test
 
-import amora.backend.indexer.ScalaSourceIndexer
-import amora.backend.TestUtils
-import amora.backend.IgnoreLogger
+abstract class ScalaCompilerTest {
 
-class ScalacConverterTest {
-
-  import TestUtils._
+  import amora.backend.TestUtils._
 
   def convert(src: String): Set[String] =
     convert("<memory>" → src)
 
-  def convert(data: (String, String)*): Set[String] = {
-    val indexer = new ScalaSourceIndexer(IgnoreLogger)
-    val res = indexer.convertToHierarchy(data) match {
-      case scala.util.Success(res) ⇒ res.flatMap(_._2)
-      case scala.util.Failure(f) ⇒ throw f
-    }
-    res.map(_.asString).toSet
-  }
+  def convert(data: (String, String)*): Set[String]
 
   @Test
   def single_class() = {
@@ -1096,5 +1085,4 @@ class ScalacConverterTest {
         "X", "X.<param>p", "scala.<ref>Int", "scala.Int.<ref>+", "X.this(II)V",
         "X.this(II)V.<param>a", "X.this(II)V.<param>b", "X.this(II)V.<ref>a", "X.this(II)V.<ref>b")
   }
-
 }
