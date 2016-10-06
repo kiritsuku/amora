@@ -32,7 +32,7 @@ trait ArtifactFetcher {
   def sparqlUpdate(query: String, errMsg: ⇒ String): Unit
   def cacheLocation: JFile
 
-  def handleArtifacts(artifacts: Seq[Artifact]) = {
+  def handleArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
     val res = artifacts flatMap fetchArtifact
     val (errors, succs) = res.partition(_.isError)
     val succMsgs = succs.collect {
@@ -54,9 +54,11 @@ trait ArtifactFetcher {
 
     if (errors.isEmpty)
       indexArtifacts(succs.asInstanceOf[Seq[DownloadSuccess]])
+
+    res
   }
 
-  def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {
+  private def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {
     logger.info(s"No errors happened during fetching of artifacts. Start indexing of ${artifacts.size} artifacts now.")
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
@@ -78,7 +80,7 @@ trait ArtifactFetcher {
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")
   }
 
-  def fetchArtifact(artifact: Artifact): Seq[DownloadStatus] = {
+  private def fetchArtifact(artifact: Artifact): Seq[DownloadStatus] = {
     import coursier.{ Artifact ⇒ _, Project ⇒ _, _ }
     val start = Resolution(Set(Dependency(Module(artifact.organization, artifact.name), artifact.version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
@@ -104,7 +106,7 @@ trait ArtifactFetcher {
     }
   }
 
-  def indexArtifact(artifact: Artifact, file: JFile): Seq[(File, Seq[Hierarchy])] = {
+  private def indexArtifact(artifact: Artifact, file: JFile): Seq[(File, Seq[Hierarchy])] = {
     import scala.collection.JavaConverters._
     require(file.getName.endsWith(".jar"), "Artifact needs to be a JAR file")
 
