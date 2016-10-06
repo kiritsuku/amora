@@ -2,6 +2,7 @@ package amora.backend.requests
 
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.net.URLClassLoader
 
 import scala.concurrent.Future
 import scala.util.Failure
@@ -20,10 +21,18 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
+import amora.backend.ActorLogger
 import amora.backend.AkkaLogging
 import amora.backend.CustomContentTypes
+import amora.backend.Logger
+import amora.backend.indexer.ArtifactFetcher
+import amora.backend.indexer.ArtifactFetcher.DownloadSuccess
+import amora.backend.services.ScalaService
+import amora.converter.protocol.Artifact
+import amora.converter.protocol.Project
 
 trait Service extends Directives with AkkaLogging {
+  import Service._
 
   private implicit val d = system.dispatcher
   private val config = system.settings.config
@@ -84,41 +93,197 @@ trait Service extends Directives with AkkaLogging {
       qs.get("name").toString() → qs.get("className").asLiteral().getString
     }.head
 
-    val requestParam = execQuery(reqModel, s"""
+    val isLiteral = execAsk(reqModel, s"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      ask {
+        <$serviceRequest> service:method/service:param/service:value ?value .
+        filter isLiteral(?value)
+      }
+    """)
+
+    def complexParam = execQuery(reqModel, s"""
+      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
       select * where {
         <$serviceRequest> service:method [
           service:param [
             service:name ?name ;
-            service:value ?value ;
+            service:value [
+              cu:fileName ?fileName ;
+              cu:source ?source ;
+            ] ;
           ] ;
         ] .
       }
     """) { qs ⇒
-      qs.get("name").toString() → qs.get("value").asLiteral()
+      val name = qs.get("name").toString()
+      val fileName = qs.get("fileName").asLiteral().getString
+      val source = qs.get("source").asLiteral().getString
+
+      name → Param(name, classOf[List[_]], List(fileName → source))
     }.toMap
 
-    val param = serviceParam.map {
-      case (name, tpe) ⇒
-        // TODO handle ???
-        val value = requestParam.getOrElse(name, ???)
-        name → (tpe match {
-          case "http://www.w3.org/2001/XMLSchema#integer" ⇒
-            Param(name, classOf[Int], value.getInt)
-          case "http://www.w3.org/2001/XMLSchema#string" ⇒
-            Param(name, classOf[String], value.getString)
-        })
+    def literalParam = {
+      val requestParam = execQuery(reqModel, s"""
+        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        select * where {
+          <$serviceRequest> service:method [
+            service:param [
+              service:name ?name ;
+              service:value ?value ;
+            ] ;
+          ] .
+        }
+      """) { qs ⇒
+        qs.get("name").toString() → qs.get("value").asLiteral()
+      }.toMap
+
+      serviceParam.map {
+        case (name, tpe) ⇒
+          // TODO handle ???
+          val value = requestParam.getOrElse(name, ???)
+          name → (tpe match {
+            case "http://www.w3.org/2001/XMLSchema#integer" ⇒
+              Param(name, classOf[Int], value.getInt)
+            case "http://www.w3.org/2001/XMLSchema#string" ⇒
+              Param(name, classOf[String], value.getString)
+          })
+      }
     }
 
-    run(serviceClassName, serviceMethod, param).toString()
+    val param =
+      if (isLiteral)
+        literalParam
+      else
+        complexParam
+
+    val serviceLogger = new ActorLogger()(system)
+
+    def mkBuildClassLoader() = {
+      val (buildName, buildVersion) = execQuery(serviceModel, s"""
+        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+        select * where {
+          <$serviceName> service:build [
+            Build:name ?buildName ;
+            Build:version ?buildVersion ;
+          ] .
+        }
+      """) { qs ⇒
+        val buildName = qs.get("buildName").asLiteral().getString
+        val buildVersion = qs.get("buildVersion").asLiteral().getString
+        buildName -> buildVersion
+      }.head
+
+      val rawDeps = execQuery(serviceModel, s"""
+        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+        prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+        select * where {
+          <$serviceName> service:build [
+            Build:dependency [
+              a                       ?tpe ;
+              Artifact:organization   ?organization ;
+              Artifact:name           ?name ;
+              Artifact:version        ?version ;
+            ] ;
+          ] .
+        }
+      """) { qs ⇒
+        val tpe = qs.get("tpe").toString() match {
+          case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
+            ScalaDependency
+          case "http://amora.center/kb/amora/Schema/0.1/JavaDependency/0.1/" =>
+            JavaDependency
+        }
+        val organization = qs.get("organization").asLiteral().getString
+        val name = qs.get("name").asLiteral().getString
+        val version = qs.get("version").asLiteral().getString
+        BuildDependency(tpe, organization, name, version)
+      }
+
+      // TODO what to do if no Scala library is defined?
+      val scalaDep = rawDeps.find(d => d.organization == ScalaOrganization && d.name == ScalaLibrary).getOrElse(???)
+      val scalaPrefix = scalaDep match {
+        case d if d.version startsWith "2.11" ⇒ "_2.11"
+      }
+
+      val deps = rawDeps map { d ⇒
+        if (d.tpe == ScalaDependency)
+          d.copy(name = d.name + scalaPrefix)
+        else
+          d
+      }
+      val build = Build(buildName, buildVersion, deps)
+      mkClassloader(serviceLogger, build)
+    }
+
+    val hasBuild = execAsk(reqModel, s"""
+      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      ask {
+        <$serviceRequest> service:build ?build .
+      }
+    """)
+
+    val cl =
+      if (hasBuild)
+        mkBuildClassLoader()
+      else
+        getClass.getClassLoader
+    val res = run(serviceLogger, cl, serviceClassName, serviceMethod, param)
+    serviceLogger.close()
+    if (serviceLogger.sw.getBuffer.length() != 0)
+      log.info(serviceLogger.sw.toString())
+    res.toString()
   }
 
-  private def run(className: String, methodName: String, param: Map[String, Param]): Any = {
-    val cls = Class.forName(className)
-    val obj = cls.newInstance()
+  private def mkClassloader(serviceLogger: Logger, build: Build): ClassLoader = {
+    if (build.dependencies.isEmpty)
+      getClass.getClassLoader
+    else {
+      val res = handleBuild(serviceLogger, build)
+      val urls = res.collect {
+        case DownloadSuccess(artifact, file) ⇒
+          file.toURI().toURL()
+      }.distinct.toArray
+
+      log.info(s"Create classpath:\n${urls.sortBy(_.getPath).mkString("\n")}")
+      new URLClassLoader(urls, getClass.getClassLoader)
+    }
+  }
+
+  private def handleBuild(serviceLogger: Logger, build: Build) = {
+    val fetcher = new ArtifactFetcher with ScalaService {
+      override def logger = serviceLogger
+      override def cacheLocation = new File(system.settings.config.getString("app.storage.artifact-repo"))
+    }
+    val uriField = fetcher.getClass.getDeclaredField("uri")
+    uriField.setAccessible(true)
+    uriField.set(fetcher, amoraUri)
+
+    val artifacts = build.dependencies map { d ⇒
+      Artifact(Project(build.name), d.organization, d.name, d.version)
+    }
+    fetcher.handleArtifacts(artifacts)
+  }
+
+  private def amoraUri = if (testMode) s"http://$interface:$port" else "http://amora.center"
+
+  private def run(serviceLogger: Logger, cl: ClassLoader, className: String, methodName: String, param: Map[String, Param]): Any = {
+    val cls = cl.loadClass(className)
+    val ctors = cls.getConstructors
+    val hasDefaultCtor = ctors.exists(_.getParameterCount == 0)
+    val obj =
+      if (hasDefaultCtor)
+        cls.newInstance()
+      else {
+        // TODO handle ???
+        val ctor = ctors.find(_.getParameterTypes sameElements Array(classOf[Logger])).getOrElse(???)
+        ctor.newInstance(serviceLogger)
+      }
     val uriField = cls.getDeclaredField("uri")
     uriField.setAccessible(true)
-    uriField.set(obj, if (testMode) s"http://$interface:$port/sparql" else "http://amora.center/sparql")
+    uriField.set(obj, amoraUri)
     // TODO get rid of the ??? here
     val m = cls.getMethods.find(_.getName == methodName).getOrElse(???)
     val hasNoJavaParameterNames = m.getParameters.headOption.exists(_.getName == "arg0")
@@ -150,6 +315,11 @@ trait Service extends Directives with AkkaLogging {
     serviceModel
   }
 
+  private def execAsk(m: Model, query: String): Boolean = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), m)
+    qexec.execAsk()
+  }
+
   private def execQuery[A](m: Model, query: String)(f: QuerySolution ⇒ A): Seq[A] = {
     import scala.collection.JavaConverters._
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), m)
@@ -162,6 +332,16 @@ trait Service extends Directives with AkkaLogging {
     m.read(in, null, "N3")
     m
   }
+}
+private[requests] object Service {
+  val ScalaOrganization = "org.scala-lang"
+  val ScalaLibrary = "scala-library"
 
-  private case class Param(name: String, tpe: Class[_], value: Any)
+  case class Param(name: String, tpe: Class[_], value: Any)
+  case class BuildDependency(tpe: DependencyType, organization: String, name: String, version: String)
+  case class Build(name: String, version: String, dependencies: Seq[BuildDependency])
+
+  sealed trait DependencyType
+  case object ScalaDependency extends DependencyType
+  case object JavaDependency extends DependencyType
 }

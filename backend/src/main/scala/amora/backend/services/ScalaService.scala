@@ -25,8 +25,19 @@ trait ScalaService {
     "#reqId"
   }
 
+  def sparqlUpdate(update: String, errorMsg: ⇒ String): Unit = {
+    val req = Http(s"$uri/sparql-update")
+      .postData(update)
+      .header("Content-Type", "application/sparql-query")
+      .header("Charset", "UTF-8")
+      .option(timeout)
+    val resp = req.asString
+    if (resp.code != 200)
+      throw new IllegalStateException(s"$errorMsg\nSPARQL update request responded with an error.\nRequest: $req\nResponse: $resp")
+  }
+
   def sparqlRequest(query: String): ResultSetRewindable = {
-    val req = Http(uri)
+    val req = Http(s"$uri/sparql")
       .postData(query)
       .header("Content-Type", "application/sparql-query")
       .header("Accept", "application/sparql-results+json")
