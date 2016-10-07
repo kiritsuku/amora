@@ -32,11 +32,11 @@ class Indexer(modelName: String) extends Log4jLogging {
       import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
-      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.n3"))
+      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.ttl"))
       indexableFiles foreach { file ⇒
         val src = io.Source.fromFile(file, "UTF-8")
         val content = src.mkString
-        val schemaName = file.getName.dropRight(".schema.n3".length)
+        val schemaName = file.getName.dropRight(".schema.ttl".length)
         src.close()
         val alreadyIndexed = runAskQuery(model, s"""
           ASK {
@@ -44,7 +44,7 @@ class Indexer(modelName: String) extends Log4jLogging {
           }
         """)
         if (!alreadyIndexed) {
-          addN3(model, content)
+          addTurtle(model, content)
           log.info(s"Schema file `$file` successfully indexed.")
         }
       }
@@ -120,9 +120,9 @@ class Indexer(modelName: String) extends Log4jLogging {
     model.read(in, /* base = */ null, "JSON-LD")
   }
 
-  def addN3(model: Model, str: String): Unit = {
+  def addTurtle(model: Model, str: String): Unit = {
     val in = new ByteArrayInputStream(str.getBytes)
-    model.read(in, /* base = */ null, "N3")
+    model.read(in, /* base = */ null, "TURTLE")
   }
 
   def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {

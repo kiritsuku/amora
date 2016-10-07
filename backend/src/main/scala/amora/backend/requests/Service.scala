@@ -41,20 +41,20 @@ trait Service extends Directives with AkkaLogging {
   private val port = config.getInt("app.port")
 
   /**
-   * Expects a request encoded in N3 and returns a response encoded in N3.
+   * Expects a request encoded in Turtle and returns a response encoded in Turtle.
    */
-  def mkServiceRequest(n3Request: String): Route = {
-    onComplete(Future(serviceRequest(n3Request))) {
+  def mkServiceRequest(ttlRequest: String): Route = {
+    onComplete(Future(serviceRequest(ttlRequest))) {
       case Success(resp) ⇒
-        complete(HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, resp))
+        complete(HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, resp))
       case Failure(t) ⇒
         log.error(t, "Error happened while handling service request.")
         complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${t.getMessage}"))
     }
   }
 
-  private def serviceRequest(n3Request: String): String = {
-    val reqModel = fillModel(ModelFactory.createDefaultModel(), n3Request)
+  private def serviceRequest(ttlRequest: String): String = {
+    val reqModel = fillModel(ModelFactory.createDefaultModel(), ttlRequest)
     val (serviceRequest, serviceName) = execQuery(reqModel, """
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       select * where {
@@ -301,7 +301,7 @@ trait Service extends Directives with AkkaLogging {
 
   private def mkServiceModel(serviceName: String): Model = {
     val cl = getClass.getClassLoader
-    val fileName = s"$serviceName.service.n3"
+    val fileName = s"$serviceName.service.ttl"
     val serviceFile = new File(cl.getResource(".").getPath + fileName)
     if (!serviceFile.exists())
       throw new IllegalStateException(s"Couldn't find service description file `$serviceFile`.")
@@ -329,7 +329,7 @@ trait Service extends Directives with AkkaLogging {
 
   private def fillModel(m: Model, str: String): Model = {
     val in = new ByteArrayInputStream(str.getBytes)
-    m.read(in, null, "N3")
+    m.read(in, null, "TURTLE")
     m
   }
 }

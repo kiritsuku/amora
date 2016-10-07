@@ -321,7 +321,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def serviceRequest(query: String): Model = {
-    testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, query), header = Accept(CustomContentTypes.`text/n3`))) {
+    testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, query), header = Accept(CustomContentTypes.`text/turtle`))) {
       status === StatusCodes.OK
       fillModel(ModelFactory.createDefaultModel(), respAsString)
     }
@@ -337,9 +337,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     resultSetAsData(rs)
   }
 
-  def fillModel(m: Model, n3Data: String): Model = {
-    val in = new ByteArrayInputStream(n3Data.getBytes)
-    m.read(in, null, "N3")
+  def fillModel(m: Model, ttlData: String): Model = {
+    val in = new ByteArrayInputStream(ttlData.getBytes)
+    m.read(in, null, "TURTLE")
     m
   }
 

@@ -8,8 +8,8 @@
 @prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/> .
 @prefix CompilationUnit:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
 
-registry:ScalaSourceIndexer
-  service:name                      "amora.backend.services.ScalaSourceIndexer" ;
+registry:DottySourceIndexer
+  service:name                      "amora.backend.services.DottySourceIndexer" ;
   service:method [
     service:name                    "run" ;
     service:param [
@@ -20,32 +20,39 @@ registry:ScalaSourceIndexer
         CompilationUnit:source      xsd:string ;
       ] ;
     ] ;
-    # The returned string contains linked data formatted in n3
+    # The returned string contains linked data formatted in Turtle
     service:returnType              xsd:string
   ] ;
   service:build                     <#buildDef> ;
 .
 <#buildDef>
-  Build:name                        "scalac-indexer" ;
+  Build:name                        "dotc-indexer" ;
   Build:version                     "0.1" ;
   Build:dependency [
     a                               JavaDependency: ;
     Artifact:organization           "org.scala-lang" ;
     Artifact:name                   "scala-library" ;
-    Artifact:version                "2.11.8" ;
-  ] ;
+    Artifact:version                "2.11.5" ;
+  ];
   Build:dependency [
     a                               JavaDependency: ;
     Artifact:organization           "org.scala-lang" ;
     Artifact:name                   "scala-reflect" ;
-    Artifact:version                "2.11.8" ;
-  ] ;
+    Artifact:version                "2.11.5" ;
+  ];
+  # Dotty depends on a forked version of scalac
   Build:dependency [
     a                               JavaDependency: ;
-    Artifact:organization           "org.scala-lang" ;
+    Artifact:organization           "me.d-d" ;
     Artifact:name                   "scala-compiler" ;
-    Artifact:version                "2.11.8" ;
-  ] ;
+    Artifact:version                "2.11.5-20160322-171045-e19b30b3cd" ;
+  ];
+  Build:dependency [
+    a                               JavaDependency: ;
+    Artifact:organization           "ch.epfl.lamp" ;
+    Artifact:name                   "dotty" ;
+    Artifact:version                "0.1-20160923-28940d3-NIGHTLY" ;
+  ];
   Build:dependency [
     a                               ScalaDependency: ;
     Artifact:organization           "amora.center" ;

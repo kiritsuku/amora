@@ -16,7 +16,7 @@ trait Requests {
   case class Range(start: Int, end: Int)
 
   def indexScalaSrc(src: String): Future[Unit] = {
-    val n3Resp = serviceRequest(s"""
+    val ttlResp = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
       @prefix registry:<http://amora.center/kb/Service/0.1/> .
       @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
@@ -36,11 +36,11 @@ trait Requests {
         ] ;
       .
     """)
-    n3Resp.map(_ ⇒ ())
+    ttlResp.map(_ ⇒ ())
   }
 
   def findUsages(offset: Int): Future[Seq[Range]] = {
-    val n3Resp = serviceRequest(s"""
+    val ttlResp = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
       @prefix registry:<http://amora.center/kb/Service/0.1/> .
       @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
@@ -57,8 +57,8 @@ trait Requests {
       .
     """)
 
-    val model = n3Resp flatMap { n3Resp ⇒
-      modelAsData(n3Resp, """
+    val model = ttlResp flatMap { ttlResp ⇒
+      modelAsData(ttlResp, """
         prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
         prefix service:<http://amora.center/kb/Schema/Service/0.1/>
         prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
@@ -81,7 +81,7 @@ trait Requests {
   }
 
   def findDeclaration(offset: Int): Future[Option[Range]] = {
-    val n3Resp = serviceRequest(s"""
+    val ttlResp = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
       @prefix registry:<http://amora.center/kb/Service/0.1/> .
       @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
@@ -98,8 +98,8 @@ trait Requests {
       .
     """)
 
-    val model = n3Resp flatMap { n3Resp ⇒
-      modelAsData(n3Resp, """
+    val model = ttlResp flatMap { ttlResp ⇒
+      modelAsData(ttlResp, """
         prefix service:<http://amora.center/kb/Schema/Service/0.1/>
         prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
         select ?start ?end where {
@@ -121,7 +121,7 @@ trait Requests {
     }
   }
 
-  def modelAsData(n3Model: String, query: String): Future[js.Any] = {
+  def modelAsData(ttlModel: String, query: String): Future[js.Any] = {
     val p = Promise[js.Any]
 
     def handleErr(err: js.Any, msg: String)(onSuccess: ⇒ Unit): Unit = {
@@ -133,8 +133,8 @@ trait Requests {
 
     jsg.Bundle.rdfstore.create(f2 { (err, store) ⇒
       handleErr(err, "Error occurred while loading rdfstore.") {
-        store.jsg.load("text/n3", n3Model, f2 { (err, loadedTriples) ⇒
-          handleErr(err, "Error occurred while loading n3 data.") {
+        store.jsg.load("text/turtle", ttlModel, f2 { (err, loadedTriples) ⇒
+          handleErr(err, "Error occurred while loading TTL data.") {
             // we can't inline `?r`, see https://github.com/antoniogarrote/rdfstore-js/issues/141
             store.jsg.execute(query, f2 { (err, graph) ⇒
               handleErr(err, "Error occurred while executing SPARQL query.") {
@@ -181,25 +181,25 @@ trait Requests {
   }
 
   /**
-   * Sends a service request, which needs to be encoded in `text/n3`. The
-   * response is also encoded in `text/n3`.
+   * Sends a service request, which needs to be encoded in `text/turtle`. The
+   * response is also encoded in `text/turtle`.
    */
-  def serviceRequest(n3Req: String): Future[String] = {
+  def serviceRequest(ttlReq: String): Future[String] = {
     val p = Promise[String]
     val r = new XMLHttpRequest
     r.open("POST", "http://amora.center/service", async = true)
-    r.setRequestHeader("Content-type", "text/n3")
-    r.setRequestHeader("Accept", "text/n3")
+    r.setRequestHeader("Content-type", "text/turtle")
+    r.setRequestHeader("Accept", "text/turtle")
     r.setRequestHeader("Charset", "UTF-8")
     r.onreadystatechange = (e: Event) ⇒ {
       if (r.readyState == XMLHttpRequest.DONE) {
         if (r.status == 200)
           p.success(r.responseText)
         else
-          p.failure(new IllegalStateException(s"Server responded with an error to service request.\nRequest: $n3Req\nResponse (error code: ${r.status}): ${r.responseText}"))
+          p.failure(new IllegalStateException(s"Server responded with an error to service request.\nRequest: $ttlReq\nResponse (error code: ${r.status}): ${r.responseText}"))
       }
     }
-    r.send(n3Req)
+    r.send(ttlReq)
     p.future
   }
 }

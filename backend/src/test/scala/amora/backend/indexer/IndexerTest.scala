@@ -85,7 +85,7 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def invalid_content_type_for_sparql_post_requests(): Unit = {
-    val e = HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, "invalid query")
+    val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, "invalid query")
     testReq(post("http://amora.center/sparql", e, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.UnsupportedMediaType
     }
@@ -139,7 +139,7 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def invalid_content_type_for_sparql_update_post_requests(): Unit = {
-    val e = HttpEntity(CustomContentTypes.`text/n3(UTF-8)`, "invalid query")
+    val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, "invalid query")
     testReq(post("http://amora.center/sparql-update", e)) {
       status === StatusCodes.UnsupportedMediaType
     }
