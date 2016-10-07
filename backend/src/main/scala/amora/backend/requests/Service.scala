@@ -193,8 +193,8 @@ trait Service extends Directives with AkkaLogging {
         val tpe = qs.get("tpe").toString() match {
           case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
             ScalaDependency
-          case "http://amora.center/kb/amora/Schema/0.1/JavaDependency/0.1/" =>
-            JavaDependency
+          case "http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/" =>
+            MavenDependency
         }
         val organization = qs.get("organization").asLiteral().getString
         val name = qs.get("name").asLiteral().getString
@@ -343,5 +343,5 @@ private[requests] object Service {
 
   sealed trait DependencyType
   case object ScalaDependency extends DependencyType
-  case object JavaDependency extends DependencyType
+  case object MavenDependency extends DependencyType
 }

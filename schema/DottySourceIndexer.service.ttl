@@ -4,7 +4,7 @@
 
 @prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/> .
 @prefix ScalaDependency:<http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/> .
-@prefix JavaDependency:<http://amora.center/kb/amora/Schema/0.1/JavaDependency/0.1/> .
+@prefix MavenDependency:<http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/> .
 @prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/> .
 @prefix CompilationUnit:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
 
@@ -29,26 +29,26 @@ registry:DottySourceIndexer
   Build:name                        "dotc-indexer" ;
   Build:version                     "0.1" ;
   Build:dependency [
-    a                               JavaDependency: ;
+    a                               MavenDependency: ;
     Artifact:organization           "org.scala-lang" ;
     Artifact:name                   "scala-library" ;
     Artifact:version                "2.11.5" ;
   ];
   Build:dependency [
-    a                               JavaDependency: ;
+    a                               MavenDependency: ;
     Artifact:organization           "org.scala-lang" ;
     Artifact:name                   "scala-reflect" ;
     Artifact:version                "2.11.5" ;
   ];
   # Dotty depends on a forked version of scalac
   Build:dependency [
-    a                               JavaDependency: ;
+    a                               MavenDependency: ;
     Artifact:organization           "me.d-d" ;
     Artifact:name                   "scala-compiler" ;
     Artifact:version                "2.11.5-20160322-171045-e19b30b3cd" ;
   ];
   Build:dependency [
-    a                               JavaDependency: ;
+    a                               MavenDependency: ;
     Artifact:organization           "ch.epfl.lamp" ;
     Artifact:name                   "dotty" ;
     Artifact:version                "0.1-20160923-28940d3-NIGHTLY" ;
