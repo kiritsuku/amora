@@ -58,7 +58,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
    * File names that end with ".java" won't be converted to a hierarchy but they
    * can be used as dependencies for the Scala files.
    */
-  private def convertToHierarchy(data: Seq[(String, String)]) = {
+  def convertToHierarchy(data: Seq[(String, String)]): Seq[(String, Seq[Hierarchy])] = {
     def srcOf[A : reflect.ClassTag] = reflect.classTag[A].getClass().getProtectionDomain.getCodeSource
     val stdlibSrc = srcOf[Unit]
 

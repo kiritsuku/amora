@@ -39,11 +39,9 @@ import akka.http.scaladsl.testkit.TestFrameworkInterface
 
 import amora.backend.AkkaLogging
 import amora.backend.CustomContentTypes
-import amora.backend.IgnoreLogger
 import amora.backend.Log4jRootLogging
 import amora.backend.PlatformConstants
 import amora.backend.WebService
-import amora.backend.schema._
 import amora.converter.protocol._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
@@ -230,31 +228,8 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def indexData(origin: Schema, data: (String, String)*): Unit = {
-    val indexer = new ScalaSourceIndexer(IgnoreLogger)
-    indexer.convertToHierarchy(data) match {
-      case scala.util.Success(data) ⇒
-        data foreach {
-          case (filename, data) ⇒
-            def asSchemaPackage(decl: Hierarchy): Schema = decl match {
-              case Root ⇒ origin
-              case Decl(name, owner) ⇒ Package(name, asSchemaPackage(owner))
-              case _ ⇒ ???
-            }
-            val pkg = data.collectFirst {
-              case d if d.attachments(Attachment.Package) ⇒ d
-            }
-            val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, filename)).getOrElse(File(origin, filename))
-            testReq(post("http://amora.center/sparql-update", Schema.mkSparqlUpdate(Seq(s)))) {(
-              status === StatusCodes.OK)
-            }
-            val query = HierarchySchema.mkSparqlUpdate(s, data)
-            testReq(post("http://amora.center/sparql-update", query)) {
-              status === StatusCodes.OK
-            }
-        }
-      case scala.util.Failure(f) ⇒
-        throw f
-    }
+    // TODO we need to implement service requests first
+    ???
   }
 
   sealed trait Region extends Product with Serializable {

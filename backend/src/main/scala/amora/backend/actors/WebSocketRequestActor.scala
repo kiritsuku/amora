@@ -92,11 +92,6 @@ class WebSocketRequestActor(queue: ActorRef, indexer: ActorRef) extends Actor wi
     val json = jsonString.parseJson
     val fields = json.asJsObject.fields
     val msg = fields.getOrElse("tpe", throw new RuntimeException("Field `tpe` is missing.")) match {
-      case JsString("scala-sources") ⇒
-        val files = json.convertTo[Files]
-        val ref = system.actorOf(Props(classOf[ScalaSourceIndexerActor], indexer, new ActorLogger), s"scala-source-indexer-${System.currentTimeMillis}")
-        QueueMessage.RunWithData(ref, files)
-
       case JsString("java-bytecode") ⇒
         val files = json.convertTo[Files]
         val ref = system.actorOf(Props(classOf[JavaBytecodeIndexerActor], indexer, new ActorLogger), s"java-bytecode-indexer-${System.currentTimeMillis}")

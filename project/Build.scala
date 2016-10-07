@@ -312,7 +312,7 @@ object Build extends sbt.Build {
 
     // once the server is started, we also want to restart it on changes in the protocol project
     watchSources ++= (watchSources in protocolJvm).value
-  ) dependsOn (protocolJvm, nvim, scalacConverter, javacConverter)
+  ) dependsOn (protocolJvm, nvim, javacConverter)
 
   lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
     name := "scalac-plugin",
@@ -384,7 +384,7 @@ object Build extends sbt.Build {
 
   lazy val scalacService = project in file("services/scalac") settings commonSettings ++ Seq(
     name := "scalac-service"
-  ) dependsOn (scalacConverter, scalaCompilerService)
+  ) dependsOn (scalacConverter, scalaCompilerService % "test->test")
 
   object versions {
     // https://github.com/lihaoyi/scalatags
