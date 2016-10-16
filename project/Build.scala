@@ -384,14 +384,14 @@ object Build extends sbt.Build {
 
   lazy val scalacService = project in file("services/scalac") settings commonSettings ++ Seq(
     name := "scalac-service"
-  ) dependsOn (scalacConverter, scalaCompilerService % "test->test")
+  ) dependsOn (scalacConverter, scalaCompilerService % "compile;test->test")
 
   lazy val dotcService = project in file("services/dotc") settings commonSettings ++ Seq(
     name := "dotc-service",
 
     // dotc ships with a fork of scalac, we therefore don't want to use the compiler that is bundled with Eclipse
     EclipseKeys.withBundledScalaContainers := false
-  ) dependsOn (dotcConverter, scalaCompilerService % "test->test")
+  ) dependsOn (dotcConverter, scalaCompilerService % "compile;test->test")
 
   object versions {
     // https://github.com/lihaoyi/scalatags
