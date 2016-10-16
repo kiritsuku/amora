@@ -20,6 +20,7 @@ import amora.backend.indexer.ArtifactFetcher
 import amora.backend.indexer.ArtifactFetcher.DownloadSuccess
 import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
+import java.net.URL
 
 private[services] object CallService {
   val ScalaOrganization = "org.scala-lang"
@@ -27,9 +28,9 @@ private[services] object CallService {
 
   case class Param(name: String, tpe: Class[_], value: Any)
   case class BuildDependency(tpe: DependencyType, organization: String, name: String, version: String)
-  case class Build(name: String, version: String, dependencies: Seq[BuildDependency])
+  case class Build(name: String, version: String, dependencies: Seq[BuildDependency], serviceDependencies: Seq[String])
 
-  sealed trait DependencyType
+  sealed trait DependencyType extends Product with Serializable
   case object ScalaDependency extends DependencyType
   case object MavenDependency extends DependencyType
 }
@@ -163,18 +164,36 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         buildName -> buildVersion
       }.head
 
+      val availableServices = registeredServices.toSet
+      val serviceDeps = execQuery(serviceModel, s"""
+        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+        prefix registry:<http://amora.center/kb/Service/0.1/>
+        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+        prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+        select * where {
+          <$serviceName> service:build/Build:dependency [
+            a                   registry:ServiceDependency ;
+            service:serviceId   ?id ;
+          ] .
+        }
+      """) { qs ⇒
+        qs.get("id").toString()
+      }.toList
+
+      val notExistingServiceDeps = serviceDeps.filterNot(availableServices)
+      if (notExistingServiceDeps.nonEmpty)
+        throw new IllegalStateException("The following service dependencies do not exist: " + notExistingServiceDeps.mkString(", "))
+
       val rawDeps = execQuery(serviceModel, s"""
         prefix service:<http://amora.center/kb/Schema/Service/0.1/>
         prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
         prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
         select * where {
-          <$serviceName> service:build [
-            Build:dependency [
-              a                       ?tpe ;
-              Artifact:organization   ?organization ;
-              Artifact:name           ?name ;
-              Artifact:version        ?version ;
-            ] ;
+          <$serviceName> service:build/Build:dependency [
+            a                       ?tpe ;
+            Artifact:organization   ?organization ;
+            Artifact:name           ?name ;
+            Artifact:version        ?version ;
           ] .
         }
       """) { qs ⇒
@@ -188,7 +207,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         val name = qs.get("name").asLiteral().getString
         val version = qs.get("version").asLiteral().getString
         BuildDependency(tpe, organization, name, version)
-      }
+      }.toList
 
       // TODO what to do if no Scala library is defined?
       val scalaDep = rawDeps.find(d => d.organization == ScalaOrganization && d.name == ScalaLibrary).getOrElse(???)
@@ -202,7 +221,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         else
           d
       }
-      val build = Build(buildName, buildVersion, deps)
+      val build = Build(buildName, buildVersion, deps, serviceDeps)
       mkClassloader(serviceLogger, build)
     }
 
@@ -226,7 +245,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
   }
 
   private def mkClassloader(serviceLogger: Logger, build: Build): ClassLoader = {
-    if (build.dependencies.isEmpty)
+    if (build.dependencies.isEmpty && build.serviceDependencies.isEmpty)
       getClass.getClassLoader
     else {
       val res = handleBuild(serviceLogger, build)
@@ -283,6 +302,17 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         m.getParameters.map(_.getName).toList
     val orderedParam = names.map(name ⇒ param(name).value.asInstanceOf[Object])
     m.invoke(obj, orderedParam: _*)
+  }
+
+  private def registeredServices: Seq[String] = {
+    import scala.collection.JavaConverters._
+    val r = sparqlRequest("""
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      select * where {
+        ?s a service: .
+      }
+    """)
+    r.asScala.map(_.get("s").toString()).toList
   }
 
   private def mkServiceModel(serviceName: String): Model = {
