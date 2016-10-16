@@ -225,10 +225,10 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       mkClassloader(serviceLogger, build)
     }
 
-    val hasBuild = execAsk(reqModel, s"""
+    val hasBuild = execAsk(serviceModel, s"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       ask {
-        <$serviceRequest> service:build ?build .
+        <$serviceName> service:build ?build .
       }
     """)
 
