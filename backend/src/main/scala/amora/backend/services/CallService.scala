@@ -307,7 +307,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
   private def registeredServices: Seq[String] = {
     import scala.collection.JavaConverters._
     val r = sparqlRequest("""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       select * where {
         ?s a service: .
       }
