@@ -28,8 +28,47 @@ class Indexer(modelName: String) extends Log4jLogging {
    * schema definitions.
    */
   def startupIndexer(dataset: Dataset): Unit = {
+    import java.io.File
+
+    def indexServices(model: Model) = {
+      def findRoot(dir: File): File =
+        if (dir.listFiles().exists(_.getName == ".git"))
+          dir
+        else
+          findRoot(dir.getParentFile)
+      val root = findRoot(new File(getClass.getClassLoader.getResource(".").getPath))
+
+      def service(dir: String) = new File(root.getAbsolutePath + dir)
+      val serviceDirectories = Seq(
+        service("/services/scala-compiler"),
+        service("/services/scalac"),
+        service("/services/dotc"),
+        service("/schema")
+      )
+      val serviceFiles = serviceDirectories flatMap { serviceDirectory ⇒
+        serviceDirectory.listFiles().filter(_.getName.endsWith(".service.ttl"))
+      }
+
+      addTurtle(model, s"""
+        @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+        @prefix registry:<http://amora.center/kb/Service/0.1/> .
+        ${
+          serviceFiles.map { s ⇒
+            val name = s.getName.dropRight(".service.ttl".length)
+            s"""
+        registry:$name
+          a service: ;
+          service:name "$name" ;
+          service:path "${s.getCanonicalPath}" ;
+          service:directory "${s.getParentFile.getAbsolutePath}" ;
+          service:fileName "${s.getName}" ;
+        ."""
+          }.mkString
+        }
+      """)
+    }
+
     def indexSchemas(model: Model) = {
-      import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
       val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.ttl"))
@@ -51,7 +90,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def indexJsonLdFormat(model: Model) = {
-      import java.io.File
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
       val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
@@ -80,6 +118,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     try withModel(dataset) { model ⇒
       indexJsonLdFormat(model)
       indexSchemas(model)
+      indexServices(model)
 
       log.info("Indexer successfully started.")
     } catch {
