@@ -2,6 +2,7 @@ package amora.backend.services
 
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.net.URL
 import java.net.URLClassLoader
 
 import org.apache.jena.query.QueryExecutionFactory
@@ -20,7 +21,6 @@ import amora.backend.indexer.ArtifactFetcher
 import amora.backend.indexer.ArtifactFetcher.DownloadSuccess
 import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
-import java.net.URL
 
 private[services] object CallService {
   val ScalaOrganization = "org.scala-lang"
@@ -44,7 +44,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
   private def serviceRequest(ttlRequest: String): String = {
     val reqModel = fillModel(ModelFactory.createDefaultModel(), ttlRequest)
-    val (serviceRequest, serviceName) = execQuery(reqModel, """
+    val (serviceRequest, serviceId) = execQuery(reqModel, """
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       select * where {
         ?request service:serviceId ?service .
@@ -53,30 +53,14 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       qs.get("request").toString() → qs.get("service").toString()
     }.head
 
-    val serviceModel = mkServiceModel(serviceName.split('/').last)
-    val serviceParam = execQuery(serviceModel, s"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-      select * where {
-        <$serviceName> service:method [
-          service:param [
-            service:name ?param ;
-            a ?tpe ;
-          ] ;
-        ] .
-      }
-    """) { qs ⇒
-      val param = qs.get("param").toString()
-      val tpe = qs.get("tpe").toString()
-      param → tpe
-    }.toMap
-
+    val serviceModel = mkServiceModel(serviceId)
     val (serviceMethod, serviceClassName) = execQuery(serviceModel, s"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       select * where {
-        <$serviceName> service:method [
+        <$serviceId> service:method [
           service:name ?name
         ] .
-        <$serviceName> service:name ?className .
+        <$serviceId> service:name ?className .
       }
     """) { qs ⇒
       qs.get("name").toString() → qs.get("className").asLiteral().getString
@@ -127,6 +111,22 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         qs.get("name").toString() → qs.get("value").asLiteral()
       }.toMap
 
+      val serviceParam = execQuery(serviceModel, s"""
+        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        select * where {
+          <$serviceId> service:method [
+            service:param [
+              service:name ?param ;
+              a ?tpe ;
+            ] ;
+          ] .
+        }
+      """) { qs ⇒
+        val param = qs.get("param").toString()
+        val tpe = qs.get("tpe").toString()
+        param → tpe
+      }.toMap
+
       serviceParam.map {
         case (name, tpe) ⇒
           // TODO handle ???
@@ -148,118 +148,161 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     val serviceLogger = new ActorLogger()(system)
 
-    def mkBuildClassLoader() = {
-      val (buildName, buildVersion) = execQuery(serviceModel, s"""
-        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-        select * where {
-          <$serviceName> service:build [
-            Build:name ?buildName ;
-            Build:version ?buildVersion ;
-          ] .
-        }
-      """) { qs ⇒
-        val buildName = qs.get("buildName").asLiteral().getString
-        val buildVersion = qs.get("buildVersion").asLiteral().getString
-        buildName -> buildVersion
-      }.head
-
-      val availableServices = registeredServices.toSet
-      val serviceDeps = execQuery(serviceModel, s"""
-        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-        prefix registry:<http://amora.center/kb/Service/0.1/>
-        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-        prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-        select * where {
-          <$serviceName> service:build/Build:dependency [
-            a                   registry:ServiceDependency ;
-            service:serviceId   ?id ;
-          ] .
-        }
-      """) { qs ⇒
-        qs.get("id").toString()
-      }.toList
-
-      val notExistingServiceDeps = serviceDeps.filterNot(availableServices)
-      if (notExistingServiceDeps.nonEmpty)
-        throw new IllegalStateException("The following service dependencies do not exist: " + notExistingServiceDeps.mkString(", "))
-
-      val rawDeps = execQuery(serviceModel, s"""
-        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-        prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-        prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-        select * where {
-          <$serviceName> service:build/Build:dependency [
-            a                       ?tpe ;
-            Artifact:organization   ?organization ;
-            Artifact:name           ?name ;
-            Artifact:version        ?version ;
-          ] .
-        }
-      """) { qs ⇒
-        val tpe = qs.get("tpe").toString() match {
-          case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
-            ScalaDependency
-          case "http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/" =>
-            MavenDependency
-        }
-        val organization = qs.get("organization").asLiteral().getString
-        val name = qs.get("name").asLiteral().getString
-        val version = qs.get("version").asLiteral().getString
-        BuildDependency(tpe, organization, name, version)
-      }.toList
-
-      // TODO what to do if no Scala library is defined?
-      val scalaDep = rawDeps.find(d => d.organization == ScalaOrganization && d.name == ScalaLibrary).getOrElse(???)
-      val scalaPrefix = scalaDep match {
-        case d if d.version startsWith "2.11" ⇒ "_2.11"
-      }
-
-      val deps = rawDeps map { d ⇒
-        if (d.tpe == ScalaDependency)
-          d.copy(name = d.name + scalaPrefix)
-        else
-          d
-      }
-      val build = Build(buildName, buildVersion, deps, serviceDeps)
-      mkClassloader(serviceLogger, build)
-    }
-
     val hasBuild = execAsk(serviceModel, s"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       ask {
-        <$serviceName> service:build ?build .
+        <$serviceId> service:build ?build .
       }
     """)
 
     val cl =
       if (hasBuild)
-        mkBuildClassLoader()
+        mkBuildClassLoader(serviceModel, serviceId, serviceLogger)
       else
         getClass.getClassLoader
+
     val res = run(serviceLogger, cl, serviceClassName, serviceMethod, param)
     serviceLogger.close()
-    if (serviceLogger.sw.getBuffer.length() != 0)
-      log.info(serviceLogger.sw.toString())
     res.toString()
   }
 
-  private def mkClassloader(serviceLogger: Logger, build: Build): ClassLoader = {
+  private def mkBuildClassLoader(serviceModel: Model, serviceId: String, serviceLogger: Logger): ClassLoader = {
+    val urls = mkBuildClassPath(serviceModel, serviceId, serviceLogger)
+    new URLClassLoader(urls.toArray, getClass.getClassLoader)
+  }
+
+  private def mkBuildClassPath(serviceModel: Model, serviceId: String, serviceLogger: Logger): Seq[URL] = {
+    val (buildName, buildVersion) = execQuery(serviceModel, s"""
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+      select * where {
+        <$serviceId> service:build [
+          Build:name      ?buildName ;
+          Build:version   ?buildVersion ;
+        ] .
+      }
+    """) { qs ⇒
+      val buildName = qs.get("buildName").asLiteral().getString
+      val buildVersion = qs.get("buildVersion").asLiteral().getString
+      buildName -> buildVersion
+    }.head
+
+    val availableServices = registeredServices.toSet
+    val serviceDeps = execQuery(serviceModel, s"""
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+      prefix ServiceDependency:<http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/>
+      select * where {
+        <$serviceId> service:build/Build:dependency [
+          a                   ServiceDependency: ;
+          service:serviceId   ?id ;
+        ] .
+      }
+    """) { qs ⇒
+      qs.get("id").toString()
+    }.toList
+
+    val notExistingServiceDeps = serviceDeps.filterNot(availableServices)
+    if (notExistingServiceDeps.nonEmpty)
+      throw new IllegalStateException("The following service dependencies do not exist: " + notExistingServiceDeps.mkString(", "))
+
+    val rawDeps = execQuery(serviceModel, s"""
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+      prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      select * where {
+        <$serviceId> service:build/Build:dependency [
+          a                       ?tpe ;
+          Artifact:organization   ?organization ;
+          Artifact:name           ?name ;
+          Artifact:version        ?version ;
+        ] .
+      }
+    """) { qs ⇒
+      val tpe = qs.get("tpe").toString() match {
+        case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
+          ScalaDependency
+        case "http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/" =>
+          MavenDependency
+      }
+      val organization = qs.get("organization").asLiteral().getString
+      val name = qs.get("name").asLiteral().getString
+      val version = qs.get("version").asLiteral().getString
+      BuildDependency(tpe, organization, name, version)
+    }.toList
+
+    // TODO what to do if no Scala library is defined?
+    val scalaDep = rawDeps.find(d => d.organization == ScalaOrganization && d.name == ScalaLibrary).getOrElse(???)
+    val scalaPrefix = scalaDep match {
+      case d if d.version startsWith "2.11" ⇒ "_2.11"
+    }
+
+    val deps = rawDeps map { d ⇒
+      if (d.tpe == ScalaDependency)
+        d.copy(name = d.name + scalaPrefix)
+      else
+        d
+    }
+    val build = Build(buildName, buildVersion, deps, serviceDeps)
+    mkClassPath(serviceModel, serviceId, serviceLogger, build)
+  }
+
+  private def mkClassPath(serviceModel: Model, serviceId: String, serviceLogger: Logger, build: Build): Seq[URL] = {
     if (build.dependencies.isEmpty && build.serviceDependencies.isEmpty)
-      getClass.getClassLoader
+      Nil
     else {
-      val res = handleBuild(serviceLogger, build)
-      val urls = res.collect {
+      val res = handleBuild(serviceLogger, build.name, build.dependencies)
+      val artifactUrls = res.collect {
         case DownloadSuccess(artifact, file) ⇒
           file.toURI().toURL()
-      }.distinct.toArray
+      }
 
-      log.info(s"Create classpath:\n${urls.sortBy(_.getPath).mkString("\n")}")
-      new URLClassLoader(urls, getClass.getClassLoader)
+      val serviceDepsUrls = build.serviceDependencies flatMap { serviceId ⇒
+        mkBuildClassPath(mkServiceModel(serviceId), serviceId, serviceLogger)
+      }
+
+      val serviceOutputFolderUrls = {
+        val serviceLocation = serviceFile(serviceId).getParent
+        val relativeOutputFolders = execQuery(serviceModel, s"""
+          prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+          prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+          prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+          select * where {
+            <$serviceId> service:build/Build:outputFolder ?out .
+          }
+        """) { qs ⇒
+          qs.get("out").toString
+        }.toList
+        val absoluteOutputFolders = relativeOutputFolders.map { out ⇒
+          val isAbsolute = out.startsWith("/")
+          if (isAbsolute)
+            out
+          else
+            serviceLocation + "/" + out
+        }
+
+        absoluteOutputFolders.map { out ⇒
+          new File(out).toURI.toURL
+        }
+      }
+
+      val cp = (artifactUrls ++ serviceDepsUrls ++ serviceOutputFolderUrls).distinct
+      log.info(s"Use classpath for `$serviceId`:\n${cp.sortBy(_.getPath).map("  " + _ + "\n").mkString}")
+      cp
     }
   }
 
-  private def handleBuild(serviceLogger: Logger, build: Build) = {
+  private def serviceFile(serviceId: String): File = {
+    val r = sparqlRequest(s"""
+      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      select * where {
+        <$serviceId> service:path ?path .
+      }
+    """)
+    new File(r.next().get("path").toString())
+  }
+
+  private def handleBuild(serviceLogger: Logger, buildName: String, buildDependencies: Seq[BuildDependency]) = {
     val fetcher = new ArtifactFetcher with ScalaService {
       override def logger = serviceLogger
       override def cacheLocation = new File(system.settings.config.getString("app.storage.artifact-repo"))
@@ -268,8 +311,8 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     uriField.setAccessible(true)
     uriField.set(fetcher, uri)
 
-    val artifacts = build.dependencies map { d ⇒
-      Artifact(Project(build.name), d.organization, d.name, d.version)
+    val artifacts = buildDependencies map { d ⇒
+      Artifact(Project(buildName), d.organization, d.name, d.version)
     }
     fetcher.handleArtifacts(artifacts)
   }
@@ -315,18 +358,16 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     r.asScala.map(_.get("s").toString()).toList
   }
 
-  private def mkServiceModel(serviceName: String): Model = {
-    val cl = getClass.getClassLoader
-    val fileName = s"$serviceName.service.ttl"
-    val serviceFile = new File(cl.getResource(".").getPath + fileName)
-    if (!serviceFile.exists())
-      throw new IllegalStateException(s"Couldn't find service description file `$serviceFile`.")
-    val src = io.Source.fromFile(serviceFile, "UTF-8")
+  private def mkServiceModel(serviceId: String): Model = {
+    val file = serviceFile(serviceId)
+    if (!file.exists())
+      throw new IllegalStateException(s"Couldn't find service description file `$file`.")
+    val src = io.Source.fromFile(file, "UTF-8")
     val service = src.mkString
     src.close()
     val serviceModel = try fillModel(ModelFactory.createDefaultModel(), service) catch {
       case e: RiotException ⇒
-        throw new IllegalStateException(s"Error while reading service description file `$serviceFile`: ${e.getMessage}.", e)
+        throw new IllegalStateException(s"Error while reading service description file `$file`: ${e.getMessage}.", e)
     }
     serviceModel
   }
