@@ -48,9 +48,9 @@ final class ActorLogger(implicit val system: ActorSystem) extends Logger {
   private val forwardLogger = system.settings.config.getBoolean("app.forward-internal-logger-to-akka-logger")
   private var level: LogLevel = Info
   private var _isClosed = false
-  val sources = ListBuffer[ActorRef]()
-  val sw = new StringWriter
-  val pw = new PrintWriter(sw)
+  private val sources = ListBuffer[ActorRef]()
+  private val sw = new StringWriter
+  private val pw = new PrintWriter(sw)
 
   override def debug(msg: String): Unit = {
     checkIfClosed()
