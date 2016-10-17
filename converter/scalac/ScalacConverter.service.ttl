@@ -1,0 +1,45 @@
+@prefix service:                    <http://amora.center/kb/Schema/Service/0.1/> .
+@prefix registry:                   <http://amora.center/kb/Service/0.1/> .
+
+@prefix Build:                      <http://amora.center/kb/amora/Schema/0.1/Build/0.1/> .
+@prefix MavenDependency:            <http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/> .
+@prefix ServiceDependency:          <http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/> .
+@prefix Artifact:                   <http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/> .
+
+registry:ScalacConverter
+  service:build                     <#buildDef> ;
+.
+<#buildDef>
+  Build:name                        "scalac-converter" ;
+  Build:version                     "0.1" ;
+  Build:outputFolder                "bin" ;
+  Build:dependency [
+    a                               ServiceDependency: ;
+    service:serviceId               registry:ConverterProtocol ;
+  ] ;
+  Build:dependency [
+    a                               MavenDependency: ;
+    Artifact:organization           "org.scala-lang" ;
+    Artifact:name                   "scala-library" ;
+    Artifact:version                "2.11.8" ;
+  ] ;
+  Build:dependency [
+    a                               MavenDependency: ;
+    Artifact:organization           "org.scala-lang" ;
+    Artifact:name                   "scala-reflect" ;
+    Artifact:version                "2.11.8" ;
+  ] ;
+  Build:dependency [
+    a                               MavenDependency: ;
+    Artifact:organization           "org.scala-lang" ;
+    Artifact:name                   "scala-compiler" ;
+    Artifact:version                "2.11.8" ;
+  ] ;
+  Build:dependency [
+    a                               MavenDependency: ;
+    Artifact:organization           "org.scala-refactoring" ;
+    Artifact:name                   "org.scala-refactoring.library_2.11.8" ;
+    Artifact:version                "0.10.0" ;
+  ] ;
+.
+

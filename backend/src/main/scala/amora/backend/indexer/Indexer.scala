@@ -43,7 +43,9 @@ class Indexer(modelName: String) extends Log4jLogging {
         service("/services/scala-compiler"),
         service("/services/scalac"),
         service("/services/dotc"),
-        service("/schema")
+        service("/schema"),
+        service("/converter/protocol"),
+        service("/converter/scalac")
       )
       val serviceFiles = serviceDirectories flatMap { serviceDirectory ⇒
         serviceDirectory.listFiles().filter(_.getName.endsWith(".service.ttl"))

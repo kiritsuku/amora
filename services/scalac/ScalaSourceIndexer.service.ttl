@@ -36,6 +36,10 @@ registry:ScalaSourceIndexer
     service:serviceId               registry:ScalaCompiler ;
   ] ;
   Build:dependency [
+    a                               ServiceDependency: ;
+    service:serviceId               registry:ScalacConverter ;
+  ] ;
+  Build:dependency [
     a                               MavenDependency: ;
     Artifact:organization           "org.scala-lang" ;
     Artifact:name                   "scala-library" ;
