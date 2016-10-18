@@ -1,4 +1,4 @@
-package amora.backend
+package amora
 
 import org.junit.runner.RunWith
 import org.junit.runners.Suite

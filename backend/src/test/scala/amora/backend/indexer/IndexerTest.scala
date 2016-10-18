@@ -12,7 +12,7 @@ import amora.backend.schema._
 import amora.converter.protocol._
 
 class IndexerTest extends RestApiTest {
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   @Test
   def jsonld_context_can_be_retrieved(): Unit = {

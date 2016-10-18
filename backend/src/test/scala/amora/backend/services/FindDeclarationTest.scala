@@ -7,7 +7,7 @@ import amora.converter.protocol.Project
 
 class FindDeclarationTest extends RestApiTest {
 
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   def serviceResult(cursorPos: Int) = {
    val m = serviceRequest(s"""

@@ -9,7 +9,7 @@ import amora.protocol.ui.Window
 
 class WindowTreeCreatorTest {
   import WindowTreeCreator._
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   /** Takes (x, y, w, h). */
   private def dims(dim: (Int, Int, Int, Int)*): Seq[WinInfo] = {

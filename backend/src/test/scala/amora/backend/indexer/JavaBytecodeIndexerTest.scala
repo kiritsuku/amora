@@ -10,7 +10,7 @@ import amora.converter.protocol._
 
 class JavaBytecodeIndexerTest {
 
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   val debugTests = true
 

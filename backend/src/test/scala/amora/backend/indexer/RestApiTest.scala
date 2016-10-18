@@ -45,7 +45,7 @@ import amora.backend.WebService
 import amora.converter.protocol._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   override def failTest(msg: String): Nothing = {
     throw new RuntimeException(msg)

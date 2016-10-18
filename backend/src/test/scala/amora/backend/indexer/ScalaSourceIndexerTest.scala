@@ -6,7 +6,7 @@ import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
 
 class ScalaSourceIndexerTest extends RestApiTest {
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   @Test
   def find_top_level_classes() = {

@@ -3,12 +3,11 @@ package amora.converter
 import org.junit.Test
 
 import amora.backend.indexer.JavaBytecodeIndexer
-import amora.backend.TestUtils
 import amora.backend.IgnoreLogger
 
 class ClassfileConverterTest {
 
-  import TestUtils._
+  import amora.TestUtils._
 
   def convert(src: String): Set[String] =
     convert("<memory>" → src)

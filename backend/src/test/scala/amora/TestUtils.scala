@@ -1,4 +1,4 @@
-package amora.backend
+package amora
 
 import org.junit.ComparisonFailure
 
