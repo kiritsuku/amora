@@ -180,6 +180,126 @@ object Schema {
     sb.toString()
   }
 
+  def mkTurtleString(schemas: Seq[Schema]): String = {
+    var prefixe = Map[String, String]()
+    var data = Map[String, Map[String, String]]()
+
+    def addPrefix(name: String, url: String) = {
+      if (!prefixe.contains(name))
+        prefixe += name → url
+    }
+    def addData(url: String, k: String, v: String) = {
+      data.get(url) match {
+        case Some(map) ⇒
+          data += url → (map + k → v)
+        case None ⇒
+          data += url → Map(k → v)
+      }
+    }
+
+    def mk(s: Schema): String = s match {
+      case Project(name) ⇒
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Project", defn+"/")
+        addData(id, "a", "Project:")
+        addData(id, s"Project:name", name)
+        id
+      case Artifact(owner, organization, name, version) ⇒
+        val oid = mk(owner)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Artifact", defn+"/")
+        addData(id, "a", "Artifact:")
+        addData(id, s"Artifact:owner", s"<$oid>")
+        addData(id, s"Artifact:organization", s""""$organization"""")
+        addData(id, s"Artifact:name", s""""$name"""")
+        id
+      case File(owner, name) ⇒
+        val oid = mk(owner)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("File", defn+"/")
+        addData(id, "a", "File:")
+        addData(id, s"File:owner", s"<$oid>")
+        addData(id, s"File:name", s""""$name"""")
+        id
+      case Package(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Package", defn+"/")
+        addData(id, "a", "Package:")
+        addData(id, s"Package:owner", s"<$oid>")
+        addData(id, s"Package:name", s""""$name"""")
+        id
+      case Class(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Class", defn+"/")
+        addData(id, "a", "Class:")
+        addData(id, s"Class:owner", s"<$oid>")
+        addData(id, s"Class:name", s""""$name"""")
+        id
+      case Def(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Def", defn+"/")
+        addData(id, "a", "Def:")
+        addData(id, s"Def:owner", s"<$oid>")
+        addData(id, s"Def:name", s""""$name"""")
+        id
+      case Val(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Val", defn+"/")
+        addData(id, "a", "Val:")
+        addData(id, s"Val:owner", s"<$oid>")
+        addData(id, s"Val:name", s""""$name"""")
+        id
+      case Var(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("Var", defn+"/")
+        addData(id, "a", "Var:")
+        addData(id, s"Var:owner", s"<$oid>")
+        addData(id, s"Var:name", s""""$name"""")
+        id
+      case LazyVal(name, parent) ⇒
+        val oid = mk(parent)
+        val id = mkId(s)
+        val defn = mkDefn(s)
+        addPrefix("LazyVal", defn+"/")
+        addData(id, "a", "LazyVal:")
+        addData(id, s"LazyVal:owner", s"<$oid>")
+        addData(id, s"LazyVal:name", s""""$name"""")
+        id
+    }
+
+    schemas foreach mk
+
+    val sb = new StringBuilder
+    prefixe foreach {
+      case (name, url) ⇒
+        sb append "@prefix " append name append ":<" append url append "> .\n"
+    }
+    val len = data.values.map(_.keys.map(_.length).max).max + 3
+    data foreach {
+      case (url, kv) ⇒
+        sb append "<" append url append ">\n"
+        kv foreach {
+          case (k, v) ⇒
+            sb append "  " append k append " " * (len - k.length) append v append " ;\n"
+        }
+        sb append ".\n"
+    }
+    sb.toString()
+  }
+
 }
 
 object HierarchySchema {
