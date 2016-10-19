@@ -66,27 +66,17 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       qs.get("name").toString() → qs.get("className").asLiteral().getString
     }.head
 
-    val isLiteral = execAsk(reqModel, s"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-      ask {
-        <$serviceRequest> service:method/service:param/service:value ?value .
-        filter isLiteral(?value)
-      }
-    """)
-
-    def complexParam = execQuery(reqModel, s"""
+    def handleListParam(paramId: String) = execQuery(reqModel, s"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
       select * where {
-        <$serviceRequest> service:method [
-          service:param [
-            service:name ?name ;
-            service:value [
-              cu:fileName ?fileName ;
-              cu:source ?source ;
-            ] ;
+        <_:$paramId>
+          service:name ?name ;
+          service:value [
+            cu:fileName ?fileName ;
+            cu:source ?source ;
           ] ;
-        ] .
+        .
       }
     """) { qs ⇒
       val name = qs.get("name").toString()
@@ -96,16 +86,14 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       name → Param(name, classOf[List[_]], List(fileName → source))
     }.toMap
 
-    def literalParam = {
+    def handleLiteralParam(paramId: String) = {
       val requestParam = execQuery(reqModel, s"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         select * where {
-          <$serviceRequest> service:method [
-            service:param [
-              service:name ?name ;
-              service:value ?value ;
-            ] ;
-          ] .
+          <_:$paramId>
+            service:name ?name ;
+            service:value ?value ;
+          .
         }
       """) { qs ⇒
         qs.get("name").toString() → qs.get("value").asLiteral()
@@ -127,10 +115,10 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         param → tpe
       }.toMap
 
-      serviceParam.map {
-        case (name, tpe) ⇒
+      requestParam.map {
+        case (name, value) ⇒
           // TODO handle ???
-          val value = requestParam.getOrElse(name, ???)
+          val tpe = serviceParam.getOrElse(name, ???)
           name → (tpe match {
             case "http://www.w3.org/2001/XMLSchema#integer" ⇒
               Param(name, classOf[Int], value.getInt)
@@ -140,11 +128,27 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       }
     }
 
-    val param =
-      if (isLiteral)
-        literalParam
-      else
-        complexParam
+    val param = {
+      val requestParam = execQuery(reqModel, s"""
+        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        select ?p (isLiteral(?value) as ?isLit) where {
+          <$serviceRequest> service:method/service:param ?p .
+          ?p
+            service:name ?name ;
+            service:value ?value ;
+          .
+        }
+      """) { qs ⇒
+        qs.get("p").toString() → qs.get("isLit").asLiteral().getBoolean
+      }.toMap
+      requestParam flatMap {
+        case (paramId, isLiteral) ⇒
+          if (isLiteral)
+            handleLiteralParam(paramId)
+          else
+            handleListParam(paramId)
+      }
+    }
 
     val serviceLogger = new ActorLogger()(system)
 
