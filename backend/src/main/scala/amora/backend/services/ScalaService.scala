@@ -25,6 +25,17 @@ trait ScalaService {
     "#reqId"
   }
 
+  def turtleUpdate(update: String, errorMsg: ⇒ String): Unit = {
+    val req = Http(s"$uri/turtle-update")
+      .postData(update)
+      .header("Content-Type", "text/turtle")
+      .header("Charset", "UTF-8")
+      .option(timeout)
+    val resp = req.asString
+    if (resp.code != 200)
+      throw new IllegalStateException(s"$errorMsg\nTurtle update request responded with an error.\nRequest: $req\nResponse: $resp")
+  }
+
   def sparqlUpdate(update: String, errorMsg: ⇒ String): Unit = {
     val req = Http(s"$uri/sparql-update")
       .postData(update)

@@ -30,6 +30,7 @@ import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
 import amora.backend.requests.Service
 import amora.backend.requests.Sparql
+import amora.backend.requests.Turtle
 import amora.frontend.webui.protocol.RequestFailed
 import amora.frontend.webui.protocol.RequestSucceeded
 
@@ -37,6 +38,7 @@ final class WebService(override implicit val system: ActorSystem)
     extends Directives
     with Sparql
     with Service
+    with Turtle
     with AkkaLogging {
 
   override val bs = new BackendSystem()
@@ -214,6 +216,13 @@ final class WebService(override implicit val system: ActorSystem)
     path("service") {
       entity(as[String]) { req ⇒
         mkServiceRequest(req)
+      }
+    } ~
+    path("turtle-update") {
+      entity(as[String]) { encodedPostReq ⇒
+        extractRequest { req ⇒
+          handleTurtleUpdatePostRequest(req, encodedPostReq)
+        }
       }
     }
   }

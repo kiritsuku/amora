@@ -31,6 +31,9 @@ class IndexerActor extends Actor with ActorLogging {
 
     case RunUpdate(query) ⇒
       sender ! Try(handleUpdate(query))
+
+    case RunTurtleUpdate(query) ⇒
+      sender ! Try(handleTurtleUpdate(query))
   }
 
   override def postStop() = {
@@ -54,10 +57,20 @@ class IndexerActor extends Actor with ActorLogging {
       }
     }
   }
+
+  def handleTurtleUpdate(query: String): Unit = {
+    log.info(s"Handle Turtle update: $query")
+    indexer.writeDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset) { model ⇒
+        indexer.addTurtle(model, query)
+      }
+    }
+  }
 }
 
 sealed trait IndexerMessage
 object IndexerMessage {
   case class RunQuery(query: String) extends IndexerMessage
   case class RunUpdate(query: String) extends IndexerMessage
+  case class RunTurtleUpdate(query: String) extends IndexerMessage
 }

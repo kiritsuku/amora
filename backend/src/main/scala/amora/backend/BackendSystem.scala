@@ -45,6 +45,9 @@ final class BackendSystem(implicit system: ActorSystem) {
   def runUpdate(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunUpdate(query), errorMessage, onSuccess)
 
+  def runTurtleUpdate(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.RunTurtleUpdate(query), errorMessage, onSuccess)
+
   def indexData(json: String): Future[amora.frontend.webui.protocol.Response] = {
     requestHandler.ask(RequestMessage.AnonymousClientRequest(IndexData(json))).mapTo[amora.frontend.webui.protocol.Response]
   }
