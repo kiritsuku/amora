@@ -42,6 +42,7 @@ import amora.backend.CustomContentTypes
 import amora.backend.Log4jRootLogging
 import amora.backend.PlatformConstants
 import amora.backend.WebService
+import amora.backend.schema.Schema
 import amora.converter.protocol._
 
 trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging with Log4jRootLogging {
@@ -228,8 +229,48 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def indexData(origin: Schema, data: (String, String)*): Unit = {
-    // TODO we need to implement service requests first
-    ???
+    def mkPkg(pkgs: Seq[String]): Schema = pkgs match {
+      case Nil ⇒ origin
+      case pkg +: pkgs ⇒ Package(pkg, mkPkg(pkgs))
+    }
+    val ttlString = data.head match {
+      case (fileName, data) ⇒
+        val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
+        val pkg = data match {
+          case PkgFinder(name) ⇒ Some(mkPkg(name.split('.')))
+          case _ ⇒ None
+        }
+        val s = pkg.map(File(_, fileName)).getOrElse(File(origin, fileName))
+        Schema.mkTurtleString(Seq(s)).replace("\n", "\\n").replace("\"", "\\\"")
+    }
+    serviceRequest(s"""
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix registry:<http://amora.center/kb/Service/0.1/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+      <#this>
+        a request: ;
+        service:serviceId registry:ScalaSourceIndexer ;
+        service:method [
+          service:name "run" ;
+          service:param [
+            service:name "origin" ;
+            service:value "$ttlString" ;
+          ] ;
+          service:param [
+            service:name "data" ;
+            service:value ${
+              data.map {
+                case (fileName, src) ⇒ s"""[
+              cu:fileName "$fileName" ;
+              cu:source "${src.replace("\n", "\\n").replace("\"", "\\\"")}" ;
+            ] """
+              }.mkString
+            };
+          ] ;
+        ] ;
+      .
+    """)
   }
 
   sealed trait Region extends Product with Serializable {
