@@ -6,7 +6,14 @@ import org.apache.jena.rdf.model.ModelFactory
 
 class ApiImpl {
 
-  def ttlModel(strings: Iterator[String], expressions: Iterator[Any]): SparqlModel = {
+  def turtleModelFromString(model: String): SparqlModel = {
+    val m = ModelFactory.createDefaultModel()
+    val in = new ByteArrayInputStream(model.getBytes)
+    m.read(in, null, "TURTLE")
+    new SparqlModel(m)
+  }
+
+  def turtleModel(strings: Iterator[String], expressions: Iterator[Any]): SparqlModel = {
     val res = op(strings, expressions) {
       case str: String ⇒ escapeString(str)
       case obj ⇒ escapeString(obj.toString)

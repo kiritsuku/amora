@@ -7,7 +7,7 @@ class ApiTest {
 
   @Test
   def can_read_ttl_model() = {
-    val m = ttlModel"""
+    val m = turtleModel"""
       <#a>
         <#b> [
           <#c1> "c1" ;
@@ -22,7 +22,7 @@ class ApiTest {
 
   @Test
   def can_run_same_query_result_set_multiple_times() = {
-    val m = ttlModel"""
+    val m = turtleModel"""
       <#a>
         <#b> [
           <#c1> "c1" ;
