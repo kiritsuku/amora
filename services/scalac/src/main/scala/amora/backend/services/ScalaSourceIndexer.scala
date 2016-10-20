@@ -19,7 +19,7 @@ import amora.converter.protocol._
  */
 final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
 
-  def run(data: Seq[(String, String)]): String = {
+  def run(origin: String, data: Seq[(String, String)]): String = {
     handleScalaSource(Artifact(Project("testProject"), "o", "n", "v1"), data)
 
     response(s"""
