@@ -203,7 +203,7 @@ object Schema {
         val defn = mkDefn(s)
         addPrefix("Project", defn+"/")
         addData(id, "a", "Project:")
-        addData(id, s"Project:name", name)
+        addData(id, s"Project:name", s""""$name"""")
         id
       case Artifact(owner, organization, name, version) ⇒
         val oid = mk(owner)
@@ -214,6 +214,7 @@ object Schema {
         addData(id, s"Artifact:owner", s"<$oid>")
         addData(id, s"Artifact:organization", s""""$organization"""")
         addData(id, s"Artifact:name", s""""$name"""")
+        addData(id, s"Artifact:version", s""""$version"""")
         id
       case File(owner, name) ⇒
         val oid = mk(owner)
