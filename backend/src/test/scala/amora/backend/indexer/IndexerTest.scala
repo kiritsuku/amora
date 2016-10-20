@@ -131,6 +131,40 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
+  def syntax_error_in_turtle_update(): Unit = {
+    val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, s"syntax error")
+    testReq(post("http://amora.center/turtle-update", e)) {
+      status === StatusCodes.InternalServerError
+    }
+  }
+
+  @Test
+  def invalid_content_type_for_turtle_update_post_requests(): Unit = {
+    val e = HttpEntity(CustomContentTypes.`application/sparql-query(UTF-8)`, "invalid query")
+    testReq(post("http://amora.center/turtle-update", e)) {
+      status === StatusCodes.UnsupportedMediaType
+    }
+  }
+
+  @Test
+  def add_single_project_through_turtle_update_post_request(): Unit = {
+    val q = Schema.mkTurtleString(Seq(Project("p")))
+    val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, q)
+    testReq(post("http://amora.center/turtle-update", e)) {
+      status === StatusCodes.OK
+    }
+    testReq((post("http://amora.center/sparql", """
+      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      select * where {
+        [a p:] p:name ?name .
+      }
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(Seq(Data("name", "p")))
+    }
+  }
+
+  @Test
   def syntax_error_in_sparql_update(): Unit = {
     testReq(post("http://amora.center/sparql-update", s"syntax error")) {
       status === StatusCodes.InternalServerError
