@@ -305,6 +305,155 @@ object Schema {
 
 object HierarchySchema {
 
+  def mkTurtleUpdate(fileId: String, shortFileId: String, fileSchemaId: String, shortArtifactId: String, hierarchies: Seq[Hierarchy]): String = {
+    var prefixe = Map[String, String]()
+    var data = Map[String, Map[String, String]]()
+
+    def addPrefix(name: String, url: String) = {
+      if (!prefixe.contains(name))
+        prefixe += name → url
+    }
+    def addData(url: String, k: String, v: String) = {
+      data.get(url) match {
+        case Some(map) ⇒
+          data += url → (map + k → v)
+        case None ⇒
+          data += url → Map(k → v)
+      }
+    }
+
+    def mkTpe(decl: Decl) = {
+      if (decl.attachments(Attachment.Lazy) && decl.attachments(Attachment.Val))
+        "LazyVal"
+      else if (decl.attachments(Attachment.Abstract) && decl.attachments(Attachment.Class))
+        "AbstractClass"
+      else
+        decl.attachments.collectFirst {
+          case Attachment.Class ⇒ "Class"
+          case Attachment.Object ⇒ "Object"
+          case Attachment.Trait ⇒ "Trait"
+          case Attachment.Package ⇒ "Package"
+          case Attachment.Def ⇒ "Def"
+          case Attachment.Val ⇒ "Val"
+          case Attachment.Var ⇒ "Var"
+        }.getOrElse("Decl")
+    }
+
+    def mkFullPath(decl: Decl) = {
+      val tpe = mkTpe(decl)
+      s"http://amora.center/kb/amora/$tpe/0.1/$shortArtifactId/${mkShortPath(decl)}"
+    }
+
+    def mkOwnerPath(h: Hierarchy, owner: Decl) = {
+      val isTopLevelDecl = {
+        def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
+        def isPkg = owner.attachments(Attachment.Package)
+        isTopLevelDecl && isPkg
+      }
+      if (isTopLevelDecl)
+        fileId
+      else
+        mkFullPath(owner)
+    }
+
+    def loop(h: Hierarchy): Unit = h match {
+      case Root ⇒
+      case decl @ Decl(name, owner) ⇒
+        val tpe = mkTpe(decl)
+        val path = mkFullPath(decl)
+        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
+        addPrefix(tpe, schemaPath+"/")
+        addData(path, "a", s"$tpe:")
+        addData(path, s"$tpe:name", s""""$name"""")
+
+        if (h.attachments(Attachment.Param)) {
+          addData(path, s"$tpe:flag", """"param"""")
+        }
+        if (h.attachments(Attachment.TypeParam)) {
+          addData(path, s"$tpe:flag", """"tparam"""")
+        }
+
+        decl.attachments.collectFirst {
+          case Attachment.JvmSignature(signature) ⇒
+            addData(path, s"$tpe:jvmSignature", s""""$signature"""")
+        }
+
+        decl.position match {
+          case RangePosition(start, end) ⇒
+            addData(path, s"$tpe:posStart", s""""$start"""")
+            addData(path, s"$tpe:posEnd", s""""$end"""")
+          case _ ⇒
+        }
+
+        owner match {
+          case Root ⇒
+            // The owner of a package is an artifact but this can't be represented
+            // in the Hierarchy structure. Thus, we index this information separately.
+            if (!decl.attachments(Attachment.Package)) {
+              val ownerPath = fileId
+              addData(path, s"$tpe:owner", s"""<$ownerPath>""")
+            }
+          case owner: Decl ⇒
+            val ownerPath = mkOwnerPath(decl, owner)
+            addData(path, s"$tpe:owner", s"""<$ownerPath>""")
+
+            loop(owner)
+          case _: Ref ⇒
+        }
+
+      case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
+        val declPath = refToDecl match {
+          case d: Decl ⇒ mkFullPath(d)
+          // TODO replace this with a real implementation
+          case _ ⇒ "???"
+        }
+        val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
+        addPrefix("Ref", schemaPath+"/")
+        addData(path, "a", "Ref:")
+        addData(path, "Ref:name", s""""$name"""")
+        addData(path, "Ref:refToDecl", s"""<$declPath>""")
+
+        ref.position match {
+          case RangePosition(start, end) ⇒
+            addData(path, "Ref:posStart", s""""$start"""")
+            addData(path, "Ref:posEnd", s""""$end"""")
+          case _ ⇒
+        }
+
+        owner match {
+          case Root ⇒
+            val ownerPath = fileSchemaId
+            addData(path, "Ref:owner", s"""<$ownerPath>""")
+          case owner: Decl ⇒
+            val ownerPath = mkOwnerPath(ref, owner)
+            addData(path, "Ref:owner", s"""<$ownerPath>""")
+
+            loop(owner)
+          case _: Ref ⇒
+        }
+    }
+
+    hierarchies foreach loop
+
+    val sb = new StringBuilder
+    prefixe foreach {
+      case (name, url) ⇒
+        sb append "@prefix " append name append ":<" append url append "> .\n"
+    }
+    val len = data.values.map(_.keys.map(_.length).max).max + 3
+    data foreach {
+      case (url, kv) ⇒
+        sb append "<" append url append ">\n"
+        kv foreach {
+          case (k, v) ⇒
+            sb append "  " append k append " " * (len - k.length) append v append " ;\n"
+        }
+        sb append ".\n"
+    }
+    sb.toString
+  }
+
   def mkSparqlUpdate(schema: Schema, data: Seq[Hierarchy]): String = {
     val sb = new StringBuilder
 

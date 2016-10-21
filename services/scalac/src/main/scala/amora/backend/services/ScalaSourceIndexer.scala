@@ -10,7 +10,7 @@ import scala.util.Failure
 import scala.util.Success
 
 import amora.backend.Logger
-import amora.backend.schema._
+import amora.backend.schema.HierarchySchema
 import amora.converter.ScalacConverter
 import amora.converter.protocol._
 
@@ -20,7 +20,7 @@ import amora.converter.protocol._
 final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
 
   def run(origin: String, data: Seq[(String, String)]): String = {
-    handleScalaSource(Artifact(Project("testProject"), "o", "n", "v1"), data)
+    handleScalaSource(origin, data)
 
     response(s"""
       @prefix service:<http://amora.center/kb/Schema/0.1/Service/0.1/> .
@@ -32,22 +32,34 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     """)
   }
 
-  private def handleScalaSource(origin: Schema, data: Seq[(String, String)]): Unit = {
+  private def handleScalaSource(origin: String, data: Seq[(String, String)]): Unit = {
+    import amora.api._
+
+    val model = turtleModel(origin)
     val res = convertToHierarchy(data)
+
     res foreach {
       case (fileName, hierarchy) ⇒
         logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
-        def asSchemaPackage(decl: Hierarchy): Schema = decl match {
-          case Root ⇒ origin
-          case Decl(name, owner) ⇒ Package(name, asSchemaPackage(owner))
-          case _ ⇒ ???
-        }
-        val pkg = hierarchy.collectFirst {
-          case d if d.attachments(Attachment.Package) ⇒ d
-        }
-        val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, fileName)).getOrElse(File(origin, fileName))
-        sparqlUpdate(Schema.mkSparqlUpdate(Seq(s)), s"Error happened while indexing $fileName.")
-        sparqlUpdate(HierarchySchema.mkSparqlUpdate(s, hierarchy), s"Error happened while indexing $fileName.")
+
+        val fileId = sparqlQuery"""
+          prefix File:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+          select * where {
+            ?s a File: .
+          }
+        """.runOnModel(model).map(_.uri("s")).head
+        val shortFileId = fileId.drop("http://amora.center/kb/amora/File/0.1/".length())
+        val fileSchemaId = "http://amora.center/kb/amora/Schema/0.1/File/0.1/"
+        val shortArtifactId = sparqlQuery"""
+          prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+          select * where {
+            ?s a Artifact: .
+          }
+        """.runOnModel(model).map(_.uri("s")).head
+
+        val s = HierarchySchema.mkTurtleUpdate(fileId, shortFileId, fileSchemaId, shortArtifactId, hierarchy)
+        turtleUpdate(origin, s"Error happened while indexing $fileName.")
+        turtleUpdate(s, s"Error happened while indexing $fileName.")
     }
   }
 
