@@ -33,7 +33,11 @@ trait ArtifactFetcher {
   def cacheLocation: JFile
 
   def handleArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
-    val res = artifacts flatMap fetchArtifact
+    val (ignored, relevant) = artifacts.partition(_.organization == "amora.center")
+    if (ignored.nonEmpty)
+      logger.info("Ignoring artifacts:" + ignored.map(a ⇒ s"${a.organization}:${a.name}:${a.version}").sorted.mkString("\n  ", "\n  ", ""))
+
+    val res = relevant flatMap fetchArtifact
     val (errors, succs) = res.partition(_.isError)
     val succMsgs = succs.collect {
       case DownloadSuccess(_, file) ⇒
