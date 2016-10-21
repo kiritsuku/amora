@@ -99,38 +99,6 @@ class IndexerTest extends RestApiTest {
   }
 
   @Test
-  def add_json_post_requests_are_possible(): Unit = {
-    testReq(post("http://amora.center/add-json", """
-      {
-        "tpe":"artifact",
-        "artifacts":[
-          {
-            "organization":"com.freedomotic",
-            "name":"hello-world",
-            "version":"3.0"
-          }
-        ]
-      }
-    """)) {
-      status === StatusCodes.OK
-    }
-    scheduleReq(post("http://amora.center/itemFinished?id=1", "")) {
-      status === StatusCodes.OK
-      respAsString.toBoolean
-    }
-    testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      select * where {
-        [a p:] p:name ?name .
-      }
-    """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
-      val r = respAsResultSet()
-      status === StatusCodes.OK
-      r.next().get("name").asLiteral().getString === "hello-world"
-    }
-  }
-
-  @Test
   def syntax_error_in_turtle_update(): Unit = {
     val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, s"syntax error")
     testReq(post("http://amora.center/turtle-update", e)) {
