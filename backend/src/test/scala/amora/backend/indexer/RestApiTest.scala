@@ -233,44 +233,42 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       case Nil ⇒ origin
       case pkg +: pkgs ⇒ Package(pkg, mkPkg(pkgs))
     }
-    val ttlString = data.head match {
-      case (fileName, data) ⇒
-        val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
-        val pkg = data match {
-          case PkgFinder(name) ⇒ Some(mkPkg(name.split('.').reverse))
-          case _ ⇒ None
+    def escaped(str: String) =
+      str.replace("\n", "\\n").replace("\"", "\\\"")
+    val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
+
+    data foreach {
+      case (fileName, src) ⇒
+        val s = src match {
+          case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), fileName)
+          case _ ⇒ File(origin, fileName)
         }
-        val s = pkg.map(File(_, fileName)).getOrElse(File(origin, fileName))
-        Schema.mkTurtleString(Seq(s)).replace("\n", "\\n").replace("\"", "\\\"")
+        val ttlString = Schema.mkTurtleString(Seq(s))
+        serviceRequest(s"""
+          @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+          @prefix registry:<http://amora.center/kb/Service/0.1/> .
+          @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+          @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+          <#this>
+            a request: ;
+            service:serviceId registry:ScalaSourceIndexer ;
+            service:method [
+              service:name "run" ;
+              service:param [
+                service:name "origin" ;
+                service:value "${escaped(ttlString)}" ;
+              ] ;
+              service:param [
+                service:name "data" ;
+                service:value [
+                  cu:fileName "$fileName" ;
+                  cu:source "${escaped(src)}" ;
+                ];
+              ] ;
+            ] ;
+          .
+        """)
     }
-    serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
-      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
-      <#this>
-        a request: ;
-        service:serviceId registry:ScalaSourceIndexer ;
-        service:method [
-          service:name "run" ;
-          service:param [
-            service:name "origin" ;
-            service:value "$ttlString" ;
-          ] ;
-          service:param [
-            service:name "data" ;
-            service:value ${
-              data.map {
-                case (fileName, src) ⇒ s"""[
-              cu:fileName "$fileName" ;
-              cu:source "${src.replace("\n", "\\n").replace("\"", "\\\"")}" ;
-            ] """
-              }.mkString
-            };
-          ] ;
-        ] ;
-      .
-    """)
   }
 
   sealed trait Region extends Product with Serializable {
