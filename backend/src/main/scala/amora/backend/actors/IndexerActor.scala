@@ -41,7 +41,7 @@ class IndexerActor extends Actor with ActorLogging {
   }
 
   def handleQuery(query: String): ResultSetRewindable = {
-    log.info(s"Handle SPARQL query: $query")
+    log.info(s"Handle SPARQL query:\n$query")
     indexer.readDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         indexer.withQueryService(model, query)
@@ -50,7 +50,7 @@ class IndexerActor extends Actor with ActorLogging {
   }
 
   def handleUpdate(query: String): Unit = {
-    log.info(s"Handle SPARQL update: $query")
+    log.info(s"Handle SPARQL update:\n$query")
     indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         indexer.withUpdateService(model, query)(_ ⇒ ())
@@ -59,7 +59,7 @@ class IndexerActor extends Actor with ActorLogging {
   }
 
   def handleTurtleUpdate(query: String): Unit = {
-    log.info(s"Handle Turtle update: $query")
+    log.info(s"Handle Turtle update:\n$query")
     indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
         indexer.addTurtle(model, query)
