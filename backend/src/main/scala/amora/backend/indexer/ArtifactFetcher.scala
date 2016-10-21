@@ -42,7 +42,7 @@ trait ArtifactFetcher {
     else {
       logger.info("Downloading artifacts:" + relevant.map(a ⇒ s"${a.organization}:${a.name}:${a.version}").sorted.mkString("\n  ", "\n  ", ""))
 
-      val res = relevant flatMap fetchArtifact
+      val res = (relevant flatMap fetchArtifact).distinct
       val (errors, succs) = res.partition(_.isError)
       val succMsgs = succs.collect {
         case DownloadSuccess(_, file) ⇒
