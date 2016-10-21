@@ -34,7 +34,7 @@ final class JavaBytecodeIndexerActor(override val indexer: ActorRef, override va
         }
         val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, fileName)).getOrElse(File(origin, fileName))
         sparqlUpdate(Schema.mkSparqlUpdate(Seq(s)), s"Error happened while indexing $fileName.")
-        sparqlUpdate(HierarchySchema.mkSparqlUpdate(s, hierarchy), s"Error happened while indexing $fileName.")
+        sparqlUpdate(Schema.mkSparqlUpdate(s, hierarchy), s"Error happened while indexing $fileName.")
     }
   }
 

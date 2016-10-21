@@ -39,7 +39,7 @@ class JavaBytecodeIndexerTest {
                 }
                 val s = pkg.map(asSchemaPackage).map(pkg ⇒ File(pkg, fileName)).getOrElse(File(origin, fileName))
                 indexer.withUpdateService(model, Schema.mkSparqlUpdate(Seq(s)))(_ ⇒ ())
-                indexer.withUpdateService(model, HierarchySchema.mkSparqlUpdate(s, data))(_ ⇒ ())
+                indexer.withUpdateService(model, Schema.mkSparqlUpdate(s, data))(_ ⇒ ())
             }
           case Failure(f) ⇒
             throw f

@@ -180,22 +180,8 @@ object Schema {
     sb.toString()
   }
 
-  def mkTurtleString(schemas: Seq[Schema]): String = {
-    var prefixe = Map[String, String]()
-    var data = Map[String, Map[String, String]]()
-
-    def addPrefix(name: String, url: String) = {
-      if (!prefixe.contains(name))
-        prefixe += name → url
-    }
-    def addData(url: String, k: String, v: String) = {
-      data.get(url) match {
-        case Some(map) ⇒
-          data += url → (map + k → v)
-        case None ⇒
-          data += url → Map(k → v)
-      }
-    }
+  def mkTurtleString(schemas: Seq[Schema]): String = turtleBuilder {
+    (addPrefix, addData) ⇒
 
     def mk(s: Schema): String = s match {
       case Project(name) ⇒
@@ -282,45 +268,10 @@ object Schema {
     }
 
     schemas foreach mk
-
-    val sb = new StringBuilder
-    prefixe foreach {
-      case (name, url) ⇒
-        sb append "@prefix " append name append ":<" append url append "> .\n"
-    }
-    val len = data.values.map(_.keys.map(_.length).max).max + 3
-    data foreach {
-      case (url, kv) ⇒
-        sb append "<" append url append ">\n"
-        kv foreach {
-          case (k, v) ⇒
-            sb append "  " append k append " " * (len - k.length) append v append " ;\n"
-        }
-        sb append ".\n"
-    }
-    sb.toString()
   }
 
-}
-
-object HierarchySchema {
-
-  def mkTurtleUpdate(fileId: String, shortFileId: String, fileSchemaId: String, shortArtifactId: String, hierarchies: Seq[Hierarchy]): String = {
-    var prefixe = Map[String, String]()
-    var data = Map[String, Map[String, String]]()
-
-    def addPrefix(name: String, url: String) = {
-      if (!prefixe.contains(name))
-        prefixe += name → url
-    }
-    def addData(url: String, k: String, v: String) = {
-      data.get(url) match {
-        case Some(map) ⇒
-          data += url → (map + k → v)
-        case None ⇒
-          data += url → Map(k → v)
-      }
-    }
+  def mkTurtleUpdate(fileId: String, shortFileId: String, fileSchemaId: String, shortArtifactId: String, hierarchies: Seq[Hierarchy]): String = turtleBuilder {
+    (addPrefix, addData) ⇒
 
     def mkTpe(decl: Decl) = {
       if (decl.attachments(Attachment.Lazy) && decl.attachments(Attachment.Val))
@@ -435,6 +386,26 @@ object HierarchySchema {
     }
 
     hierarchies foreach loop
+  }
+
+  private def turtleBuilder(f: ((String, String) ⇒ Unit, (String, String, String) ⇒ Unit) ⇒ Unit) = {
+    var prefixe = Map[String, String]()
+    var data = Map[String, Map[String, String]]()
+
+    def addPrefix(name: String, url: String) = {
+      if (!prefixe.contains(name))
+        prefixe += name → url
+    }
+    def addData(url: String, k: String, v: String) = {
+      data.get(url) match {
+        case Some(map) ⇒
+          data += url → (map + k → v)
+        case None ⇒
+          data += url → Map(k → v)
+      }
+    }
+
+    f(addPrefix, addData)
 
     val sb = new StringBuilder
     prefixe foreach {
@@ -587,7 +558,7 @@ object HierarchySchema {
       ""
   }
 
-  def encode(str: String): String =
+  private def encode(str: String): String =
     URLEncoder.encode(str, "UTF-8")
 
   private def mkShortPath(decl: Decl) = {

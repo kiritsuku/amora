@@ -10,7 +10,7 @@ import scala.util.Failure
 import scala.util.Success
 
 import amora.backend.Logger
-import amora.backend.schema.HierarchySchema
+import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
 import amora.converter.protocol._
 
@@ -57,7 +57,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
           }
         """.runOnModel(model).map(_.uri("s")).head
 
-        val s = HierarchySchema.mkTurtleUpdate(fileId, shortFileId, fileSchemaId, shortArtifactId, hierarchy)
+        val s = Schema.mkTurtleUpdate(fileId, shortFileId, fileSchemaId, shortArtifactId, hierarchy)
         turtleUpdate(origin, s"Error happened while indexing $fileName.")
         turtleUpdate(s, s"Error happened while indexing $fileName.")
     }

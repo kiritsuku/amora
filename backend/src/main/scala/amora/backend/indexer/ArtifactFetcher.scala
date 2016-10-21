@@ -71,7 +71,7 @@ trait ArtifactFetcher {
           case ((file @ File(_, fileName), hierarchy), i) ⇒
             // TODO
             val fileQuery = schema.Schema.mkSparqlUpdate(Seq(file))
-            val dataQuery = schema.HierarchySchema.mkSparqlUpdate(file, hierarchy)
+            val dataQuery = schema.Schema.mkSparqlUpdate(file, hierarchy)
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
             sparqlUpdate(fileQuery, s"Error happened while indexing $fileName.")
             sparqlUpdate(dataQuery, s"Error happened while indexing $fileName.")
