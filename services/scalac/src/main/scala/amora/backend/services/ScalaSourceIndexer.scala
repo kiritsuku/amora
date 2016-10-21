@@ -55,7 +55,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
           select * where {
             ?s a Artifact: .
           }
-        """.runOnModel(model).map(_.uri("s")).head
+        """.runOnModel(model).map(_.uri("s")).head.drop("http://amora.center/kb/amora/Artifact/0.1/".length())
 
         val s = Schema.mkTurtleUpdate(fileId, shortFileId, fileSchemaId, shortArtifactId, hierarchy)
         turtleUpdate(origin, s"Error happened while indexing $fileName.")

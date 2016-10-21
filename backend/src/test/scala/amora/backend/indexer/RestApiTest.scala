@@ -237,7 +237,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       case (fileName, data) ⇒
         val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
         val pkg = data match {
-          case PkgFinder(name) ⇒ Some(mkPkg(name.split('.')))
+          case PkgFinder(name) ⇒ Some(mkPkg(name.split('.').reverse))
           case _ ⇒ None
         }
         val s = pkg.map(File(_, fileName)).getOrElse(File(origin, fileName))
