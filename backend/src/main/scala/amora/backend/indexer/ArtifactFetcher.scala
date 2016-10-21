@@ -103,7 +103,8 @@ trait ArtifactFetcher {
       val localArtifacts = Task.gatherUnordered(
         resolution.dependencyArtifacts.map {
           case (dependency, coursierArtifact) ⇒
-            Cache.file(coursierArtifact, cache = cacheLocation, logger = Some(coursierLogger)).map(f ⇒ artifact → f).run
+            val a = Artifact(Project(dependency.module.organization), dependency.module.organization, dependency.module.name, dependency.version)
+            Cache.file(coursierArtifact, cache = cacheLocation, logger = Some(coursierLogger)).map(f ⇒ a → f).run
         }
       ).run
 
