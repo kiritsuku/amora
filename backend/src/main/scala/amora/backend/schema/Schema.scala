@@ -408,9 +408,10 @@ object Schema {
     f(addPrefix, addData)
 
     val sb = new StringBuilder
+    val prefixLen = prefixe.keys.map(_.length).max + 3
     prefixe foreach {
       case (name, url) ⇒
-        sb append "@prefix " append name append ":<" append url append "> .\n"
+        sb append "@prefix " append name append ":" append " " * (prefixLen - name.length) append "<" append url append "> .\n"
     }
     val len = data.values.map(_.keys.map(_.length).max).max + 3
     data foreach {
