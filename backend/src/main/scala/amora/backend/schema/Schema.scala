@@ -331,8 +331,8 @@ object Schema {
 
         decl.position match {
           case RangePosition(start, end) ⇒
-            addData(path, s"$tpe:posStart", s""""$start"""")
-            addData(path, s"$tpe:posEnd", s""""$end"""")
+            addData(path, s"$tpe:posStart", start.toString)
+            addData(path, s"$tpe:posEnd", end.toString)
           case _ ⇒
         }
 
@@ -367,8 +367,8 @@ object Schema {
 
         ref.position match {
           case RangePosition(start, end) ⇒
-            addData(path, "Ref:posStart", s""""$start"""")
-            addData(path, "Ref:posEnd", s""""$end"""")
+            addData(path, "Ref:posStart", start.toString)
+            addData(path, "Ref:posEnd", end.toString)
           case _ ⇒
         }
 
