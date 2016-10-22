@@ -22,6 +22,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a c:] c:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "C1")),
         Seq(Data("name", "C2")),
@@ -48,6 +49,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a d:] d:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "m1")),
         Seq(Data("name", "m2")),
@@ -77,6 +79,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         ?class a c:; c:name "C1" .
         [d:owner ?class] d:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "m11")),
         Seq(Data("name", "m12")))
@@ -101,6 +104,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select * where {
         [a c:] amora:owner [amora:name "f1.scala"]; amora:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "C1")),
         Seq(Data("name", "C2")))
@@ -119,6 +123,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a p:] p:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "a")),
         Seq(Data("name", "b")),
@@ -146,6 +151,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         values ?tpes {v: l:}
         [a ?tpes] amora:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "b")),
         Seq(Data("name", "e")))
@@ -169,6 +175,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a l:] l:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "e")))
   }
@@ -191,6 +198,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "b")))
   }
@@ -213,6 +221,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "d")))
   }
@@ -235,6 +244,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a d:] d:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "a")),
         Seq(Data("name", "c")))
@@ -255,6 +265,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a c:] c:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "A")))
   }
@@ -274,6 +285,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a c:] c:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "B")))
   }
@@ -293,6 +305,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a t:] t:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "C")))
   }
@@ -312,6 +325,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a o:] o:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "D")))
   }
@@ -327,6 +341,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")))
@@ -345,6 +360,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")))
@@ -363,6 +379,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")),
@@ -382,6 +399,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")),
@@ -401,6 +419,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "j")))
   }
@@ -418,6 +437,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "j")))
   }
@@ -435,6 +455,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [a v:] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")))
@@ -453,6 +474,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
         Seq(Data("name", "j")))
@@ -475,6 +497,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       select ?name where {
         [ref:owner [a def:]] ref:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "Boolean")),
         Seq(Data("name", "b1")),
