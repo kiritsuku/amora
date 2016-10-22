@@ -9,8 +9,8 @@ object TestUtils {
       if (actual != expected) {
         (actual, expected) match {
           case (actual: Seq[_], expected: Seq[_]) ⇒
-            val as = actual.map(_.toString).sorted.mkString("\n")
-            val es = expected.map(_.toString).sorted.mkString("\n")
+            val as = actual.map(_.toString).mkString("\n")
+            val es = expected.map(_.toString).mkString("\n")
             throw new ComparisonFailure("", es, as)
           case (actual: Set[_], expected: Set[_]) ⇒
             val as = actual.toSeq.map(_.toString).sorted.mkString("\n")
