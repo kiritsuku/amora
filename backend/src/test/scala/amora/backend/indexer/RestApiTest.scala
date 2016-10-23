@@ -19,6 +19,7 @@ import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.rdf.model.Model
 import org.apache.jena.rdf.model.ModelFactory
 import org.junit.After
+import org.junit.ComparisonFailure
 
 import com.typesafe.config.ConfigFactory
 
@@ -224,7 +225,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       order by ?s ?p
       limit $entries
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
-      status === StatusCodes.OK
+      checkStatus()
     }
   }
 
@@ -330,7 +331,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     val expectedRegions = dataWithRegions.flatMap { case (_, _, region) ⇒ region }.sortBy(regionOrdering)
 
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
-      status === StatusCodes.OK
+      checkStatus()
       val r = respAsResultSet()
 
       import scala.collection.JavaConverters._
@@ -354,14 +355,14 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   def sparqlRequest(query: String): Seq[Seq[Data]] = {
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
-      status === StatusCodes.OK
+      checkStatus()
       resultSetAsData(respAsResultSet())
     }
   }
 
   def serviceRequest(query: String): Model = {
     testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, query), header = Accept(CustomContentTypes.`text/turtle`))) {
-      status === StatusCodes.OK
+      checkStatus()
       fillModel(ModelFactory.createDefaultModel(), respAsString)
     }
   }
@@ -393,6 +394,11 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     val i = rawSrc.indexOf('^')
     require(i >= 0, "No cursor marker found.")
     CursorData(i, rawSrc.substring(0, i) + rawSrc.substring(i+1))
+  }
+
+  def checkStatus() = {
+    if (status != StatusCodes.OK)
+      throw new ComparisonFailure("", StatusCodes.OK.toString(), s"$status\n\n$respAsString\n\nRawResponse: $response")
   }
 
   @After
