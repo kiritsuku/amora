@@ -398,7 +398,7 @@ object Build extends sbt.Build {
     val scalatags       = "0.5.2"
     // https://github.com/lloydmeta/enumeratum
     val enumeratum      = "1.3.7"
-    val akka            = "2.4.3"
+    val akka            = "2.4.11"
     val scalameta       = "0.1.0-SNAPSHOT"
     // https://github.com/typesafehub/scala-logging
     val scalaLogging    = "3.1.0"
