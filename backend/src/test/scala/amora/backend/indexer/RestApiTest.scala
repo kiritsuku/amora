@@ -113,13 +113,13 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   val interface = config.getString("app.interface")
   val port = config.getInt("app.port")
   val binding = Http().bindAndHandle(route, interface, port)
-  binding.onComplete {
+  Await.ready(binding, Duration.Inf).value.get match {
     case Success(binding) ⇒
       val addr = binding.localAddress
       log.info(s"Server is listening on ${addr.getHostName}:${addr.getPort}")
     case Failure(e) ⇒
       log.error(e, "Failed to start server")
-      system.terminate()
+      throw e
   }
 
   case class Data(varName: String, value: String)
@@ -403,6 +403,6 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   @After
   def waitForTermination(): Unit = {
-    Await.result(system.terminate(), Duration.Inf)
+    Await.ready(system.terminate(), Duration.Inf)
   }
 }
