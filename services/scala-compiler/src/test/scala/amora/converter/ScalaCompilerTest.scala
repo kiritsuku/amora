@@ -4,7 +4,7 @@ import org.junit.Test
 
 abstract class ScalaCompilerTest {
 
-  import amora.backend.TestUtils._
+  import amora.TestUtils._
 
   def convert(src: String): Set[String] =
     convert("<memory>" → src)
