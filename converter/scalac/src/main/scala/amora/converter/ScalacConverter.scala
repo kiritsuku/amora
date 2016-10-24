@@ -390,6 +390,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       body(owner, finalizer)
     case Throw(expr) ⇒
       body(owner, expr)
+    case Return(expr) ⇒
+      body(owner, expr)
     case EmptyTree ⇒
   }
 
