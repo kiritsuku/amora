@@ -12,6 +12,11 @@ abstract class ScalaCompilerTest {
   def convert(data: (String, String)*): Set[String]
 
   @Test
+  def single_package() = {
+    convert("package pkg") === Set("pkg")
+  }
+
+  @Test
   def single_class() = {
     convert("package pkg; class X") === Set("pkg", "pkg.X")
   }
