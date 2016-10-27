@@ -87,6 +87,8 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     val reporter = new ConsoleReporter(s, Console.in, new PrintWriter(writer, /* autoFlush */true))
     val g = new Global(s, reporter)
 
+    logger.info(s.userSetSettings.toSeq.sortBy(_.name.toLowerCase).mkString(s"Compile sources with scalac settings:\n  ", "\n  ", ""))
+
     def withResponse[A](f: g.Response[A] ⇒ Unit) = {
       val r = new g.Response[A]
       f(r)
