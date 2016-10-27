@@ -380,7 +380,7 @@ object Build extends sbt.Build {
     name := "scala-compiler-service",
 
     libraryDependencies ++= deps.scalaCompilerService.value
-  ) dependsOn (backend)
+  ) dependsOn (backend % "compile;test->test")
 
   lazy val scalacService = project in file("services/scalac") settings commonSettings ++ Seq(
     name := "scalac-service"
