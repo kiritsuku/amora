@@ -1,8 +1,10 @@
 package amora.backend.services
 
 import java.io.BufferedWriter
+import java.io.File
 import java.io.OutputStreamWriter
 
+import scala.io.Codec
 import scala.reflect.io.VirtualFile
 import scala.util.Failure
 import scala.util.Success
@@ -11,9 +13,9 @@ import amora.backend.Logger
 import amora.converter.AmoraPhase
 import amora.converter.protocol._
 import dotty.tools.dotc.Compiler
+import dotty.tools.dotc.config.PathResolver
 import dotty.tools.dotc.core.Contexts._
 import dotty.tools.dotc.util.SourceFile
-import scala.io.Codec
 
 class DottySourceIndexer(logger: Logger) extends ScalaService {
 
@@ -35,10 +37,14 @@ class DottySourceIndexer(logger: Logger) extends ScalaService {
   }
 
   def convertToSchema(data: Seq[(String, String)]): Seq[(String, Seq[Hierarchy])] = {
+    def srcOf[A : reflect.ClassTag] = reflect.classTag[A].runtimeClass.getProtectionDomain.getCodeSource.getLocation.toExternalForm
     var results = Vector[(String, Seq[Hierarchy])]()
     implicit val ctx = {
+      val stdlibSrc = srcOf[Predef.type]
+      val dottylibSrc = srcOf[dotty.DottyPredef.type]
+
       val ctx = new ContextBase().initialCtx.fresh
-      ctx.setSetting(ctx.settings.usejavacp, true)
+      ctx.setSetting(ctx.settings.classpath, Seq(stdlibSrc, dottylibSrc).mkString(File.pathSeparator))
       ctx
     }
     val compiler = new Compiler {
@@ -66,6 +72,7 @@ class DottySourceIndexer(logger: Logger) extends ScalaService {
         new SourceFile(virtualFile, Codec.UTF8)
     }
     val run = compiler.newRun
+    logger.info("Compile sources with the following dotc configuration: " + new PathResolver().Calculated)
     run.compileSources(sourceFiles.toList)
     results.toSeq
   }
