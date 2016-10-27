@@ -72,7 +72,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
    */
   def convertToHierarchy(data: Seq[(String, String)]): Seq[(String, Seq[Hierarchy])] = {
     def srcOf[A : reflect.ClassTag] = reflect.classTag[A].runtimeClass.getProtectionDomain.getCodeSource
-    val stdlibSrc = srcOf[Unit]
+    val stdlibSrc = srcOf[Predef.type]
 
     val s = new Settings
     // - When the tests are run in Eclipse stdlibSrc is null. Luckily, we don't need
