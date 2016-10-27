@@ -427,7 +427,6 @@ object Build extends sbt.Build {
       "com.typesafe.akka"              %%  "akka-http-spray-json-experimental" % versions.akka,
       "com.typesafe.akka"              %%  "akka-stream"                       % versions.akka,
       "com.typesafe.akka"              %%  "akka-slf4j"                        % versions.akka,
-      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
       "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
       "com.lihaoyi"                    %%% "scalatags"                         % versions.scalatags,
       "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
@@ -443,7 +442,7 @@ object Build extends sbt.Build {
       "com.github.xuwei-k"             %%  "msgpack4z-core"                    % versions.msgpack4zCore,
       "com.github.xuwei-k"             %   "msgpack4z-java07"                  % versions.msgpack4zJava07,
       "com.beachape"                   %%  "enumeratum"                        % versions.enumeratum,
-      "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
+      "org.scala-lang"                 %   "scala-reflect"                     % scalaVersion.value,
       "com.typesafe.scala-logging"     %%  "scala-logging"                     % versions.scalaLogging
     ))
 
