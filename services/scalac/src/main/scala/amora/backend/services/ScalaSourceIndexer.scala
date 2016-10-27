@@ -71,7 +71,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
    * can be used as dependencies for the Scala files.
    */
   def convertToHierarchy(data: Seq[(String, String)]): Seq[(String, Seq[Hierarchy])] = {
-    def srcOf[A : reflect.ClassTag] = reflect.classTag[A].getClass().getProtectionDomain.getCodeSource
+    def srcOf[A : reflect.ClassTag] = reflect.classTag[A].runtimeClass.getProtectionDomain.getCodeSource
     val stdlibSrc = srcOf[Unit]
 
     val s = new Settings
