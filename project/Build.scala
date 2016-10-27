@@ -41,6 +41,13 @@ object Build extends sbt.Build {
     cancelable := true
   )
 
+  lazy val junitSettings = Seq(
+    // see https://github.com/sbt/junit-interface for an explanation of the arguments
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s"),
+    // we don't want to run the tests in sbt because they consume lots of resources
+    fork in Test := true
+  )
+
   lazy val protocol = crossProject crossType CrossType.Pure in file("protocol") settings (
     name := "protocol",
     // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
@@ -252,7 +259,7 @@ object Build extends sbt.Build {
     libraryDependencies ++= deps.nvim.value
   )
 
-  lazy val backend = project in file("backend") settings commonSettings ++ Revolver.settings ++ Seq(
+  lazy val backend = project in file("backend") settings commonSettings ++ Revolver.settings ++ junitSettings ++ Seq(
     name := "backend",
 
     resolvers += Resolver.sonatypeRepo("snapshots"),
@@ -263,11 +270,6 @@ object Build extends sbt.Build {
 
     // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
     EclipseKeys.eclipseOutput := Some("bin/"),
-
-    // see https://github.com/sbt/junit-interface for an explanation of the arguments
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v", "-s"),
-    // we don't want to run the tests in sbt because they consume lots of resources
-    fork in Test := true,
 
     // add ui JS files to resources: *fastopt.js, *fullopt.js, *launcher.js, *jsdeps.js
     resourceGenerators in Compile += (fastOptJS in Compile in ui).map(r => Seq(r.data)).taskValue,
@@ -382,11 +384,11 @@ object Build extends sbt.Build {
     libraryDependencies ++= deps.scalaCompilerService.value
   ) dependsOn (backend % "compile;test->test")
 
-  lazy val scalacService = project in file("services/scalac") settings commonSettings ++ Seq(
+  lazy val scalacService = project in file("services/scalac") settings commonSettings ++ junitSettings ++ Seq(
     name := "scalac-service"
   ) dependsOn (scalacConverter, scalaCompilerService % "compile;test->test")
 
-  lazy val dotcService = project in file("services/dotc") settings commonSettings ++ Seq(
+  lazy val dotcService = project in file("services/dotc") settings commonSettings ++ junitSettings ++ Seq(
     name := "dotc-service",
 
     // dotc ships with a fork of scalac, we therefore don't want to use the compiler that is bundled with Eclipse
