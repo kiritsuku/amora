@@ -348,6 +348,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       } else
         m.getParameters.map(_.getName).toList
     val orderedParam = names.map(name ⇒ param(name).value.asInstanceOf[Object])
+    log.info(s"Calling service method:\n  $m")
     m.invoke(obj, orderedParam: _*)
   }
 
