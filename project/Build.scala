@@ -48,6 +48,12 @@ object Build extends sbt.Build {
     fork in Test := true
   )
 
+  /**
+   * Aggregates all projects that contain test suites.
+   * This way all the test suites can be run with `root/test`.
+   */
+  lazy val root = project in file(".") aggregate (backend, scalacService, dotcService)
+
   lazy val protocol = crossProject crossType CrossType.Pure in file("protocol") settings (
     name := "protocol",
     // We need to explicitly set this to the default Eclipse output folder, otherwise another one is created
