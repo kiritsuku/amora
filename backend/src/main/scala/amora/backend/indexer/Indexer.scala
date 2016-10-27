@@ -20,6 +20,7 @@ import org.apache.jena.update.UpdateAction
 
 import amora.backend.Log4jLogging
 import spray.json._
+import scala.util.control.NonFatal
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -213,6 +214,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       val res = f(model)
       model.commit()
       res
+    // no catch here because 'abort' on models is not supported
     } finally {
       model.close()
     }
@@ -224,6 +226,10 @@ class Indexer(modelName: String) extends Log4jLogging {
       val res = f(dataset)
       dataset.commit()
       res
+    } catch {
+      case NonFatal(e) ⇒
+        dataset.abort()
+        throw e
     } finally {
       dataset.end()
     }
