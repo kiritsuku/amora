@@ -139,3 +139,22 @@ case object IgnoreLogger extends Logger {
   override def close() = throw new UnsupportedOperationException
   override def isClosed = false
 }
+
+case object ConsoleLogger extends Logger {
+  override def debug(msg: String): Unit = println(s"[debug] $msg")
+  override def warning(msg: String): Unit = println(s"[warning] $msg")
+  override def info(msg: String): Unit = println(s"[info] $msg")
+  override def error(msg: String, t: Throwable): Unit = {
+    val sw = new StringWriter
+    val pw = new PrintWriter(sw)
+    t.printStackTrace(pw)
+
+    println(s"[error] $msg\n${sw.toString}")
+  }
+  override def log: Source[String, Unit] = throw new UnsupportedOperationException
+  override def logLevel: Logger.LogLevel = throw new UnsupportedOperationException
+  override def logLevel_=(level: Logger.LogLevel): Unit = throw new UnsupportedOperationException
+
+  override def close() = throw new UnsupportedOperationException
+  override def isClosed = false
+}
