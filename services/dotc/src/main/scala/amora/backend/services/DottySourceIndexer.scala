@@ -13,6 +13,7 @@ import amora.converter.protocol._
 import dotty.tools.dotc.Compiler
 import dotty.tools.dotc.core.Contexts._
 import dotty.tools.dotc.util.SourceFile
+import scala.io.Codec
 
 class DottySourceIndexer(logger: Logger) extends ScalaService {
 
@@ -62,7 +63,7 @@ class DottySourceIndexer(logger: Logger) extends ScalaService {
         val writer = new BufferedWriter(new OutputStreamWriter(virtualFile.output, "UTF-8"))
         writer.write(sourceCode)
         writer.close()
-        new SourceFile(virtualFile)
+        new SourceFile(virtualFile, Codec.UTF8)
     }
     val run = compiler.newRun
     run.compileSources(sourceFiles.toList)

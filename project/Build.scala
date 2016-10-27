@@ -481,7 +481,7 @@ object Build extends sbt.Build {
     ))
 
     lazy val dotcConverter = Def.setting(Seq(
-      "ch.epfl.lamp"                   %%  "dotty"                             % "0.1-20160923-28940d3-NIGHTLY",
+      "ch.epfl.lamp"                   %%  "dotty"                             % "0.1-SNAPSHOT",
       "me.d-d"                         %   "scala-compiler"                    % "2.11.5-20160322-171045-e19b30b3cd"
     ))
 
