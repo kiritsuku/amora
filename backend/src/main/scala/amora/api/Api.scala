@@ -16,6 +16,11 @@ final class SparqlQuery(val query: String) {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
     new SparqlResultSet(ResultSetFactory.makeRewindable(qexec.execSelect()))
   }
+
+  def askOnModel(model: SparqlModel): Boolean = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
+    qexec.execAsk()
+  }
 }
 
 final class SparqlResultSet(val resultSet: ResultSetRewindable) {
@@ -39,29 +44,36 @@ final class SparqlModel(val model: Model)
 
 final class ResultSetRow(val row: QuerySolution) {
   def string(varName: String): String =
-    row.get(varName).asLiteral.getString
+    get(varName).asLiteral.getString
 
   def int(varName: String): Int =
-    row.get(varName).asLiteral.getInt
+    get(varName).asLiteral.getInt
 
   def long(varName: String): Long =
-    row.get(varName).asLiteral.getLong
+    get(varName).asLiteral.getLong
 
   def boolean(varName: String): Boolean =
-    row.get(varName).asLiteral.getBoolean
+    get(varName).asLiteral.getBoolean
 
   def double(varName: String): Double =
-    row.get(varName).asLiteral.getDouble
+    get(varName).asLiteral.getDouble
 
   def float(varName: String): Float =
-    row.get(varName).asLiteral.getFloat
+    get(varName).asLiteral.getFloat
 
   def char(varName: String): Char =
-    row.get(varName).asLiteral.getChar
+    get(varName).asLiteral.getChar
 
   def byte(varName: String): Byte =
-    row.get(varName).asLiteral.getByte
+    get(varName).asLiteral.getByte
 
   def uri(varName: String): String =
-    row.get(varName).toString
+    get(varName).toString
+
+  private def get(varName: String) = {
+    val v = row.get(varName)
+    if (v == null)
+      throw new IllegalArgumentException(s"The variable name `$varName` doesn't exist in the result set.")
+    v
+  }
 }
