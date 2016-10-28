@@ -415,9 +415,13 @@ object Schema {
 
     f(addPrefix, addData)
 
+    val stringOrdering = new Ordering[String] {
+      def compare(a: String, b: String) = String.CASE_INSENSITIVE_ORDER.compare(a, b)
+    }
+
     val sb = new StringBuilder
     val prefixLen = prefixe.keys.map(_.length).max + 3
-    prefixe foreach {
+    prefixe.toList.sortBy(_._1)(stringOrdering) foreach {
       case (name, url) ⇒
         sb append "@prefix " append name append ":" append " " * (prefixLen - name.length) append "<" append url append "> .\n"
     }
@@ -425,7 +429,7 @@ object Schema {
     data foreach {
       case (url, kv) ⇒
         sb append "<" append url append ">\n"
-        kv foreach {
+        kv.toList.sortBy(_._1)(stringOrdering) foreach {
           case (k, v) ⇒
             sb append "  " append k append " " * (len - k.length) append v append " ;\n"
         }
