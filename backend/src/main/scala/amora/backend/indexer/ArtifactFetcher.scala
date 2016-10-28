@@ -7,7 +7,7 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipFile
 
 import amora.backend.Logger
-import amora.backend.schema
+import amora.backend.schema.Schema
 import amora.converter.ClassfileConverter
 import amora.converter.protocol._
 import scalaz._
@@ -29,7 +29,7 @@ trait ArtifactFetcher {
   import ArtifactFetcher._
 
   def logger: Logger
-  def sparqlUpdate(query: String, errMsg: ⇒ String): Unit
+  def turtleUpdate(update: String, errorMsg: ⇒ String): Unit
   def cacheLocation: JFile
 
   def handleArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
@@ -73,18 +73,17 @@ trait ArtifactFetcher {
     artifacts foreach {
       case DownloadSuccess(artifact, file) ⇒
         val files = indexArtifact(artifact, file)
-        val artifactQuery = schema.Schema.mkSparqlUpdate(Seq(artifact))
-        logger.info(s"Indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version} with ${files.size} files.")
-        sparqlUpdate(artifactQuery, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
+        val artifactQuery = Schema.mkTurtleString(Seq(artifact))
+        logger.info(s"Indexing artifact ${artifact.organization}:${artifact.name}:${artifact.version} with ${files.size} files.")
+        turtleUpdate(artifactQuery, s"Error happened while indexing artifact ${artifact.organization}/${artifact.name}/${artifact.version}.")
 
         files.zipWithIndex foreach {
           case ((file @ File(_, fileName), hierarchy), i) ⇒
-            // TODO
-            val fileQuery = schema.Schema.mkSparqlUpdate(Seq(file))
-            val dataQuery = schema.Schema.mkSparqlUpdate(file, hierarchy)
+            val fileQuery = Schema.mkTurtleString(Seq(file))
+            val dataQuery = Schema.mkTurtleUpdate(file, hierarchy)
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
-            sparqlUpdate(fileQuery, s"Error happened while indexing $fileName.")
-            sparqlUpdate(dataQuery, s"Error happened while indexing $fileName.")
+            turtleUpdate(fileQuery, s"Error happened while indexing $fileName.")
+            turtleUpdate(dataQuery, s"Error happened while indexing $fileName.")
         }
     }
     logger.info(s"Successfully indexed ${artifacts.size} artifacts.")

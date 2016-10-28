@@ -21,6 +21,10 @@ trait DataIndexer { this: Actor ⇒
 
   implicit def dispatcher = context.system.dispatcher
 
+  def turtleUpdate(query: String, errMsg: ⇒ String): Unit = {
+    ???
+  }
+
   def sparqlUpdate(query: String, errMsg: ⇒ String): Unit = {
     import amora.backend.PlatformConstants.timeout
     Await.ready((indexer ask IndexerMessage.RunUpdate(query)).mapTo[Try[Unit]], timeout.duration) onComplete {
