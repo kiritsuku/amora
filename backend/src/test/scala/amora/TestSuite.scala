@@ -12,6 +12,7 @@ import amora.backend.indexer.ScalaSourceRegionIndexerTest
 import amora.backend.services.FindUsagesTest
 import amora.backend.services.FindDeclarationTest
 import amora.api.ApiTest
+import amora.backend.indexer.MultiProjectTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -22,6 +23,7 @@ import amora.api.ApiTest
   classOf[ScalaSourceRegionIndexerTest],
   classOf[FindUsagesTest],
   classOf[FindDeclarationTest],
-  classOf[ApiTest]
+  classOf[ApiTest],
+  classOf[MultiProjectTest]
 ))
 class TestSuite

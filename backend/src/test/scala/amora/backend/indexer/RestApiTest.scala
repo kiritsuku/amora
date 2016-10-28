@@ -371,6 +371,12 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  def turtleRequest(req: String): Unit = {
+    testReq(post("http://amora.center/turtle-update", HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, req))) {
+      checkStatus()
+    }
+  }
+
   def modelAsData(model: Model, query: String): Seq[Seq[Data]] = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     val rs = ResultSetFactory.makeRewindable(qexec.execSelect())
