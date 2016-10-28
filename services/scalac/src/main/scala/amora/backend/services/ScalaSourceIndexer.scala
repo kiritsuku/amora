@@ -41,14 +41,19 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
       prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
       prefix Project:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
       select * where {
-        [Artifact:organization ?organization ; Artifact:name ?name ; Artifact:version ?version ; Artifact:owner [Project:name ?pname]] a Artifact: .
+        [
+          Artifact:organization ?organization ;
+          Artifact:name ?name ;
+          Artifact:version ?version ;
+          Artifact:owner [Project:name ?pname] ;
+        ] a Artifact: .
       }
-    """.runOnModel(model).map { c ⇒
+    """.runOnModel(model).map { row ⇒
       Artifact(
-          Project(c.string("pname")),
-          c.string("organization"),
-          c.string("name"),
-          c.string("version"))
+          Project(row.string("pname")),
+          row.string("organization"),
+          row.string("name"),
+          row.string("version"))
     }.head
     def mkPkg(pkgs: Seq[String]): Schema = pkgs match {
       case Nil ⇒ artifact
