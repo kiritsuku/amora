@@ -238,38 +238,42 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       str.replace("\n", "\\n").replace("\"", "\\\"")
     val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
 
-    data foreach {
+    val files = data map {
       case (fileName, src) ⇒
-        val s = src match {
+        src match {
           case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), fileName)
           case _ ⇒ File(origin, fileName)
         }
-        val ttlString = Schema.mkTurtleString(Seq(s))
-        serviceRequest(s"""
-          @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-          @prefix registry:<http://amora.center/kb/Service/0.1/> .
-          @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
-          @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
-          <#this>
-            a request: ;
-            service:serviceId registry:ScalaSourceIndexer ;
-            service:method [
-              service:name "run" ;
-              service:param [
-                service:name "origin" ;
-                service:value "${escaped(ttlString)}" ;
-              ] ;
-              service:param [
-                service:name "data" ;
-                service:value [
-                  cu:fileName "$fileName" ;
-                  cu:source "${escaped(src)}" ;
-                ];
-              ] ;
-            ] ;
-          .
-        """)
     }
+    val ttlString = Schema.mkTurtleString(files)
+    serviceRequest(s"""
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix registry:<http://amora.center/kb/Service/0.1/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+      <#this>
+        a request: ;
+        service:serviceId registry:ScalaSourceIndexer ;
+        service:method [
+          service:name "run" ;
+          service:param [
+            service:name "origin" ;
+            service:value "${escaped(ttlString)}" ;
+          ] ;
+          service:param [
+            service:name "data" ;
+            service:value [${
+              data.map {
+                case (fileName, src) ⇒ s"""
+              cu:fileName "$fileName" ;
+              cu:source "${escaped(src)}" ;
+            ], ["""
+              }.mkString
+            }];
+          ] ;
+        ] ;
+      .
+    """)
   }
 
   sealed trait Region extends Product with Serializable {

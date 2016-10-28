@@ -270,7 +270,7 @@ object Schema {
     schemas foreach mk
   }
 
-  def mkTurtleUpdate(fileId: String, shortFileId: String, fileSchemaId: String, shortArtifactId: String, hierarchies: Seq[Hierarchy]): String = turtleBuilder {
+  def mkTurtleUpdate(file: File, hierarchies: Seq[Hierarchy]): String = turtleBuilder {
     (addPrefix, addData) ⇒
 
     def mkTpe(decl: Decl) = {
@@ -291,6 +291,13 @@ object Schema {
     }
 
     def mkFullPath(decl: Decl) = {
+      def findArtifact(schema: Schema): Artifact = schema match {
+        case a: Artifact ⇒ a
+        case p: Package ⇒ findArtifact(p.owner)
+        case f: File ⇒ findArtifact(f.owner)
+        case _ ⇒ ???
+      }
+      val shortArtifactId = Schema.mkShortId(findArtifact(file))
       val tpe = mkTpe(decl)
       s"http://amora.center/kb/amora/$tpe/0.1/$shortArtifactId/${mkShortPath(decl)}"
     }
@@ -302,7 +309,7 @@ object Schema {
         isTopLevelDecl && isPkg
       }
       if (isTopLevelDecl)
-        fileId
+        mkId(file)
       else
         mkFullPath(owner)
     }
@@ -341,7 +348,7 @@ object Schema {
             // The owner of a package is an artifact but this can't be represented
             // in the Hierarchy structure. Thus, we index this information separately.
             if (!decl.attachments(Attachment.Package)) {
-              val ownerPath = fileId
+              val ownerPath = mkId(file)
               addData(path, s"$tpe:owner", s"""<$ownerPath>""")
             }
           case owner: Decl ⇒
@@ -358,6 +365,7 @@ object Schema {
           // TODO replace this with a real implementation
           case _ ⇒ "???"
         }
+        val shortFileId = mkShortId(file)
         val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
         val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
         addPrefix("Ref", schemaPath+"/")
@@ -374,7 +382,7 @@ object Schema {
 
         owner match {
           case Root ⇒
-            val ownerPath = fileSchemaId
+            val ownerPath = mkDefn(file)
             addData(path, "Ref:owner", s"""<$ownerPath>""")
           case owner: Decl ⇒
             val ownerPath = mkOwnerPath(ref, owner)

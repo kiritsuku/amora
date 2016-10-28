@@ -37,27 +37,35 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
 
     val model = turtleModel(origin)
     val res = convertToHierarchy(data)
+    val artifact = sparqlQuery"""
+      prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix Project:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      select * where {
+        [Artifact:organization ?organization ; Artifact:name ?name ; Artifact:version ?version ; Artifact:owner [Project:name ?pname]] a Artifact: .
+      }
+    """.runOnModel(model).map { c ⇒
+      Artifact(
+          Project(c.string("pname")),
+          c.string("organization"),
+          c.string("name"),
+          c.string("version"))
+    }.head
+    def mkPkg(pkgs: Seq[String]): Schema = pkgs match {
+      case Nil ⇒ artifact
+      case pkg +: pkgs ⇒ Package(pkg, mkPkg(pkgs))
+    }
+    val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
 
     res foreach {
       case (fileName, hierarchy) ⇒
         logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
 
-        val fileId = sparqlQuery"""
-          prefix File:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
-          select * where {
-            ?s a File: .
-          }
-        """.runOnModel(model).map(_.uri("s")).head
-        val shortFileId = fileId.drop("http://amora.center/kb/amora/File/0.1/".length())
-        val fileSchemaId = "http://amora.center/kb/amora/Schema/0.1/File/0.1/"
-        val shortArtifactId = sparqlQuery"""
-          prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-          select * where {
-            ?s a Artifact: .
-          }
-        """.runOnModel(model).map(_.uri("s")).head.drop("http://amora.center/kb/amora/Artifact/0.1/".length())
-
-        val s = Schema.mkTurtleUpdate(fileId, shortFileId, fileSchemaId, shortArtifactId, hierarchy)
+        val src = data.find(_._1 == fileName).get._2
+        val file = src match {
+          case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), fileName)
+          case _ ⇒ File(artifact, fileName)
+        }
+        val s = Schema.mkTurtleUpdate(file, hierarchy)
         turtleUpdate(origin, s"Error happened while indexing $fileName.")
         turtleUpdate(s, s"Error happened while indexing $fileName.")
     }

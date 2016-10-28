@@ -66,25 +66,34 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       qs.get("name").toString() → qs.get("className").asLiteral().getString
     }.head
 
-    def handleListParam(paramId: String) = execQuery(reqModel, s"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-      prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
-      select * where {
-        <_:$paramId>
-          service:name ?name ;
-          service:value [
+    def handleListParam(paramId: String) = {
+      val name = execQuery(reqModel, s"""
+        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        select * where {
+          <_:$paramId> service:name ?name .
+        }
+      """) { qs ⇒
+        qs.get("name").toString()
+      }.head
+
+      val list = execQuery(reqModel, s"""
+        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
+        select * where {
+          <_:$paramId> service:value [
             cu:fileName ?fileName ;
             cu:source ?source ;
-          ] ;
-        .
-      }
-    """) { qs ⇒
-      val name = qs.get("name").toString()
-      val fileName = qs.get("fileName").asLiteral().getString
-      val source = qs.get("source").asLiteral().getString
+          ] .
+        }
+      """) { qs ⇒
+        val fileName = qs.get("fileName").asLiteral().getString
+        val source = qs.get("source").asLiteral().getString
 
-      name → Param(name, classOf[List[_]], List(fileName → source))
-    }.toMap
+        (fileName, source)
+      }.toList
+
+      Map(name → Param(name, classOf[List[_]], list))
+    }
 
     def handleLiteralParam(paramId: String) = {
       val requestParam = execQuery(reqModel, s"""
