@@ -62,4 +62,27 @@ class MultiProjectTest extends RestApiTest {
         Seq(Data("name", "n1"), Data("version", "v1")),
         Seq(Data("name", "n1"), Data("version", "v2")))
   }
+
+  @Test
+  def add_files_that_belong_to_different_artifacts(): Unit = {
+    indexData(Artifact(Project("p1"), "o1", "n1", "v1"),
+      "a.scala" → """
+        package a.b.c
+        class A
+      """)
+    indexData(Artifact(Project("p2"), "o2", "n2", "v1"),
+      "b.scala" → """
+        package d.e.f
+        class B
+      """)
+    sparqlRequest("""
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix d:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+      prefix s:<http://amora.center/kb/amora/Schema/0.1/>
+      select * where {
+        [a d:] d:name "B" ; s:owner+ [a a: ; a:name ?name] .
+      }
+    """) === Seq(
+        Seq(Data("name", "n2")))
+  }
 }
