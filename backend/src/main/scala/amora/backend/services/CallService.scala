@@ -1,16 +1,9 @@
 package amora.backend.services
 
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.net.URL
 import java.net.URLClassLoader
 
-import org.apache.jena.query.QueryExecutionFactory
-import org.apache.jena.query.QueryFactory
-import org.apache.jena.query.QuerySolution
-import org.apache.jena.query.ResultSetFactory
-import org.apache.jena.rdf.model.Model
-import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.riot.RiotException
 
 import akka.actor.ActorSystem
@@ -37,24 +30,25 @@ private[services] object CallService {
 
 class CallService(override val uri: String, override val system: ActorSystem) extends ScalaService with AkkaLogging {
   import CallService._
+  import amora.api._
 
   def run(ttlRequest: String): String = {
     serviceRequest(ttlRequest)
   }
 
   private def serviceRequest(ttlRequest: String): String = {
-    val reqModel = fillModel(ModelFactory.createDefaultModel(), ttlRequest)
-    val (serviceRequest, serviceId) = execQuery(reqModel, """
+    val reqModel = turtleModel(ttlRequest)
+    val (serviceRequest, serviceId) = sparqlQuery"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       select * where {
         ?request service:serviceId ?service .
       }
-    """) { qs ⇒
-      qs.get("request").toString() → qs.get("service").toString()
+    """.runOnModel(reqModel).map { row ⇒
+      row.uri("request") → row.uri("service")
     }.head
 
     val serviceModel = mkServiceModel(serviceId)
-    val (serviceMethod, serviceClassName) = execQuery(serviceModel, s"""
+    val (serviceMethod, serviceClassName) = sparqlQuery"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       select * where {
         <$serviceId> service:method [
@@ -62,21 +56,21 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         ] .
         <$serviceId> service:name ?className .
       }
-    """) { qs ⇒
-      qs.get("name").toString() → qs.get("className").asLiteral().getString
+    """.runOnModel(serviceModel).map { row ⇒
+      row.string("name") → row.string("className")
     }.head
 
     def handleListParam(paramId: String) = {
-      val name = execQuery(reqModel, s"""
+      val name = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         select * where {
           <_:$paramId> service:name ?name .
         }
-      """) { qs ⇒
-        qs.get("name").toString()
+      """.runOnModel(reqModel).map { row ⇒
+        row.string("name")
       }.head
 
-      val list = execQuery(reqModel, s"""
+      val list = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
         select * where {
@@ -85,18 +79,15 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
             cu:source ?source ;
           ] .
         }
-      """) { qs ⇒
-        val fileName = qs.get("fileName").asLiteral().getString
-        val source = qs.get("source").asLiteral().getString
-
-        (fileName, source)
+      """.runOnModel(reqModel).map { row ⇒
+        row.string("fileName") → row.string("source")
       }.toList
 
       Map(name → Param(name, classOf[List[_]], list))
     }
 
     def handleLiteralParam(paramId: String) = {
-      val requestParam = execQuery(reqModel, s"""
+      val requestParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         select * where {
           <_:$paramId>
@@ -104,11 +95,12 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
             service:value ?value ;
           .
         }
-      """) { qs ⇒
-        qs.get("name").toString() → qs.get("value").asLiteral()
+      """.runOnModel(reqModel).map { row ⇒
+        // TODO asLiteral
+        row.string("name") → row.row.get("value").asLiteral()
       }.toMap
 
-      val serviceParam = execQuery(serviceModel, s"""
+      val serviceParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         select * where {
           <$serviceId> service:method [
@@ -118,10 +110,8 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
             ] ;
           ] .
         }
-      """) { qs ⇒
-        val param = qs.get("param").toString()
-        val tpe = qs.get("tpe").toString()
-        param → tpe
+      """.runOnModel(serviceModel).map { row ⇒
+        row.string("param") → row.uri("tpe")
       }.toMap
 
       requestParam.map {
@@ -138,7 +128,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     }
 
     val param = {
-      val requestParam = execQuery(reqModel, s"""
+      val requestParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/0.1/>
         select ?p (isLiteral(?value) as ?isLit) where {
           <$serviceRequest> service:method/service:param ?p .
@@ -147,8 +137,8 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
             service:value ?value ;
           .
         }
-      """) { qs ⇒
-        qs.get("p").toString() → qs.get("isLit").asLiteral().getBoolean
+      """.runOnModel(reqModel).map { row ⇒
+        row.uri("p") → row.boolean("isLit")
       }.toMap
       requestParam flatMap {
         case (paramId, isLiteral) ⇒
@@ -161,12 +151,12 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     val serviceLogger = new ActorLogger()(system)
 
-    val hasBuild = execAsk(serviceModel, s"""
+    val hasBuild = sparqlQuery"""
       prefix service: <http://amora.center/kb/Schema/Service/0.1/>
       ask {
         <$serviceId> service:build ?build .
       }
-    """)
+    """.askOnModel(serviceModel)
 
     val cl =
       if (hasBuild)
@@ -179,13 +169,13 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     res.toString()
   }
 
-  private def mkBuildClassLoader(serviceModel: Model, serviceId: String, serviceLogger: Logger): ClassLoader = {
+  private def mkBuildClassLoader(serviceModel: SparqlModel, serviceId: String, serviceLogger: Logger): ClassLoader = {
     val urls = mkBuildClassPath(serviceModel, serviceId, serviceLogger)
     new URLClassLoader(urls.toArray, getClass.getClassLoader)
   }
 
-  private def mkBuildClassPath(serviceModel: Model, serviceId: String, serviceLogger: Logger): Seq[URL] = {
-    val (buildName, buildVersion) = execQuery(serviceModel, s"""
+  private def mkBuildClassPath(serviceModel: SparqlModel, serviceId: String, serviceLogger: Logger): Seq[URL] = {
+    val (buildName, buildVersion) = sparqlQuery"""
       prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
       select * where {
@@ -194,14 +184,12 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           Build:version   ?buildVersion ;
         ] .
       }
-    """) { qs ⇒
-      val buildName = qs.get("buildName").asLiteral().getString
-      val buildVersion = qs.get("buildVersion").asLiteral().getString
-      buildName -> buildVersion
+    """.runOnModel(serviceModel).map { row ⇒
+      row.string("buildName") → row.string("buildVersion")
     }.head
 
     val availableServices = registeredServices.toSet
-    val serviceDeps = execQuery(serviceModel, s"""
+    val serviceDeps = sparqlQuery"""
       prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
       prefix ServiceDependency:<http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/>
@@ -211,15 +199,15 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           service:serviceId   ?id ;
         ] .
       }
-    """) { qs ⇒
-      qs.get("id").toString()
+    """.runOnModel(serviceModel).map { row ⇒
+      row.uri("id")
     }.toList
 
     val notExistingServiceDeps = serviceDeps.filterNot(availableServices)
     if (notExistingServiceDeps.nonEmpty)
       throw new IllegalStateException("The following service dependencies do not exist: " + notExistingServiceDeps.mkString(", "))
 
-    val rawDeps = execQuery(serviceModel, s"""
+    val rawDeps = sparqlQuery"""
       prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
       prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
@@ -231,16 +219,16 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           Artifact:version        ?version ;
         ] .
       }
-    """) { qs ⇒
-      val tpe = qs.get("tpe").toString() match {
+    """.runOnModel(serviceModel).map { row ⇒
+      val tpe = row.uri("tpe") match {
         case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
           ScalaDependency
         case "http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/" =>
           MavenDependency
       }
-      val organization = qs.get("organization").asLiteral().getString
-      val name = qs.get("name").asLiteral().getString
-      val version = qs.get("version").asLiteral().getString
+      val organization = row.string("organization")
+      val name = row.string("name")
+      val version = row.string("version")
       BuildDependency(tpe, organization, name, version)
     }.toList
 
@@ -260,7 +248,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     mkClassPath(serviceModel, serviceId, serviceLogger, build)
   }
 
-  private def mkClassPath(serviceModel: Model, serviceId: String, serviceLogger: Logger, build: Build): Seq[URL] = {
+  private def mkClassPath(serviceModel: SparqlModel, serviceId: String, serviceLogger: Logger, build: Build): Seq[URL] = {
     if (build.dependencies.isEmpty && build.serviceDependencies.isEmpty)
       Nil
     else {
@@ -276,15 +264,15 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
       val serviceOutputFolderUrls = {
         val serviceLocation = serviceFile(serviceId).getParent
-        val relativeOutputFolders = execQuery(serviceModel, s"""
+        val relativeOutputFolders = sparqlQuery"""
           prefix service:<http://amora.center/kb/Schema/Service/0.1/>
           prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
           prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
           select * where {
             <$serviceId> service:build/Build:outputFolder ?out .
           }
-        """) { qs ⇒
-          qs.get("out").toString
+        """.runOnModel(serviceModel).map { row ⇒
+          row.uri("out")
         }.toList
         val absoluteOutputFolders = relativeOutputFolders.map { out ⇒
           val isAbsolute = out.startsWith("/")
@@ -372,35 +360,17 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     r.asScala.map(_.get("s").toString()).toList
   }
 
-  private def mkServiceModel(serviceId: String): Model = {
+  private def mkServiceModel(serviceId: String) = {
     val file = serviceFile(serviceId)
     if (!file.exists())
       throw new IllegalStateException(s"Couldn't find service description file `$file`.")
     val src = io.Source.fromFile(file, "UTF-8")
     val service = src.mkString
     src.close()
-    val serviceModel = try fillModel(ModelFactory.createDefaultModel(), service) catch {
+    val serviceModel = try turtleModel(service) catch {
       case e: RiotException ⇒
         throw new IllegalStateException(s"Error while reading service description file `$file`: ${e.getMessage}.", e)
     }
     serviceModel
-  }
-
-  private def execAsk(m: Model, query: String): Boolean = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), m)
-    qexec.execAsk()
-  }
-
-  private def execQuery[A](m: Model, query: String)(f: QuerySolution ⇒ A): Seq[A] = {
-    import scala.collection.JavaConverters._
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), m)
-    val rs = ResultSetFactory.makeRewindable(qexec.execSelect())
-    rs.asScala.map(f(_)).toSeq
-  }
-
-  private def fillModel(m: Model, str: String): Model = {
-    val in = new ByteArrayInputStream(str.getBytes)
-    m.read(in, null, "TURTLE")
-    m
   }
 }
