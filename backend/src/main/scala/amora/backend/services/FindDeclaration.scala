@@ -26,10 +26,9 @@ class FindDeclaration extends ScalaService {
       }
       limit 1
     """)
-    import scala.collection.JavaConverters._
-    val position = r.asScala.map { qs ⇒
-      qs.get("declStart").asLiteral().getInt → qs.get("declEnd").asLiteral().getInt
-    }.toSeq
+    val position = r.map { row ⇒
+      row.int("declStart") → row.int("declEnd")
+    }
 
     response(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .

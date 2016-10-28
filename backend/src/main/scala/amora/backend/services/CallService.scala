@@ -299,7 +299,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         <$serviceId> service:path ?path .
       }
     """)
-    new File(r.next().get("path").toString())
+    new File(r.map(_.uri("path")).head)
   }
 
   private def handleBuild(serviceLogger: Logger, buildName: String, buildDependencies: Seq[BuildDependency]) = {
@@ -349,14 +349,12 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
   }
 
   private def registeredServices: Seq[String] = {
-    import scala.collection.JavaConverters._
-    val r = sparqlRequest("""
+    sparqlRequest("""
       prefix service:<http://amora.center/kb/Schema/Service/0.1/>
       select * where {
         ?s a service: .
       }
-    """)
-    r.asScala.map(_.get("s").toString()).toList
+    """).map(_.uri("s"))
   }
 
   private def mkServiceModel(serviceId: String) = {

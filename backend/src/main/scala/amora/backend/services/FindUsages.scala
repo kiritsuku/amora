@@ -47,9 +47,8 @@ class FindUsages extends ScalaService {
         filter (?identOwner = ?usagesOwner)
       }
     """)
-    import scala.collection.JavaConverters._
-    val positions = r.asScala.map { qs ⇒
-      qs.get("usageStart").asLiteral().getInt → qs.get("usageEnd").asLiteral().getInt
+    val positions = r.map { row ⇒
+      row.int("usageStart") → row.int("usageEnd")
     }
 
     response(s"""

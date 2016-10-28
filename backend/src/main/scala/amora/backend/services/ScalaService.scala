@@ -4,11 +4,11 @@ import java.io.ByteArrayInputStream
 import java.nio.charset.StandardCharsets
 
 import org.apache.jena.query.ResultSetFactory
-import org.apache.jena.query.ResultSetRewindable
 
+import amora.api.SparqlResultSet
+import amora.backend.PlatformConstants
 import scalaj.http.Http
 import scalaj.http.HttpOptions
-import amora.backend.PlatformConstants
 
 trait ScalaService {
 
@@ -47,7 +47,7 @@ trait ScalaService {
       throw new IllegalStateException(s"$errorMsg\nSPARQL update request responded with an error.\nRequest: $req\nResponse: $resp")
   }
 
-  def sparqlRequest(query: String): ResultSetRewindable = {
+  def sparqlRequest(query: String): SparqlResultSet = {
     val req = Http(s"$uri/sparql")
       .postData(query)
       .header("Content-Type", "application/sparql-query")
@@ -59,6 +59,6 @@ trait ScalaService {
       throw new IllegalStateException(s"SPARQL request responded with an error.\nRequest: $req\nResponse: $resp")
 
     val in = new ByteArrayInputStream(resp.body.getBytes(StandardCharsets.UTF_8))
-    ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
+    new SparqlResultSet(ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in)))
   }
 }
