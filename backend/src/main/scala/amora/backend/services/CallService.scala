@@ -96,8 +96,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           .
         }
       """.runOnModel(reqModel).map { row ⇒
-        // TODO asLiteral
-        row.string("name") → row.row.get("value").asLiteral()
+        row.string("name") → row.literal("value")
       }.toMap
 
       val serviceParam = sparqlQuery"""
@@ -120,9 +119,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           val tpe = serviceParam.getOrElse(name, ???)
           name → (tpe match {
             case "http://www.w3.org/2001/XMLSchema#integer" ⇒
-              Param(name, classOf[Int], value.getInt)
+              Param(name, classOf[Int], value.int)
             case "http://www.w3.org/2001/XMLSchema#string" ⇒
-              Param(name, classOf[String], value.getString)
+              Param(name, classOf[String], value.string)
           })
       }
     }

@@ -9,6 +9,7 @@ import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
+import org.apache.jena.rdf.model.{ Literal ⇒ JLiteral }
 import org.apache.jena.rdf.model.Model
 
 final class SparqlQuery(val query: String) {
@@ -70,10 +71,29 @@ final class ResultSetRow(val row: QuerySolution) {
   def uri(varName: String): String =
     get(varName).toString
 
+  def literal(varName: String): Literal = {
+    val v = get(varName)
+    if (v.isLiteral())
+      Literal(v.asLiteral())
+    else
+      throw new IllegalArgumentException(s"The variable `$varName` does not contain a literal.")
+  }
+
   private def get(varName: String) = {
     val v = row.get(varName)
     if (v == null)
-      throw new IllegalArgumentException(s"The variable name `$varName` doesn't exist in the result set.")
+      throw new IllegalArgumentException(s"The variable `$varName` does not exist in the result set.")
     v
   }
+}
+
+final case class Literal(literal: JLiteral) {
+  def string: String = literal.getString
+  def int: Int = literal.getInt
+  def long: Long = literal.getLong
+  def boolean: Boolean = literal.getBoolean
+  def double: Double = literal.getDouble
+  def float: Float = literal.getFloat
+  def char: Char = literal.getChar
+  def byte: Byte = literal.getByte
 }
