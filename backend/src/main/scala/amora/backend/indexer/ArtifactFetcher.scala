@@ -32,7 +32,7 @@ trait ArtifactFetcher {
   def turtleUpdate(update: String, errorMsg: ⇒ String): Unit
   def cacheLocation: JFile
 
-  def handleArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
+  def downloadArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
     val (ignored, relevant) = artifacts.partition(_.organization == "amora.center")
     if (ignored.nonEmpty)
       logger.info("Ignoring artifacts:" + ignored.map(a ⇒ s"${a.organization}:${a.name}:${a.version}").sorted.mkString("\n  ", "\n  ", ""))
@@ -60,12 +60,18 @@ trait ArtifactFetcher {
       val msg = Seq(succMsg, errMsg).flatten.mkString("\n")
 
       logger.info(msg)
-
-      if (errors.isEmpty)
-        indexArtifacts(succs.asInstanceOf[Seq[DownloadSuccess]])
-
       res
     }
+  }
+
+  def downloadAndIndexArtifacts(artifacts: Seq[Artifact]): Seq[DownloadStatus] = {
+    val res = downloadArtifacts(artifacts)
+    val (errors, succs) = res.partition(_.isError)
+
+    if (errors.isEmpty)
+      indexArtifacts(succs.asInstanceOf[Seq[DownloadSuccess]])
+
+    res
   }
 
   private def indexArtifacts(artifacts: Seq[DownloadSuccess]) = {

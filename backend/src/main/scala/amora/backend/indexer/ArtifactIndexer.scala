@@ -18,7 +18,7 @@ final class ArtifactIndexer(override val indexer: ActorRef, override val logger:
         val as = artifacts map { a =>
           Artifact(Project(a.name), a.organization, a.name, a.version)
         }
-        handleArtifacts(as)
+        downloadAndIndexArtifacts(as)
       }
     case RequestMessage.GetLogger ⇒
       sender ! logger

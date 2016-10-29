@@ -314,7 +314,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     val artifacts = buildDependencies map { d ⇒
       Artifact(Project(buildName), d.organization, d.name, d.version)
     }
-    fetcher.handleArtifacts(artifacts)
+    fetcher.downloadArtifacts(artifacts)
   }
 
   private def run(serviceLogger: Logger, cl: ClassLoader, className: String, methodName: String, param: Map[String, Param]): Any = {
