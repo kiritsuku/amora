@@ -126,7 +126,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "pkg", "pkg.X", "pkg.X.a()I", "pkg.X.a()I.b()I", "pkg.X.a()I.b()I.c",
-        "pkg.X.a()I.b()I.c.d", "scala.<ref>Int", "pkg.X.a()I.<ref>b", "pkg.X.a()I.b()I.<ref>c", "pkg.X.a()I.b()I.c.<ref>d")
+        "pkg.X.a()I.b()I.c.d", "scala.<ref>Int", "pkg.X.a()I.<ref>b()I", "pkg.X.a()I.b()I.<ref>c", "pkg.X.a()I.b()I.c.<ref>d")
   }
 
   @Test
@@ -162,7 +162,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         toString
       }
-    """) === Set("pkg", "pkg.X", "java.lang.Object.<ref>toString")
+    """) === Set("pkg", "pkg.X", "java.lang.Object.<ref>toString()Ljava/lang/String;")
   }
 
   @Test
@@ -172,7 +172,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         toString.toString.toString.toString
       }
-    """) === Set("pkg", "pkg.X", "java.lang.Object.<ref>toString", "java.lang.String.<ref>toString")
+    """) === Set(
+        "pkg", "pkg.X", "java.lang.Object.<ref>toString()Ljava/lang/String;",
+        "java.lang.String.<ref>toString()Ljava/lang/String;")
   }
 
   @Test
@@ -256,7 +258,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         def f = Option(1)
       }
-    """) === Set("X", "X.f()Lscala/Option;", "scala.<ref>Option", "scala.Option.<ref>apply", "scala.<ref>Int")
+    """) === Set(
+        "X", "X.f()Lscala/Option;", "scala.<ref>Option",
+        "scala.Option.<ref>apply(Ljava/lang/Object;)Lscala/Option;", "scala.<ref>Int")
   }
 
   @Test
@@ -265,7 +269,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         def f = Option.apply(1)
       }
-    """) === Set("X", "X.f()Lscala/Option;", "scala.<ref>Option", "scala.Option.<ref>apply", "scala.<ref>Int")
+    """) === Set(
+        "X", "X.f()Lscala/Option;", "scala.<ref>Option",
+        "scala.Option.<ref>apply(Ljava/lang/Object;)Lscala/Option;", "scala.<ref>Int")
   }
 
   @Test
@@ -292,7 +298,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         f(v)
         f(Int.MinValue)
       }
-    """) === Set("X", "X.v", "X.f(I)I", "X.f(I)I.<param>i", "X.<ref>f", "X.f(I)I.<ref>i", "X.<ref>v", "scala.<ref>Int", "scala.Int.<ref>MinValue")
+    """) === Set("X", "X.v", "X.f(I)I", "X.f(I)I.<param>i", "X.<ref>f(I)I", "X.f(I)I.<ref>i", "X.<ref>v", "scala.<ref>Int", "scala.Int.<ref>MinValue")
   }
 
   @Test
@@ -336,7 +342,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
           toString
         }
       }
-    """) === Set("X", "X.f()Ljava/lang/String;", "java.lang.Object.<ref>toString", "java.lang.<ref>String")
+    """) === Set(
+        "X", "X.f()Ljava/lang/String;", "java.lang.Object.<ref>toString()Ljava/lang/String;",
+        "java.lang.<ref>String")
   }
 
   @Test
@@ -356,7 +364,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         def meth(f: ⇒ Int) = 0
       }
-    """) === Set("X", "X.meth(Lscala/Function0;)I", "X.meth(Lscala/Function0;)I.<param>f", "scala.<ref>Function0", "scala.<ref>Int")
+    """) === Set(
+        "X", "X.meth(Lscala/Function0;)I", "X.meth(Lscala/Function0;)I.<param>f",
+        "scala.<ref>Function0", "scala.<ref>Int")
   }
 
   @Test
@@ -368,7 +378,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.<param>v", "X.<ref>meth.<ref>v", "scala.<ref>Function1", "scala.<ref>Int")
+        "X.<ref>meth(Lscala/Function1;)I", "X.<ref>meth(Lscala/Function1;)I.<param>v",
+        "X.<ref>meth(Lscala/Function1;)I.<ref>v", "scala.<ref>Function1", "scala.<ref>Int")
   }
 
   @Test
@@ -396,7 +407,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function3;)I", "X.meth(Lscala/Function3;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.<param>a", "X.<ref>meth.<param>b", "X.<ref>meth.<param>c",
+        "X.<ref>meth(Lscala/Function3;)I", "X.<ref>meth(Lscala/Function3;)I.<param>a",
+        "X.<ref>meth(Lscala/Function3;)I.<param>b", "X.<ref>meth(Lscala/Function3;)I.<param>c",
         "scala.<ref>Function3", "scala.<ref>Int")
   }
 
@@ -409,7 +421,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.meth(Lscala/Function1;)I", "X.meth(Lscala/Function1;)I.<param>f",
-        "X.<ref>meth", "X.<ref>meth.<param>a", "X.<ref>meth.<param>b", "X.<ref>meth.<param>c",
+        "X.<ref>meth(Lscala/Function1;)I", "X.<ref>meth(Lscala/Function1;)I.<param>a",
+        "X.<ref>meth(Lscala/Function1;)I.<param>b", "X.<ref>meth(Lscala/Function1;)I.<param>c",
         "scala.<ref>Function1", "scala.<ref>Int")
   }
 
@@ -513,7 +526,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X {
         val t = (0, "")
       }
-    """) === Set("X", "X.t", "scala.<ref>Int", "java.lang.<ref>String", "scala.<ref>Tuple2", "scala.Tuple2.<ref>apply")
+    """) === Set(
+        "X", "X.t", "scala.<ref>Int", "java.lang.<ref>String", "scala.<ref>Tuple2",
+        "scala.Tuple2.<ref>apply(Ljava/lang/Object;Ljava/lang/Object;)Lscala/Tuple2;")
   }
 
   @Test
@@ -630,7 +645,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         def !!(i: Int) = i
         !!(0)
       }
-    """) === Set("X", "X.!!(I)I", "X.!!(I)I.<param>i", "X.<ref>!!", "X.!!(I)I.<ref>i", "scala.<ref>Int")
+    """) === Set("X", "X.!!(I)I", "X.!!(I)I.<param>i", "X.<ref>!!(I)I", "X.!!(I)I.<ref>i", "scala.<ref>Int")
   }
 
   @Test
@@ -660,7 +675,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         def a = 0
         def b = a
       }
-    """) === Set("X", "X.a()I", "X.b()I", "X.<ref>a", "scala.<ref>Int")
+    """) === Set("X", "X.a()I", "X.b()I", "X.<ref>a()I", "scala.<ref>Int")
   }
 
   @Test
@@ -800,7 +815,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.f(I)I", "X.f(I)I.<param>i", "scala.<ref>Int",
-        "X.<ref>f", "X.<ref>f.i", "X.<ref>f.<ref>i")
+        "X.<ref>f(I)I", "X.<ref>f(I)I.i", "X.<ref>f(I)I.<ref>i")
   }
 
   @Test
@@ -822,7 +837,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z", "X.f()Z.x",
-        "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4", "X.f()Z.<ref>x", "scala.<ref>Boolean", "scala.Boolean.<ref>==")
+        "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4", "X.f()Z.<ref>x",
+        "scala.<ref>Boolean", "scala.Boolean.<ref>==(Z)Z")
   }
 
   @Test
@@ -851,7 +867,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.f(I)Lscala/Option;", "X.f(I)Lscala/Option;.<param>i", "X.f(I)Lscala/Option;.<ref>i",
-        "scala.<ref>Option", "scala.Option.<ref>apply", "scala.<ref>Int")
+        "scala.<ref>Option", "scala.Option.<ref>apply(Ljava/lang/Object;)Lscala/Option;", "scala.<ref>Int")
   }
 
   @Test
@@ -870,9 +886,10 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.f()I", "X.f()I.i", "X.f()I.j", "X.f()I.<ref>i", "X.f()I.<ref>j",
-        "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply", "Extractor",
-        "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
-        "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option", "scala.Option.<ref>apply")
+        "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply(I)Lscala/Option;",
+        "Extractor", "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
+        "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option",
+        "scala.Option.<ref>apply(Ljava/lang/Object;)Lscala/Option;")
   }
 
   @Test
@@ -893,7 +910,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.f()Z.e", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
-        "scala.Predef.<ref>println", "scala.<ref>Boolean", "scala.<ref>Exception")
+        "scala.Predef.<ref>println(Ljava/lang/Object;)V", "scala.<ref>Boolean", "scala.<ref>Exception")
   }
 
   @Test
@@ -947,7 +964,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "Ann", "Ann.<param>arr", "<ref>Ann", "scala.Predef.<ref>classOf", "<ref>X",
         "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
-        "scala.<ref>Array", "scala.Array.<ref>apply", "java.lang.<ref>Class")
+        "scala.<ref>Array", "java.lang.<ref>Class",
+        "scala.Array.<ref>apply(Lscala/collection/Seq;Lscala/reflect/ClassTag;)Ljava/lang/Object;")
   }
 
   @Test
@@ -1081,7 +1099,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "X", "X.<param>p", "scala.<ref>Int", "scala.Int.<ref>+", "X.this(II)V",
+        "X", "X.<param>p", "scala.<ref>Int", "scala.Int.<ref>+(I)I", "X.this(II)V",
         "X.this(II)V.<param>a", "X.this(II)V.<param>b", "X.this(II)V.<ref>a", "X.this(II)V.<ref>b")
   }
 
