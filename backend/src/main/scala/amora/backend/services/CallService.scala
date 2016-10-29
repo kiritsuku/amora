@@ -346,7 +346,12 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         mirror.reflect(obj).symbol.typeSignature.member(universe.TermName(methodName)).asMethod.paramLists.flatten.map(_.name.encodedName.toString).toList
       } else
         m.getParameters.map(_.getName).toList
-    val orderedParam = names.map(name ⇒ param(name).value.asInstanceOf[Object])
+    val orderedParam = names.map { name ⇒
+      param.get(name) match {
+        case Some(param) ⇒ param.value.asInstanceOf[Object]
+        case None ⇒ throw new IllegalStateException(s"The parameter `$name` does not exist in the request.")
+      }
+    }
     log.info(s"Calling service method:\n  $m")
     m.invoke(obj, orderedParam: _*)
   }
