@@ -1,0 +1,16 @@
+@prefix service:         <http://amora.center/kb/Schema/Service/0.1/>
+@prefix registry:        <http://amora.center/kb/Service/0.1/>
+@prefix xsd:             <http://www.w3.org/2001/XMLSchema#>
+
+registry:IndexArtifacts
+  service:name           "amora.backend.services.IndexArtifacts" ;
+  service:method [
+    service:name         "run" ;
+    service:param [
+      service:name       "turtleReq" ;
+      a                  xsd:string ;
+    ] ;
+    a                    xsd:string ;
+  ] ;
+.
+

@@ -85,4 +85,19 @@ class MultiProjectTest extends RestApiTest {
     """) === Seq(
         Seq(Data("name", "n2")))
   }
+
+  @Test
+  def indev_downloaded_artifacts(): Unit = {
+    indexArtifacts(Artifact(Project("freedomotic"), "com.freedomotic", "hello-world", "3.0"))
+    sparqlRequest("""
+      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix s:<http://amora.center/kb/amora/Schema/0.1/>
+      select ?name where {
+        [a c:] s:owner+ [a a: ; a:name "hello-world"] ; c:name ?name .
+      }
+      order by ?name
+    """) === Seq(
+        Seq(Data("name", "HelloWorld")))
+  }
 }

@@ -276,6 +276,28 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     """)
   }
 
+  def indexArtifacts(artifacts: Artifact*) = {
+    def escaped(str: String) =
+      str.replace("\n", "\\n").replace("\"", "\\\"")
+    val ttlString = Schema.mkTurtleString(artifacts)
+    serviceRequest(s"""
+      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
+      @prefix registry:<http://amora.center/kb/Service/0.1/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      <#this>
+        a request: ;
+        service:serviceId registry:IndexArtifacts ;
+        service:method [
+          service:name "run" ;
+          service:param [
+            service:name "turtleReq" ;
+            service:value "${escaped(ttlString)}" ;
+          ] ;
+        ] ;
+      .
+    """)
+  }
+
   sealed trait Region extends Product with Serializable {
     def len: Int
   }
