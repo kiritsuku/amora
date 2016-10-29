@@ -38,6 +38,7 @@ import akka.http.scaladsl.testkit.RouteTest
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.http.scaladsl.testkit.TestFrameworkInterface
 
+import amora.api._
 import amora.backend.AkkaLogging
 import amora.backend.CustomContentTypes
 import amora.backend.Log4jRootLogging
@@ -277,10 +278,8 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   }
 
   def indexArtifacts(artifacts: Artifact*) = {
-    def escaped(str: String) =
-      str.replace("\n", "\\n").replace("\"", "\\\"")
     val ttlString = Schema.mkTurtleString(artifacts)
-    serviceRequest(s"""
+    serviceRequest(sparql"""
       @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
       @prefix registry:<http://amora.center/kb/Service/0.1/> .
       @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
@@ -291,7 +290,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
           service:name "run" ;
           service:param [
             service:name "turtleReq" ;
-            service:value "${escaped(ttlString)}" ;
+            service:value "$ttlString" ;
           ] ;
         ] ;
       .
