@@ -7,7 +7,6 @@
 # schema data
 schema:
   amora:schemaName "Format" ;
-  amora:schemaVersion "0.1" ;
   amora:schemaAuthor "amora" ;
   amora:schemaId schema:content ;
   amora:format <http://amora.center/kb/amora/Format/amora/Format/schema.jsonld>

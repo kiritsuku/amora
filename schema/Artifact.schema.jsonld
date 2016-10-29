@@ -11,7 +11,6 @@
         "$ID/version"
       ],
       "amora:schemaAuthor": "amora",
-      "amora:schemaVersion": "0.1",
       "@type": "http://amora.center/kb/amora/Schema/"
     },
     {

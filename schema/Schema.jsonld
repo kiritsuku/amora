@@ -14,10 +14,6 @@
       "@id": "amora:schemaId",
       "@type": "@id"
     },
-    "amora:schemaVersion": {
-      "@id": "amora:schemaVersion",
-      "@type": "schema:Text"
-    },
     "amora:schemaAuthor": {
       "@id": "amora:schemaAuthor",
       "@type": "schema:Text"

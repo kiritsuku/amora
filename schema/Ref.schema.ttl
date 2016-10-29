@@ -6,7 +6,6 @@
 
 schema:
   amora:schemaName "Ref" ;
-  amora:schemaVersion "0.1" ;
   amora:schemaAuthor "amora" ;
   amora:schemaId schema:name ;
   amora:schemaId schema:owner ;

@@ -69,16 +69,7 @@ class SchemaGenerator {
                 }
             }
           }
-          val version = find(fields, "/schemaVersion") {
-            case (key, value) if key.endsWith("/schemaVersion") ⇒ value match {
-              case JsArray(Vector(JsObject(fields))) ⇒
-                find(fields, "@value") {
-                  case ("@value", JsString(str)) ⇒ str
-                }
-            }
-          }
           jsCtx += name → JsObject(Map("@id" → id))
-          jsCtx += version → JsObject(Map("@id" → id))
         }
         else {
           val id = find(fields, "@id") {
