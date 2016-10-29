@@ -16,7 +16,7 @@ class ApiImpl {
   def turtleModel(strings: Iterator[String], expressions: Iterator[Any]): SparqlModel = {
     val res = op(strings, expressions) {
       case str: String ⇒ escapeString(str)
-      case obj ⇒ escapeString(obj.toString)
+      case obj ⇒ obj.toString
     }
     val m = ModelFactory.createDefaultModel()
     val in = new ByteArrayInputStream(res.getBytes)
@@ -27,7 +27,7 @@ class ApiImpl {
   def sparqlQuery(strings: Iterator[String], expressions: Iterator[Any]): SparqlQuery = {
     val res = op(strings, expressions) {
       case str: String ⇒ escapeString(str)
-      case obj ⇒ escapeString(obj.toString)
+      case obj ⇒ obj.toString
     }
     new SparqlQuery(res)
   }
