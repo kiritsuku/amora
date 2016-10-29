@@ -319,15 +319,18 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
   private def run(serviceLogger: Logger, cl: ClassLoader, className: String, methodName: String, param: Map[String, Param]): Any = {
     val cls = cl.loadClass(className)
-    val ctors = cls.getConstructors
-    val hasDefaultCtor = ctors.exists(_.getParameterCount == 0)
+    val ctor = cls.getConstructors.head
+    val hasDefaultCtor = ctor.getParameterCount == 0
     val obj =
       if (hasDefaultCtor)
         cls.newInstance()
       else {
-        // TODO handle ???
-        val ctor = ctors.find(_.getParameterTypes sameElements Array(classOf[Logger])).getOrElse(???)
-        ctor.newInstance(serviceLogger)
+        val ctorParam = ctor.getParameterTypes map {
+          case c if c == classOf[Logger] ⇒ serviceLogger
+          case c if c == classOf[ActorSystem] ⇒ system
+          case c ⇒ throw new IllegalStateException(s"Constructor `$ctor` takes unknown argument type `$c`.")
+        }
+        ctor.newInstance(ctorParam: _*)
       }
     val uriField = cls.getDeclaredField("uri")
     uriField.setAccessible(true)
