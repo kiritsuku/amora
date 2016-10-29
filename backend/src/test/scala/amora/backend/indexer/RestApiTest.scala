@@ -215,7 +215,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     r
   }
 
-  def showAmoraIndexContent(entries: Int = 100, prefix: String = "http://amora.center/kb/"): Unit = {
+  def showAmoraIndexContent(entries: Int = 100, prefix: String = "http://amora.center/kb/(?!amora/Schema/)"): Unit = {
     require(entries > 0, "limit needs to be greater than zero")
     testReq(post("http://amora.center/sparql", s"""
       select * where {
