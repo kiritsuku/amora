@@ -16,5 +16,9 @@ package object api {
     def sparqlQuery(args: Any*): SparqlQuery = {
       impl.sparqlQuery(sc.parts.iterator, args.iterator)
     }
+
+    def sparql(args: Any*): String = {
+      impl.sparql(sc.parts.iterator, args.iterator)
+    }
   }
 }

@@ -32,6 +32,13 @@ class ApiImpl {
     new SparqlQuery(res)
   }
 
+  def sparql(strings: Iterator[String], expressions: Iterator[Any]): String = {
+    op(strings, expressions) {
+      case str: String ⇒ escapeString(str)
+      case obj ⇒ obj.toString
+    }
+  }
+
   private def escapeString(str: String) =
     str.replace("\"", "\\\"").replace("\n", "\\n")
 
