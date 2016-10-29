@@ -16,21 +16,21 @@ class IndexerTest extends RestApiTest {
 
   @Test
   def jsonld_context_can_be_retrieved(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=jsonld")) {
+    testReq(get("http://amora.center/kb/amora/Format/amora/Format/schema.jsonld?format=jsonld")) {
       status === StatusCodes.OK
     }
   }
 
   @Test
   def error_for_invalid_format(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/schema.jsonld?format=invalid")) {
+    testReq(get("http://amora.center/kb/amora/Format/amora/Format/schema.jsonld?format=invalid")) {
       status === StatusCodes.BadRequest
     }
   }
 
   @Test
   def error_for_invalid_format_uri(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/0.1/amora/Format/0.1/invalid.jsonld?format=jsonld")) {
+    testReq(get("http://amora.center/kb/amora/Format/amora/Format/invalid.jsonld?format=jsonld")) {
       status === StatusCodes.NotFound
     }
   }
@@ -122,7 +122,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select * where {
         [a p:] p:name ?name .
       }
@@ -154,7 +154,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select * where {
         [a p:] p:name ?name .
       }
@@ -173,7 +173,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select * where {
         [a p:] p:name ?name .
       }
@@ -200,7 +200,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select ?name where {
         [a p:] p:name ?name .
       }
@@ -221,7 +221,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select ?organization ?name ?version where {
         [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
       }
@@ -242,7 +242,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select ?organization ?name ?version where {
         [a a:] a:organization ?organization ; a:name ?name ; a:version ?version .
       }
@@ -265,8 +265,8 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select distinct ?name where {
         [a a:] a:owner [p:name ?name] .
       }
@@ -284,7 +284,7 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select ?owner where {
         [a p:] p:owner ?owner .
       }
@@ -302,14 +302,14 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select ?tpe where {
         [a a:] a:owner [a ?tpe] .
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Project/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Project/")))
     }
   }
 
@@ -320,7 +320,7 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      prefix f:<http://amora.center/kb/amora/Schema/File/>
       select ?name where {
         [a f:] f:name ?name .
       }
@@ -341,7 +341,7 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      prefix f:<http://amora.center/kb/amora/Schema/File/>
       select ?name where {
         [a f:] f:name ?name .
       }
@@ -365,10 +365,10 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Package/>
+      prefix f:<http://amora.center/kb/amora/Schema/File/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
+      prefix amora:<http://amora.center/kb/amora/Schema/>
       select ?name ?version where {
         [a f:] amora:owner* [a a:; a:version ?version]; amora:name ?name .
       }
@@ -392,9 +392,9 @@ class IndexerTest extends RestApiTest {
       status === StatusCodes.OK
     }
     testReq((post("http://amora.center/sparql", """
-      prefix pkg:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+      prefix pkg:<http://amora.center/kb/amora/Schema/Package/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
+      prefix amora:<http://amora.center/kb/amora/Schema/>
       select ?pname ?pkgname where {
         [a pkg:] amora:owner* [a p:; amora:name ?pname]; amora:name ?pkgname .
       }
@@ -414,7 +414,7 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Package/>
       select ?name where {
         [a p:] p:name ?name .
       }
@@ -432,14 +432,14 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Package/>
       select ?tpe where {
         [a p:] p:owner [a ?tpe] .
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Artifact/")))
     }
   }
 
@@ -450,7 +450,7 @@ class IndexerTest extends RestApiTest {
         package pkg.inner
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Package/>
       select ?name ?tpe where {
         [p:owner [a p:]] p:name ?name ; a ?tpe .
       }
@@ -458,8 +458,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")),
-          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
+          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")),
+          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/Package/")))
     }
   }
 
@@ -471,7 +471,7 @@ class IndexerTest extends RestApiTest {
         class A
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select ?name where {
         [a c:] c:name ?name .
       }
@@ -490,14 +490,14 @@ class IndexerTest extends RestApiTest {
         class A
       """)
     testReq((post("http://amora.center/sparql", """
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select ?tpe where {
         [a c:] c:owner [a ?tpe] .
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/File/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/File/")))
     }
   }
 
@@ -508,14 +508,14 @@ class IndexerTest extends RestApiTest {
         class A
       """)
     testReq(post("http://amora.center/sparql", """
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select ?tpe where {
         [a c:] c:owner [a ?tpe] .
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/File/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/File/")))
     }
   }
 
@@ -526,7 +526,7 @@ class IndexerTest extends RestApiTest {
         package pkg
       """)
     testReq(post("http://amora.center/sparql", """
-      prefix f:<http://amora.center/kb/amora/Schema/0.1/File/0.1/>
+      prefix f:<http://amora.center/kb/amora/Schema/File/>
       select ?tpe where {
         [a f:] f:owner [a ?tpe] .
       }
@@ -534,8 +534,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")),
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Package/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")),
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Package/")))
     }
   }
 
@@ -549,7 +549,7 @@ class IndexerTest extends RestApiTest {
         }
       """)
     testReq(post("http://amora.center/sparql", """
-      prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      prefix d:<http://amora.center/kb/amora/Schema/Def/>
       select ?tpe where {
         [a d:] d:owner [a ?tpe] .
       }
@@ -557,8 +557,8 @@ class IndexerTest extends RestApiTest {
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Class/0.1/")),
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/0.1/Decl/0.1/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")),
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")))
     }
   }
 }

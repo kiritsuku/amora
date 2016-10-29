@@ -37,7 +37,7 @@ trait Sparql extends Directives with AkkaLogging {
   def retrieveJsonLdContext(path: String): Route = {
     val query = s"""
       |SELECT * WHERE {
-      |  <$path> <http://amora.center/kb/amora/Schema/0.1/Format/0.1/content> ?str .
+      |  <$path> <http://amora.center/kb/amora/Schema/Format/content> ?str .
       |}
     """.stripMargin.trim
     runQuery(query) { r ⇒

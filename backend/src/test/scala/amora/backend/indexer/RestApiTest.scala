@@ -248,10 +248,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
     val ttlString = Schema.mkTurtleString(files)
     serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
-      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
+      @prefix cu:<http://amora.center/kb/Schema/CompilationUnit/> .
       <#this>
         a request: ;
         service:serviceId registry:ScalaSourceIndexer ;
@@ -280,9 +280,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def indexArtifacts(artifacts: Artifact*) = {
     val ttlString = Schema.mkTurtleString(artifacts)
     serviceRequest(sparql"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
       <#this>
         a request: ;
         service:serviceId registry:IndexArtifacts ;

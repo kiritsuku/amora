@@ -23,8 +23,8 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     handleScalaSource(origin, data)
 
     response(s"""
-      @prefix service:<http://amora.center/kb/Schema/0.1/Service/0.1/> .
-      @prefix response:<http://amora.center/kb/ServiceResponse/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix response:<http://amora.center/kb/ServiceResponse/> .
       <#this>
         a response: ;
         service:requestId <$requestId> ;
@@ -38,8 +38,8 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     val model = turtleModel(origin)
     val res = convertToHierarchy(data)
     val artifact = sparqlQuery"""
-      prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-      prefix Project:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
+      prefix Project:<http://amora.center/kb/amora/Schema/Project/>
       select * where {
         [
           Artifact:organization ?organization ;

@@ -1,8 +1,8 @@
 # Schema file for class "Artifact"
 
 @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+@prefix amora:<http://amora.center/kb/amora/Schema/>
+@prefix schema:<http://amora.center/kb/amora/Schema/Artifact/>
 
   # schema data
 schema:
@@ -13,7 +13,7 @@ schema:
   amora:schemaId schema:owner ;
   amora:schemaId schema:organization ;
   amora:schemaId schema:version ;
-  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Artifact/0.1/schema.jsonld>
+  amora:format <http://amora.center/kb/amora/Format/amora/Artifact/schema.jsonld>
 .
 
 # inference rules

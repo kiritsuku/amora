@@ -1,9 +1,9 @@
 # Schema file for class "Def"
 
 @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-@prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+@prefix amora:<http://amora.center/kb/amora/Schema/>
+@prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+@prefix schema:<http://amora.center/kb/amora/Schema/Def/>
 
 # schema data
 schema:
@@ -16,7 +16,7 @@ schema:
   amora:schemaId schema:posStart ;
   amora:schemaId schema:posEnd ;
   amora:schemaId schema:jvmSignature ;
-  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Def/0.1/schema.jsonld>
+  amora:format <http://amora.center/kb/amora/Format/amora/Def/schema.jsonld>
 .
 
 # inference rules

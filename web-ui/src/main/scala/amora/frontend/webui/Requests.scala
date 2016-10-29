@@ -17,10 +17,10 @@ trait Requests {
 
   def indexScalaSrc(src: String): Future[Unit] = {
     val ttlResp = serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
-      @prefix cu:<http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
+      @prefix cu:<http://amora.center/kb/Schema/CompilationUnit/> .
       <#this>
         a request: ;
         service:serviceId registry:ScalaSourceIndexer ;
@@ -41,9 +41,9 @@ trait Requests {
 
   def findUsages(offset: Int): Future[Seq[Range]] = {
     val ttlResp = serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
       <#this>
         a request: ;
         service:serviceId registry:FindUsages ;
@@ -60,8 +60,8 @@ trait Requests {
     val model = ttlResp flatMap { ttlResp ⇒
       modelAsData(ttlResp, """
         prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix service:<http://amora.center/kb/Schema/Service/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select ?start ?end where {
           ?s service:result ?r .
           ?r decl:posStart ?start ; decl:posEnd ?end .
@@ -82,9 +82,9 @@ trait Requests {
 
   def findDeclaration(offset: Int): Future[Option[Range]] = {
     val ttlResp = serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
       <#this>
         a request: ;
         service:serviceId registry:FindDeclaration ;
@@ -100,8 +100,8 @@ trait Requests {
 
     val model = ttlResp flatMap { ttlResp ⇒
       modelAsData(ttlResp, """
-        prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix service:<http://amora.center/kb/Schema/Service/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select ?start ?end where {
           ?s service:result ?r .
           ?r decl:posStart ?start ; decl:posEnd ?end .

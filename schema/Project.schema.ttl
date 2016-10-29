@@ -1,8 +1,8 @@
 # Schema file for class "Project"
 
 @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+@prefix amora:<http://amora.center/kb/amora/Schema/>
+@prefix schema:<http://amora.center/kb/amora/Schema/Project/>
 
 # schema data
 schema:
@@ -10,7 +10,7 @@ schema:
   amora:schemaVersion "0.1" ;
   amora:schemaAuthor "amora" ;
   amora:schemaId schema:name ;
-  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Project/0.1/schema.jsonld>
+  amora:format <http://amora.center/kb/amora/Format/amora/Project/schema.jsonld>
 .
 
 # inference rules

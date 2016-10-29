@@ -65,7 +65,7 @@ class JavaBytecodeIndexerTest {
   @Test
   def classes() = {
     ask(modelName, s"""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Class/>
         select * where {
           [a c:] c:name ?name .
         }
@@ -78,7 +78,7 @@ class JavaBytecodeIndexerTest {
   @Test
   def methods() = {
     ask(modelName, s"""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           [a c:] c:name ?name .
         }
@@ -98,7 +98,7 @@ class JavaBytecodeIndexerTest {
   @Test
   def fields() = {
     ask(modelName, s"""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Var/>
         select * where {
           [a c:] c:name ?name .
         }
@@ -114,7 +114,7 @@ class JavaBytecodeIndexerTest {
   @Test
   def index_method_parameter_as_vars() = {
     ask(modelName, s"""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Var/>
         select * where {
           [a c:] c:name ?name .
         }
@@ -129,7 +129,7 @@ class JavaBytecodeIndexerTest {
   @Test
   def index_method_parameter_as_params() = {
     ask(modelName, s"""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Var/>
         select * where {
           [c:flag "param"] c:name ?name .
         }

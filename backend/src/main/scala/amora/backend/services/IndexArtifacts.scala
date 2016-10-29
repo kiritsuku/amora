@@ -15,8 +15,8 @@ class IndexArtifacts(val system: ActorSystem, override val logger: Logger) exten
 
   def run(turtleReq: String): String = {
     val artifacts = sparqlQuery"""
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select * where {
         [a a:] a:owner [p:name ?pname] ; a:organization ?org ; a:name ?name ; a:version ?version .
       }
@@ -27,8 +27,8 @@ class IndexArtifacts(val system: ActorSystem, override val logger: Logger) exten
     downloadAndIndexArtifacts(artifacts)
 
     response(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix response:<http://amora.center/kb/ServiceResponse/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix response:<http://amora.center/kb/ServiceResponse/> .
       <#this>
         a response: ;
         service:requestId <$requestId> ;

@@ -10,7 +10,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def classes() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Class/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -30,7 +30,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def abstract_classes() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/AbstractClass/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/AbstractClass/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -47,7 +47,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def classes_with_body() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Class/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -69,7 +69,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def objects() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Object/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Object/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -86,7 +86,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def traits() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Trait/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -101,7 +101,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def packages() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Package/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -116,7 +116,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def defs() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -139,7 +139,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def vals() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -162,7 +162,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def vars() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Var/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -185,7 +185,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def lazy_vals() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/LazyVal/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -208,7 +208,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def private_class_parameters() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
           [c:flag "param"] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -222,7 +222,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def method_parameters() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
           [c:flag "param"] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -238,7 +238,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def multiple_lambda_decls() = {
     indexRegionData("""
-        prefix c:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
           [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
@@ -260,7 +260,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def return_type_at_members() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -279,7 +279,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def return_type_at_nested_members() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -309,7 +309,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def return_type_at_nested_lazy_vals() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -331,7 +331,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def member_ref() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -350,7 +350,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def classOf_ref() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -366,7 +366,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_imports() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -385,7 +385,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_rename_imports() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -403,7 +403,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def self_ref_with_fully_qualified_name() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -419,7 +419,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_in_if_expr() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -438,8 +438,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_single_method() = {
     indexRegionData("""
-        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix def:<http://amora.center/kb/amora/Schema/Def/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           ?def def:jvmSignature "(IF)I" .
           [a ref:] ref:owner ?def ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
@@ -457,8 +457,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_parameter() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
           [a ref:] ref:refToDecl [decl:flag "param"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -476,8 +476,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_local_value_with_same_name_as_parameter() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
           [a ref:] ref:refToDecl [decl:flag "param"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -497,8 +497,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_to_local_value_when_parameter_of_same_name_exists() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix v:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
           ?val a v: .
           FILTER NOT EXISTS {
@@ -521,8 +521,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_type_parameter() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
           [a ref:] ref:refToDecl [decl:flag "tparam"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -538,9 +538,9 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_without_shadowed_type_parameter_refs() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-        prefix t:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix t:<http://amora.center/kb/amora/Schema/Trait/>
         select * where {
           # find type parameter
           ?tparam decl:owner [a t:] ; decl:flag "tparam" .
@@ -560,9 +560,9 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_shadowed_type_parameter() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
           ?tparam decl:owner [a def:; def:jvmSignature "(Ljava/lang/Object;)Ljava/lang/Object;"] ; decl:flag "tparam" .
@@ -582,9 +582,9 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_when_parameter_of_same_name_exists() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
           ?tparam decl:owner [a def:] ; decl:flag "tparam" .
@@ -605,9 +605,9 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_when_local_val_decl_of_same_name_exists() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-        prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
           ?tparam decl:owner [a def:] ; decl:flag "tparam" .
@@ -629,7 +629,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def multiple_calls_to_def() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -647,7 +647,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def multiple_blocks_with_same_name() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -665,7 +665,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def explicit_apply_method() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -681,7 +681,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def implicit_apply_method() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -697,7 +697,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def class_annotation() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -713,7 +713,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def multiple_annotations() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -732,7 +732,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_lambda_decl() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -748,7 +748,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def refs_of_function_decl() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -764,7 +764,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def multiple_lambda_refs() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -782,7 +782,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def ref_with_qualifier() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         select * where {
           [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -804,8 +804,8 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   @Test
   def ref_to_val_from_within_another_val() = {
     indexRegionData("""
-        prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-        prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
           [a ref:] ref:name "xs" ; ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] .
         }

@@ -1,14 +1,14 @@
-@prefix service:                    <http://amora.center/kb/Schema/Service/0.1/> .
-@prefix registry:                   <http://amora.center/kb/Service/0.1/> .
+@prefix service:                    <http://amora.center/kb/Schema/Service/> .
+@prefix registry:                   <http://amora.center/kb/Service/> .
 @prefix xsd:                        <http://www.w3.org/2001/XMLSchema#> .
 
-@prefix Build:                      <http://amora.center/kb/amora/Schema/0.1/Build/0.1/> .
-@prefix ScalaDependency:            <http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/> .
-@prefix MavenDependency:            <http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/> .
-@prefix ServiceDependency:          <http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/> .
-@prefix Artifact:                   <http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/> .
-@prefix Directory:                  <http://amora.center/kb/amora/Schema/0.1/Directory/0.1/> .
-@prefix CompilationUnit:            <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/> .
+@prefix Build:                      <http://amora.center/kb/amora/Schema/Build/> .
+@prefix ScalaDependency:            <http://amora.center/kb/amora/Schema/ScalaDependency/> .
+@prefix MavenDependency:            <http://amora.center/kb/amora/Schema/MavenDependency/> .
+@prefix ServiceDependency:          <http://amora.center/kb/amora/Schema/ServiceDependency/> .
+@prefix Artifact:                   <http://amora.center/kb/amora/Schema/Artifact/> .
+@prefix Directory:                  <http://amora.center/kb/amora/Schema/Directory/> .
+@prefix CompilationUnit:            <http://amora.center/kb/Schema/CompilationUnit/> .
 
 registry:ScalaSourceIndexer
   service:name                      "amora.backend.services.ScalaSourceIndexer" ;

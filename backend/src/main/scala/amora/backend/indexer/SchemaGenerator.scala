@@ -19,28 +19,26 @@ class SchemaGenerator {
     // TODO do not hardcode the version of the schema
     val user = "amora"
     val amora = "http://amora.center/kb"
-    val schemaVersion = "0.1"
-    s"${id(amora, user, "Schema", "0.1")}/$schemaName/$schemaVersion"
+    s"${id(amora, user, "Schema")}/$schemaName"
   }
 
   def mkInsertFormatQuery(schemaName: String, contentVar: String): String = {
     val a = "http://amora.center/kb"
     val schemaId = mkAmoraSchemaId(schemaName)
-    val noPrefixSchemaId = id("", "amora", schemaName, "0.1")
-    val formatId = s"${id(a, "amora", "Format", "0.1")}$noPrefixSchemaId/schema.jsonld"
+    val noPrefixSchemaId = id("", "amora", schemaName)
+    val formatId = s"${id(a, "amora", "Format")}$noPrefixSchemaId/schema.jsonld"
     s"""
       PREFIX a:<http://amora.center/kb/amora/Schema/>
       INSERT DATA {
-        <$schemaId/> <$a/amora/Schema/0.1/format> <$formatId> .
-        <$formatId> <$a/amora/Schema/0.1/Format/0.1/content> ?$contentVar .
+        <$schemaId/> <$a/amora/Schema/format> <$formatId> .
+        <$formatId> <$a/amora/Schema/Format/content> ?$contentVar .
       }
     """
   }
 
   def mkJsonLdContext(schemaName: String, json: String): JsObject = {
     val amora = "http://amora.center/kb"
-    val schemaVersion = "0.1"
-    val schemaUrl = s"$amora/amora/Schema/0.1/$schemaName/$schemaVersion"
+    val schemaUrl = s"$amora/amora/Schema/$schemaName"
 
     val expandedJson = JsonLdProcessor.expand(JsonUtils.fromString(json), new JsonLdOptions)
     val ctx = find(json.parseJson.asJsObject.fields, "@context") {
@@ -113,8 +111,8 @@ class SchemaGenerator {
     JsObject(Map("@context" → JsObject(jsCtx)))
   }
 
-  private def id(prefix: String, user: String, schemaName: String, schemaVersion: String) =
-    s"$prefix/$user/$schemaName/$schemaVersion"
+  private def id(prefix: String, user: String, schemaName: String) =
+    s"$prefix/$user/$schemaName"
 
   private def find[A, B, C](map: Map[A, B], keyName: String)(pf: PartialFunction[(A, B), C]): C = {
     map.collectFirst(pf) match {

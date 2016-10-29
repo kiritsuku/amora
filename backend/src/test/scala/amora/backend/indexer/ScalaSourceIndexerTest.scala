@@ -18,7 +18,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         class C3
       """)
     sparqlRequest("""
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select ?name where {
         [a c:] c:name ?name .
       }
@@ -45,7 +45,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      prefix d:<http://amora.center/kb/amora/Schema/Def/>
       select ?name where {
         [a d:] d:name ?name .
       }
@@ -73,8 +73,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
-      prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
+      prefix d:<http://amora.center/kb/amora/Schema/Def/>
       select ?name where {
         ?class a c:; c:name "C1" .
         [d:owner ?class] d:name ?name .
@@ -99,8 +99,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
         class D2
       """)
     sparqlRequest("""
-      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix amora:<http://amora.center/kb/amora/Schema/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select * where {
         [a c:] amora:owner [amora:name "f1.scala"]; amora:name ?name .
       }
@@ -119,7 +119,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
       """)
     showAmoraIndexContent()
     sparqlRequest("""
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Package/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Package/>
       select ?name where {
         [a p:] p:name ?name .
       }
@@ -144,9 +144,9 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
-      prefix l:<http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1/>
-      prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
+      prefix l:<http://amora.center/kb/amora/Schema/LazyVal/>
+      prefix amora:<http://amora.center/kb/amora/Schema/>
       select ?name where {
         values ?tpes {v: l:}
         [a ?tpes] amora:name ?name .
@@ -171,7 +171,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix l:<http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1/>
+      prefix l:<http://amora.center/kb/amora/Schema/LazyVal/>
       select ?name where {
         [a l:] l:name ?name .
       }
@@ -194,7 +194,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -217,7 +217,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Var/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -240,7 +240,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix d:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      prefix d:<http://amora.center/kb/amora/Schema/Def/>
       select ?name where {
         [a d:] d:name ?name .
       }
@@ -261,7 +261,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         object D
       """)
     sparqlRequest("""
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
       select ?name where {
         [a c:] c:name ?name .
       }
@@ -281,7 +281,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         object D
       """)
     sparqlRequest("""
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/AbstractClass/0.1/>
+      prefix c:<http://amora.center/kb/amora/Schema/AbstractClass/>
       select ?name where {
         [a c:] c:name ?name .
       }
@@ -301,7 +301,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         object D
       """)
     sparqlRequest("""
-      prefix t:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+      prefix t:<http://amora.center/kb/amora/Schema/Trait/>
       select ?name where {
         [a t:] t:name ?name .
       }
@@ -321,7 +321,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         object D
       """)
     sparqlRequest("""
-      prefix o:<http://amora.center/kb/amora/Schema/0.1/Object/0.1/>
+      prefix o:<http://amora.center/kb/amora/Schema/Object/>
       select ?name where {
         [a o:] o:name ?name .
       }
@@ -337,7 +337,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         class X(i: Int, j: String)
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
@@ -356,7 +356,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
@@ -375,7 +375,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -395,7 +395,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -415,7 +415,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Var/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -433,7 +433,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Var/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Var/>
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
@@ -451,7 +451,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [a v:] v:name ?name .
       }
@@ -470,7 +470,7 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix v:<http://amora.center/kb/amora/Schema/0.1/Val/0.1/>
+      prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
         [v:flag "param"] v:name ?name .
       }
@@ -492,8 +492,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix ref:<http://amora.center/kb/amora/Schema/0.1/Ref/0.1/>
-      prefix def:<http://amora.center/kb/amora/Schema/0.1/Def/0.1/>
+      prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+      prefix def:<http://amora.center/kb/amora/Schema/Def/>
       select ?name where {
         [ref:owner [a def:]] ref:name ?name .
       }

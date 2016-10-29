@@ -15,7 +15,7 @@ class MultiProjectTest extends RestApiTest {
     val p2 = Project("p2")
     turtleRequest(Schema.mkTurtleString(Seq(p1, p2)))
     sparqlRequest("""
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
       select * where {
         [a p:] p:name ?name .
       }
@@ -32,7 +32,7 @@ class MultiProjectTest extends RestApiTest {
     val a4 = Artifact(Project("p2"), "o2", "n2", "v2")
     turtleRequest(Schema.mkTurtleString(Seq(a1, a2, a3, a4)))
     sparqlRequest("""
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select * where {
         [a a:] a:name ?name ; a:version ?version .
       }
@@ -52,8 +52,8 @@ class MultiProjectTest extends RestApiTest {
     val a4 = Artifact(Project("p2"), "o2", "n2", "v2")
     turtleRequest(Schema.mkTurtleString(Seq(a1, a2, a3, a4)))
     sparqlRequest("""
-      prefix p:<http://amora.center/kb/amora/Schema/0.1/Project/0.1/>
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix p:<http://amora.center/kb/amora/Schema/Project/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
       select * where {
         [a a:] a:owner [a p: ; p:name "p1"] ; a:name ?name ; a:version ?version .
       }
@@ -76,9 +76,9 @@ class MultiProjectTest extends RestApiTest {
         class B
       """)
     sparqlRequest("""
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-      prefix d:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-      prefix s:<http://amora.center/kb/amora/Schema/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
+      prefix d:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix s:<http://amora.center/kb/amora/Schema/>
       select * where {
         [a d:] d:name "B" ; s:owner+ [a a: ; a:name ?name] .
       }
@@ -90,9 +90,9 @@ class MultiProjectTest extends RestApiTest {
   def indev_downloaded_artifacts(): Unit = {
     indexArtifacts(Artifact(Project("freedomotic"), "com.freedomotic", "hello-world", "3.0"))
     sparqlRequest("""
-      prefix a:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
-      prefix c:<http://amora.center/kb/amora/Schema/0.1/Class/0.1/>
-      prefix s:<http://amora.center/kb/amora/Schema/0.1/>
+      prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
+      prefix c:<http://amora.center/kb/amora/Schema/Class/>
+      prefix s:<http://amora.center/kb/amora/Schema/>
       select ?name where {
         [a c:] s:owner+ [a a: ; a:name "hello-world"] ; c:name ?name .
       }

@@ -1,9 +1,9 @@
 # Schema file for class "Trait"
 
 @prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/0.1/>
-@prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
-@prefix schema:<http://amora.center/kb/amora/Schema/0.1/Trait/0.1/>
+@prefix amora:<http://amora.center/kb/amora/Schema/>
+@prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+@prefix schema:<http://amora.center/kb/amora/Schema/Trait/>
 
 # schema data
 schema:
@@ -15,7 +15,7 @@ schema:
   amora:schemaId schema:flag ;
   amora:schemaId schema:posStart ;
   amora:schemaId schema:posEnd ;
-  amora:format <http://amora.center/kb/amora/Format/0.1/amora/Trait/0.1/schema.jsonld>
+  amora:format <http://amora.center/kb/amora/Format/amora/Trait/schema.jsonld>
 .
 
 # inference rules

@@ -39,7 +39,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
   private def serviceRequest(ttlRequest: String): String = {
     val reqModel = turtleModel(ttlRequest)
     val (serviceRequest, serviceId) = sparqlQuery"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      prefix service: <http://amora.center/kb/Schema/Service/>
       select * where {
         ?request service:serviceId ?service .
       }
@@ -49,7 +49,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     val serviceModel = mkServiceModel(serviceId)
     val (serviceMethod, serviceClassName) = sparqlQuery"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      prefix service: <http://amora.center/kb/Schema/Service/>
       select * where {
         <$serviceId> service:method [
           service:name ?name
@@ -62,7 +62,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     def handleListParam(paramId: String) = {
       val name = sparqlQuery"""
-        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
           <_:$paramId> service:name ?name .
         }
@@ -71,8 +71,8 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       }.head
 
       val list = sparqlQuery"""
-        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-        prefix cu: <http://amora.center/kb/Schema/0.1/CompilationUnit/0.1/>
+        prefix service: <http://amora.center/kb/Schema/Service/>
+        prefix cu: <http://amora.center/kb/Schema/CompilationUnit/>
         select * where {
           <_:$paramId> service:value [
             cu:fileName ?fileName ;
@@ -88,7 +88,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     def handleLiteralParam(paramId: String) = {
       val requestParam = sparqlQuery"""
-        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
           <_:$paramId>
             service:name ?name ;
@@ -100,7 +100,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       }.toMap
 
       val serviceParam = sparqlQuery"""
-        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
           <$serviceId> service:method [
             service:param [
@@ -128,7 +128,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     val param = {
       val requestParam = sparqlQuery"""
-        prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+        prefix service: <http://amora.center/kb/Schema/Service/>
         select ?p (isLiteral(?value) as ?isLit) where {
           <$serviceRequest> service:method/service:param ?p .
           ?p
@@ -151,7 +151,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     val serviceLogger = new ActorLogger()(system)
 
     val hasBuild = sparqlQuery"""
-      prefix service: <http://amora.center/kb/Schema/Service/0.1/>
+      prefix service: <http://amora.center/kb/Schema/Service/>
       ask {
         <$serviceId> service:build ?build .
       }
@@ -175,8 +175,8 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
   private def mkBuildClassPath(serviceModel: SparqlModel, serviceId: String, serviceLogger: Logger): Seq[URL] = {
     val (buildName, buildVersion) = sparqlQuery"""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
+      prefix Build:<http://amora.center/kb/amora/Schema/Build/>
       select * where {
         <$serviceId> service:build [
           Build:name      ?buildName ;
@@ -189,9 +189,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
     val availableServices = registeredServices.toSet
     val serviceDeps = sparqlQuery"""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-      prefix ServiceDependency:<http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
+      prefix Build:<http://amora.center/kb/amora/Schema/Build/>
+      prefix ServiceDependency:<http://amora.center/kb/amora/Schema/ServiceDependency/>
       select * where {
         <$serviceId> service:build/Build:dependency [
           a                   ServiceDependency: ;
@@ -207,9 +207,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       throw new IllegalStateException("The following service dependencies do not exist: " + notExistingServiceDeps.mkString(", "))
 
     val rawDeps = sparqlQuery"""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-      prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-      prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
+      prefix Build:<http://amora.center/kb/amora/Schema/Build/>
+      prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
       select * where {
         <$serviceId> service:build/Build:dependency [
           a                       ?tpe ;
@@ -220,9 +220,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       }
     """.runOnModel(serviceModel).map { row ⇒
       val tpe = row.uri("tpe") match {
-        case "http://amora.center/kb/amora/Schema/0.1/ScalaDependency/0.1/" =>
+        case "http://amora.center/kb/amora/Schema/ScalaDependency/" =>
           ScalaDependency
-        case "http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/" =>
+        case "http://amora.center/kb/amora/Schema/MavenDependency/" =>
           MavenDependency
       }
       val organization = row.string("organization")
@@ -264,9 +264,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       val serviceOutputFolderUrls = {
         val serviceLocation = serviceFile(serviceId).getParent
         val relativeOutputFolders = sparqlQuery"""
-          prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-          prefix Build:<http://amora.center/kb/amora/Schema/0.1/Build/0.1/>
-          prefix Artifact:<http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/>
+          prefix service:<http://amora.center/kb/Schema/Service/>
+          prefix Build:<http://amora.center/kb/amora/Schema/Build/>
+          prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
           select * where {
             <$serviceId> service:build/Build:outputFolder ?out .
           }
@@ -294,7 +294,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
   private def serviceFile(serviceId: String): File = {
     val r = sparqlRequest(s"""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
       select * where {
         <$serviceId> service:path ?path .
       }
@@ -353,7 +353,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
 
   private def registeredServices: Seq[String] = {
     sparqlRequest("""
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
       select * where {
         ?s a service: .
       }

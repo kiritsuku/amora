@@ -1,10 +1,10 @@
-@prefix service:                    <http://amora.center/kb/Schema/Service/0.1/> .
-@prefix registry:                   <http://amora.center/kb/Service/0.1/> .
+@prefix service:                    <http://amora.center/kb/Schema/Service/> .
+@prefix registry:                   <http://amora.center/kb/Service/> .
 
-@prefix Build:                      <http://amora.center/kb/amora/Schema/0.1/Build/0.1/> .
-@prefix MavenDependency:            <http://amora.center/kb/amora/Schema/0.1/MavenDependency/0.1/> .
-@prefix ServiceDependency:          <http://amora.center/kb/amora/Schema/0.1/ServiceDependency/0.1/> .
-@prefix Artifact:                   <http://amora.center/kb/amora/Schema/0.1/Artifact/0.1/> .
+@prefix Build:                      <http://amora.center/kb/amora/Schema/Build/> .
+@prefix MavenDependency:            <http://amora.center/kb/amora/Schema/MavenDependency/> .
+@prefix ServiceDependency:          <http://amora.center/kb/amora/Schema/ServiceDependency/> .
+@prefix Artifact:                   <http://amora.center/kb/amora/Schema/Artifact/> .
 
 registry:ScalacConverter
   service:build                     <#buildDef> ;

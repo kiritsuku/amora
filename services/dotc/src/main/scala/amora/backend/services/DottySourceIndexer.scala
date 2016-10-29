@@ -23,8 +23,8 @@ class DottySourceIndexer(logger: Logger) extends ScalaService {
     handleDottySource(Artifact(Project("testProject"), "o", "n", "v1"), data)
 
     response(s"""
-      @prefix service:<http://amora.center/kb/Schema/0.1/Service/0.1/> .
-      @prefix response:<http://amora.center/kb/ServiceResponse/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix response:<http://amora.center/kb/ServiceResponse/> .
       <#this>
         a response: ;
         service:requestId <$requestId> ;

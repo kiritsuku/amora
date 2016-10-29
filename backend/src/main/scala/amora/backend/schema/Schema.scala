@@ -35,56 +35,56 @@ object Schema {
 
   def mkId(s: Schema): String = s match {
     case _: Project ⇒
-      s"http://amora.center/kb/amora/Project/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Project/${mkShortId(s)}"
     case _: Artifact ⇒
-      s"http://amora.center/kb/amora/Artifact/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Artifact/${mkShortId(s)}"
     case _: File ⇒
-      s"http://amora.center/kb/amora/File/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/File/${mkShortId(s)}"
     case _: Package ⇒
-      s"http://amora.center/kb/amora/Package/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Package/${mkShortId(s)}"
     case _: Class ⇒
-      s"http://amora.center/kb/amora/Class/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Class/${mkShortId(s)}"
     case _: AbstractClass ⇒
-      s"http://amora.center/kb/amora/AbstractClass/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/AbstractClass/${mkShortId(s)}"
     case _: Object ⇒
-      s"http://amora.center/kb/amora/Object/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Object/${mkShortId(s)}"
     case _: Trait ⇒
-      s"http://amora.center/kb/amora/Trait/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Trait/${mkShortId(s)}"
     case _: Def ⇒
-      s"http://amora.center/kb/amora/Def/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Def/${mkShortId(s)}"
     case _: Val ⇒
-      s"http://amora.center/kb/amora/Val/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Val/${mkShortId(s)}"
     case _: Var ⇒
-      s"http://amora.center/kb/amora/Var/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/Var/${mkShortId(s)}"
     case _: LazyVal ⇒
-      s"http://amora.center/kb/amora/LazyVal/0.1/${mkShortId(s)}"
+      s"http://amora.center/kb/amora/LazyVal/${mkShortId(s)}"
   }
 
   def mkDefn(s: Schema): String = s match {
     case _: Project ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Project/0.1"
+      s"http://amora.center/kb/amora/Schema/Project"
     case _: Artifact ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Artifact/0.1"
+      s"http://amora.center/kb/amora/Schema/Artifact"
     case _: File ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/File/0.1"
+      s"http://amora.center/kb/amora/Schema/File"
     case _: Package ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Package/0.1"
+      s"http://amora.center/kb/amora/Schema/Package"
     case _: Class ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Class/0.1"
+      s"http://amora.center/kb/amora/Schema/Class"
     case _: AbstractClass ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/AbstractClass/0.1"
+      s"http://amora.center/kb/amora/Schema/AbstractClass"
     case _: Object ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Object/0.1"
+      s"http://amora.center/kb/amora/Schema/Object"
     case _: Trait ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Trait/0.1"
+      s"http://amora.center/kb/amora/Schema/Trait"
     case _: Def ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Def/0.1"
+      s"http://amora.center/kb/amora/Schema/Def"
     case _: Val ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Val/0.1"
+      s"http://amora.center/kb/amora/Schema/Val"
     case _: Var ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/Var/0.1"
+      s"http://amora.center/kb/amora/Schema/Var"
     case _: LazyVal ⇒
-      s"http://amora.center/kb/amora/Schema/0.1/LazyVal/0.1"
+      s"http://amora.center/kb/amora/Schema/LazyVal"
   }
 
   def mkSparqlUpdate(schemas: Seq[Schema]): String = {
@@ -299,7 +299,7 @@ object Schema {
       }
       val shortArtifactId = Schema.mkShortId(findArtifact(file))
       val tpe = mkTpe(decl)
-      s"http://amora.center/kb/amora/$tpe/0.1/$shortArtifactId/${mkShortPath(decl)}"
+      s"http://amora.center/kb/amora/$tpe/$shortArtifactId/${mkShortPath(decl)}"
     }
 
     def mkOwnerPath(h: Hierarchy, owner: Decl) = {
@@ -319,7 +319,7 @@ object Schema {
       case decl @ Decl(name, owner) ⇒
         val tpe = mkTpe(decl)
         val path = mkFullPath(decl)
-        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/$tpe"
         addPrefix(tpe, schemaPath+"/")
         addData(path, "a", s"$tpe:")
         addData(path, s"$tpe:name", s""""$name"""")
@@ -367,7 +367,7 @@ object Schema {
         }
         val shortFileId = mkShortId(file)
         val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
-        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/Ref"
         addPrefix("Ref", schemaPath+"/")
         addData(path, "a", "Ref:")
         addData(path, "Ref:name", s""""$name"""")
@@ -467,7 +467,7 @@ object Schema {
       }
       val a = findArtifact(schema)
       val tpe = mkTpe(decl)
-      s"http://amora.center/kb/amora/$tpe/0.1/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
+      s"http://amora.center/kb/amora/$tpe/${Schema.mkShortId(a)}/${mkShortPath(decl)}"
     }
 
     def mkOwnerPath(h: Hierarchy, owner: Decl) = {
@@ -487,7 +487,7 @@ object Schema {
       case decl @ Decl(name, owner) ⇒
         val tpe = mkTpe(decl)
         val path = mkFullPath(decl)
-        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/$tpe/0.1"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/$tpe"
         sb.append(s"  <$path> a <$schemaPath/> .\n")
         sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
 
@@ -533,7 +533,7 @@ object Schema {
           case _ ⇒ "???"
         }
         val path = s"$declPath/${Schema.mkShortId(schema)}${uniqueRef(ref.position)}"
-        val schemaPath = s"http://amora.center/kb/amora/Schema/0.1/Ref/0.1"
+        val schemaPath = s"http://amora.center/kb/amora/Schema/Ref"
         sb.append(s"  <$path> a <$schemaPath/> .\n")
         sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
         sb.append(s"  <$path> <$schemaPath/refToDecl> <$declPath> .\n")

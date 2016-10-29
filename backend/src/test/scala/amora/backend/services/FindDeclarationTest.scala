@@ -11,9 +11,9 @@ class FindDeclarationTest extends RestApiTest {
 
   def serviceResult(cursorPos: Int) = {
    val m = serviceRequest(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-      @prefix registry:<http://amora.center/kb/Service/0.1/> .
-      @prefix request:<http://amora.center/kb/ServiceRequest/0.1/> .
+      @prefix service:<http://amora.center/kb/Schema/Service/> .
+      @prefix registry:<http://amora.center/kb/Service/> .
+      @prefix request:<http://amora.center/kb/ServiceRequest/> .
       <#this>
         a request: ;
         service:serviceId registry:FindDeclaration ;
@@ -28,8 +28,8 @@ class FindDeclarationTest extends RestApiTest {
     """)
 
     modelAsData(m, """
-      prefix service:<http://amora.center/kb/Schema/Service/0.1/>
-      prefix decl:<http://amora.center/kb/amora/Schema/0.1/Decl/0.1/>
+      prefix service:<http://amora.center/kb/Schema/Service/>
+      prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
 
       select ?start ?end where {
         ?s service:result [decl:posStart ?start ; decl:posEnd ?end]

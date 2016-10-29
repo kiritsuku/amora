@@ -53,8 +53,8 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
 
       addTurtle(model, s"""
-        @prefix service:<http://amora.center/kb/Schema/Service/0.1/> .
-        @prefix registry:<http://amora.center/kb/Service/0.1/> .
+        @prefix service:<http://amora.center/kb/Schema/Service/> .
+        @prefix registry:<http://amora.center/kb/Service/> .
         ${
           serviceFiles.map { s ⇒
             val name = s.getName.dropRight(".service.ttl".length)
@@ -82,7 +82,7 @@ class Indexer(modelName: String) extends Log4jLogging {
         src.close()
         val alreadyIndexed = runAskQuery(model, s"""
           ASK {
-            <http://amora.center/kb/amora/Schema/0.1/$schemaName/0.1/> <http://amora.center/kb/amora/Schema/0.1/schemaVersion> ?o
+            <http://amora.center/kb/amora/Schema/$schemaName/> <http://amora.center/kb/amora/Schema/schemaVersion> ?o
           }
         """)
         if (!alreadyIndexed) {

@@ -1,5 +1,5 @@
-@prefix service: <http://amora.center/kb/Schema/Service/0.1/>
-@prefix registry: <http://amora.center/kb/Service/0.1/>
+@prefix service: <http://amora.center/kb/Schema/Service/>
+@prefix registry: <http://amora.center/kb/Service/>
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 
 registry:FindUsages
