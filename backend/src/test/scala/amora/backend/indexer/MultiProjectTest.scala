@@ -87,7 +87,7 @@ class MultiProjectTest extends RestApiTest {
   }
 
   @Test
-  def indev_downloaded_artifacts(): Unit = {
+  def index_downloaded_artifacts(): Unit = {
     indexArtifacts(Artifact(Project("freedomotic"), "com.freedomotic", "hello-world", "3.0"))
     sparqlRequest("""
       prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
