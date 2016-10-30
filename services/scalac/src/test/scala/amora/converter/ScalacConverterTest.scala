@@ -1136,7 +1136,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "X.<param>p", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
         "X.this()V", "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int",
-        "scala.<ref>AnyRef")
+        "scala.<ref>AnyRef", "X.<ref>this(I)V")
   }
 
   @Test
@@ -1161,7 +1161,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "X.<param>p", "scala.<ref>Int", "scala.Int.<ref>+(I)I", "X.this(II)V",
         "X.this(II)V.<param>a", "X.this(II)V.<param>b", "X.this(II)V.<ref>a",
-        "X.this(II)V.<ref>b", "scala.<ref>AnyRef")
+        "X.this(II)V.<ref>b", "scala.<ref>AnyRef", "X.<ref>this(I)V")
   }
 
   @Test

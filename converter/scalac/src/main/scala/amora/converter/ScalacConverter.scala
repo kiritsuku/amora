@@ -191,9 +191,14 @@ final class ScalacConverter[G <: Global](val global: G) {
         else
           mkDeepDecl(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
+      val n =
+        if (name == nme.CONSTRUCTOR)
+          "this"
+        else
+          decodedName(name)
       // we can't use [[refToDecl.name]] here because for rename imports its name
       // is different from the name of the symbol
-      val ref = h.Ref(decodedName(name), refToDecl, owner, calledOn)
+      val ref = h.Ref(n, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
 
       // implicitly called apply methods do have range positions but the position
@@ -215,8 +220,8 @@ final class ScalacConverter[G <: Global](val global: G) {
         val offset = t.pos.start
         ref.position = h.RangePosition(offset, offset)
       }
-      // TODO do not ignore constructor refs here, we also want to index them but as `this` instead of `<init>`
-      if ((isTopLevelRef || t.pos.isRange) && name != nme.CONSTRUCTOR)
+
+      if (isTopLevelRef || t.pos.isRange)
         found += ref
       ref
     case _: Ident | _: TypeTree ⇒
