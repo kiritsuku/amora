@@ -267,7 +267,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val a: [[Int]] = 0
           var b: [[Int]] = 0
           def c: [[Int]] = 0
@@ -286,7 +286,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def x: [[Int]] = {
             val a: [[Int]] = {
               val a: [[Int]] = 0
@@ -316,7 +316,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           lazy val a: [[Int]] = {
             lazy val a: [[Int]] = {
               lazy val a: [[Int]] = 0
@@ -338,7 +338,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val [[!Int]]a = 0
           def [[!Int]]b = [[a]]
           var [[!Int]]c = [[b]]
@@ -357,7 +357,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val [[!Class]]a = [[classOf]][ /* Int */ [[Int]] ]
         }
       """)
@@ -375,7 +375,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       "x.scala" → """
         import [[scala]].[[collection]].[[mutable]].[[Buffer]]
         import [[scala]].[[collection]].[[mutable]].[[ListBuffer]]
-        class X {
+        class [[!AnyRef]]X {
           [[Buffer]]
           [[ListBuffer]]
         }
@@ -393,7 +393,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         import [[scala]].[[collection]].[[mutable]].{ [[Buffer]] ⇒ [[B]], [[ListBuffer]] }
-        class X {
+        class [[!AnyRef]]X {
           [[B]]
           [[ListBuffer]]
         }
@@ -410,7 +410,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        trait X {
+        trait [[!AnyRef]]X {
           self: [[scala]].[[collection]].[[mutable]].[[AbstractSet]][ [[java]].[[io]].[[File]] ] ⇒
         }
       """)
@@ -426,7 +426,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val [[!Boolean]]b1 = true
           val [[!Boolean]]b2 = true
           val [[!Boolean]]b3 = true
@@ -636,7 +636,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def [[!Int]]f(i: [[Int]]) = 0
           [[f]](0)
           [[f]](0)
@@ -654,7 +654,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def [[!Int]]f(i: [[Int]]) = 0
           [[f]]({val [[!Int]]i = 0; [[i]]})
           [[f]]({val [[!Int]]i = 0; [[i]]})
@@ -672,7 +672,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val [[!Option]]a = [[Option]].[[!Int]][[apply]](1)
         }
       """)
@@ -688,7 +688,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           val [[!Option]]a = [[!apply]][[!Int]][[Option]](1)
         }
       """)
@@ -705,7 +705,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         @[[Ann]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
-        class X
+        class [[!AnyRef]]X
         class Ann(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
       """)
   }
@@ -723,7 +723,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
         @[[Ann2]]
         @[[Ann1]]([[!apply]][[!Class]][[Array]]([[classOf]] [ [[X]] ]))
-        class X
+        class [[!AnyRef]]X
         class Ann1(arr: [[Array]][ [[Class]] [_] ]) extends [[scala]].[[annotation]].[[StaticAnnotation]]
         class Ann2 extends [[scala]].[[annotation]].[[StaticAnnotation]]
       """)
@@ -739,7 +739,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
         }
       """)
@@ -755,7 +755,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def [[!Function1]]f([[!Function1]]i: [[Function1]][ [[Int]], [[Int]] ]) = [[i]]
         }
       """)
@@ -771,7 +771,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class X {
+        class [[!AnyRef]]X {
           def [[!Function1]]f([[!Function1]]i: [[Int]] ⇒ [[Int]]) = [[i]]
           [[f]]([[!Int]]v ⇒ [[v]])
           [[f]]([[!Int]]value ⇒ [[value]])
@@ -791,13 +791,13 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       "f1.scala" → """
         package a.b
         import [[d]].[[e]]
-        class X {
+        class [[!AnyRef]]X {
           val f: [[e]].[[Y]] = null
         }
       """,
       "f2.scala" → """
         package d.e
-        class Y
+        class [[!AnyRef]]Y
       """)
   }
 

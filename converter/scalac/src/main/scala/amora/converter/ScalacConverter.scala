@@ -156,7 +156,18 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def mkRef(owner: h.Hierarchy, t: Tree): h.Ref = t match {
+  /**
+   * `isTopLevelRef` should be `true` when this method is called. It can be set
+   * to `false` when this method calls itself recursively. We need to know if a
+   * ref is top level for Selects. `a.b.c` is a Select and it can exist
+   * explicitly in the sources or implicitly to qualify a symbol. In the latter
+   * case we always want to throw away inner selects like `a.b` and `a` but
+   * sometimes we want to keep the top level select `a.b.c`. This may be the
+   * case for implicitly called `apply` methods as in `Option(1)`, where the
+   * Select would be `scala.Option.apply` (`apply` is kept but `scala.Option`
+   * and `scala` are thrown away).
+   */
+  private def mkRef(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
     case Apply(fun, args) ⇒
       val ref = mkRef(owner, fun)
       args foreach (expr(ref, _))
@@ -167,16 +178,12 @@ final class ScalacConverter[G <: Global](val global: G) {
     case Select(New(nt), _) ⇒
       mkRef(owner, nt)
     case Select(qualifier, name) ⇒
-      // implicitly called apply methods do have range positions but the position
-      // of their qualifier is transparent. We need to ensure that we don't treat
-      // the apply method as a range position.
-      val isImplicitApplyMethod = name == nme.apply && qualifier.pos.isTransparent
       qualifier match {
         case _: This | Ident(nme.ROOTPKG) ⇒
         case Select(qualifier, nme.PACKAGE) ⇒
-          mkRef(owner, qualifier)
+          mkRef(owner, qualifier, isTopLevelRef = false)
         case _ ⇒
-          mkRef(owner, qualifier)
+          mkRef(owner, qualifier, isTopLevelRef = false)
       }
       val calledOn =
         if (t.symbol.owner.name.toTermName == nme.PACKAGE)
@@ -188,15 +195,28 @@ final class ScalacConverter[G <: Global](val global: G) {
       // is different from the name of the symbol
       val ref = h.Ref(decodedName(name), refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
-      if (!isImplicitApplyMethod)
+
+      // implicitly called apply methods do have range positions but the position
+      // of their qualifier is transparent. We need to ensure that we don't treat
+      // the apply method as a range position.
+      def isImplicitApplyMethod = name == nme.apply && qualifier.pos.isTransparent
+      // some refs are implicitly added by the compiler (like `scala.AnyRef` parents
+      // for classes). In this case they don't have a range position but they are top
+      // level and their only reasonable position can be the offset of their owners.
+      if (!t.pos.isRange)
+        owner.position match {
+          case h.RangePosition(offset, _) ⇒
+            ref.position = h.RangePosition(offset, offset)
+          case _ ⇒
+        }
+      else if (!isImplicitApplyMethod)
         setPosition(ref, t.pos)
       else {
         val offset = t.pos.start
         ref.position = h.RangePosition(offset, offset)
       }
-      // TODO remove this scala.Tuple check. It is a hack, which is needed as long
-      // as we keep the isRange check, we actually want to get rid of it altogether.
-      if (t.pos.isRange || qualifier.symbol.fullName.startsWith("scala.Tuple"))
+      // TODO do not ignore constructor refs here, we also want to index them but as `this` instead of `<init>`
+      if ((isTopLevelRef || t.pos.isRange) && name != nme.CONSTRUCTOR)
         found += ref
       ref
     case _: Ident | _: TypeTree ⇒
