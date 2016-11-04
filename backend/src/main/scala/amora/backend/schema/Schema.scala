@@ -426,7 +426,7 @@ object Schema {
         sb append "@prefix " append name append ":" append " " * (prefixLen - name.length) append "<" append url append "> .\n"
     }
     val len = data.values.map(_.keys.map(_.length).max).max + 3
-    data foreach {
+    data.toList.sortBy(_._1)(stringOrdering) foreach {
       case (url, kv) ⇒
         sb append "<" append url append ">\n"
         kv.toList.sortBy(_._1)(stringOrdering) foreach {
