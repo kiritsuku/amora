@@ -53,7 +53,10 @@ class ScalaSourceIndexerTest extends RestApiTest {
     """) === Seq(
         Seq(Data("name", "m1")),
         Seq(Data("name", "m2")),
-        Seq(Data("name", "m3")))
+        Seq(Data("name", "m3")),
+        Seq(Data("name", "this")),
+        Seq(Data("name", "this")),
+        Seq(Data("name", "this")))
   }
 
   @Test
@@ -82,7 +85,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "m11")),
-        Seq(Data("name", "m12")))
+        Seq(Data("name", "m12")),
+        Seq(Data("name", "this")))
   }
 
   @Test
@@ -247,7 +251,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "a")),
-        Seq(Data("name", "c")))
+        Seq(Data("name", "c")),
+        Seq(Data("name", "this")))
   }
 
   @Test
@@ -344,6 +349,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
         Seq(Data("name", "j")))
   }
 
@@ -363,6 +370,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
         Seq(Data("name", "j")))
   }
 
@@ -382,6 +391,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
         Seq(Data("name", "j")),
         Seq(Data("name", "k")))
   }
@@ -402,6 +413,8 @@ class ScalaSourceIndexerTest extends RestApiTest {
       order by ?name
     """) === Seq(
         Seq(Data("name", "i")),
+        Seq(Data("name", "i")),
+        Seq(Data("name", "j")),
         Seq(Data("name", "j")),
         Seq(Data("name", "k")))
   }

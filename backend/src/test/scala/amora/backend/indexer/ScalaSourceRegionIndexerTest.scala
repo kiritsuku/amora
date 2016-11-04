@@ -123,7 +123,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class A {
+        class [[!this]]A {
           def [[meth]] = 0
           def [[meth2]] = {
             def [[meth3]] = {
@@ -209,7 +209,7 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
   def private_class_parameters() = {
     indexRegionData("""
         prefix c:<http://amora.center/kb/amora/Schema/Val/>
-        select * where {
+        select distinct ?name ?start ?end where {
           [c:flag "param"] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
       """,

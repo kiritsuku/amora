@@ -551,6 +551,27 @@ class IndexerTest extends RestApiTest {
     testReq(post("http://amora.center/sparql", """
       prefix d:<http://amora.center/kb/amora/Schema/Def/>
       select ?tpe where {
+        [a d:] d:name "method" ; d:owner [a ?tpe] .
+      }
+      order by ?tpe
+    """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
+      status === StatusCodes.OK
+      resultSetAsData(respAsResultSet()) === Seq(
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")),
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")))
+    }
+  }
+
+  @Test
+  def the_owner_of_a_ctor_is_a_class(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        package pkg
+        class A(i: Int)
+      """)
+    testReq(post("http://amora.center/sparql", """
+      prefix d:<http://amora.center/kb/amora/Schema/Def/>
+      select ?tpe where {
         [a d:] d:owner [a ?tpe] .
       }
       order by ?tpe

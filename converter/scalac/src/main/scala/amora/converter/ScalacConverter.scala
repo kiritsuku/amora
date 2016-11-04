@@ -179,7 +179,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       mkRef(owner, nt)
     case Select(qualifier, name) ⇒
       qualifier match {
-        case _: This | Ident(nme.ROOTPKG) ⇒
+        case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
         case Select(qualifier, nme.PACKAGE) ⇒
           mkRef(owner, qualifier, isTopLevelRef = false)
         case _ ⇒
@@ -209,11 +209,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       // for classes). In this case they don't have a range position but they are top
       // level and their only reasonable position can be the offset of their owners.
       if (!t.pos.isRange)
-        owner.position match {
-          case h.RangePosition(offset, _) ⇒
-            ref.position = h.RangePosition(offset, offset)
-          case _ ⇒
-        }
+        setPositionOfOwner(owner, ref)
       else if (!isImplicitApplyMethod)
         setPosition(ref, t.pos)
       else {
@@ -237,6 +233,14 @@ final class ScalacConverter[G <: Global](val global: G) {
       if (t.pos.isRange)
         found += ref
       ref
+  }
+
+  private def setPositionOfOwner(owner: h.Hierarchy, elem: h.Hierarchy): Unit = {
+    owner.position match {
+      case h.RangePosition(offset, _) ⇒
+        elem.position = h.RangePosition(offset, offset)
+      case _ ⇒
+    }
   }
 
   private def typeTree(owner: h.Hierarchy, t: TypeTree): Unit = {
@@ -541,14 +545,22 @@ final class ScalacConverter[G <: Global](val global: G) {
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
       val m = mkDecl(t.symbol, owner)
-      setPosition(m, t.pos)
+      if (t.name == nme.CONSTRUCTOR && !t.pos.isRange)
+        setPositionOfOwner(owner, m)
+      else
+        setPosition(m, t.pos)
       found += m
       tparams foreach (typeParamDef(m, _))
       vparamss foreach (_ foreach (valDef(m, _)))
       val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
       if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
         typeRef(m, tpt)
-      body(m, rhs)
+      // not sure if this condition is the right thing to do. It avoids to create
+      // refs to the default constructor `java.lang.Object.<ref>this()V`. The
+      // default constructor of the super class is always called implicitly but
+      // I'm not sure if we want to highlight this fact in our index.
+      if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
+        body(m, rhs)
     }
 
     def lazyDefDef() = {
@@ -561,8 +573,7 @@ final class ScalacConverter[G <: Global](val global: G) {
 
     if (t.symbol.isLazy)
       lazyDefDef
-    else if ((t.name == nme.CONSTRUCTOR && !t.pos.isOpaqueRange)
-          || t.name == nme.MIXIN_CONSTRUCTOR
+    else if (t.name == nme.MIXIN_CONSTRUCTOR
           || t.symbol.isGetter && t.symbol.isAccessor
           || t.symbol.isSetter)
       ()

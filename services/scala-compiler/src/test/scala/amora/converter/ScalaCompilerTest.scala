@@ -13,11 +13,18 @@ abstract class ScalaCompilerTest {
 
   @Test
   def single_package() = {
-    convert("package pkg") === Set("pkg")
+    convert("""
+      package pkg
+    """) === Set(
+        "pkg")
   }
 
   @Test
   def single_class() = {
-    convert("package pkg; class X") === Set("pkg", "pkg.X", "scala.<ref>AnyRef")
+    convert("""
+      package pkg
+      class X
+    """) === Set(
+        "pkg", "pkg.X", "scala.<ref>AnyRef", "pkg.X.this()V")
   }
 }
