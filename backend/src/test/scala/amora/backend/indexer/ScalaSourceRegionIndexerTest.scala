@@ -253,6 +253,34 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """)
   }
 
+  @Test
+  def default_constructor() = {
+    indexRegionData("""
+        prefix c:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!this]][[X]]
+      """)
+  }
+
+  @Test
+  def constructor_with_parameter() = {
+    indexRegionData("""
+        prefix c:<http://amora.center/kb/amora/Schema/Decl/>
+        select distinct * where {
+          [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!this]][[X]]([[value]]: Int)
+      """)
+  }
+
   // ====================================================================
   // Ref tests
   // ====================================================================

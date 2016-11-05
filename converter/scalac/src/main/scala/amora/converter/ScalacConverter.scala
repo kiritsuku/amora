@@ -545,7 +545,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
       val m = mkDecl(t.symbol, owner)
-      if (t.name == nme.CONSTRUCTOR && !t.pos.isRange)
+      if (t.name == nme.CONSTRUCTOR && t.pos.isTransparent || t.pos.isOffset)
         setPositionOfOwner(owner, m)
       else
         setPosition(m, t.pos)
