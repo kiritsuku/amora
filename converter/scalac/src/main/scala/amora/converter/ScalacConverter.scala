@@ -220,7 +220,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       if (isTopLevelRef || t.pos.isRange)
         found += ref
       ref
-    case _: Ident | _: TypeTree ⇒
+    case _: Ident | _: TypeTree | _: This ⇒
       val calledOn =
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
           owner
@@ -421,6 +421,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       body(owner, expr)
     case Return(expr) ⇒
       body(owner, expr)
+    case _: This ⇒
+      mkRef(owner, t)
     case EmptyTree ⇒
   }
 

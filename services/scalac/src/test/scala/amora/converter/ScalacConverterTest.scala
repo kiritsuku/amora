@@ -1262,4 +1262,15 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.f()I", "X.f()I.x", "X.f()I.<ref>x", "scala.<ref>Int",
         "scala.<ref>AnyRef", "X.this()V")
   }
+
+  @Test
+  def this_ref() = {
+    convert("""
+      class X {
+        val value = this
+      }
+    """) === Set(
+        "X", "X.value", "<ref>X", "scala.<ref>AnyRef", "X.this()V")
+  }
+
 }
