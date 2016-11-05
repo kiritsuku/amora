@@ -227,7 +227,11 @@ final class ScalacConverter[G <: Global](val global: G) {
         else
           mkDeepDecl(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
-      val ref = h.Ref(refToDecl.name, refToDecl, owner, calledOn)
+      val n = t match {
+        case _: This ⇒ "this"
+        case _ ⇒ refToDecl.name
+      }
+      val ref = h.Ref(n, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
       setPosition(ref, t.pos)
       if (t.pos.isRange)

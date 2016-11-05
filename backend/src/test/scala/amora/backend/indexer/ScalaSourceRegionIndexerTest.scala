@@ -864,4 +864,21 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def this_ref_points_to_class() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a ref:] ref:name "this" ; ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[X]] {
+          val value = this
+        }
+      """)
+  }
 }
