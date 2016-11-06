@@ -390,6 +390,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       defDef(owner, t)
     case t: ValDef ⇒
       valDef(owner, t)
+    case t: TypeDef ⇒
+      typeDef(owner, t)
     case Block(stats, expr) ⇒
       stats foreach (body(owner, _))
       body(owner, expr)
@@ -528,6 +530,14 @@ final class ScalacConverter[G <: Global](val global: G) {
           found += ref(qualifier.symbol, sel.rename, sel.renamePos)
       }
     }
+  }
+
+  private def typeDef(owner: h.Hierarchy, t: TypeDef): Unit = {
+    val decl = mkDecl(t.symbol, owner)
+    setPosition(decl, t.pos)
+    found += decl
+    t.tparams foreach (typeParamDef(decl, _))
+    expr(owner, t.rhs)
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef, isFunction: Boolean = false): Unit = {

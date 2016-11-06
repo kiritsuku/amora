@@ -1273,4 +1273,25 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.value", "<ref>X", "scala.<ref>AnyRef", "X.this()V")
   }
 
+  @Test
+  def type_alias() = {
+    convert("""
+      class X {
+        type Type = X
+      }
+    """) === Set(
+        "X", "X.Type", "<ref>X", "scala.<ref>AnyRef", "X.this()V")
+  }
+
+  @Test
+  def type_alias_with_type_parameter() = {
+    convert("""
+      class X {
+        type Type[A, B] = Map[A, B]
+      }
+    """) === Set(
+        "X", "X.Type", "X.Type.<tparam>A", "X.Type.<tparam>B",
+        "X.Type.<ref>A", "X.Type.<ref>B",
+        "scala.<ref>AnyRef", "X.this()V", "scala.Predef.<ref>Map")
+  }
 }
