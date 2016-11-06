@@ -299,6 +299,22 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
       """)
   }
 
+  @Test
+  def type_alias_with_type_parameter() = {
+    indexRegionData("""
+        prefix c:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a c:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!this]][[X]] {
+          type [[Type]] [ [[A]] , [[B]] ] = Map[A, B]
+        }
+      """)
+  }
+
   // ====================================================================
   // Ref tests
   // ====================================================================

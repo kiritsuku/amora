@@ -618,6 +618,7 @@ final class ScalacConverter[G <: Global](val global: G) {
 
   private def typeParamDef(owner: h.Hierarchy, t: TypeDef): Unit = {
     val m = mkDecl(t.symbol, owner)
+    setPosition(m, t.pos)
     found += m
     t.tparams foreach (typeParamDef(m, _))
   }
