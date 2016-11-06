@@ -913,4 +913,41 @@ class ScalaSourceRegionIndexerTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def type_alias_can_be_referenced() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a ref:] ref:name "Type" ; ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X {
+          type [[Type]] [A, B] = Map[A, B]
+
+          def f: Type[Int, Int]
+        }
+      """)
+  }
+
+  @Test
+  def type_alias_parameter_can_be_referenced() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          values ?vals { "A" "B" }
+          [a ref:] ref:name ?vals ; ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          type Type [ [[A]] , [[B]] ] = Map[A, B]
+        }
+      """)
+  }
 }
