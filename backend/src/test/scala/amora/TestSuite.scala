@@ -13,6 +13,7 @@ import amora.backend.services.FindUsagesTest
 import amora.backend.services.FindDeclarationTest
 import amora.api.ApiTest
 import amora.backend.indexer.MultiProjectTest
+import amora.backend.indexer.ScalaRefTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -24,6 +25,7 @@ import amora.backend.indexer.MultiProjectTest
   classOf[FindUsagesTest],
   classOf[FindDeclarationTest],
   classOf[ApiTest],
-  classOf[MultiProjectTest]
+  classOf[MultiProjectTest],
+  classOf[ScalaRefTest]
 ))
 class TestSuite
