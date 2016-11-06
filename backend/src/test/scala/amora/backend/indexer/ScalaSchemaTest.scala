@@ -5,7 +5,7 @@ import org.junit.Test
 import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
 
-class ScalaSourceIndexerTest extends RestApiTest {
+class ScalaSchemaTest extends RestApiTest {
   import amora.TestUtils._
 
   @Test

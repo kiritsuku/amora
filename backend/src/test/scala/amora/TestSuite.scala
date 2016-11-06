@@ -7,7 +7,7 @@ import org.junit.runners.Suite.SuiteClasses
 import amora.converter.ClassfileConverterTest
 import amora.backend.indexer.JavaBytecodeIndexerTest
 import amora.backend.indexer.IndexerTest
-import amora.backend.indexer.ScalaSourceIndexerTest
+import amora.backend.indexer.ScalaSchemaTest
 import amora.backend.indexer.ScalaDeclTest
 import amora.backend.services.FindUsagesTest
 import amora.backend.services.FindDeclarationTest
@@ -20,7 +20,7 @@ import amora.backend.indexer.ScalaRefTest
   classOf[ClassfileConverterTest],
   classOf[JavaBytecodeIndexerTest],
   classOf[IndexerTest],
-  classOf[ScalaSourceIndexerTest],
+  classOf[ScalaSchemaTest],
   classOf[ScalaDeclTest],
   classOf[FindUsagesTest],
   classOf[FindDeclarationTest],
