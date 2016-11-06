@@ -8,7 +8,7 @@ import amora.converter.ClassfileConverterTest
 import amora.backend.indexer.JavaBytecodeIndexerTest
 import amora.backend.indexer.IndexerTest
 import amora.backend.indexer.ScalaSourceIndexerTest
-import amora.backend.indexer.ScalaSourceRegionIndexerTest
+import amora.backend.indexer.ScalaDeclTest
 import amora.backend.services.FindUsagesTest
 import amora.backend.services.FindDeclarationTest
 import amora.api.ApiTest
@@ -21,7 +21,7 @@ import amora.backend.indexer.ScalaRefTest
   classOf[JavaBytecodeIndexerTest],
   classOf[IndexerTest],
   classOf[ScalaSourceIndexerTest],
-  classOf[ScalaSourceRegionIndexerTest],
+  classOf[ScalaDeclTest],
   classOf[FindUsagesTest],
   classOf[FindDeclarationTest],
   classOf[ApiTest],
