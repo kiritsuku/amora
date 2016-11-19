@@ -170,7 +170,7 @@ class Indexer(modelName: String) extends Log4jLogging {
 
   def askNlq(model: Model, query: String): ResultSetRewindable = {
     val s = NlParser.parseSentence(query)
-    s.words.map(w ⇒ w.word + " → " + w.meanings) foreach println
+    s.words foreach println
     ???
     val sparqlQuery = ""
     withQueryService(model, sparqlQuery)
