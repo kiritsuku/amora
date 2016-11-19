@@ -21,6 +21,7 @@ import org.apache.jena.update.UpdateAction
 import amora.backend.Log4jLogging
 import spray.json._
 import scala.util.control.NonFatal
+import amora.nlp.NlParser
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -165,6 +166,14 @@ class Indexer(modelName: String) extends Log4jLogging {
   def addTurtle(model: Model, str: String): Unit = {
     val in = new ByteArrayInputStream(str.getBytes)
     model.read(in, /* base = */ null, "TURTLE")
+  }
+
+  def askNlq(model: Model, query: String): ResultSetRewindable = {
+    val s = NlParser.parseSentence(query)
+    s.words.map(w ⇒ w.word + " → " + w.meanings) foreach println
+    ???
+    val sparqlQuery = ""
+    withQueryService(model, sparqlQuery)
   }
 
   def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {

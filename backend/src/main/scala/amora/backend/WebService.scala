@@ -28,6 +28,7 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
+import amora.backend.requests.Nlp
 import amora.backend.requests.Service
 import amora.backend.requests.Sparql
 import amora.backend.requests.Turtle
@@ -39,6 +40,7 @@ final class WebService(override implicit val system: ActorSystem)
     with Sparql
     with Service
     with Turtle
+    with Nlp
     with AkkaLogging {
 
   override val bs = new BackendSystem()
@@ -222,6 +224,13 @@ final class WebService(override implicit val system: ActorSystem)
       entity(as[String]) { encodedPostReq ⇒
         extractRequest { req ⇒
           handleTurtleUpdatePostRequest(req, encodedPostReq)
+        }
+      }
+    } ~
+    path("nlq") {
+      entity(as[String]) { query ⇒
+        extractRequest { req ⇒
+          handleNlqPostRequest(req, query)
         }
       }
     }

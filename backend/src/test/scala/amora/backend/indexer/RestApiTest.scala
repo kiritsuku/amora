@@ -26,6 +26,7 @@ import com.typesafe.config.ConfigFactory
 import akka.actor.Cancellable
 import akka.http.javadsl.model.headers.RawRequestURI
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpHeader
 import akka.http.scaladsl.model.HttpMethods
@@ -37,7 +38,6 @@ import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.testkit.RouteTest
 import akka.http.scaladsl.testkit.RouteTestTimeout
 import akka.http.scaladsl.testkit.TestFrameworkInterface
-
 import amora.api._
 import amora.backend.AkkaLogging
 import amora.backend.CustomContentTypes
@@ -375,6 +375,13 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
       }.sortBy(regionOrdering)
 
       foundRegions === expectedRegions
+    }
+  }
+
+  def nlqRequest(query: String): Seq[Seq[Data]] = {
+    testReq(post("http://amora.center/nlq", HttpEntity(ContentTypes.`text/plain(UTF-8)`, query), header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
+      checkStatus()
+      resultSetAsData(respAsResultSet())
     }
   }
 

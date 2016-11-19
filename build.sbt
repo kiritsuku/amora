@@ -307,7 +307,7 @@ lazy val backend = project in file("backend") settings commonSettings ++ Revolve
 
   // once the server is started, we also want to restart it on changes in the protocol project
   watchSources ++= (watchSources in protocolJvm).value
-) dependsOn (protocolJvm, nvim, javacConverter)
+) dependsOn (protocolJvm, nvim, javacConverter, nlp)
 
 lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
   name := "scalac-plugin",
@@ -387,3 +387,9 @@ lazy val dotcService = project in file("services/dotc") settings commonSettings 
   // dotc ships with a fork of scalac, we therefore don't want to use the compiler that is bundled with Eclipse
   EclipseKeys.withBundledScalaContainers := false
 ) dependsOn (dotcConverter, scalaCompilerService % "compile;test->test")
+
+lazy val nlp = project in file("nlp") settings commonSettings ++ Seq(
+  name := "nlp",
+
+  libraryDependencies ++= deps.nlp.value
+)

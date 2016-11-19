@@ -94,4 +94,11 @@ object deps {
   lazy val scalaCompilerService = Def.setting(Seq(
     "com.novocode"                   %   "junit-interface"                   % junitInterface   % "test"
   ))
+
+  lazy val nlp = Def.setting(Seq(
+    // https://github.com/extjwnl/extjwnl
+    "net.sf.extjwnl"                 %   "extjwnl"                           % "1.9.1",
+    "net.sf.extjwnl"                 %   "extjwnl-data-wn31"                 % "1.2",
+    "org.parboiled"                  %%  "parboiled"                         % "2.1.3"
+  ))
 }

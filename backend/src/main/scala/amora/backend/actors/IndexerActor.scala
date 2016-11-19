@@ -34,6 +34,9 @@ class IndexerActor extends Actor with ActorLogging {
 
     case RunTurtleUpdate(query) ⇒
       sender ! Try(handleTurtleUpdate(query))
+
+    case RunNlq(query) ⇒
+      sender ! Try(handleNlq(query))
   }
 
   override def postStop() = {
@@ -66,6 +69,15 @@ class IndexerActor extends Actor with ActorLogging {
       }
     }
   }
+
+  def handleNlq(query: String): ResultSetRewindable = {
+    log.info(s"Handle natural language query:\n$query")
+    indexer.writeDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset) { model ⇒
+        indexer.askNlq(model, query)
+      }
+    }
+  }
 }
 
 sealed trait IndexerMessage
@@ -73,4 +85,5 @@ object IndexerMessage {
   case class RunQuery(query: String) extends IndexerMessage
   case class RunUpdate(query: String) extends IndexerMessage
   case class RunTurtleUpdate(query: String) extends IndexerMessage
+  case class RunNlq(query: String) extends IndexerMessage
 }
