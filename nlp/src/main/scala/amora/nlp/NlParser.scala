@@ -28,7 +28,7 @@ final class NlParser(override val input: ParserInput) extends Parser {
   def ws = rule { atomic(zeroOrMore(anyOf(" \t\n"))) }
   def word = rule { ws ~ capture(oneOrMore(CharPredicate.Visible)) ~> mkWord _ }
 
-  def sentence = rule { word ~ verb ~ word ~ noun ~> Sentence }
+  def sentence = rule { word ~ verb ~ word ~ noun ~ EOI ~> Sentence }
 
   def verb = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Verb)) ~> ((w: Word) ⇒ Verb(w.stemmed, w.word)) }
   def noun = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Noun)) ~> ((w: Word) ⇒ Noun(w.stemmed, w.word)) }
