@@ -28,25 +28,27 @@ final class NlParser(override val input: ParserInput) extends Parser {
   def ws = rule { atomic(zeroOrMore(anyOf(" \t\n"))) }
   def word = rule { ws ~ capture(oneOrMore(CharPredicate.Visible)) ~> mkWord _ }
 
-  def sentence = rule { zeroOrMore(word) ~> Sentence }
+  def sentence = rule { word ~ verb ~ word ~ noun ~> Sentence }
+
+  def verb = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Verb)) ~> ((w: Word) ⇒ Verb(w.stemmed, w.word)) }
+  def noun = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Noun)) ~> ((w: Word) ⇒ Noun(w.stemmed, w.word)) }
 
   def mkWord(word: String): Word = {
-    import WordType._
     val meanings = Words.dictionary.lookupAllIndexWords(word).getIndexWordArray.toList
 
     if (meanings.isEmpty) {
       if (Words.prepositions(word))
-        Word(word, word, Seq(Preposition))
+        Word(word, word, Seq(WordType.Preposition))
       else
         ???
     }
     else {
       val tpes = meanings.map { w ⇒
         w.getPOS match {
-          case POS.NOUN ⇒ Noun
-          case POS.VERB ⇒ Verb
-          case POS.ADJECTIVE ⇒ Adjective
-          case POS.ADVERB ⇒ Adverb
+          case POS.NOUN ⇒ WordType.Noun
+          case POS.VERB ⇒ WordType.Verb
+          case POS.ADJECTIVE ⇒ WordType.Adjective
+          case POS.ADVERB ⇒ WordType.Adverb
         }
       }
       Word(word, meanings.head.getLemma, tpes)
@@ -57,8 +59,10 @@ final class NlParser(override val input: ParserInput) extends Parser {
 final class ParseError(msg: String) extends RuntimeException(msg)
 
 trait Tree
-case class Sentence(words: Seq[Word]) extends Tree
-case class Word(word: String, base: String, tpes: Seq[WordType.WordType]) extends Tree
+case class Sentence(verb: Verb, noun: Noun) extends Tree
+case class Word(word: String, stemmed: String, tpes: Seq[WordType.WordType]) extends Tree
+case class Verb(word: String, original: String) extends Tree
+case class Noun(word: String, unstemmed: String) extends Tree
 object WordType {
   sealed trait WordType
   case object Noun extends WordType

@@ -138,6 +138,20 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  def resultSetAsList(r: ResultSet): Seq[String] = {
+    import scala.collection.JavaConverters._
+    require(r.getResultVars.size == 1, "Result set can only be shown as a list if it contains only one variable.")
+
+    val variable = r.getResultVars.get(0)
+    r.asScala.map { q ⇒
+      val res = q.get(variable)
+      if (res.isLiteral())
+        res.asLiteral().getString
+      else
+        res.toString()
+    }.toList
+  }
+
   def transformResultSet[A](r: ResultSet)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
     import scala.collection.JavaConverters._
     val vars = r.getResultVars.asScala.toSeq
@@ -378,10 +392,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  def nlqRequest(query: String): Seq[Seq[Data]] = {
+  def nlqRequest(query: String): Seq[String] = {
     testReq(post("http://amora.center/nlq", HttpEntity(ContentTypes.`text/plain(UTF-8)`, query), header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       checkStatus()
-      resultSetAsData(respAsResultSet())
+      resultSetAsList(respAsResultSet())
     }
   }
 

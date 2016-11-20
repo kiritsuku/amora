@@ -1,0 +1,8 @@
+@prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
+@prefix Data:<http://amora.center/kb/amora/Semantics/>
+
+Data:class
+  a Semantics: ;
+  Semantics:word "class" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Class/> ;
+.

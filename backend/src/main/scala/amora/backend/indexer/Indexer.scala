@@ -3,6 +3,8 @@ package amora.backend.indexer
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
+import scala.util.control.NonFatal
+
 import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.ParameterizedSparqlString
@@ -19,9 +21,10 @@ import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
 import amora.backend.Log4jLogging
-import spray.json._
-import scala.util.control.NonFatal
 import amora.nlp.NlParser
+import amora.nlp.Noun
+import amora.nlp.Verb
+import spray.json._
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -170,9 +173,72 @@ class Indexer(modelName: String) extends Log4jLogging {
 
   def askNlq(model: Model, query: String): ResultSetRewindable = {
     val s = NlParser.parseSentence(query)
-    s.words foreach println
-    ???
-    val sparqlQuery = ""
+
+    var prefixe = Map[String, String]()
+    var data = Map[String, Map[String, String]]()
+
+    def addPrefix(name: String, url: String) = {
+      if (!prefixe.contains(name))
+        prefixe += name → url
+    }
+
+    def addData(variable: String, k: String, v: String) = {
+      data.get(variable) match {
+        case Some(map) ⇒
+          data += variable → (map + k → v)
+        case None ⇒
+          data += variable → Map(k → v)
+      }
+    }
+
+    def lookupNoun(noun: Noun) = {
+      import amora.api._
+      val (schema, name) = sparqlQuery"""
+        prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
+        prefix Schema:<http://amora.center/kb/amora/Schema/>
+        select * where {
+          [Semantics:word "${noun.word}"] Semantics:association ?schema .
+          ?schema Schema:schemaName ?name .
+        }
+      """.runOnModel(new SparqlModel(model)).map { r ⇒
+        r.uri("schema") → r.string("name")
+      }.head
+      addPrefix(name, schema)
+      addData(s"x${data.size}", "a", s"$name:")
+    }
+    def lookupVerb(verb: Verb) = {
+      if (verb.word == "list")
+        ()
+      else
+        ???
+    }
+
+    def mkSparql = {
+      val stringOrdering = new Ordering[String] {
+        def compare(a: String, b: String) = String.CASE_INSENSITIVE_ORDER.compare(a, b)
+      }
+
+      val sb = new StringBuilder
+      prefixe.toList.sortBy(_._1)(stringOrdering) foreach {
+        case (name, url) ⇒
+          sb append "prefix " append name append ":<" append url append ">\n"
+      }
+      sb append "select * where {\n"
+      data.toList.sortBy(_._1)(stringOrdering) foreach {
+        case (variable, kv) ⇒
+          kv.toList.sortBy(_._1)(stringOrdering) foreach {
+            case (k, v) ⇒
+              sb append "  ?" append variable append " " append k append " " append v append " .\n"
+          }
+      }
+      sb append "}"
+      sb.toString
+    }
+
+    lookupNoun(s.noun)
+    lookupVerb(s.verb)
+    val sparqlQuery = mkSparql
+    log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
     withQueryService(model, sparqlQuery)
   }
 
