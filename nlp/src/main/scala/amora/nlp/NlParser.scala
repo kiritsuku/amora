@@ -14,8 +14,10 @@ object NlParser {
         res
       case scala.util.Failure(e: org.parboiled2.ParseError) ⇒
         throw new ParseError(s"Couldn't parse input: ${p.formatError(e, new ErrorFormatter(showTraces = true))}")
-      case err ⇒
-        throw new ParseError(s"Unexpected result: $err")
+      case scala.util.Failure(e: ParseError) ⇒
+        throw e
+      case scala.util.Failure(t) ⇒
+        throw new IllegalStateException("Unexpected error.", t)
     }
   }
 
@@ -56,7 +58,7 @@ final class NlParser(override val input: ParserInput) extends Parser {
       if (Words.prepositions(word))
         Word(word, word, Seq(WordType.Preposition))
       else
-        ???
+        throw new ParseError(s"Unknown word: $word")
     }
     else {
       val tpes = meanings.map { w ⇒
