@@ -245,6 +245,17 @@ class Indexer(modelName: String) extends Log4jLogging {
         ???
     }
 
+    def lookupGrammar(id: String, clazz: String, word: String) = {
+      clazz match {
+        case "Class" ⇒
+          if (NlParser.isScalaIdent(word)) {
+            addData(id, "Class:name", "\"" + word + "\"")
+          }
+        case name ⇒
+          throw new IllegalStateException(s"No grammar handling for class `$name` found.")
+      }
+    }
+
     def mkSparql = {
       val stringOrdering = new Ordering[String] {
         def compare(a: String, b: String) = String.CASE_INSENSITIVE_ORDER.compare(a, b)
@@ -269,12 +280,18 @@ class Indexer(modelName: String) extends Log4jLogging {
       sb.toString
     }
 
-    s.pp match {
-      case Some(pp) ⇒
+    s.remaining match {
+      case Some(pp: PrepositionPhrase) ⇒
         lookupPreposition(s.noun, pp)
+      case Some(n: Noun) ⇒
+        val (id, _) = lookupNounAsClass(s.noun)
+        addSelect(id)
+        lookupGrammar(id, prefixe.head._1, n.original)
       case None ⇒
         val (id, _) = lookupNounAsClass(s.noun)
         addSelect(id)
+      case node ⇒
+        throw new IllegalStateException(s"Unknown tree node $node.")
     }
     lookupVerb(s.verb)
 

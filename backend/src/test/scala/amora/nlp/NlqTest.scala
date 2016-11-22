@@ -94,4 +94,21 @@ class NlqTest extends RestApiTest {
       "this"
     )
   }
+
+  @Test
+  def list_given_class(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def a = 0
+        }
+        class B {
+          def b1 = 0
+          def b2 = 0
+        }
+      """)
+    nlqRequest("list class A") === Seq(
+      "http://amora.center/kb/amora/Class/p/o/n/v1/A"
+    )
+  }
 }

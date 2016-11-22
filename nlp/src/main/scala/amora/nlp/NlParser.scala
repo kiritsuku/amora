@@ -25,9 +25,22 @@ object NlParser {
 
   def parseQuery(str: String): Sentence =
     parse(str)(_.query)
+
+  def isScalaIdent(str: String): Boolean = {
+    val p = new NlParser(str)
+    p.__run(p.scalaIdent).isSuccess
+  }
 }
 
-final class NlParser(override val input: ParserInput) extends Parser {
+trait ScalaIdentParser {
+  this: Parser ⇒
+
+  def scalaIdent = rule { capture(atomic(oneOrMore(CharPredicate.AlphaNum))) }
+}
+
+final class NlParser(override val input: ParserInput)
+    extends Parser
+    with ScalaIdentParser {
 
   type R1T = Rule1[Tree]
   def ws = rule { atomic(zeroOrMore(anyOf(" \t\n"))) }
@@ -35,7 +48,9 @@ final class NlParser(override val input: ParserInput) extends Parser {
 
   def query = rule { sentence ~ EOI }
 
-  def sentence = rule { verbPhrase ~ nounPhrase ~ optional(prepositionPhrase ~ nounPhrase ~> PrepositionPhrase) ~> Sentence }
+  def sentence = rule { verbPhrase ~ nounPhrase ~ optional(prepositionPart | nounPhrase) ~> Sentence }
+
+  def prepositionPart = rule { prepositionPhrase ~ nounPhrase ~> PrepositionPhrase }
 
   def verbPhrase = rule { word ~ verb }
   def nounPhrase = rule { word ~ noun }
@@ -77,10 +92,10 @@ final class NlParser(override val input: ParserInput) extends Parser {
 final class ParseError(msg: String) extends RuntimeException(msg)
 
 trait Tree
-case class Sentence(verb: Verb, noun: Noun, pp: Option[PrepositionPhrase]) extends Tree
+case class Sentence(verb: Verb, noun: Noun, remaining: Option[Tree]) extends Tree
 case class Word(word: String, stemmed: String, tpes: Seq[WordType.WordType]) extends Tree
 case class Verb(word: String, original: String) extends Tree
-case class Noun(word: String, unstemmed: String) extends Tree
+case class Noun(word: String, original: String) extends Tree
 case class Preposition(word: String) extends Tree
 case class PrepositionPhrase(preposition: Preposition, noun: Noun) extends Tree
 object WordType {
