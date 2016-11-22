@@ -17,6 +17,30 @@ schema:
   amora:schemaId schema:jvmSignature ;
   amora:format <http://amora.center/kb/amora/Format/amora/Def/schema.jsonld>
 .
+schema:name
+  a rdfs:Property ;
+  amora:schemaName "name" ;
+.
+schema:owner
+  a rdfs:Property ;
+  amora:schemaName "owner" ;
+.
+schema:flag
+  a rdfs:Property ;
+  amora:schemaName "flag" ;
+.
+schema:posStart
+  a rdfs:Property ;
+  amora:schemaName "posStart" ;
+.
+schema:posEnd
+  a rdfs:Property ;
+  amora:schemaName "posEnd" ;
+.
+schema:jvmSignature
+  a rdfs:Property ;
+  amora:schemaName "jvmSignature" ;
+.
 
 # inference rules
 schema:name rdfs:subPropertyOf decl:name .
