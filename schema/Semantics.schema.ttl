@@ -16,3 +16,13 @@ Data:class-name
   Semantics:word "name" ;
   Semantics:association <http://amora.center/kb/amora/Schema/Class/name> ;
 .
+Data:method
+  a Semantics: ;
+  Semantics:word "method" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Def/> ;
+.
+Data:method-name
+  a Semantics: ;
+  Semantics:word "name" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Def/name> ;
+.

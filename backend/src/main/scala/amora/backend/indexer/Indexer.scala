@@ -194,13 +194,14 @@ class Indexer(modelName: String) extends Log4jLogging {
       selects += name
     }
 
-    def lookupNounAsProperty(noun: Noun, id: String) = {
+    def lookupNounAsProperty(noun: Noun, id: String, classSchema: String) = {
       import amora.api._
       val q = sparqlQuery"""
         prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
         prefix Schema:<http://amora.center/kb/amora/Schema/>
         select ?schema ?name where {
           [Semantics:word "${noun.word}"] Semantics:association ?schema .
+          <$classSchema> Schema:schemaId ?schema .
           ?schema Schema:schemaName ?name .
         }
       """
@@ -226,15 +227,15 @@ class Indexer(modelName: String) extends Log4jLogging {
       val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
         (r.uri("schema"), r.string("name"))
       }.head
-      val id = s"x${data.size}"
+      val selectId = s"x${data.size}"
       addPrefix(name, schema)
-      addData(id, "a", s"$name:")
-      id
+      addData(selectId, "a", s"$name:")
+      (selectId, schema)
     }
 
     def lookupPreposition(property: Noun, pp: PrepositionPhrase) = {
-      val id = lookupNounAsClass(pp.noun)
-      lookupNounAsProperty(property, id)
+      val (id, schema) = lookupNounAsClass(pp.noun)
+      lookupNounAsProperty(property, id, schema)
     }
 
     def lookupVerb(verb: Verb) = {
@@ -272,7 +273,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       case Some(pp) ⇒
         lookupPreposition(s.noun, pp)
       case None ⇒
-        val id = lookupNounAsClass(s.noun)
+        val (id, _) = lookupNounAsClass(s.noun)
         addSelect(id)
     }
     lookupVerb(s.verb)
