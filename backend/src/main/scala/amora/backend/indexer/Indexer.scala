@@ -21,9 +21,7 @@ import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
 import amora.backend.Log4jLogging
-import amora.nlp.NlParser
-import amora.nlp.Noun
-import amora.nlp.Verb
+import amora.nlp._
 import spray.json._
 
 class Indexer(modelName: String) extends Log4jLogging {
@@ -172,10 +170,11 @@ class Indexer(modelName: String) extends Log4jLogging {
   }
 
   def askNlq(model: Model, query: String): ResultSetRewindable = {
-    val s = NlParser.parseSentence(query)
+    val s = NlParser.parseQuery(query)
 
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, String]]()
+    var selects = Set[String]()
 
     def addPrefix(name: String, url: String) = {
       if (!prefixe.contains(name))
@@ -191,21 +190,53 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
     }
 
-    def lookupNoun(noun: Noun) = {
+    def addSelect(name: String) = {
+      selects += name
+    }
+
+    def lookupNounAsProperty(noun: Noun, id: String) = {
       import amora.api._
-      val (schema, name) = sparqlQuery"""
+      val q = sparqlQuery"""
         prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
         prefix Schema:<http://amora.center/kb/amora/Schema/>
-        select * where {
+        select ?schema ?name where {
           [Semantics:word "${noun.word}"] Semantics:association ?schema .
           ?schema Schema:schemaName ?name .
         }
-      """.runOnModel(new SparqlModel(model)).map { r ⇒
-        r.uri("schema") → r.string("name")
+      """
+      log.info(s"Ask for semantic information about `${noun.word}` (noun,property):\n${q.query}")
+      val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
+        (r.uri("schema"), r.string("name"))
       }.head
-      addPrefix(name, schema)
-      addData(s"x${data.size}", "a", s"$name:")
+      addData(id, s"<$schema>", s"?$name")
+      addSelect(name)
     }
+
+    def lookupNounAsClass(noun: Noun) = {
+      import amora.api._
+      val q = sparqlQuery"""
+        prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
+        prefix Schema:<http://amora.center/kb/amora/Schema/>
+        select ?schema ?name where {
+          [Semantics:word "${noun.word}"] Semantics:association ?schema .
+          ?schema Schema:schemaName ?name .
+        }
+      """
+      log.info(s"Ask for semantic information about `${noun.word}` (noun,class):\n${q.query}")
+      val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
+        (r.uri("schema"), r.string("name"))
+      }.head
+      val id = s"x${data.size}"
+      addPrefix(name, schema)
+      addData(id, "a", s"$name:")
+      id
+    }
+
+    def lookupPreposition(property: Noun, pp: PrepositionPhrase) = {
+      val id = lookupNounAsClass(pp.noun)
+      lookupNounAsProperty(property, id)
+    }
+
     def lookupVerb(verb: Verb) = {
       if (verb.word == "list")
         ()
@@ -223,7 +254,9 @@ class Indexer(modelName: String) extends Log4jLogging {
         case (name, url) ⇒
           sb append "prefix " append name append ":<" append url append ">\n"
       }
-      sb append "select * where {\n"
+      sb append "select"
+      selects foreach (select ⇒ sb append " ?" append select)
+      sb append " where {\n"
       data.toList.sortBy(_._1)(stringOrdering) foreach {
         case (variable, kv) ⇒
           kv.toList.sortBy(_._1)(stringOrdering) foreach {
@@ -235,8 +268,15 @@ class Indexer(modelName: String) extends Log4jLogging {
       sb.toString
     }
 
-    lookupNoun(s.noun)
+    s.pp match {
+      case Some(pp) ⇒
+        lookupPreposition(s.noun, pp)
+      case None ⇒
+        val id = lookupNounAsClass(s.noun)
+        addSelect(id)
+    }
     lookupVerb(s.verb)
+
     val sparqlQuery = mkSparql
     log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
     withQueryService(model, sparqlQuery)

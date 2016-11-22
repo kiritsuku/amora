@@ -11,3 +11,8 @@ Data:trait
   Semantics:word "trait" ;
   Semantics:association <http://amora.center/kb/amora/Schema/Trait/> ;
 .
+Data:class-name
+  a Semantics: ;
+  Semantics:word "name" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Class/name> ;
+.

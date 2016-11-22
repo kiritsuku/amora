@@ -1,8 +1,9 @@
 package amora.nlp
 
 import org.parboiled2._
-import net.sf.extjwnl.dictionary.Dictionary
+
 import net.sf.extjwnl.data.POS
+import net.sf.extjwnl.dictionary.Dictionary
 
 object NlParser {
 
@@ -18,8 +19,8 @@ object NlParser {
     }
   }
 
-  def parseSentence(str: String): Sentence =
-    parse(str)(_.sentence)
+  def parseQuery(str: String): Sentence =
+    parse(str)(_.query)
 }
 
 final class NlParser(override val input: ParserInput) extends Parser {
@@ -28,12 +29,27 @@ final class NlParser(override val input: ParserInput) extends Parser {
   def ws = rule { atomic(zeroOrMore(anyOf(" \t\n"))) }
   def word = rule { ws ~ capture(oneOrMore(CharPredicate.Visible)) ~> mkWord _ }
 
-  def sentence = rule { word ~ verb ~ word ~ noun ~ EOI ~> Sentence }
+  def query = rule { sentence ~ EOI }
+
+  def sentence = rule { verbPhrase ~ nounPhrase ~ optional(prepositionPhrase ~ nounPhrase ~> PrepositionPhrase) ~> Sentence }
+
+  def verbPhrase = rule { word ~ verb }
+  def nounPhrase = rule { word ~ noun }
+  def prepositionPhrase = rule { word ~ preposition }
 
   def verb = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Verb)) ~> ((w: Word) ⇒ Verb(w.stemmed, w.word)) }
   def noun = rule { test(valueStack.peek.asInstanceOf[Word].tpes.contains(WordType.Noun)) ~> ((w: Word) ⇒ Noun(w.stemmed, w.word)) }
+  def preposition = rule { test(Words.prepositions(valueStack.peek.asInstanceOf[Word].word)) ~> ((w: Word) ⇒ Preposition(w.word)) }
 
   def mkWord(word: String): Word = {
+    // the word `names` can't be stemmed because it exists in wordnet
+    if (word == "names")
+      Word(word, "name", Seq(WordType.Noun, WordType.Verb))
+    else
+      lookupWord(word)
+  }
+
+  def lookupWord(word: String): Word = {
     val meanings = Words.dictionary.lookupAllIndexWords(word).getIndexWordArray.toList
 
     if (meanings.isEmpty) {
@@ -59,10 +75,12 @@ final class NlParser(override val input: ParserInput) extends Parser {
 final class ParseError(msg: String) extends RuntimeException(msg)
 
 trait Tree
-case class Sentence(verb: Verb, noun: Noun) extends Tree
+case class Sentence(verb: Verb, noun: Noun, pp: Option[PrepositionPhrase]) extends Tree
 case class Word(word: String, stemmed: String, tpes: Seq[WordType.WordType]) extends Tree
 case class Verb(word: String, original: String) extends Tree
 case class Noun(word: String, unstemmed: String) extends Tree
+case class Preposition(word: String) extends Tree
+case class PrepositionPhrase(preposition: Preposition, noun: Noun) extends Tree
 object WordType {
   sealed trait WordType
   case object Noun extends WordType
