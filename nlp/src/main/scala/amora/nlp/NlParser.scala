@@ -46,14 +46,6 @@ final class NlParser(override val input: ParserInput) extends Parser {
   def preposition = rule { test(Words.prepositions(valueStack.peek.asInstanceOf[Word].word)) ~> ((w: Word) ⇒ Preposition(w.word)) }
 
   def mkWord(word: String): Word = {
-    // the word `names` can't be stemmed because it exists in wordnet
-    if (word == "names")
-      Word(word, "name", Seq(WordType.Noun, WordType.Verb))
-    else
-      lookupWord(word)
-  }
-
-  def lookupWord(word: String): Word = {
     val meanings = {
       val m = Words.memoryDictionary.lookupAllIndexWords(word).getIndexWordArray.toList
       if (m.nonEmpty)
@@ -104,6 +96,9 @@ object Words {
     val d = Dictionary.getResourceInstance("/mem_properties.xml")
     d.edit()
     d.addIndexWord(new IndexWord(d, "def", POS.NOUN, new Synset(d, POS.NOUN)))
+    // the word `names` can't be stemmed because it exists in wordnet
+    d.addIndexWord(new IndexWord(d, "name", POS.NOUN, new Synset(d, POS.NOUN)))
+    d.addIndexWord(new IndexWord(d, "name", POS.VERB, new Synset(d, POS.VERB)))
     d
   }
   val dictionary = Dictionary.getDefaultResourceInstance
