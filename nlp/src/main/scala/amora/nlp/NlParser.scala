@@ -2,7 +2,9 @@ package amora.nlp
 
 import org.parboiled2._
 
+import net.sf.extjwnl.data.IndexWord
 import net.sf.extjwnl.data.POS
+import net.sf.extjwnl.data.Synset
 import net.sf.extjwnl.dictionary.Dictionary
 
 object NlParser {
@@ -52,7 +54,13 @@ final class NlParser(override val input: ParserInput) extends Parser {
   }
 
   def lookupWord(word: String): Word = {
-    val meanings = Words.dictionary.lookupAllIndexWords(word).getIndexWordArray.toList
+    val meanings = {
+      val m = Words.memoryDictionary.lookupAllIndexWords(word).getIndexWordArray.toList
+      if (m.nonEmpty)
+        m
+      else
+        Words.dictionary.lookupAllIndexWords(word).getIndexWordArray.toList
+    }
 
     if (meanings.isEmpty) {
       if (Words.prepositions(word))
@@ -92,6 +100,12 @@ object WordType {
   case object Preposition extends WordType
 }
 object Words {
+  val memoryDictionary = {
+    val d = Dictionary.getResourceInstance("/mem_properties.xml")
+    d.edit()
+    d.addIndexWord(new IndexWord(d, "def", POS.NOUN, new Synset(d, POS.NOUN)))
+    d
+  }
   val dictionary = Dictionary.getDefaultResourceInstance
 
   val prepositions = {

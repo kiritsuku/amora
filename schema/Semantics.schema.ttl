@@ -26,3 +26,13 @@ Data:method-name
   Semantics:word "name" ;
   Semantics:association <http://amora.center/kb/amora/Schema/Def/name> ;
 .
+Data:def
+  a Semantics: ;
+  Semantics:word "def" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Def/> ;
+.
+Data:def-name
+  a Semantics: ;
+  Semantics:word "name" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Def/name> ;
+.
