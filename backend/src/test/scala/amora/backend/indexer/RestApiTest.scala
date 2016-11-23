@@ -145,6 +145,7 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     val variable = r.getResultVars.get(0)
     r.asScala.map { q ⇒
       val res = q.get(variable)
+      require(res != null, s"The variable `$variable` does not exist in the result set.")
       if (res.isLiteral())
         res.asLiteral().getString
       else
