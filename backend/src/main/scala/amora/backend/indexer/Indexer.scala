@@ -173,7 +173,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     val s = NlParser.parseQuery(query)
 
     var prefixe = Map[String, String]()
-    var data = Map[String, Map[String, String]]()
+    var data = Map[String, Map[String, Set[String]]]()
     var selects = Set[String]()
 
     def addPrefix(name: String, url: String) = {
@@ -184,9 +184,10 @@ class Indexer(modelName: String) extends Log4jLogging {
     def addData(variable: String, k: String, v: String) = {
       data.get(variable) match {
         case Some(map) ⇒
-          data += variable → (map + k → v)
+          val set = map.getOrElse(k, Set())
+          data += variable → (map + k → (set + v))
         case None ⇒
-          data += variable → Map(k → v)
+          data += variable → Map(k → Set(v))
       }
     }
 
@@ -237,9 +238,26 @@ class Indexer(modelName: String) extends Log4jLogging {
       val (id, schema) = lookupNounAsClass(pp.noun)
       lookupNounAsProperty(property, id, schema)
       pp.remaining match {
-        case Some(n) ⇒
-          lookupGrammar(id, prefixe.head._1, n.original)
+        case Some(n: Noun) ⇒
+          lookupGrammar(id, schema, n.original)
+        case Some(outer: PrepositionPhrase) ⇒
+          lookupInnerPreposition(id, schema, outer)
         case None ⇒
+        case node ⇒
+          throw new IllegalStateException(s"Unknown tree node $node.")
+      }
+    }
+    def lookupInnerPreposition(idInner: String, schemaInner: String, pp: PrepositionPhrase): Unit = {
+      val (id, schema) = lookupNounAsClass(pp.noun)
+      addData(idInner, s"<${schemaInner}owner>", s"?$id")
+      pp.remaining match {
+        case Some(n: Noun) ⇒
+          lookupGrammar(id, schema, n.original)
+        case Some(outer: PrepositionPhrase) ⇒
+          lookupInnerPreposition(id, schema, outer)
+        case None ⇒
+        case node ⇒
+          throw new IllegalStateException(s"Unknown tree node $node.")
       }
     }
 
@@ -250,11 +268,15 @@ class Indexer(modelName: String) extends Log4jLogging {
         ???
     }
 
-    def lookupGrammar(id: String, clazz: String, word: String) = {
-      clazz match {
-        case "Class" ⇒
+    def lookupGrammar(id: String, schema: String, word: String) = {
+      schema match {
+        case "http://amora.center/kb/amora/Schema/Class/" ⇒
           if (NlParser.isScalaIdent(word)) {
-            addData(id, "Class:name", "\"" + word + "\"")
+            addData(id, "<http://amora.center/kb/amora/Schema/Class/name>", "\"" + word + "\"")
+          }
+        case "http://amora.center/kb/amora/Schema/Def/" ⇒
+          if (NlParser.isScalaIdent(word)) {
+            addData(id, "<http://amora.center/kb/amora/Schema/Def/name>", "\"" + word + "\"")
           }
         case name ⇒
           throw new IllegalStateException(s"No grammar handling for class `$name` found.")
@@ -277,8 +299,10 @@ class Indexer(modelName: String) extends Log4jLogging {
       data.toList.sortBy(_._1)(stringOrdering) foreach {
         case (variable, kv) ⇒
           kv.toList.sortBy(_._1)(stringOrdering) foreach {
-            case (k, v) ⇒
-              sb append "  ?" append variable append " " append k append " " append v append " .\n"
+            case (k, set) ⇒
+              set foreach { v ⇒
+                sb append "  ?" append variable append " " append k append " " append v append " .\n"
+              }
           }
       }
       sb append "}"
@@ -289,9 +313,9 @@ class Indexer(modelName: String) extends Log4jLogging {
       case Some(pp: PrepositionPhrase) ⇒
         lookupPreposition(s.noun, pp)
       case Some(n: Noun) ⇒
-        val (id, _) = lookupNounAsClass(s.noun)
+        val (id, schema) = lookupNounAsClass(s.noun)
         addSelect(id)
-        lookupGrammar(id, prefixe.head._1, n.original)
+        lookupGrammar(id, schema, n.original)
       case None ⇒
         val (id, _) = lookupNounAsClass(s.noun)
         addSelect(id)

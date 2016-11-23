@@ -129,4 +129,22 @@ class NlqTest extends RestApiTest {
     )
   }
 
+  @Test
+  def list_names_of_methods_of_given_class(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def a = 0
+        }
+        class B {
+          def b1 = 0
+          def b2 = 0
+        }
+      """)
+    nlqRequest("list names of methods of class B").sorted === Seq(
+      "b1",
+      "b2",
+      "this"
+    )
+  }
 }
