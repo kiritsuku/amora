@@ -50,7 +50,7 @@ final class NlParser(override val input: ParserInput)
 
   def sentence = rule { verbPhrase ~ nounPhrase ~ optional(prepositionPart | nounPhrase) ~> Sentence }
 
-  def prepositionPart = rule { prepositionPhrase ~ nounPhrase ~> PrepositionPhrase }
+  def prepositionPart = rule { prepositionPhrase ~ nounPhrase ~ optional(nounPhrase) ~> PrepositionPhrase }
 
   def verbPhrase = rule { word ~ verb }
   def nounPhrase = rule { word ~ noun }
@@ -97,7 +97,7 @@ case class Word(word: String, stemmed: String, tpes: Seq[WordType.WordType]) ext
 case class Verb(word: String, original: String) extends Tree
 case class Noun(word: String, original: String) extends Tree
 case class Preposition(word: String) extends Tree
-case class PrepositionPhrase(preposition: Preposition, noun: Noun) extends Tree
+case class PrepositionPhrase(preposition: Preposition, noun: Noun, remaining: Option[Noun]) extends Tree
 object WordType {
   sealed trait WordType
   case object Noun extends WordType

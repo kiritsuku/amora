@@ -236,6 +236,11 @@ class Indexer(modelName: String) extends Log4jLogging {
     def lookupPreposition(property: Noun, pp: PrepositionPhrase) = {
       val (id, schema) = lookupNounAsClass(pp.noun)
       lookupNounAsProperty(property, id, schema)
+      pp.remaining match {
+        case Some(n) ⇒
+          lookupGrammar(id, prefixe.head._1, n.original)
+        case None ⇒
+      }
     }
 
     def lookupVerb(verb: Verb) = {

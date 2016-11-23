@@ -111,4 +111,22 @@ class NlqTest extends RestApiTest {
       "http://amora.center/kb/amora/Class/p/o/n/v1/A"
     )
   }
+
+  @Test
+  def list_name_of_class(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def a = 0
+        }
+        class B {
+          def b1 = 0
+          def b2 = 0
+        }
+      """)
+    nlqRequest("list name of class A").sorted === Seq(
+      "A"
+    )
+  }
+
 }
