@@ -187,4 +187,25 @@ class NlqTest extends RestApiTest {
       "this"
     )
   }
+
+  @Test
+  def list_decls(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          val a = 0
+          var b = 0
+          def c = 0
+          lazy val d = 0
+        }
+      """)
+    nlqRequest("list names of decls").sorted === Seq(
+      "A",
+      "a",
+      "b",
+      "c",
+      "d",
+      "this"
+    )
+  }
 }

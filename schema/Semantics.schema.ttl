@@ -46,3 +46,13 @@ Data:declaration-name
   Semantics:word "name" ;
   Semantics:association <http://amora.center/kb/amora/Schema/Decl/name> ;
 .
+Data:decl
+  a Semantics: ;
+  Semantics:word "decl" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Decl/> ;
+.
+Data:decl-name
+  a Semantics: ;
+  Semantics:word "name" ;
+  Semantics:association <http://amora.center/kb/amora/Schema/Decl/name> ;
+.

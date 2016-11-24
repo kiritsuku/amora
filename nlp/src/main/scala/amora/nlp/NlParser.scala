@@ -111,6 +111,7 @@ object Words {
     val d = Dictionary.getResourceInstance("/mem_properties.xml")
     d.edit()
     d.addIndexWord(new IndexWord(d, "def", POS.NOUN, new Synset(d, POS.NOUN)))
+    d.addIndexWord(new IndexWord(d, "decl", POS.NOUN, new Synset(d, POS.NOUN)))
     // the word `names` can't be stemmed because it exists in wordnet
     d.addIndexWord(new IndexWord(d, "name", POS.NOUN, new Synset(d, POS.NOUN)))
     d.addIndexWord(new IndexWord(d, "name", POS.VERB, new Synset(d, POS.VERB)))
