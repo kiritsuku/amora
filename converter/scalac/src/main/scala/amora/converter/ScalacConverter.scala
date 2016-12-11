@@ -254,7 +254,12 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def typeTree(owner: h.Hierarchy, t: TypeTree): Unit = {
+  /**
+   * `selfRefPos` needs to be set when the type tree belongs to the type of a
+   * self reference. The value in the `Option` is the start offset of the self
+   * reference.
+   */
+  private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int]): Unit = {
     val sym = t.symbol
 
     def refFromSymbol(sym: Symbol): h.Ref = {
@@ -290,7 +295,14 @@ final class ScalacConverter[G <: Global](val global: G) {
           val offset = owner.position.asInstanceOf[h.RangePosition].start
           ref.position = new h.RangePosition(offset, offset)
         case _ ⇒
-          setPosition(ref, t.pos)
+          // the position for self references are wrong, we had to pass it as a
+          // parameter to this function
+          selfRefPos match {
+            case Some(offset) ⇒
+              ref.position = h.RangePosition(offset, offset)
+            case None ⇒
+              setPosition(ref, t.pos)
+          }
       }
       found += ref
     }
@@ -319,9 +331,12 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
-  private def typeRef(owner: h.Hierarchy, t: Tree): Unit = t match {
+  /**
+   * See [[typeTree]] for information about what `selfRefPos` is doing.
+   */
+  private def typeRef(owner: h.Hierarchy, t: Tree, selfRefPos: Option[Int] = None): Unit = t match {
     case t: TypeTree ⇒
-      typeTree(owner, t)
+      typeTree(owner, t, selfRefPos)
     case AppliedTypeTree(tpt, args) ⇒
       if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
         typeRef(owner, tpt)
@@ -559,7 +574,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     val m = mkDecl(t.symbol, owner)
     setPosition(m, t.pos)
     found += m
-    typeRef(m, t.tpt)
+    typeRef(m, t.tpt, selfRefPos = Some(t.pos.start))
   }
 
   private def defDef(owner: h.Hierarchy, t: DefDef): Unit = {
