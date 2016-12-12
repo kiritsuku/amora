@@ -231,6 +231,23 @@ class ScalaRefTest extends RestApiTest {
   }
 
   @Test
+  def self_ref_usages_reference_self_ref_decl() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a ref:] ref:refToDecl [decl:name ?name ; decl:posStart ?start ; decl:posEnd ?end] ; ref:name "self" .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait X { [[self]] ⇒
+          def x = self
+        }
+      """)
+  }
+
+  @Test
   def refs_in_if_expr() = {
     indexRegionData("""
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
