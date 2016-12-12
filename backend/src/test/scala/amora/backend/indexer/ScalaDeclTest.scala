@@ -325,7 +325,7 @@ class ScalaDeclTest extends RestApiTest {
       """,
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
-        class [[!this]][[X]] { [[self]] ⇒
+        class [[!this]][[X]] { [[selfRef]] ⇒
         }
       """)
   }

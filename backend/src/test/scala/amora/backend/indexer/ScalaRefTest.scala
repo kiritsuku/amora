@@ -248,6 +248,22 @@ class ScalaRefTest extends RestApiTest {
   }
 
   @Test
+  def self_ref_usages_have_correct_positions() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait [[!AnyRef]]X { [[!X]]longSelfRefName ⇒
+          def [[!X]]x = [[longSelfRefName]]
+        }
+      """)
+  }
+
+  @Test
   def refs_in_if_expr() = {
     indexRegionData("""
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>

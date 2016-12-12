@@ -251,7 +251,7 @@ final class ScalacConverter[G <: Global](val global: G) {
         // we need to manually adjust positions for `this` references because
         // the implementation of `setPosition` for some reason can't handle them.
         case _: This ⇒
-          ref.position = h.RangePosition(t.pos.point, t.pos.point+"this".length)
+          ref.position = h.RangePosition(t.pos.point, t.pos.point+n.length)
         case _ ⇒
           setPosition(ref, t.pos)
       }
