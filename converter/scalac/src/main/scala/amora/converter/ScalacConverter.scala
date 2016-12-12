@@ -228,8 +228,17 @@ final class ScalacConverter[G <: Global](val global: G) {
           mkDeepDecl(t.symbol.owner)
       val refToDecl = mkDecl(t.symbol, calledOn)
       val n = t match {
-        case _: This ⇒ "this"
-        case _ ⇒ refToDecl.name
+        // the names of self refs are not part of the tree. They are in the same
+        // way represented as a this reference. We have to check the source code
+        // to find out what it is.
+        case _: This ⇒
+          val thisRef = t.pos.source.content.slice(t.pos.start, t.pos.end).mkString
+          if (thisRef == "this")
+            "this"
+          else
+            thisRef
+        case _ ⇒
+          refToDecl.name
       }
       val ref = h.Ref(n, refToDecl, owner, calledOn)
       ref.addAttachments(a.Ref)
