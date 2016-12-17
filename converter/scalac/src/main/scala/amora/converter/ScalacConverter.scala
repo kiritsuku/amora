@@ -136,7 +136,7 @@ final class ScalacConverter[G <: Global](val global: G) {
   }
 
   /**
-   * Creates a [[Decl]], whose owner is the owner of the symbol and so on untl
+   * Creates a [[Decl]], whose owner is the owner of the symbol and so on until
    * the root node is reached.
    */
   private def mkDeepDecl(sym: Symbol): h.Decl = {
