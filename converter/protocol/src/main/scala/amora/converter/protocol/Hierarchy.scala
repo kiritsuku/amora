@@ -34,9 +34,15 @@ sealed trait Hierarchy {
       }
       refToDecl.owner match {
         case Root ⇒
-          s"<ref>$name$sig"
+          if (name == "this")
+            s"<ref>${refToDecl.asInstanceOf[Decl].name}$sig"
+          else
+            s"<ref>$name$sig"
         case o ⇒
-          s"${o.asString}.<ref>$name$sig"
+          if (name == "this")
+            s"${o.asString}.<ref>${refToDecl.asInstanceOf[Decl].name}$sig"
+          else
+            s"${o.asString}.<ref>$name$sig"
       }
   }
 
