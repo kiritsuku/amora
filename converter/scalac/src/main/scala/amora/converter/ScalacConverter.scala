@@ -407,7 +407,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
-      val classOfRef = h.Ref("classOf", owner, owner, h.Decl("Predef", h.Decl("scala", h.Root)))
+      val refToDecl = h.Decl("classOf", h.Decl("Predef", h.Decl("scala", h.Root)))
+      val classOfRef = h.Ref("classOf", refToDecl, owner, h.Decl("Predef", h.Decl("scala", h.Root)))
       classOfRef.addAttachments(a.Ref)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef

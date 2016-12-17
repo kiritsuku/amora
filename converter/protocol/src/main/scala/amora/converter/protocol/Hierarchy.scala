@@ -23,7 +23,7 @@ sealed trait Hierarchy {
         case _ ⇒
           s"${parent.asString}.$paramAtt$name$sig"
       }
-    case Ref(name, refToDecl, _, qualifier) ⇒
+    case Ref(name, refToDecl, _, _) ⇒
       val sig = refToDecl match {
         case d: Decl ⇒
           d.attachments.collectFirst {
@@ -32,11 +32,11 @@ sealed trait Hierarchy {
         case _ ⇒
           ""
       }
-      qualifier match {
+      refToDecl.owner match {
         case Root ⇒
           s"<ref>$name$sig"
-        case _ ⇒
-          s"${qualifier.asString}.<ref>$name$sig"
+        case o ⇒
+          s"${o.asString}.<ref>$name$sig"
       }
   }
 
