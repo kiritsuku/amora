@@ -455,8 +455,10 @@ final class ScalacConverter[G <: Global](val global: G) {
       s.addAttachments(a.If)
       found += s
 
+      scopes = scopes.inc
       body(s, cond)
       body(s, thenp)
+      scopes = scopes.dec
       body(owner, elsep)
     case Match(selector, cases) ⇒
       body(owner, selector)
