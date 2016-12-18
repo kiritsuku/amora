@@ -89,7 +89,7 @@ final class ScalacConverter[G <: Global](val global: G) {
   }
 
   /**
-   * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner.
+   * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner`.
    */
   private def mkDecl(sym: Symbol, owner: h.Hierarchy): h.Decl = {
     val name =
