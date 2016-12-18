@@ -455,10 +455,10 @@ final class ScalacConverter[G <: Global](val global: G) {
       s.addAttachments(a.If)
       found += s
 
-      scopes = scopes.inc
-      body(s, cond)
-      body(s, thenp)
-      scopes = scopes.dec
+      withNewScope {
+        body(s, cond)
+        body(s, thenp)
+      }
       body(owner, elsep)
     case Match(selector, cases) ⇒
       body(owner, selector)
@@ -591,10 +591,11 @@ final class ScalacConverter[G <: Global](val global: G) {
       decl.addAttachments(a.Function)
     setPosition(decl, t.pos)
     found += decl
-    scopes = scopes.add(decl).inc
-    typeRef(decl, t.tpt)
-    body(decl, t.rhs)
-    scopes = scopes.dec
+    scopes = scopes.add(decl)
+    withNewScope {
+      typeRef(decl, t.tpt)
+      body(decl, t.rhs)
+    }
   }
 
   private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
@@ -736,6 +737,12 @@ final class ScalacConverter[G <: Global](val global: G) {
       val offset = pos.start
       d.position = h.RangePosition(offset, offset)
     }
+  }
+
+  private def withNewScope(f: ⇒ Unit) = {
+    scopes = scopes.inc
+    f
+    scopes = scopes.dec
   }
 }
 
