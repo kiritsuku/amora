@@ -1312,4 +1312,23 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.f()Z", "X.f()Z.<if>", "X.f()Z.<if>.b", "X.f()Z.<if>.<ref>b",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
   }
+
+  @Test
+  def nested_if_scope() = {
+    convert("""
+      class X {
+        def f = {
+          if (true) {
+            val b = true
+            if (true) {
+              b
+            }
+          }
+          true
+        }
+      }
+    """) === Set(
+        "X", "X.f()Z", "X.f()Z.<if>", "X.f()Z.<if>.b", "X.f()Z.<if>.<if>", "X.f()Z.<if>.<ref>b",
+        "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
+  }
 }

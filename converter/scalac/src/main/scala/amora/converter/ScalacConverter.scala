@@ -9,13 +9,14 @@ import scala.tools.refactoring.util.SourceWithMarker.Movements
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+import amora.converter.{ protocol ⇒ h }
+import amora.converter.protocol.{ Attachment ⇒ a }
 
 final class ScalacConverter[G <: Global](val global: G) {
   import global.{ Try ⇒ TTry, _ }
-  import amora.converter.{ protocol ⇒ h }
-  import amora.converter.protocol.{ Attachment ⇒ a }
 
   private val found = ListBuffer[h.Hierarchy]()
+  private var scopes = Scopes()
 
   /**
    * Extracts the semantic information in `tree` and converts it into a
@@ -88,20 +89,22 @@ final class ScalacConverter[G <: Global](val global: G) {
     s"($paramsSig)$retSig"
   }
 
+  private def mkName(sym: Symbol): String = {
+    if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME)
+      "Function0"
+    else if (sym.name == nme.CONSTRUCTOR)
+      "this"
+    else if (sym.isLazyAccessor && sym.isArtifact)
+      decodedName(TermName(sym.name.decoded.trim.dropRight(nme.LAZY_LOCAL.length)))
+    else
+      decodedName(sym.name)
+  }
+
   /**
    * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner`.
    */
   private def mkDecl(sym: Symbol, owner: h.Hierarchy): h.Decl = {
-    val name =
-      if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME)
-        "Function0"
-      else if (sym.name == nme.CONSTRUCTOR)
-        "this"
-      else if (sym.isLazyAccessor && sym.isArtifact)
-        decodedName(TermName(sym.name.decoded.trim.dropRight(nme.LAZY_LOCAL.length)))
-      else
-        decodedName(sym.name)
-    val decl = h.Decl(name, owner)
+    val decl = h.Decl(mkName(sym), owner)
 
     def classify(sym: Symbol): Unit = {
       if (sym.isTrait)
@@ -221,18 +224,13 @@ final class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case _: Ident | _: TypeTree | _: This ⇒
-      def isInScope(o: h.Hierarchy): Boolean = o match {
-        case h.Root ⇒ false
-        case _: h.Scope ⇒ true
-        case _ ⇒ isInScope(o.owner)
-      }
       val calledOn =
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
           owner
-        else if (isInScope(owner))
-          owner
-        else
-          mkDeepDecl(t.symbol.owner)
+        else scopes.asDecl(mkName(t.symbol)) match {
+          case Some(decl) ⇒ decl.owner
+          case None ⇒ mkDeepDecl(t.symbol.owner)
+        }
       val rawRefToDecl = mkDecl(t.symbol, calledOn)
       val (n, refToDecl) = t match {
         // the names of self refs are not part of the tree. They are in the same
@@ -591,8 +589,10 @@ final class ScalacConverter[G <: Global](val global: G) {
       decl.addAttachments(a.Function)
     setPosition(decl, t.pos)
     found += decl
+    scopes = scopes.add(decl).inc
     typeRef(decl, t.tpt)
     body(decl, t.rhs)
+    scopes = scopes.dec
   }
 
   private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
@@ -734,5 +734,25 @@ final class ScalacConverter[G <: Global](val global: G) {
       val offset = pos.start
       d.position = h.RangePosition(offset, offset)
     }
+  }
+}
+
+final case class Scopes(level: Int = 0, scopes: Map[Int, Map[String, h.Decl]] = Map(0 → Map())) {
+  def asDecl(str: String): Option[h.Decl] = {
+    def find(level: Int): Option[h.Decl] = {
+      if (level < 0)
+        None
+      else
+        scopes(level).get(str).orElse(find(level - 1))
+    }
+    find(level)
+  }
+  def inc: Scopes =
+    copy(level = level + 1, scopes = scopes + ((level + 1) → Map()))
+  def dec: Scopes =
+    copy(level = level - 1, scopes = scopes - level)
+  def add(decl: h.Decl): Scopes = {
+    require(!scopes(level).contains(decl.name), s"Value `${decl.name}` already exists.")
+    copy(scopes = scopes + (level → (scopes(level) + (decl.name → decl))))
   }
 }
