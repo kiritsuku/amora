@@ -17,6 +17,7 @@ object Attachment {
   case object Param extends Attachment { override def asString = "param" }
   case object Ref extends Attachment { override def asString = "ref" }
   case object Function extends Attachment { override def asString = "function" }
+  case object If extends Attachment { override def asString = "if" }
 
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
 }

@@ -221,8 +221,15 @@ final class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case _: Ident | _: TypeTree | _: This ⇒
+      def isInScope(o: h.Hierarchy): Boolean = o match {
+        case h.Root ⇒ false
+        case _: h.Scope ⇒ true
+        case _ ⇒ isInScope(o.owner)
+      }
       val calledOn =
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
+          owner
+        else if (isInScope(owner))
           owner
         else
           mkDeepDecl(t.symbol.owner)
@@ -445,8 +452,13 @@ final class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
       mkRef(owner, t)
     case If(cond, thenp, elsep) ⇒
-      body(owner, cond)
-      body(owner, thenp)
+      val s = h.Scope(owner)
+      s.position = h.RangePosition(t.pos.start, t.pos.start+"if".length)
+      s.addAttachments(a.If)
+      found += s
+
+      body(s, cond)
+      body(s, thenp)
       body(owner, elsep)
     case Match(selector, cases) ⇒
       body(owner, selector)
@@ -709,7 +721,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     case EmptyTree                                     ⇒
   }
 
-  private def setPosition(d: h.Hierarchy, pos: Position, skipping: Movement = Movements.none) = {
+  private def setPosition(d: h.HierarchyWithName, pos: Position, skipping: Movement = Movements.none) = {
     if (pos.isRange) {
       import scala.tools.refactoring.util.SourceWithMarker.Movements._
       val mvnt = until(id, skipping)

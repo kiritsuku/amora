@@ -863,7 +863,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.<ref>b1", "X.<ref>b2",
-        "X.<ref>b3", "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
+        "X.<ref>b3", "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V",
+        "X.f()Z.<if>")
   }
 
   @Test
@@ -1293,5 +1294,22 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.Type", "X.Type.<tparam>A", "X.Type.<tparam>B",
         "X.Type.<ref>A", "X.Type.<ref>B",
         "scala.<ref>AnyRef", "X.this()V", "scala.Predef.<ref>Map")
+  }
+
+  @Test
+  def if_scope() = {
+    convert("""
+      class X {
+        def f = {
+          if (true) {
+            val b = true
+            b
+          }
+          true
+        }
+      }
+    """) === Set(
+        "X", "X.f()Z", "X.f()Z.<if>", "X.f()Z.<if>.b", "X.f()Z.<if>.<ref>b",
+        "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
   }
 }

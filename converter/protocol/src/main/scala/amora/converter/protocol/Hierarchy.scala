@@ -44,6 +44,11 @@ sealed trait Hierarchy {
           else
             s"${o.asString}.<ref>$name$sig"
       }
+    case Scope(parent) ⇒
+      val scope = attachments.collectFirst {
+        case Attachment.If ⇒ "<if>"
+      }.getOrElse(throw new IllegalStateException(s"Scope `$this` has no attachment."))
+      s"${parent.asString}.$scope"
   }
 
   def attachments: Set[Attachment] = _attachments
@@ -53,15 +58,20 @@ sealed trait Hierarchy {
   }
 
   /**
-   * The name of the hierarchy object.
-   */
-  def name: String
-
-  /**
    * The scope of [[name]], i.e. another hierarchy object in which [[name]] has
    * been defined and where it can be accessed.
    */
   def owner: Hierarchy
+}
+
+case class Scope(override val owner: Hierarchy) extends Hierarchy
+
+sealed trait HierarchyWithName extends Hierarchy {
+
+  /**
+   * The name of the hierarchy object.
+   */
+  def name: String
 }
 
 /**
@@ -70,7 +80,7 @@ sealed trait Hierarchy {
  * [[name]] overrides the super declaration. [[_owner]] is private to this class
  * and exists only because [[owner]] couldn't directly be overridden.
  */
-case class Decl(override val name: String, private val _owner: Hierarchy) extends Hierarchy {
+case class Decl(override val name: String, private val _owner: Hierarchy) extends HierarchyWithName {
   override def owner = _owner
 }
 
@@ -81,7 +91,7 @@ case class Decl(override val name: String, private val _owner: Hierarchy) extend
  * this reference points to. [[owner]] is the declaration, which contains [[name]].
  * [[qualifier]] specifies how [[name]] refers to [[refToDecl]].
  */
-case class Ref(override val name: String, refToDecl: Hierarchy, override val owner: Hierarchy, qualifier: Hierarchy) extends Hierarchy
+case class Ref(override val name: String, refToDecl: Hierarchy, override val owner: Hierarchy, qualifier: Hierarchy) extends HierarchyWithName
 
 /**
  * The root or bottom of the hierarchy. The owner refers to itself.
