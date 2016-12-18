@@ -100,41 +100,40 @@ final class ScalacConverter[G <: Global](val global: G) {
       decodedName(sym.name)
   }
 
+  private def classifyDecl(sym: Symbol, decl: h.Decl): Unit = {
+    if (sym.isTrait)
+      decl.addAttachments(a.Trait)
+    else if (sym.isClass) {
+      decl.addAttachments(a.Class)
+      if (sym.isAbstract)
+        decl.addAttachments(a.Abstract)
+    }
+    else if (sym.isModule && !sym.hasPackageFlag)
+      decl.addAttachments(a.Object)
+    else if (sym.isLazy)
+      decl.addAttachments(a.Lazy, a.Val)
+    else if (sym.isMethod) {
+      if (sym.asMethod.isGetter)
+        classifyDecl(sym.accessed, decl)
+      else
+        decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
+    }
+    else if (sym.isTypeParameterOrSkolem)
+      decl.addAttachments(a.TypeParam)
+    else if (sym.isParameter || sym.isParamAccessor)
+      decl.addAttachments(if (sym.isVar) a.Var else a.Val, a.Param)
+    else if (sym.isVal)
+      decl.addAttachments(a.Val)
+    else if (sym.isVar)
+      decl.addAttachments(a.Var)
+  }
+
   /**
    * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner`.
    */
   private def mkDecl(sym: Symbol, owner: h.Hierarchy): h.Decl = {
     val decl = h.Decl(mkName(sym), owner)
-
-    def classify(sym: Symbol): Unit = {
-      if (sym.isTrait)
-        decl.addAttachments(a.Trait)
-      else if (sym.isClass) {
-        decl.addAttachments(a.Class)
-        if (sym.isAbstract)
-          decl.addAttachments(a.Abstract)
-      }
-      else if (sym.isModule && !sym.hasPackageFlag)
-        decl.addAttachments(a.Object)
-      else if (sym.isLazy)
-        decl.addAttachments(a.Lazy, a.Val)
-      else if (sym.isMethod) {
-        if (sym.asMethod.isGetter)
-          classify(sym.accessed)
-        else
-          decl.addAttachments(a.Def, a.JvmSignature(jvmSignature(sym)))
-      }
-      else if (sym.isTypeParameterOrSkolem)
-        decl.addAttachments(a.TypeParam)
-      else if (sym.isParameter || sym.isParamAccessor)
-        decl.addAttachments(if (sym.isVar) a.Var else a.Val, a.Param)
-      else if (sym.isVal)
-        decl.addAttachments(a.Val)
-      else if (sym.isVar)
-        decl.addAttachments(a.Var)
-    }
-
-    classify(sym)
+    classifyDecl(sym, decl)
     decl
   }
 
@@ -224,10 +223,15 @@ final class ScalacConverter[G <: Global](val global: G) {
         found += ref
       ref
     case _: Ident | _: TypeTree | _: This ⇒
+      def mkIdent = {
+        val d = h.Decl(mkName(t.symbol), h.Root)
+        classifyDecl(t.symbol, d)
+        d.asString
+      }
       val calledOn =
         if (t.symbol.owner.isAnonymousFunction || t.symbol.owner.isLocalDummy)
           owner
-        else scopes.asDecl(mkName(t.symbol)) match {
+        else scopes.asDecl(mkIdent) match {
           case Some(decl) ⇒ decl.owner
           case None ⇒ mkDeepDecl(t.symbol.owner)
         }
@@ -623,17 +627,19 @@ final class ScalacConverter[G <: Global](val global: G) {
       else
         setPosition(m, t.pos)
       found += m
-      tparams foreach (typeParamDef(m, _))
-      vparamss foreach (_ foreach (valDef(m, _)))
-      val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
-      if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
-        typeRef(m, tpt)
-      // not sure if this condition is the right thing to do. It avoids to create
-      // refs to the default constructor `java.lang.Object.<ref>this()V`. The
-      // default constructor of the super class is always called implicitly but
-      // I'm not sure if we want to highlight this fact in our index.
-      if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
-        body(m, rhs)
+      withNewScope {
+        tparams foreach (typeParamDef(m, _))
+        vparamss foreach (_ foreach (valDef(m, _)))
+        val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
+        if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
+          typeRef(m, tpt)
+        // not sure if this condition is the right thing to do. It avoids to create
+        // refs to the default constructor `java.lang.Object.<ref>this()V`. The
+        // default constructor of the super class is always called implicitly but
+        // I'm not sure if we want to highlight this fact in our index.
+        if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
+          body(m, rhs)
+      }
     }
 
     def lazyDefDef() = {
@@ -761,7 +767,12 @@ final case class Scopes(level: Int = 0, scopes: Map[Int, Map[String, h.Decl]] = 
   def dec: Scopes =
     copy(level = level - 1, scopes = scopes - level)
   def add(decl: h.Decl): Scopes = {
-    require(!scopes(level).contains(decl.name), s"Value `${decl.name}` already exists.")
-    copy(scopes = scopes + (level → (scopes(level) + (decl.name → decl))))
+    val ident = {
+      val d = h.Decl(decl.name, h.Root)
+      d.addAttachments(decl.attachments.toSeq: _*)
+      d.asString
+    }
+    require(!scopes(level).contains(ident), s"Value `$ident` already exists.")
+    copy(scopes = scopes + (level → (scopes(level) + (ident → decl))))
   }
 }
