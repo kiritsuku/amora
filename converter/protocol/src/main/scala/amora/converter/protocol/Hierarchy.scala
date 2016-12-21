@@ -44,11 +44,8 @@ sealed trait Hierarchy {
           else
             s"${o.asString}.<ref>$name$sig"
       }
-    case Scope(parent) ⇒
-      val scope = attachments.collectFirst {
-        case Attachment.If ⇒ "<if>"
-      }.getOrElse(throw new IllegalStateException(s"Scope `$this` has no attachment."))
-      s"${parent.asString}.$scope"
+    case s @ Scope(parent) ⇒
+      s"${parent.asString}.${s.attachmentAsString}"
   }
 
   def attachments: Set[Attachment] = _attachments
@@ -64,7 +61,13 @@ sealed trait Hierarchy {
   def owner: Hierarchy
 }
 
-case class Scope(override val owner: Hierarchy) extends Hierarchy
+case class Scope(override val owner: Hierarchy) extends Hierarchy {
+  def attachmentAsString = {
+    attachments.collectFirst {
+      case Attachment.If ⇒ "<if>"
+    }.getOrElse(throw new IllegalStateException(s"Scope `$this` has no attachment."))
+  }
+}
 
 sealed trait HierarchyWithName extends Hierarchy {
 

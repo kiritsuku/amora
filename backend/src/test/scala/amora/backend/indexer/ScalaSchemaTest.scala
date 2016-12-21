@@ -505,10 +505,11 @@ class ScalaSchemaTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
+      prefix a:<http://amora.center/kb/amora/Schema/>
       prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
       prefix def:<http://amora.center/kb/amora/Schema/Def/>
       select ?name where {
-        [ref:owner [a def:]] ref:name ?name .
+        [a:owner+ [a def:]] ref:name ?name .
       }
       order by ?name
     """) === Seq(

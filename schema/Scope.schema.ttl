@@ -1,0 +1,36 @@
+# Schema file for class "Scope"
+
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+@prefix amora: <http://amora.center/kb/amora/Schema/>
+@prefix schema: <http://amora.center/kb/amora/Schema/Scope/>
+
+schema:
+  amora:schemaName "Scope" ;
+  amora:schemaAuthor "amora" ;
+  amora:schemaId schema:owner ;
+  amora:schemaId schema:flag ;
+  amora:schemaId schema:posStart ;
+  amora:schemaId schema:posEnd ;
+.
+schema:owner
+  a rdfs:Property ;
+  amora:schemaName "owner" ;
+.
+schema:flag
+  a rdfs:Property ;
+  amora:schemaName "flag" ;
+.
+schema:posStart
+  a rdfs:Property ;
+  amora:schemaName "posStart" ;
+.
+schema:posEnd
+  a rdfs:Property ;
+  amora:schemaName "posEnd" ;
+.
+
+schema:owner rdfs:subPropertyOf amora:owner .
+schema:flag rdfs:subPropertyOf amora:flag .
+schema:posStart rdfs:subPropertyOf amora:posStart .
+schema:posEnd rdfs:subPropertyOf amora:posEnd .
+

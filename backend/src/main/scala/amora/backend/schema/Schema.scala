@@ -356,6 +356,8 @@ object Schema {
             addData(path, s"$tpe:owner", s"""<$ownerPath>""")
 
             loop(owner)
+          case owner: Scope ⇒
+            loop(owner.owner)
           case _: Ref ⇒
         }
 
@@ -389,8 +391,43 @@ object Schema {
             addData(path, "Ref:owner", s"""<$ownerPath>""")
 
             loop(owner)
+          case owner: Scope ⇒
+            owner.owner match {
+              case decl: Decl ⇒
+                val ownerPath = mkOwnerPath(ref, decl) + "/" + encode(owner.attachmentAsString)
+                addData(path, "Ref:owner", s"""<$ownerPath>""")
+              case _ ⇒
+                ???
+            }
+            loop(owner.owner)
           case _: Ref ⇒
         }
+      case scope: Scope ⇒
+        val path = scope.owner match {
+          case decl: Decl ⇒
+            mkFullPath(decl) + "/" + encode(scope.attachmentAsString)
+          case _ ⇒
+            ???
+        }
+        val schemaPath = s"http://amora.center/kb/amora/Schema/Scope"
+        addPrefix("Scope", schemaPath+"/")
+        addData(path, "a", "Scope:")
+
+        scope.position match {
+          case RangePosition(start, end) ⇒
+            addData(path, "Scope:posStart", start.toString)
+            addData(path, "Scope:posEnd", end.toString)
+          case _ ⇒
+        }
+        scope.owner match {
+          case decl: Decl ⇒
+            val ownerPath = mkFullPath(decl)
+            addData(path, "Scope:owner", s"""<$ownerPath>""")
+          case _ ⇒
+            ???
+        }
+
+        loop(scope.owner)
     }
 
     hierarchies foreach loop
@@ -580,7 +617,7 @@ object Schema {
     val ownerPath = owner match {
       case Root ⇒
         ""
-      case _: Decl ⇒
+      case _: Decl | _: Scope ⇒
         encode(owner.asString).replace('.', '/')
       case _: Ref ⇒
         val path = encode(owner.asString).replace('.', '/')
