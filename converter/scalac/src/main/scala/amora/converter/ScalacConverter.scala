@@ -384,8 +384,10 @@ final class ScalacConverter[G <: Global](val global: G) {
     case _: Select ⇒
       mkRef(owner, t)
     case Function(vparams, body) ⇒
-      vparams foreach (valDef(owner, _, isFunction = true))
-      expr(owner, body)
+      withNewScope {
+        vparams foreach (valDef(owner, _, isFunction = true))
+        expr(owner, body)
+      }
     case Bind(_, body) ⇒
       val decl = mkDecl(t.symbol, owner)
       setPosition(decl, t.pos)
