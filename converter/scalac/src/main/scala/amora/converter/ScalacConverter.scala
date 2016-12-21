@@ -434,8 +434,10 @@ final class ScalacConverter[G <: Global](val global: G) {
     case t: TypeDef ⇒
       typeDef(owner, t)
     case Block(stats, expr) ⇒
-      stats foreach (body(owner, _))
-      body(owner, expr)
+      withNewScope {
+        stats foreach (body(owner, _))
+        body(owner, expr)
+      }
     case t: Literal ⇒
       classOfConst(owner, t)
     case Assign(lhs, rhs) ⇒
