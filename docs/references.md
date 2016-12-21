@@ -102,3 +102,8 @@ This document contains a list of references, related projects, articles, blog po
 - Web technologies:
   - [SPARQL](https://www.w3.org/TR/rdf-sparql-query/)
   - [JSON-LD](https://www.w3.org/TR/json-ld/)
+
+- NLP:
+  - [Quepy](https://github.com/machinalis/quepy) (A python framework to transform natural language questions to queries in a database query language)
+  - [Word Lists](http://www.english-grammar-revolution.com/word-lists.html) (Word Lists: The Eight Parts of Speech)
+  - [the - definite article](http://www.dictionary.com/browse/the)
