@@ -1,5 +1,6 @@
 # Amora
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/3e318e6272634762a7d3de5138c690ef)](https://www.codacy.com/app/mail_2843/amora?utm_source=github.com&utm_medium=referral&utm_content=sschaef/amora&utm_campaign=badger)
 [![Join the chat at https://gitter.im/sschaef/amora](https://badges.gitter.im/sschaef/amora.svg)](https://gitter.im/sschaef/amora?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 Amora is a semantic search engine where anyone can define anything anywhere - a technical prowess that is achieved by relying on semantic web technologies. Everything in Amora is [Linked Data](https://en.wikipedia.org/wiki/Linked_data) or in other words a distributed key-value store where every key-value pair is associated with an unique identifier in form of an URI. Amora was created to provide an IDE and tooling research platform whose ambitious goal it is to supersede existing tools by a new being.
