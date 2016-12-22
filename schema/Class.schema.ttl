@@ -7,7 +7,6 @@
 
 # schema data
 schema:
-  a rdfs:Class ;
   amora:schemaName "Class" ;
   amora:schemaAuthor "amora" ;
   amora:schemaId schema:name ;
