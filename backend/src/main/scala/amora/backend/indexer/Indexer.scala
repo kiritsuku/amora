@@ -262,7 +262,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def lookupVerb(verb: Verb) = {
-      if (verb.word == "list")
+      if (verb.word == "list" || verb.word == "show")
         ()
       else
         ???
