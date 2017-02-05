@@ -68,8 +68,15 @@ final class ResultSetRow(val row: QuerySolution) {
   def byte(varName: String): Byte =
     get(varName).asLiteral.getByte
 
-  def uri(varName: String): String =
-    get(varName).toString
+  def uri(varName: String): String = {
+    val v = get(varName)
+    if (v.isLiteral())
+      throw new IllegalStateException(s"Value of variable name `$varName` is not an URI, it is of type: ${v.asLiteral().getDatatypeURI}.")
+    if (v.isAnon())
+      s"<_:$v>"
+    else
+      s"<$v>"
+  }
 
   def literal(varName: String): Literal = {
     val v = get(varName)
@@ -96,4 +103,11 @@ final case class Literal(literal: JLiteral) {
   def float: Float = literal.getFloat
   def char: Char = literal.getChar
   def byte: Byte = literal.getByte
+
+  def stringOpt: Option[String] =
+    if (literal.getDatatype.getURI() == "http://www.w3.org/2001/XMLSchema#string")
+      Some(string)
+    else
+      None
+
 }

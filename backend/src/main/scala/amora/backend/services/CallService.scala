@@ -51,10 +51,10 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     val (serviceMethod, serviceClassName) = sparqlQuery"""
       prefix service: <http://amora.center/kb/Schema/Service/>
       select * where {
-        <$serviceId> service:method [
+        $serviceId service:method [
           service:name ?name
         ] .
-        <$serviceId> service:name ?className .
+        $serviceId service:name ?className .
       }
     """.runOnModel(serviceModel).map { row ⇒
       row.string("name") → row.string("className")
@@ -64,7 +64,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       val name = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
-          <_:$paramId> service:name ?name .
+          $paramId service:name ?name .
         }
       """.runOnModel(reqModel).map { row ⇒
         row.string("name")
@@ -74,7 +74,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
         prefix service: <http://amora.center/kb/Schema/Service/>
         prefix cu: <http://amora.center/kb/Schema/CompilationUnit/>
         select * where {
-          <_:$paramId> service:value [
+          $paramId service:value [
             cu:fileName ?fileName ;
             cu:source ?source ;
           ] .
@@ -90,7 +90,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       val requestParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
-          <_:$paramId>
+          $paramId
             service:name ?name ;
             service:value ?value ;
           .
@@ -102,7 +102,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       val serviceParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/>
         select * where {
-          <$serviceId> service:method [
+          $serviceId service:method [
             service:param [
               service:name ?param ;
               a ?tpe ;
@@ -118,9 +118,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           // TODO handle ???
           val tpe = serviceParam.getOrElse(name, ???)
           name → (tpe match {
-            case "http://www.w3.org/2001/XMLSchema#integer" ⇒
+            case "<http://www.w3.org/2001/XMLSchema#integer>" ⇒
               Param(name, classOf[Int], value.int)
-            case "http://www.w3.org/2001/XMLSchema#string" ⇒
+            case "<http://www.w3.org/2001/XMLSchema#string>" ⇒
               Param(name, classOf[String], value.string)
           })
       }
@@ -130,7 +130,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       val requestParam = sparqlQuery"""
         prefix service: <http://amora.center/kb/Schema/Service/>
         select ?p (isLiteral(?value) as ?isLit) where {
-          <$serviceRequest> service:method/service:param ?p .
+          $serviceRequest service:method/service:param ?p .
           ?p
             service:name ?name ;
             service:value ?value ;
@@ -153,7 +153,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     val hasBuild = sparqlQuery"""
       prefix service: <http://amora.center/kb/Schema/Service/>
       ask {
-        <$serviceId> service:build ?build .
+        $serviceId service:build ?build .
       }
     """.askOnModel(serviceModel)
 
@@ -178,7 +178,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       prefix service:<http://amora.center/kb/Schema/Service/>
       prefix Build:<http://amora.center/kb/amora/Schema/Build/>
       select * where {
-        <$serviceId> service:build [
+        $serviceId service:build [
           Build:name      ?buildName ;
           Build:version   ?buildVersion ;
         ] .
@@ -193,7 +193,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       prefix Build:<http://amora.center/kb/amora/Schema/Build/>
       prefix ServiceDependency:<http://amora.center/kb/amora/Schema/ServiceDependency/>
       select * where {
-        <$serviceId> service:build/Build:dependency [
+        $serviceId service:build/Build:dependency [
           a                   ServiceDependency: ;
           service:serviceId   ?id ;
         ] .
@@ -211,7 +211,7 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       prefix Build:<http://amora.center/kb/amora/Schema/Build/>
       prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
       select * where {
-        <$serviceId> service:build/Build:dependency [
+        $serviceId service:build/Build:dependency [
           a                       ?tpe ;
           Artifact:organization   ?organization ;
           Artifact:name           ?name ;
@@ -220,9 +220,9 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
       }
     """.runOnModel(serviceModel).map { row ⇒
       val tpe = row.uri("tpe") match {
-        case "http://amora.center/kb/amora/Schema/ScalaDependency/" =>
+        case "<http://amora.center/kb/amora/Schema/ScalaDependency/>" =>
           ScalaDependency
-        case "http://amora.center/kb/amora/Schema/MavenDependency/" =>
+        case "<http://amora.center/kb/amora/Schema/MavenDependency/>" =>
           MavenDependency
       }
       val organization = row.string("organization")
@@ -268,10 +268,10 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
           prefix Build:<http://amora.center/kb/amora/Schema/Build/>
           prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
           select * where {
-            <$serviceId> service:build/Build:outputFolder ?out .
+            $serviceId service:build/Build:outputFolder ?out .
           }
         """.runOnModel(serviceModel).map { row ⇒
-          row.uri("out")
+          row.string("out")
         }.toList
         val absoluteOutputFolders = relativeOutputFolders.map { out ⇒
           val isAbsolute = out.startsWith("/")
@@ -296,10 +296,10 @@ class CallService(override val uri: String, override val system: ActorSystem) ex
     val r = sparqlRequest(s"""
       prefix service:<http://amora.center/kb/Schema/Service/>
       select * where {
-        <$serviceId> service:path ?path .
+        $serviceId service:path ?path .
       }
     """)
-    new File(r.map(_.uri("path")).head)
+    new File(r.map(_.string("path")).head)
   }
 
   private def handleBuild(serviceLogger: Logger, buildName: String, buildDependencies: Seq[BuildDependency]) = {

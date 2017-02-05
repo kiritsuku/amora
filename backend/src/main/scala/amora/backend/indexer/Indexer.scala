@@ -202,7 +202,7 @@ class Indexer(modelName: String) extends Log4jLogging {
         prefix Schema:<http://amora.center/kb/amora/Schema/>
         select ?schema ?name where {
           [Semantics:word "${noun.word}"] Semantics:association ?schema .
-          <$classSchema> Schema:schemaId ?schema .
+          $classSchema Schema:schemaId ?schema .
           ?schema Schema:schemaName ?name .
         }
       """
@@ -210,7 +210,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
         (r.uri("schema"), r.string("name"))
       }.head
-      addData(id, s"<$schema>", s"?$name")
+      addData(id, schema, s"?$name")
       addSelect(name)
     }
 
@@ -249,7 +249,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
     def lookupInnerPreposition(idInner: String, schemaInner: String, pp: PrepositionPhrase): Unit = {
       val (id, schema) = lookupNounAsClass(pp.noun)
-      addData(idInner, s"<${schemaInner}owner>", s"?$id")
+      addData(idInner, s"${schemaInner.init}owner>", s"?$id")
       pp.remaining match {
         case Some(n: Noun) ⇒
           lookupGrammar(id, schema, n.original)
@@ -270,11 +270,11 @@ class Indexer(modelName: String) extends Log4jLogging {
 
     def lookupGrammar(id: String, schema: String, word: String) = {
       schema match {
-        case "http://amora.center/kb/amora/Schema/Class/" ⇒
+        case "<http://amora.center/kb/amora/Schema/Class/>" ⇒
           if (NlParser.isScalaIdent(word)) {
             addData(id, "<http://amora.center/kb/amora/Schema/Class/name>", "\"" + word + "\"")
           }
-        case "http://amora.center/kb/amora/Schema/Def/" ⇒
+        case "<http://amora.center/kb/amora/Schema/Def/>" ⇒
           if (NlParser.isScalaIdent(word)) {
             addData(id, "<http://amora.center/kb/amora/Schema/Def/name>", "\"" + word + "\"")
           }
@@ -291,7 +291,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       val sb = new StringBuilder
       prefixe.toList.sortBy(_._1)(stringOrdering) foreach {
         case (name, url) ⇒
-          sb append "prefix " append name append ":<" append url append ">\n"
+          sb append "prefix " append name append ":" append url append "\n"
       }
       sb append "select"
       selects foreach (select ⇒ sb append " ?" append select)
