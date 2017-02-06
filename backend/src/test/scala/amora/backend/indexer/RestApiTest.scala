@@ -393,10 +393,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  def nlqRequest(query: String): Seq[String] = {
-    testReq(post("http://amora.center/nlq", HttpEntity(ContentTypes.`text/plain(UTF-8)`, query), header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
+  def nlqRequest(query: String): NlqResponse = {
+    testReq(post("http://amora.center/nlq", HttpEntity(ContentTypes.`text/plain(UTF-8)`, query), header = Accept(CustomContentTypes.`text/turtle`))) {
       checkStatus()
-      resultSetAsList(respAsResultSet())
+      NlqResponse(new SparqlModel(fillModel(ModelFactory.createDefaultModel(), respAsString)))
     }
   }
 
@@ -457,5 +457,42 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   @After
   def waitForTermination(): Unit = {
     Await.ready(system.terminate(), Duration.Inf)
+  }
+}
+
+case class NlqResponse(model: SparqlModel) {
+  import amora.api._
+
+  def nodes: Seq[Node] = {
+    sparqlQuery"""
+      prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/>
+      prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/>
+      select ?node ?value where {
+        [a VResponse:] VResponse:graph ?node .
+        ?node VGraph:value ?value .
+      }
+    """.runOnModel(model).map { r ⇒
+      Node(r.literal("value").stringOpt.getOrElse(???), r.uri("node"))
+    }.toList
+  }
+
+  def sortedAsList: Seq[String] = {
+    def loop(n: Node): Seq[String] =
+      n.value +: n.edges.flatMap(loop)
+    nodes.flatMap(loop).sorted
+  }
+
+  case class Node(value: String, uri: String) {
+    def edges: Seq[Node] = {
+      sparqlQuery"""
+        prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/>
+        select * where {
+          $uri VGraph:edges ?edge .
+          ?edge VGraph:value ?value .
+        }
+      """.runOnModel(model).map { r ⇒
+        Node(r.literal("value").stringOpt.getOrElse(???), r.uri("edge"))
+      }.toList
+    }
   }
 }

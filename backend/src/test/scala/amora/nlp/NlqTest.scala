@@ -17,7 +17,7 @@ class NlqTest extends RestApiTest {
         class B
         class C
       """)
-    nlqRequest("list classes") === Seq(
+    nlqRequest("list classes").sortedAsList === Seq(
       "http://amora.center/kb/amora/Class/p/o/n/v1/A",
       "http://amora.center/kb/amora/Class/p/o/n/v1/B",
       "http://amora.center/kb/amora/Class/p/o/n/v1/C"
@@ -32,7 +32,7 @@ class NlqTest extends RestApiTest {
         class B
         trait C
       """)
-    nlqRequest("list traits") === Seq(
+    nlqRequest("list traits").sortedAsList === Seq(
       "http://amora.center/kb/amora/Trait/p/o/n/v1/A",
       "http://amora.center/kb/amora/Trait/p/o/n/v1/C"
     )
@@ -46,7 +46,7 @@ class NlqTest extends RestApiTest {
         class B
         class C
       """)
-    nlqRequest("list names of classes") === Seq(
+    nlqRequest("list names of classes").sortedAsList === Seq(
       "A",
       "B",
       "C"
@@ -65,7 +65,7 @@ class NlqTest extends RestApiTest {
           def b2 = 0
         }
       """)
-    nlqRequest("list names of methods").sorted === Seq(
+    nlqRequest("list names of methods").sortedAsList === Seq(
       "a",
       "b1",
       "b2",
@@ -86,7 +86,7 @@ class NlqTest extends RestApiTest {
           def b2 = 0
         }
       """)
-    nlqRequest("list names of defs").sorted === Seq(
+    nlqRequest("list names of defs").sortedAsList === Seq(
       "a",
       "b1",
       "b2",
@@ -107,7 +107,7 @@ class NlqTest extends RestApiTest {
           def b2 = 0
         }
       """)
-    nlqRequest("list class A") === Seq(
+    nlqRequest("list class A").sortedAsList === Seq(
       "http://amora.center/kb/amora/Class/p/o/n/v1/A"
     )
   }
@@ -124,7 +124,7 @@ class NlqTest extends RestApiTest {
           def b2 = 0
         }
       """)
-    nlqRequest("list name of class A").sorted === Seq(
+    nlqRequest("list name of class A").sortedAsList === Seq(
       "A"
     )
   }
@@ -141,7 +141,7 @@ class NlqTest extends RestApiTest {
           def b2 = 0
         }
       """)
-    nlqRequest("list names of methods of class B").sorted === Seq(
+    nlqRequest("list names of methods of class B").sortedAsList === Seq(
       "b1",
       "b2",
       "this"
@@ -161,7 +161,7 @@ class NlqTest extends RestApiTest {
           def b = 0
         }
       """)
-    nlqRequest("list names of methods of method a").sorted === Seq(
+    nlqRequest("list names of methods of method a").sortedAsList === Seq(
       "n1",
       "n2"
     )
@@ -178,7 +178,7 @@ class NlqTest extends RestApiTest {
           lazy val d = 0
         }
       """)
-    nlqRequest("list names of declarations").sorted === Seq(
+    nlqRequest("list names of declarations").sortedAsList === Seq(
       "A",
       "a",
       "b",
@@ -199,7 +199,7 @@ class NlqTest extends RestApiTest {
           lazy val d = 0
         }
       """)
-    nlqRequest("list names of decls").sorted === Seq(
+    nlqRequest("list names of decls").sortedAsList === Seq(
       "A",
       "a",
       "b",
@@ -220,7 +220,28 @@ class NlqTest extends RestApiTest {
           lazy val d = 0
         }
       """)
-    nlqRequest("show names of decls").sorted === Seq(
+    nlqRequest("show names of decls").sortedAsList === Seq(
+      "A",
+      "a",
+      "b",
+      "c",
+      "d",
+      "this"
+    )
+  }
+
+  @Test
+  def show_decls_as_list(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          val a = 0
+          var b = 0
+          def c = 0
+          lazy val d = 0
+        }
+      """)
+    nlqRequest("show names of decls as list").sortedAsList === Seq(
       "A",
       "a",
       "b",

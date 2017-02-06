@@ -70,7 +70,7 @@ class IndexerActor extends Actor with ActorLogging {
     }
   }
 
-  def handleNlq(query: String): ResultSetRewindable = {
+  def handleNlq(query: String): String = {
     log.info(s"Handle natural language query:\n$query")
     indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒

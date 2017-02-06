@@ -1,5 +1,7 @@
 @prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
+@prefix Visualization:<http://amora.center/kb/amora/Schema/Visualization/>
 @prefix Data:<http://amora.center/kb/amora/Semantics/>
+@prefix VData:<http://amora.center/kb/amora/Visualization/>
 
 Data:class
   a Semantics: ;
@@ -55,4 +57,8 @@ Data:decl-name
   a Semantics: ;
   Semantics:word "name" ;
   Semantics:association <http://amora.center/kb/amora/Schema/Decl/name> ;
+.
+VData:list
+  a Visualization: ;
+  Visualization:word "list" ;
 .

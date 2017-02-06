@@ -23,6 +23,7 @@ import org.apache.jena.update.UpdateAction
 import amora.backend.Log4jLogging
 import amora.nlp._
 import spray.json._
+import amora.api.SparqlResultSet
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -169,12 +170,13 @@ class Indexer(modelName: String) extends Log4jLogging {
     model.read(in, /* base = */ null, "TURTLE")
   }
 
-  def askNlq(model: Model, query: String): ResultSetRewindable = {
+  def askNlq(model: Model, query: String): String = {
     val s = NlParser.parseQuery(query)
 
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, Set[String]]]()
     var selects = Set[String]()
+    var visualization = "list"
 
     def addPrefix(name: String, url: String) = {
       if (!prefixe.contains(name))
@@ -234,6 +236,22 @@ class Indexer(modelName: String) extends Log4jLogging {
       (selectId, schema)
     }
 
+    def lookupVisualization(noun: Noun) = {
+      import amora.api._
+      val q = sparqlQuery"""
+        prefix Visualization:<http://amora.center/kb/amora/Schema/Visualization/>
+        select ?v where {
+          ?v Visualization:word "${noun.word}" .
+        }
+      """
+      log.info(s"Ask for visualization information about `${noun.word}`:\n${q.query}")
+      // right now we only need to check if the visualization exists
+      val _ = q.runOnModel(new SparqlModel(model)).map { r ⇒
+        r.uri("v")
+      }.head
+      visualization = noun.word
+    }
+
     def lookupPreposition(property: Noun, pp: PrepositionPhrase) = {
       val (id, schema) = lookupNounAsClass(pp.noun)
       lookupNounAsProperty(property, id, schema)
@@ -241,7 +259,12 @@ class Indexer(modelName: String) extends Log4jLogging {
         case Some(n: Noun) ⇒
           lookupGrammar(id, schema, n.original)
         case Some(outer: PrepositionPhrase) ⇒
-          lookupInnerPreposition(id, schema, outer)
+          outer.preposition match {
+            case Preposition("as") ⇒
+              lookupVisualization(outer.noun)
+            case _ ⇒
+              lookupInnerPreposition(id, schema, outer)
+          }
         case None ⇒
         case node ⇒
           throw new IllegalStateException(s"Unknown tree node $node.")
@@ -326,7 +349,29 @@ class Indexer(modelName: String) extends Log4jLogging {
 
     val sparqlQuery = mkSparql
     log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
-    withQueryService(model, sparqlQuery)
+    val rs = withQueryService(model, sparqlQuery)
+    val srs = new SparqlResultSet(rs)
+
+    def mkTurtle = {
+      s"""
+        @prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/> .
+        @prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/> .
+        <#this>
+          a VResponse: ;
+          VResponse:graph ${
+            srs.map { rs ⇒
+              val v = rs.row.get(selects.head)
+              val str = if (v.isLiteral()) v.asLiteral().getString else v.toString()
+              s"""[
+            VGraph:value "$str" ;
+          ]"""
+            }.mkString(" , ")
+          } ;
+        .
+      """
+    }
+
+    mkTurtle
   }
 
   def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
