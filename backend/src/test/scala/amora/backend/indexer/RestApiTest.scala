@@ -476,6 +476,17 @@ case class NlqResponse(model: SparqlModel) {
     }.toList
   }
 
+  def renderAsString: String = {
+    val sb = new StringBuilder
+    def renderNode(level: Int)(n: Node): Unit = {
+      sb append " "*level append "- " append n.value append "\n"
+      n.edges.sortBy(_.value) foreach renderNode(level + 1)
+    }
+    val ns = nodes.sortBy(_.value)
+    ns foreach renderNode(0)
+    sb.toString()
+  }
+
   def sortedAsList: Seq[String] = {
     def loop(n: Node): Seq[String] =
       n.value +: n.edges.flatMap(loop)

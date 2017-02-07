@@ -9,6 +9,12 @@ import amora.converter.protocol.Project
 class NlqTest extends RestApiTest {
   import amora.TestUtils._
 
+  private def fmt(str: String): String = {
+    val lines = str.split("\n")
+    val indent = lines.dropWhile(_.isEmpty()).head.takeWhile(_.isWhitespace).size
+    lines.map(_.drop(indent)).mkString("\n").trim + "\n"
+  }
+
   @Test
   def list_classes(): Unit = {
     indexData(Artifact(Project("p"), "o", "n", "v1"),
@@ -241,13 +247,15 @@ class NlqTest extends RestApiTest {
           lazy val d = 0
         }
       """)
-    nlqRequest("show names of decls as list").sortedAsList === Seq(
-      "A",
-      "a",
-      "b",
-      "c",
-      "d",
-      "this"
+    nlqRequest("show names of decls as list").renderAsString === fmt("""
+      - A
+      - a
+      - b
+      - c
+      - d
+      - this
+    """)
+  }
     )
   }
 }
