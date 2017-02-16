@@ -39,6 +39,12 @@ final class SparqlResultSet(val resultSet: ResultSetRewindable) {
     resultSet.reset()
     ret
   }
+
+  def foreach(f: ResultSetRow ⇒ Unit): Unit = {
+    import scala.collection.JavaConverters._
+    resultSet.asScala.foreach(row ⇒ f(new ResultSetRow(row)))
+    resultSet.reset()
+  }
 }
 
 final class SparqlModel(val model: Model)

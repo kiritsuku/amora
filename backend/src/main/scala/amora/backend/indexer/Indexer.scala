@@ -20,10 +20,10 @@ import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
+import amora.api.SparqlResultSet
 import amora.backend.Log4jLogging
 import amora.nlp._
 import spray.json._
-import amora.api.SparqlResultSet
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -353,22 +353,25 @@ class Indexer(modelName: String) extends Log4jLogging {
     val srs = new SparqlResultSet(rs)
 
     def mkTurtle = {
-      s"""
-        @prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/> .
-        @prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/> .
-        <#this>
-          a VResponse: ;
-          VResponse:graph ${
-            srs.map { rs ⇒
-              val v = rs.row.get(selects.head)
-              val str = if (v.isLiteral()) v.asLiteral().getString else v.toString()
-              s"""[
-            VGraph:value "$str" ;
-          ]"""
-            }.mkString(" , ")
-          } ;
-        .
-      """
+      val sb = new StringBuilder
+      sb append "@prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/> .\n"
+      sb append "@prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/> .\n"
+      sb append "<#this>\n"
+      sb append "  a VResponse: ;\n"
+      visualization match {
+        case "list" ⇒
+          sb append "  VResponse:graph"
+          srs foreach { rs ⇒
+            val v = rs.row.get(selects.head)
+            val str = if (v.isLiteral()) v.asLiteral().getString else v.toString()
+            sb append " [\n    VGraph:value \"" append str append "\" ;\n  ],"
+          }
+          sb append " [] ;\n"
+      }
+      sb append ".\n"
+      val vresp = sb.toString()
+      log.info(s"Visualization response for natural language query `$query`:\n$vresp")
+      vresp
     }
 
     mkTurtle
