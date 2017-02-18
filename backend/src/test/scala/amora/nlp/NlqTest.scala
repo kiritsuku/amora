@@ -285,6 +285,49 @@ class NlqTest extends RestApiTest {
         - this
     """)
   }
+
+  @Test
+  def do_not_break_nesting_for_complex_tree_visualization(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def x = {
+            def x = 0
+            def a = x
+            def b = a
+            def y = b
+            y
+          }
+          def a = {
+            def x = 0
+            x
+          }
+          def b = {
+            def x = 0
+            x
+          }
+          def y = {
+            def x = 0
+            x
+          }
+        }
+      """)
+    nlqRequest("show names of decls as tree").renderAsString === fmt("""
+      - A
+        - a
+          - x
+        - b
+          - x
+        - this
+        - x
+          - a
+          - b
+          - x
+          - y
+        - y
+          - x
+    """)
+  }
     )
   }
 }

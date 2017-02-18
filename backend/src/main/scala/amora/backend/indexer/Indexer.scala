@@ -401,16 +401,19 @@ class Indexer(modelName: String) extends Log4jLogging {
         case "tree" ⇒
           case class Tree(id: String, value: String, var children: List[Tree])
           var trees = Map[String, Tree]()
+          var owners = Map[String, List[Tree]]()
           val root = Tree("<root>", "", Nil)
-          srs foreach { rs ⇒
+
+          for (rs ← srs) {
             val id = rs.uri(selects(Id))
             val value = rs.string(selects(Value))
             val owner = rs.uri(selects(Rel))
-            val t = trees.getOrElse(owner, root)
             val nt = Tree(id, value, Nil)
             trees += id → nt
-            t.children +:= nt
+            owners += owner → (nt :: owners.getOrElse(owner, Nil))
           }
+          for ((owner, ts) ← owners; t ← ts)
+            trees.getOrElse(owner, root).children ::= t
 
           def p(t: Tree, indent: Int): Unit = {
             sb append " "*indent append "VGraph:value \"" append t.value append "\" ;\n"
