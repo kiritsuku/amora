@@ -171,11 +171,16 @@ class Indexer(modelName: String) extends Log4jLogging {
   }
 
   def askNlq(model: Model, query: String): String = {
+    trait SelectType
+    case object Id extends SelectType
+    case object Value extends SelectType
+    case object Rel extends SelectType
+
     val s = NlParser.parseQuery(query)
 
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, Set[String]]]()
-    var selects = Set[String]()
+    var selects = Map[SelectType, String]()
     var visualization = "list"
 
     def addPrefix(name: String, url: String) = {
@@ -193,8 +198,8 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
     }
 
-    def addSelect(name: String) = {
-      selects += name
+    def addSelect(tpe: SelectType, name: String) = {
+      selects += tpe → name
     }
 
     def lookupNounAsProperty(noun: Noun, id: String, classSchema: String) = {
@@ -213,7 +218,7 @@ class Indexer(modelName: String) extends Log4jLogging {
         (r.uri("schema"), r.string("name"))
       }.head
       addData(id, schema, s"?$name")
-      addSelect(name)
+      addSelect(Value, name)
     }
 
     def lookupNounAsClass(noun: Noun) = {
@@ -233,6 +238,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       val selectId = s"x${data.size}"
       addPrefix(name, schema)
       addData(selectId, "a", s"$name:")
+      addSelect(Id, selectId)
       (selectId, schema)
     }
 
@@ -306,6 +312,27 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
     }
 
+    def findRelationshipInformation() = {
+      import amora.api._
+      val ids = sparqlQuery"""
+        prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix Schema:<http://amora.center/kb/amora/Schema/>
+        select ?id where {
+          Decl: Schema:schemaId ?id .
+          ?id Schema:schemaType Decl: .
+        }
+      """.runOnModel(new SparqlModel(model)).map { rs ⇒
+        rs.uri("id")
+      }
+      if (ids.nonEmpty)
+        log.info("Found relationship predicates: " + ids.mkString(", "))
+      ids foreach { id ⇒
+        val selectId = s"x${data.size}"
+        addSelect(Rel, selectId)
+        addData(selects(Id), id, s"?$selectId")
+      }
+    }
+
     def mkSparql = {
       val stringOrdering = new Ordering[String] {
         def compare(a: String, b: String) = String.CASE_INSENSITIVE_ORDER.compare(a, b)
@@ -317,7 +344,7 @@ class Indexer(modelName: String) extends Log4jLogging {
           sb append "prefix " append name append ":" append url append "\n"
       }
       sb append "select"
-      selects foreach (select ⇒ sb append " ?" append select)
+      selects.values foreach (select ⇒ sb append " ?" append select)
       sb append " where {\n"
       data.toList.sortBy(_._1)(stringOrdering) foreach {
         case (variable, kv) ⇒
@@ -337,15 +364,18 @@ class Indexer(modelName: String) extends Log4jLogging {
         lookupPreposition(s.noun, pp)
       case Some(n: Noun) ⇒
         val (id, schema) = lookupNounAsClass(s.noun)
-        addSelect(id)
         lookupGrammar(id, schema, n.original)
       case None ⇒
-        val (id, _) = lookupNounAsClass(s.noun)
-        addSelect(id)
+        lookupNounAsClass(s.noun)
       case node ⇒
         throw new IllegalStateException(s"Unknown tree node $node.")
     }
     lookupVerb(s.verb)
+    visualization match {
+      case "tree" ⇒
+        findRelationshipInformation()
+      case _ ⇒
+    }
 
     val sparqlQuery = mkSparql
     log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
@@ -362,11 +392,46 @@ class Indexer(modelName: String) extends Log4jLogging {
         case "list" ⇒
           sb append "  VResponse:graph"
           srs foreach { rs ⇒
-            val v = rs.row.get(selects.head)
+            val v = rs.row.get(selects.getOrElse(Value, selects(Id)))
             val str = if (v.isLiteral()) v.asLiteral().getString else v.toString()
             sb append " [\n    VGraph:value \"" append str append "\" ;\n  ],"
           }
           sb append " [] ;\n"
+
+        case "tree" ⇒
+          case class Tree(id: String, value: String, var children: List[Tree])
+          var trees = Map[String, Tree]()
+          val root = Tree("<root>", "", Nil)
+          srs foreach { rs ⇒
+            val id = rs.uri(selects(Id))
+            val value = rs.string(selects(Value))
+            val owner = rs.uri(selects(Rel))
+            val t = trees.getOrElse(owner, root)
+            val nt = Tree(id, value, Nil)
+            trees += id → nt
+            t.children +:= nt
+          }
+
+          def p(t: Tree, indent: Int): Unit = {
+            sb append " "*indent append "VGraph:value \"" append t.value append "\" ;\n"
+            if (t.children.nonEmpty) {
+              sb append " "*indent append "VGraph:edges "
+              t.children foreach { c ⇒
+                sb append "[\n"
+                p(c, indent+2)
+                sb append " "*indent append "], "
+              }
+              sb append "[] ;\n"
+            }
+          }
+
+          sb append "  VResponse:graph "
+          root.children foreach { c ⇒
+            sb append "[\n"
+            p(c, 4)
+            sb append "  ], "
+          }
+          sb append "[] ;\n"
       }
       sb append ".\n"
       val vresp = sb.toString()

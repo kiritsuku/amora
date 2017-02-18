@@ -62,3 +62,7 @@ VData:list
   a Visualization: ;
   Visualization:word "list" ;
 .
+VData:tree
+  a Visualization: ;
+  Visualization:word "tree" ;
+.

@@ -3,6 +3,7 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 @prefix amora: <http://amora.center/kb/amora/Schema/>
 @prefix schema: <http://amora.center/kb/amora/Schema/Decl/>
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
 
 schema:
   amora:schemaName "Decl" ;
@@ -17,10 +18,12 @@ schema:
 schema:name
   a rdfs:Property ;
   amora:schemaName "name" ;
+  amora:schemaType xsd:string ;
 .
 schema:owner
   a rdfs:Property ;
   amora:schemaName "owner" ;
+  amora:schemaType schema: ;
 .
 schema:flag
   a rdfs:Property ;
@@ -29,10 +32,12 @@ schema:flag
 schema:posStart
   a rdfs:Property ;
   amora:schemaName "posStart" ;
+  xsd:schemaType xsd:int ;
 .
 schema:posEnd
   a rdfs:Property ;
   amora:schemaName "posEnd" ;
+  xsd:schemaType xsd:int ;
 .
 
 schema:name rdfs:subPropertyOf amora:name .

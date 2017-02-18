@@ -478,9 +478,9 @@ case class NlqResponse(model: SparqlModel) {
 
   def renderAsString: String = {
     val sb = new StringBuilder
-    def renderNode(level: Int)(n: Node): Unit = {
-      sb append " "*level append "- " append n.value append "\n"
-      n.edges.sortBy(_.value) foreach renderNode(level + 1)
+    def renderNode(indent: Int)(n: Node): Unit = {
+      sb append " "*indent append "- " append n.value append "\n"
+      n.edges.sortBy(_.value) foreach renderNode(indent + 2)
     }
     val ns = nodes.sortBy(_.value)
     ns foreach renderNode(0)

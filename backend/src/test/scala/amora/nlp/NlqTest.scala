@@ -256,6 +256,35 @@ class NlqTest extends RestApiTest {
       - this
     """)
   }
+
+  @Test
+  def show_decls_as_tree(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def a = {
+            def a = 0
+            a
+          }
+        }
+        class B {
+          def b = {
+            def b = 0
+            b
+          }
+        }
+      """)
+    nlqRequest("show names of decls as tree").renderAsString === fmt("""
+      - A
+        - a
+          - a
+        - this
+      - B
+        - b
+          - b
+        - this
+    """)
+  }
     )
   }
 }
