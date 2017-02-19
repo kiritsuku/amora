@@ -22,6 +22,8 @@ final class SparqlQuery(val query: String) {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
     qexec.execAsk()
   }
+
+  override def toString = query
 }
 
 final class SparqlResultSet(val resultSet: ResultSetRewindable) {

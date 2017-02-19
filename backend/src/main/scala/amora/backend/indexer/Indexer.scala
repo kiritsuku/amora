@@ -20,7 +20,7 @@ import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
-import amora.api.SparqlResultSet
+import amora.api._
 import amora.backend.Log4jLogging
 import amora.nlp._
 import spray.json._
@@ -176,7 +176,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     case object Value extends SelectType
     case object Rel extends SelectType
 
-    val s = NlParser.parseQuery(query)
+    val smodel = new SparqlModel(model)
 
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, Set[String]]]()
@@ -203,7 +203,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def lookupNounAsProperty(noun: Noun, id: String, classSchema: String) = {
-      import amora.api._
       val q = sparqlQuery"""
         prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
         prefix Schema:<http://amora.center/kb/amora/Schema/>
@@ -213,8 +212,8 @@ class Indexer(modelName: String) extends Log4jLogging {
           ?schema Schema:schemaName ?name .
         }
       """
-      log.info(s"Ask for semantic information about `${noun.word}` (noun,property):\n${q.query}")
-      val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
+      log.info(s"Ask for semantic information about `${noun.word}` (noun,property):\n$q")
+      val (schema, name) = q.runOnModel(smodel).map { r ⇒
         (r.uri("schema"), r.string("name"))
       }.head
       addData(id, schema, s"?$name")
@@ -222,7 +221,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def lookupNounAsClass(noun: Noun) = {
-      import amora.api._
       val q = sparqlQuery"""
         prefix Semantics:<http://amora.center/kb/amora/Schema/Semantics/>
         prefix Schema:<http://amora.center/kb/amora/Schema/>
@@ -231,8 +229,8 @@ class Indexer(modelName: String) extends Log4jLogging {
           ?schema Schema:schemaName ?name .
         }
       """
-      log.info(s"Ask for semantic information about `${noun.word}` (noun,class):\n${q.query}")
-      val (schema, name) = q.runOnModel(new SparqlModel(model)).map { r ⇒
+      log.info(s"Ask for semantic information about `${noun.word}` (noun,class):\n$q")
+      val (schema, name) = q.runOnModel(smodel).map { r ⇒
         (r.uri("schema"), r.string("name"))
       }.head
       val selectId = s"x${data.size}"
@@ -243,16 +241,15 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def lookupVisualization(noun: Noun) = {
-      import amora.api._
       val q = sparqlQuery"""
         prefix Visualization:<http://amora.center/kb/amora/Schema/Visualization/>
         select ?v where {
           ?v Visualization:word "${noun.word}" .
         }
       """
-      log.info(s"Ask for visualization information about `${noun.word}`:\n${q.query}")
+      log.info(s"Ask for visualization information about `${noun.word}`:\n$q")
       // right now we only need to check if the visualization exists
-      val _ = q.runOnModel(new SparqlModel(model)).map { r ⇒
+      val _ = q.runOnModel(smodel).map { r ⇒
         r.uri("v")
       }.head
       visualization = noun.word
@@ -313,7 +310,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
 
     def findRelationshipInformation() = {
-      import amora.api._
       val ids = sparqlQuery"""
         prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
         prefix Schema:<http://amora.center/kb/amora/Schema/>
@@ -321,7 +317,7 @@ class Indexer(modelName: String) extends Log4jLogging {
           Decl: Schema:schemaId ?id .
           ?id Schema:schemaType Decl: .
         }
-      """.runOnModel(new SparqlModel(model)).map { rs ⇒
+      """.runOnModel(smodel).map { rs ⇒
         rs.uri("id")
       }
       if (ids.nonEmpty)
@@ -356,33 +352,30 @@ class Indexer(modelName: String) extends Log4jLogging {
           }
       }
       sb append "}"
-      sb.toString
+      new SparqlQuery(sb.toString)
     }
 
-    s.remaining match {
-      case Some(pp: PrepositionPhrase) ⇒
-        lookupPreposition(s.noun, pp)
-      case Some(n: Noun) ⇒
-        val (id, schema) = lookupNounAsClass(s.noun)
-        lookupGrammar(id, schema, n.original)
-      case None ⇒
-        lookupNounAsClass(s.noun)
-      case node ⇒
-        throw new IllegalStateException(s"Unknown tree node $node.")
+    def handleNlQuery() = {
+      val s = NlParser.parseQuery(query)
+      s.remaining match {
+        case Some(pp: PrepositionPhrase) ⇒
+          lookupPreposition(s.noun, pp)
+        case Some(n: Noun) ⇒
+          val (id, schema) = lookupNounAsClass(s.noun)
+          lookupGrammar(id, schema, n.original)
+        case None ⇒
+          lookupNounAsClass(s.noun)
+        case node ⇒
+          throw new IllegalStateException(s"Unknown tree node $node.")
+      }
+      lookupVerb(s.verb)
     }
-    lookupVerb(s.verb)
-    visualization match {
-      case "tree" ⇒
-        findRelationshipInformation()
-      case _ ⇒
-    }
-
-    val sparqlQuery = mkSparql
-    log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
-    val rs = withQueryService(model, sparqlQuery)
-    val srs = new SparqlResultSet(rs)
 
     def mkTurtle = {
+      val sparqlQuery = mkSparql
+      log.info(s"Natural language query `$query` as SPARQL query:\n$sparqlQuery")
+      val srs = sparqlQuery.runOnModel(smodel)
+
       val sb = new StringBuilder
       sb append "@prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/> .\n"
       sb append "@prefix VGraph:<http://amora.center/kb/amora/Schema/VisualizationGraph/> .\n"
@@ -391,7 +384,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       visualization match {
         case "list" ⇒
           sb append "  VResponse:graph"
-          srs foreach { rs ⇒
+          for (rs ← srs) {
             val v = rs.row.get(selects.getOrElse(Value, selects(Id)))
             val str = if (v.isLiteral()) v.asLiteral().getString else v.toString()
             sb append " [\n    VGraph:value \"" append str append "\" ;\n  ],"
@@ -415,13 +408,13 @@ class Indexer(modelName: String) extends Log4jLogging {
           for ((owner, ts) ← owners; t ← ts)
             trees.getOrElse(owner, root).children ::= t
 
-          def p(t: Tree, indent: Int): Unit = {
+          def print(t: Tree, indent: Int): Unit = {
             sb append " "*indent append "VGraph:value \"" append t.value append "\" ;\n"
             if (t.children.nonEmpty) {
               sb append " "*indent append "VGraph:edges "
               t.children foreach { c ⇒
                 sb append "[\n"
-                p(c, indent+2)
+                print(c, indent+2)
                 sb append " "*indent append "], "
               }
               sb append "[] ;\n"
@@ -431,7 +424,7 @@ class Indexer(modelName: String) extends Log4jLogging {
           sb append "  VResponse:graph "
           root.children foreach { c ⇒
             sb append "[\n"
-            p(c, 4)
+            print(c, 4)
             sb append "  ], "
           }
           sb append "[] ;\n"
@@ -442,6 +435,12 @@ class Indexer(modelName: String) extends Log4jLogging {
       vresp
     }
 
+    handleNlQuery()
+    visualization match {
+      case "tree" ⇒
+        findRelationshipInformation()
+      case _ ⇒
+    }
     mkTurtle
   }
 
