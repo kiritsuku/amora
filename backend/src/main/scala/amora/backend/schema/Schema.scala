@@ -364,8 +364,8 @@ object Schema {
       case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
         val declPath = refToDecl match {
           case d: Decl ⇒ mkFullPath(d)
-          // TODO replace this with a real implementation
-          case _ ⇒ "???"
+          case _ ⇒
+            ???
         }
         val shortFileId = mkShortId(file)
         val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
