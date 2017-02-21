@@ -458,16 +458,27 @@ final class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
       mkRef(owner, t)
     case If(cond, thenp, elsep) ⇒
-      val s = h.Scope(owner)
-      s.position = h.RangePosition(t.pos.start, t.pos.start+"if".length)
-      s.addAttachments(a.If)
-      found += s
-
+      val sIf = h.Scope(owner)
+      sIf.position = h.RangePosition(t.pos.start, t.pos.start+"if".length)
+      sIf.addAttachments(a.If)
+      found += sIf
       withNewScope {
-        body(s, cond)
-        body(s, thenp)
+        body(sIf, cond)
+        body(sIf, thenp)
       }
-      body(owner, elsep)
+
+      elsep match {
+        case Literal(c) if c.tag == UnitTag ⇒
+          // ignore empty else blocks
+        case _ ⇒
+          val sElse = h.Scope(owner)
+          sElse.position = h.RangePosition(t.pos.start, t.pos.start+"else".length)
+          sElse.addAttachments(a.Else)
+          found += sElse
+          withNewScope {
+            body(sElse, elsep)
+          }
+      }
     case Match(selector, cases) ⇒
       body(owner, selector)
       // TODO we need to put the case expressions into a new owner to make variable definitions unique
