@@ -72,3 +72,11 @@ FlagData:constructor
   a Flag: ;
   Flag:name "constructor" ;
 .
+FlagData:param
+  a Flag: ;
+  Flag:name "param" ;
+.
+FlagData:tparam
+  a Flag: ;
+  Flag:name "tparam" ;
+.

@@ -208,9 +208,10 @@ class ScalaDeclTest extends RestApiTest {
   @Test
   def private_class_parameters() = {
     indexRegionData("""
+        prefix param:<http://amora.center/kb/amora/Flag/param>
         prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select distinct ?name ?start ?end where {
-          [c:flag "param"] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+          [c:flag param:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
       """,
       Artifact(Project("p"), "o", "n", "v1"),
@@ -222,9 +223,10 @@ class ScalaDeclTest extends RestApiTest {
   @Test
   def method_parameters() = {
     indexRegionData("""
+        prefix param:<http://amora.center/kb/amora/Flag/param>
         prefix c:<http://amora.center/kb/amora/Schema/Val/>
         select * where {
-          [c:flag "param"] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+          [c:flag param:] c:name ?name ; c:posStart ?start ; c:posEnd ?end .
         }
       """,
       Artifact(Project("p"), "o", "n", "v1"),

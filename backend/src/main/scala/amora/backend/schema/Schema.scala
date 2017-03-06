@@ -325,10 +325,10 @@ object Schema {
         addData(path, s"$tpe:name", s""""$name"""")
 
         if (h.attachments(Attachment.Param)) {
-          addData(path, s"$tpe:flag", """"param"""")
+          addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/param>")
         }
         if (h.attachments(Attachment.TypeParam)) {
-          addData(path, s"$tpe:flag", """"tparam"""")
+          addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/tparam>")
         }
         if (h.attachments(Attachment.Constructor)) {
           addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/constructor>")
@@ -532,10 +532,10 @@ object Schema {
         sb.append(s"""  <$path> <$schemaPath/name> "$name" .""" + "\n")
 
         if (h.attachments(Attachment.Param)) {
-          sb.append(s"""  <$path> <$schemaPath/flag> "param" .""" + "\n")
+          sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/param> .""" + "\n")
         }
         if (h.attachments(Attachment.TypeParam)) {
-          sb.append(s"""  <$path> <$schemaPath/flag> "tparam" .""" + "\n")
+          sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/tparam> .""" + "\n")
         }
         if (h.attachments(Attachment.Constructor)) {
           sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/constructor> .""" + "\n")

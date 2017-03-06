@@ -304,10 +304,11 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_parameter() = {
     indexRegionData("""
+        prefix param:<http://amora.center/kb/amora/Flag/param>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
-          [a ref:] ref:refToDecl [decl:flag "param"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+          [a ref:] ref:refToDecl [decl:flag param:] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
       """,
       Artifact(Project("p"), "o", "n", "v1"),
@@ -368,10 +369,11 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_type_parameter() = {
     indexRegionData("""
+        prefix tparam:<http://amora.center/kb/amora/Flag/tparam>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         select * where {
-          [a ref:] ref:refToDecl [decl:flag "tparam"] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+          [a ref:] ref:refToDecl [decl:flag tparam:] ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
       """,
       Artifact(Project("p"), "o", "n", "v1"),
@@ -385,12 +387,13 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_without_shadowed_type_parameter_refs() = {
     indexRegionData("""
+        prefix tparam:<http://amora.center/kb/amora/Flag/tparam>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         prefix t:<http://amora.center/kb/amora/Schema/Trait/>
         select * where {
           # find type parameter
-          ?tparam decl:owner [a t:] ; decl:flag "tparam" .
+          ?tparam decl:owner [a t:] ; decl:flag tparam: .
           # find references of type parameter
           [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -407,12 +410,13 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_shadowed_type_parameter() = {
     indexRegionData("""
+        prefix tparam:<http://amora.center/kb/amora/Flag/tparam>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
-          ?tparam decl:owner [a def:; def:jvmSignature "(Ljava/lang/Object;)Ljava/lang/Object;"] ; decl:flag "tparam" .
+          ?tparam decl:owner [a def:; def:jvmSignature "(Ljava/lang/Object;)Ljava/lang/Object;"] ; decl:flag tparam: .
           # find references of type parameter
           [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -429,12 +433,13 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_when_parameter_of_same_name_exists() = {
     indexRegionData("""
+        prefix tparam:<http://amora.center/kb/amora/Flag/tparam>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
-          ?tparam decl:owner [a def:] ; decl:flag "tparam" .
+          ?tparam decl:owner [a def:] ; decl:flag tparam: .
           # find references of type parameter
           [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }
@@ -452,12 +457,13 @@ class ScalaRefTest extends RestApiTest {
   @Test
   def refs_of_type_parameter_when_local_val_decl_of_same_name_exists() = {
     indexRegionData("""
+        prefix tparam:<http://amora.center/kb/amora/Flag/tparam>
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
         prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
         prefix def:<http://amora.center/kb/amora/Schema/Def/>
         select * where {
           # find type parameter
-          ?tparam decl:owner [a def:] ; decl:flag "tparam" .
+          ?tparam decl:owner [a def:] ; decl:flag tparam: .
           # find references of type parameter
           [a ref:] ref:refToDecl ?tparam ; ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
         }

@@ -129,9 +129,10 @@ class JavaBytecodeIndexerTest {
   @Test
   def index_method_parameter_as_params() = {
     ask(modelName, s"""
+        prefix param:<http://amora.center/kb/amora/Flag/param>
         prefix c:<http://amora.center/kb/amora/Schema/Var/>
         select * where {
-          [c:flag "param"] c:name ?name .
+          [c:flag param:] c:name ?name .
         }
       """,
       "X.java" → """

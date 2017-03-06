@@ -342,9 +342,10 @@ class ScalaSchemaTest extends RestApiTest {
         class X(i: Int, j: String)
       """)
     sparqlRequest("""
+      prefix param:<http://amora.center/kb/amora/Flag/param>
       prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
-        [v:flag "param"] v:name ?name .
+        [v:flag param:] v:name ?name .
       }
       order by ?name
     """) === Seq(
@@ -363,9 +364,10 @@ class ScalaSchemaTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
+      prefix param:<http://amora.center/kb/amora/Flag/param>
       prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
-        [v:flag "param"] v:name ?name .
+        [v:flag param:] v:name ?name .
       }
       order by ?name
     """) === Seq(
@@ -446,9 +448,10 @@ class ScalaSchemaTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
+      prefix param:<http://amora.center/kb/amora/Flag/param>
       prefix v:<http://amora.center/kb/amora/Schema/Var/>
       select ?name where {
-        [v:flag "param"] v:name ?name .
+        [v:flag param:] v:name ?name .
       }
       order by ?name
     """) === Seq(
@@ -483,9 +486,10 @@ class ScalaSchemaTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
+      prefix param:<http://amora.center/kb/amora/Flag/param>
       prefix v:<http://amora.center/kb/amora/Schema/Val/>
       select ?name where {
-        [v:flag "param"] v:name ?name .
+        [v:flag param:] v:name ?name .
       }
       order by ?name
     """) === Seq(
