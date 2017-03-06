@@ -89,7 +89,11 @@ class Indexer(modelName: String) extends Log4jLogging {
           }
         """)
         if (!alreadyIndexed) {
-          addTurtle(model, content)
+          try addTurtle(model, content)
+          catch {
+            case NonFatal(t) ⇒
+              throw new RuntimeException(s"An error happened during indexing of file `$file`", t)
+          }
           log.info(s"Schema file `$file` successfully indexed.")
         }
       }
@@ -128,7 +132,7 @@ class Indexer(modelName: String) extends Log4jLogging {
 
       log.info("Indexer successfully started.")
     } catch {
-      case t: Throwable ⇒
+      case NonFatal(t) ⇒
         throw new RuntimeException("An error happened during initialization of the indexer.", t)
     }
   }
