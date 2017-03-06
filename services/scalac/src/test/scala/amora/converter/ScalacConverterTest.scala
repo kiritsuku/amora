@@ -1521,4 +1521,22 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.f()Z.<while>.<ref>b", "scala.Predef.<ref>println(Ljava/lang/Object;)V",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
   }
+
+  @Test
+  def do_while_scope() = {
+    convert("""
+      class X {
+        def f = {
+          do {
+            val b = true
+            println(b)
+          } while (false)
+          true
+        }
+      }
+    """) === Set(
+        "X", "X.f()Z", "X.f()Z.<do>", "X.f()Z.<do>.b",
+        "X.f()Z.<do>.<ref>b", "scala.Predef.<ref>println(Ljava/lang/Object;)V",
+        "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
+  }
 }
