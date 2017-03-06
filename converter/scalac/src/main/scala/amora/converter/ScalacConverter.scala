@@ -392,6 +392,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       val decl = mkDecl(t.symbol, owner)
       setPosition(decl, t.pos)
       found += decl
+      scopes = scopes.add(decl)
       expr(owner, body)
     case Typed(expr, tpt) ⇒
       this.expr(owner, expr)

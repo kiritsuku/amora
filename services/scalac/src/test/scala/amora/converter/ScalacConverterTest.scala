@@ -957,7 +957,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z",
         "X.f()Z.<match>", "X.f()Z.<match>.<case>", "X.f()Z.<match>.<case>.x",
-        "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4", "X.f()Z.<ref>x",
+        "X.f()Z.<match>.<case>.<ref>x", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4",
         "scala.<ref>Boolean", "scala.Boolean.<ref>==(Z)Z", "scala.<ref>AnyRef",
         "X.this()V")
   }
@@ -1010,8 +1010,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
         def unapply(i: Int) = Option(i)
       }
     """) === Set(
-        "X", "X.f()I", "X.f()I.<ref>i", "X.f()I.<ref>j", "X.f()I.<match>",
+        "X", "X.f()I", "X.f()I.<match>",
         "X.f()I.<match>.<case>", "X.f()I.<match>.<case>.i", "X.f()I.<match>.<case>.j",
+        "X.f()I.<match>.<case>.<ref>i", "X.f()I.<match>.<case>.<ref>j",
         "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply(I)Lscala/Option;",
         "Extractor", "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
         "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option",
@@ -1476,6 +1477,23 @@ class ScalacConverterTest extends ScalaCompilerTest {
           true match {
             case _ ⇒
               val b = true
+              b
+          }
+        }
+      }
+    """) === Set(
+        "X", "X.f()Z", "X.f()Z.<match>", "X.f()Z.<match>.<case>",
+        "X.f()Z.<match>.<case>.b", "X.f()Z.<match>.<case>.<ref>b",
+        "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
+  }
+
+  @Test
+  def decl_in_case_scope_is_correctly_referenced() = {
+    convert("""
+      class X {
+        def f = {
+          true match {
+            case b ⇒
               b
           }
         }
