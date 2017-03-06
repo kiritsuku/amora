@@ -484,7 +484,9 @@ final class ScalacConverter[G <: Global](val global: G) {
         body(sTry, block)
       }
       catches foreach (body(owner, _))
-      body(owner, finalizer)
+      withKeywordScope(owner, t, a.Finally) { sFinally ⇒
+        body(sFinally, finalizer)
+      }
     case Throw(expr) ⇒
       body(owner, expr)
     case Return(expr) ⇒
