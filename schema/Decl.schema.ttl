@@ -4,6 +4,7 @@
 @prefix amora: <http://amora.center/kb/amora/Schema/>
 @prefix schema: <http://amora.center/kb/amora/Schema/Decl/>
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+@prefix Flag: <http://amora.center/kb/amora/Schema/Flag/>
 
 schema:
   amora:schemaName "Decl" ;
@@ -28,6 +29,7 @@ schema:owner
 schema:flag
   a rdfs:Property ;
   amora:schemaName "flag" ;
+  amora:schemaType Flag: ;
 .
 schema:posStart
   a rdfs:Property ;

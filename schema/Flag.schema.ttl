@@ -1,0 +1,20 @@
+# Schema file for class "Flag"
+
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
+
+Flag:
+  Schema:schemaName     "Flag" ;
+  Schema:schemaAuthor   "amora" ;
+  Schema:schemaId       Flag:name ;
+.
+Flag:name
+  a                     rdfs:Property ;
+  rdfs:subPropertyOf    Schema:name ;
+  Schema:schemaName     "name" ;
+  Schema:schemaType     xsd:string ;
+.
+
+
