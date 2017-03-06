@@ -488,7 +488,13 @@ final class ScalacConverter[G <: Global](val global: G) {
       this.body(owner, guard)
       this.body(owner, body)
     case TTry(block, catches, finalizer) ⇒
-      body(owner, block)
+      val sTry = h.Scope(owner)
+      sTry.position = h.RangePosition(t.pos.start, t.pos.start+"try".length)
+      sTry.addAttachments(a.Try)
+      found += sTry
+      withNewScope {
+        body(sTry, block)
+      }
       catches foreach (body(owner, _))
       body(owner, finalizer)
     case Throw(expr) ⇒

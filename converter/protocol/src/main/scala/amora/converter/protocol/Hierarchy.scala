@@ -66,6 +66,7 @@ case class Scope(override val owner: Hierarchy) extends Hierarchy {
     attachments.collectFirst {
       case Attachment.If ⇒ "<if>"
       case Attachment.Else ⇒ "<else>"
+      case Attachment.Try ⇒ "<try>"
     }.getOrElse(throw new IllegalStateException(s"Scope `$this` has no attachment."))
   }
 }
