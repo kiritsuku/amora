@@ -15,6 +15,7 @@ import amora.api.ApiTest
 import amora.backend.indexer.MultiProjectTest
 import amora.backend.indexer.ScalaRefTest
 import amora.nlp.NlqTest
+import amora.backend.indexer.FlagTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -28,6 +29,7 @@ import amora.nlp.NlqTest
   classOf[ApiTest],
   classOf[MultiProjectTest],
   classOf[ScalaRefTest],
-  classOf[NlqTest]
+  classOf[NlqTest],
+  classOf[FlagTest]
 ))
 class TestSuite

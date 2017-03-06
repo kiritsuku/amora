@@ -2,6 +2,8 @@
 @prefix Visualization:<http://amora.center/kb/amora/Schema/Visualization/>
 @prefix Data:<http://amora.center/kb/amora/Semantics/>
 @prefix VData:<http://amora.center/kb/amora/Visualization/>
+@prefix Flag:<http://amora.center/kb/amora/Schema/Flag/>
+@prefix FlagData:<http://amora.center/kb/amora/Flag/>
 
 Data:class
   a Semantics: ;
@@ -65,4 +67,8 @@ VData:list
 VData:tree
   a Visualization: ;
   Visualization:word "tree" ;
+.
+FlagData:constructor
+  a Flag: ;
+  Flag:name "constructor" ;
 .

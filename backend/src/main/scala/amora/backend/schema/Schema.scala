@@ -330,6 +330,9 @@ object Schema {
         if (h.attachments(Attachment.TypeParam)) {
           addData(path, s"$tpe:flag", """"tparam"""")
         }
+        if (h.attachments(Attachment.Constructor)) {
+          addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/constructor>")
+        }
 
         decl.attachments.collectFirst {
           case Attachment.JvmSignature(signature) ⇒
@@ -533,6 +536,9 @@ object Schema {
         }
         if (h.attachments(Attachment.TypeParam)) {
           sb.append(s"""  <$path> <$schemaPath/flag> "tparam" .""" + "\n")
+        }
+        if (h.attachments(Attachment.Constructor)) {
+          sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/constructor> .""" + "\n")
         }
 
         decl.attachments.collectFirst {
