@@ -1419,4 +1419,26 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.f()Z.<finally>.<ref>b", "scala.Predef.<ref>println(Ljava/lang/Object;)V",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "scala.<ref>Throwable", "X.this()V")
   }
+
+  @Test
+  def case_scope() = {
+    convert("""
+      class X {
+        def f = {
+          try {
+            true
+          }
+          catch {
+            case _: Throwable ⇒
+              val b = true
+              b
+          }
+          true
+        }
+      }
+    """) === Set(
+        "X", "X.f()Z", "X.f()Z.<try>", "X.f()Z.<case>", "X.f()Z.<case>.b",
+        "X.f()Z.<case>.<ref>b",
+        "scala.<ref>Boolean", "scala.<ref>AnyRef", "scala.<ref>Throwable", "X.this()V")
+  }
 }

@@ -476,16 +476,20 @@ final class ScalacConverter[G <: Global](val global: G) {
       // TODO we need to put the case expressions into a new owner to make variable definitions unique
       cases foreach (body(owner, _))
     case CaseDef(pat, guard, body) ⇒
-      expr(owner, pat)
-      this.body(owner, guard)
-      this.body(owner, body)
+      withKeywordScope(owner, t, a.Case) { sCase ⇒
+        expr(owner, pat)
+        this.body(owner, guard)
+        this.body(sCase, body)
+      }
     case TTry(block, catches, finalizer) ⇒
       withKeywordScope(owner, t, a.Try) { sTry ⇒
         body(sTry, block)
       }
       catches foreach (body(owner, _))
-      withKeywordScope(owner, t, a.Finally) { sFinally ⇒
-        body(sFinally, finalizer)
+      if (finalizer.nonEmpty) {
+        withKeywordScope(owner, t, a.Finally) { sFinally ⇒
+          body(sFinally, finalizer)
+        }
       }
     case Throw(expr) ⇒
       body(owner, expr)
