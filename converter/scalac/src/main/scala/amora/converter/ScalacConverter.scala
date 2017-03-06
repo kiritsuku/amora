@@ -458,11 +458,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     case _: Ident ⇒
       mkRef(owner, t)
     case If(cond, thenp, elsep) ⇒
-      val sIf = h.Scope(owner)
-      sIf.position = h.RangePosition(t.pos.start, t.pos.start+"if".length)
-      sIf.addAttachments(a.If)
-      found += sIf
-      withNewScope {
+      withKeywordScope(owner, t, a.If) { sIf ⇒
         body(sIf, cond)
         body(sIf, thenp)
       }
@@ -471,11 +467,7 @@ final class ScalacConverter[G <: Global](val global: G) {
         case Literal(c) if c.tag == UnitTag ⇒
           // ignore empty else blocks
         case _ ⇒
-          val sElse = h.Scope(owner)
-          sElse.position = h.RangePosition(t.pos.start, t.pos.start+"else".length)
-          sElse.addAttachments(a.Else)
-          found += sElse
-          withNewScope {
+          withKeywordScope(owner, t, a.Else) { sElse ⇒
             body(sElse, elsep)
           }
       }
@@ -488,11 +480,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       this.body(owner, guard)
       this.body(owner, body)
     case TTry(block, catches, finalizer) ⇒
-      val sTry = h.Scope(owner)
-      sTry.position = h.RangePosition(t.pos.start, t.pos.start+"try".length)
-      sTry.addAttachments(a.Try)
-      found += sTry
-      withNewScope {
+      withKeywordScope(owner, t, a.Try) { sTry ⇒
         body(sTry, block)
       }
       catches foreach (body(owner, _))
@@ -770,6 +758,14 @@ final class ScalacConverter[G <: Global](val global: G) {
     scopes = scopes.inc
     f
     scopes = scopes.dec
+  }
+
+  private def withKeywordScope(owner: h.Hierarchy, t: Tree, attachment: a)(f: h.Scope ⇒ Unit) = {
+    val s = h.Scope(owner)
+    s.position = h.RangePosition(t.pos.start, t.pos.start+attachment.asString.length)
+    s.addAttachments(attachment)
+    found += s
+    withNewScope(f(s))
   }
 }
 
