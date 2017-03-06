@@ -1034,6 +1034,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.f()Z.e", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
+        "X.f()Z.<catch>", "X.f()Z.<catch>.<case>",
         "scala.Predef.<ref>println(Ljava/lang/Object;)V", "scala.<ref>Boolean", "scala.<ref>Exception",
         "scala.<ref>AnyRef", "X.this()V")
   }
@@ -1393,6 +1394,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.f()Z", "X.f()Z.<try>", "X.f()Z.<try>.b", "X.f()Z.<try>.<ref>b",
+        "X.f()Z.<catch>", "X.f()Z.<catch>.<case>",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "scala.<ref>Throwable", "X.this()V")
   }
 
@@ -1416,12 +1418,13 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.f()Z", "X.f()Z.<try>", "X.f()Z.<finally>", "X.f()Z.<finally>.b",
+        "X.f()Z.<catch>", "X.f()Z.<catch>.<case>",
         "X.f()Z.<finally>.<ref>b", "scala.Predef.<ref>println(Ljava/lang/Object;)V",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "scala.<ref>Throwable", "X.this()V")
   }
 
   @Test
-  def case_scope() = {
+  def catch_scope() = {
     convert("""
       class X {
         def f = {
@@ -1437,8 +1440,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "X", "X.f()Z", "X.f()Z.<try>", "X.f()Z.<case>", "X.f()Z.<case>.b",
-        "X.f()Z.<case>.<ref>b",
+        "X", "X.f()Z", "X.f()Z.<try>", "X.f()Z.<catch>", "X.f()Z.<catch>.<case>",
+        "X.f()Z.<catch>.<case>.b", "X.f()Z.<catch>.<case>.<ref>b",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "scala.<ref>Throwable", "X.this()V")
   }
 

@@ -481,11 +481,15 @@ final class ScalacConverter[G <: Global](val global: G) {
         this.body(owner, guard)
         this.body(sCase, body)
       }
-    case TTry(block, catches, finalizer) ⇒
+    case TTry(block, catchCases, finalizer) ⇒
       withKeywordScope(owner, t, a.Try) { sTry ⇒
         body(sTry, block)
       }
-      catches foreach (body(owner, _))
+      if (catchCases.nonEmpty) {
+        withKeywordScope(owner, t, a.Catch) { sCatch ⇒
+          catchCases foreach (body(sCatch, _))
+        }
+      }
       if (finalizer.nonEmpty) {
         withKeywordScope(owner, t, a.Finally) { sFinally ⇒
           body(sFinally, finalizer)
