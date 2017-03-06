@@ -955,7 +955,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z", "X.f()Z.x",
+        "X", "X.b1", "X.b2", "X.b3", "X.b4", "X.f()Z",
+        "X.f()Z.<case>", "X.f()Z.<case>.x",
         "X.<ref>b1", "X.<ref>b2", "X.<ref>b3", "X.<ref>b4", "X.f()Z.<ref>x",
         "scala.<ref>Boolean", "scala.Boolean.<ref>==(Z)Z", "scala.<ref>AnyRef",
         "X.this()V")
@@ -978,6 +979,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
     """) === Set(
         "X", "X.b1", "X.f()Z", "X.f()Z.b2", "X.<ref>b1", "X.f()Z.<ref>b2",
+        "X.f()Z.<case>",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
   }
 
@@ -1008,7 +1010,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
         def unapply(i: Int) = Option(i)
       }
     """) === Set(
-        "X", "X.f()I", "X.f()I.i", "X.f()I.j", "X.f()I.<ref>i", "X.f()I.<ref>j",
+        "X", "X.f()I", "X.f()I.<ref>i", "X.f()I.<ref>j",
+        "X.f()I.<case>", "X.f()I.<case>.i", "X.f()I.<case>.j",
         "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply(I)Lscala/Option;",
         "Extractor", "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
         "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option",
@@ -1033,8 +1036,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.f()Z.e", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
-        "X.f()Z.<catch>", "X.f()Z.<catch>.<case>",
+        "X", "X.b1", "X.b2", "X.b3", "X.f()Z", "X.<ref>b1", "X.<ref>b2", "X.<ref>b3",
+        "X.f()Z.<try>", "X.f()Z.<finally>",
+        "X.f()Z.<catch>", "X.f()Z.<catch>.<case>", "X.f()Z.<catch>.<case>.e",
         "scala.Predef.<ref>println(Ljava/lang/Object;)V", "scala.<ref>Boolean", "scala.<ref>Exception",
         "scala.<ref>AnyRef", "X.this()V")
   }

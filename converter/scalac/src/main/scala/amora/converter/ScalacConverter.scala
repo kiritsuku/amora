@@ -477,8 +477,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       cases foreach (body(owner, _))
     case CaseDef(pat, guard, body) ⇒
       withKeywordScope(owner, t, a.Case) { sCase ⇒
-        expr(owner, pat)
-        this.body(owner, guard)
+        expr(sCase, pat)
+        this.body(sCase, guard)
         this.body(sCase, body)
       }
     case TTry(block, catchCases, finalizer) ⇒
