@@ -503,6 +503,11 @@ final class ScalacConverter[G <: Global](val global: G) {
       body(owner, expr)
     case _: This ⇒
       mkRef(owner, t)
+    case LabelDef(_, _, If(cond, Block(stats, _), _)) ⇒
+      withKeywordScope(owner, t, a.While) { sWhile ⇒
+        body(sWhile, cond)
+        stats foreach (body(sWhile, _))
+      }
     case EmptyTree ⇒
   }
 
