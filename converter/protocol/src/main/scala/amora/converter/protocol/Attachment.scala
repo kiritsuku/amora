@@ -22,6 +22,7 @@ object Attachment {
   case object Try extends Attachment { override def asString = "try" }
   case object Catch extends Attachment { override def asString = "catch" }
   case object Finally extends Attachment { override def asString = "finally" }
+  case object Match extends Attachment { override def asString = "match" }
   case object Case extends Attachment { override def asString = "case" }
 
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
