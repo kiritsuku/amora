@@ -161,7 +161,7 @@ class ScalaRefTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         trait [[!AnyRef]]X {
-          self: [[scala]].[[collection]].[[mutable]].[[AbstractSet]][ [[java]].[[io]].[[File]] ] ⇒
+          [[!X]]self: [[scala]].[[collection]].[[mutable]].[[AbstractSet]][ [[java]].[[io]].[[File]] ] ⇒
         }
       """)
   }
@@ -274,9 +274,25 @@ class ScalaRefTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         trait [[!AnyRef]]X {
-          self: [[scala]].[[collection]].[[SeqLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ]
+          [[!X]]self: [[scala]].[[collection]].[[SeqLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ]
             with [[scala]].[[collection]].[[IterableLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ]
             with [[scala]].[[collection]].[[GenSeqLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ] ⇒
+        }
+      """)
+  }
+
+  @Test
+  def self_ref_with_parent() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait [[!AnyRef]]X {
+          [[!X]]selfRef: [[scala]].[[collection]].[[mutable]].[[AbstractMap]] [ [[List]] [ [[Map]] [ [[Int]], [[Set]] [ [[Int]] ] ] ], [[Map]] [ [[Int]], [[String]] ] ] ⇒
         }
       """)
   }

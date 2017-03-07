@@ -302,9 +302,30 @@ final class ScalacConverter[G <: Global](val global: G) {
         else
           t +: t.typeArgs.flatMap(findTypes)
 
-      val syms = t.symbol.info.parents.flatMap(findTypes).map(_.typeSymbol)
-      val refs = syms.map(refFromSymbol)
-      refs foreach (found += _)
+      def findTrees(t: Tree): Seq[Tree] = t match {
+        case CompoundTypeTree(Template(parents, _, _)) ⇒
+          parents.flatMap(findTrees)
+        case AppliedTypeTree(tpt, args) ⇒
+          tpt +: args.flatMap(findTrees)
+        case t ⇒
+          Seq(t)
+      }
+
+      val typeParents = t.symbol.info.parents.flatMap(findTypes)
+      val treeParents = findTrees(t.original)
+
+      val selfRef = refFromSymbol(typeParents.head.typeSymbol)
+      selfRefPos foreach { offset ⇒
+        selfRef.position = h.RangePosition(offset, offset)
+      }
+      found += selfRef
+
+      typeParents.tail zip treeParents foreach {
+        case (typeParent, treeParent) ⇒
+          val ref = refFromSymbol(typeParent.typeSymbol)
+          setPosition(ref, treeParent.pos)
+          found += ref
+      }
     }
 
     def otherTypes() = {
@@ -360,12 +381,14 @@ final class ScalacConverter[G <: Global](val global: G) {
         def handleTypeArguments() = {
           def findTypes(t: Type): Seq[Type] =
             t +: t.typeArgs.flatMap(findTypes)
+
           def findTrees(t: Tree): Seq[Tree] = t match {
             case AppliedTypeTree(tpt, args) ⇒
               tpt +: args.flatMap(findTrees)
             case t ⇒
               Seq(t)
           }
+
           val typeParents = t.tpe.parents.flatMap(findTypes)
           val treeParents = parents.flatMap(findTrees)
           typeParents zip treeParents foreach {
