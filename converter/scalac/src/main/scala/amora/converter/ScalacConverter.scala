@@ -350,12 +350,11 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
 
     t.original match {
-      case AppliedTypeTree(tpt, args) ⇒
-        typeRef(owner, t.original)
+      case t: AppliedTypeTree ⇒
+        typeRef(owner, t)
       case t: Select ⇒
         typeRef(owner, t)
       case _ ⇒
-        // TODO index other trees as well, to make for example type aliases available
     }
   }
 

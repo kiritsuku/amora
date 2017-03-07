@@ -1302,10 +1302,6 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.<ref>AnyRef", "X.this()V", "scala.Predef.<ref>Map")
   }
 
-  //----------------------------------------------------------------------------
-  // scopes
-  //----------------------------------------------------------------------------
-
   @Test
   def if_scope() = {
     convert("""
