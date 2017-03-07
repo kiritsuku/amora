@@ -89,7 +89,12 @@ final class ScalacConverter[G <: Global](val global: G) {
     s"($paramsSig)$retSig"
   }
 
+  private def requireSymbolDefined(sym: Symbol) =
+    require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, "
+        + "make sure that everything with a NoSymbol does not survive long enough to get here.")
+
   private def mkName(sym: Symbol): String = {
+    requireSymbolDefined(sym)
     if (sym.name == tpnme.BYNAME_PARAM_CLASS_NAME)
       "Function0"
     else if (sym.name == nme.CONSTRUCTOR)
@@ -132,6 +137,7 @@ final class ScalacConverter[G <: Global](val global: G) {
    * Creates a [[Decl]] from a symbol `sym` and sets its owner to `owner`.
    */
   private def mkDecl(sym: Symbol, owner: h.Hierarchy): h.Decl = {
+    requireSymbolDefined(sym)
     val decl = h.Decl(mkName(sym), owner)
     classifyDecl(sym, decl)
     decl
@@ -142,8 +148,7 @@ final class ScalacConverter[G <: Global](val global: G) {
    * the root node is reached.
    */
   private def mkDeepDecl(sym: Symbol): h.Decl = {
-    require(sym != NoSymbol, "The passed argument is NoSymbol. This is a programming error, "
-        + "make sure that everything with a NoSymbol does not survive long enough to get here.")
+    requireSymbolDefined(sym)
     if (sym.name.toTermName == nme.ROOT)
       h.Root
     else {
