@@ -288,8 +288,6 @@ final class ScalacConverter[G <: Global](val global: G) {
    * reference.
    */
   private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int]): Unit = {
-    val sym = t.symbol
-
     def refFromSymbol(sym: Symbol): h.Ref = {
       val o = mkDeepDecl(sym)
       val ref = h.Ref(o.name, o, owner, o.owner)
@@ -304,13 +302,13 @@ final class ScalacConverter[G <: Global](val global: G) {
         else
           t +: t.typeArgs.flatMap(findTypes)
 
-      val syms = sym.info.parents.flatMap(findTypes).map(_.typeSymbol)
+      val syms = t.symbol.info.parents.flatMap(findTypes).map(_.typeSymbol)
       val refs = syms.map(refFromSymbol)
       refs foreach (found += _)
     }
 
     def otherTypes() = {
-      val ref = refFromSymbol(sym)
+      val ref = refFromSymbol(t.symbol)
       t.original match {
         case t: AppliedTypeTree if t.symbol.fullName.startsWith("scala.Function") && owner.position.isInstanceOf[h.RangePosition] ⇒
           // `pos.point` doesn't make a lot of sense for function literals, therefore
@@ -335,7 +333,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       found += ref
     }
 
-    if (sym.isRefinementClass)
+    if (t.symbol.isRefinementClass)
       selfRefTypes
     else t.tpe match {
       case tpe: AliasTypeRef ⇒
