@@ -581,12 +581,12 @@ class ScalacConverterTest extends ScalaCompilerTest {
       trait X {
         self: collection.SeqLike[List[Int], List[Int]]
           with collection.IterableLike[List[Int], List[Int]]
-          with collection.GenSeqLike[List[Int], List[Int]] ⇒
+          with scala.collection.GenSeqLike[List[Int], List[Int]] ⇒
       }
     """) === Set(
         "X", "X.self", "<ref>X", "scala.collection.<ref>SeqLike", "scala.collection.<ref>IterableLike",
         "scala.collection.<ref>GenSeqLike", "scala.collection.immutable.<ref>List", "scala.<ref>Int",
-        "scala.<ref>AnyRef")
+        "scala.<ref>AnyRef", "scala.<ref>collection", "<ref>scala")
   }
 
   @Test

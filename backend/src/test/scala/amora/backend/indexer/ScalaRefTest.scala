@@ -264,6 +264,24 @@ class ScalaRefTest extends RestApiTest {
   }
 
   @Test
+  def compound_type_ref_in_self_ref() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        trait [[!AnyRef]]X {
+          self: [[scala]].[[collection]].[[SeqLike]] [ List [ Int ], List [ Int ] ]
+            with [[scala]].[[collection]].[[IterableLike]] [ List [ Int ], List [ Int ] ]
+            with [[scala]].[[collection]].[[GenSeqLike]] [ List [ Int ], List [ Int ] ] ⇒
+        }
+      """)
+  }
+
+  @Test
   def refs_in_if_expr() = {
     indexRegionData("""
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>

@@ -354,6 +354,14 @@ final class ScalacConverter[G <: Global](val global: G) {
         typeRef(owner, t)
       case t: Select ⇒
         typeRef(owner, t)
+      // Compound type trees need special handling, since their original representation
+      // lacks symbols. Only Select trees deep within contain symbols.
+      case CompoundTypeTree(Template(parents, _, _)) ⇒
+        parents foreach {
+          case AppliedTypeTree(tpt: Select, args) if tpt.symbol != NoSymbol ⇒
+            typeRef(owner, tpt)
+          case _ ⇒
+        }
       case _ ⇒
     }
   }
