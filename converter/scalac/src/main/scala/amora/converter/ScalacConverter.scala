@@ -353,13 +353,40 @@ final class ScalacConverter[G <: Global](val global: G) {
       case t: Select ⇒
         typeRef(owner, t)
       // Compound type trees need special handling, since their original representation
-      // lacks symbols. Only Select trees deep within contain symbols.
-      case CompoundTypeTree(Template(parents, _, _)) ⇒
-        parents foreach {
-          case AppliedTypeTree(tpt: Select, args) if tpt.symbol != NoSymbol ⇒
-            typeRef(owner, tpt)
-          case _ ⇒
+      // lacks symbols.
+      case t @ CompoundTypeTree(Template(parents, _, _)) ⇒
+        // we need to extract symbols from the types and later combine the symbols
+        // with the trees because the trees do not contain the symbols.
+        def handleTypeArguments() = {
+          def findTypes(t: Type): Seq[Type] =
+            t +: t.typeArgs.flatMap(findTypes)
+          def findTrees(t: Tree): Seq[Tree] = t match {
+            case AppliedTypeTree(tpt, args) ⇒
+              tpt +: args.flatMap(findTrees)
+            case t ⇒
+              Seq(t)
+          }
+          val typeParents = t.tpe.parents.flatMap(findTypes)
+          val treeParents = parents.flatMap(findTrees)
+          typeParents zip treeParents foreach {
+            case (typeParent, treeParent) ⇒
+              val ref = refFromSymbol(typeParent.typeSymbol)
+              setPosition(ref, treeParent.pos)
+              found += ref
+          }
         }
+
+        // Only the Select trees from the qualifiers contain symbols.
+        def handleQualifiers() = {
+          parents foreach {
+            case AppliedTypeTree(tpt: Select, _) if tpt.symbol != NoSymbol ⇒
+              typeRef(owner, tpt)
+            case _ ⇒
+          }
+        }
+
+        handleTypeArguments()
+        handleQualifiers()
       case _ ⇒
     }
   }

@@ -274,9 +274,9 @@ class ScalaRefTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         trait [[!AnyRef]]X {
-          self: [[scala]].[[collection]].[[SeqLike]] [ List [ Int ], List [ Int ] ]
-            with [[scala]].[[collection]].[[IterableLike]] [ List [ Int ], List [ Int ] ]
-            with [[scala]].[[collection]].[[GenSeqLike]] [ List [ Int ], List [ Int ] ] ⇒
+          self: [[scala]].[[collection]].[[SeqLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ]
+            with [[scala]].[[collection]].[[IterableLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ]
+            with [[scala]].[[collection]].[[GenSeqLike]] [ [[List]] [ [[Int]] ], [[List]] [ [[Int]] ] ] ⇒
         }
       """)
   }
