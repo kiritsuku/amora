@@ -79,7 +79,7 @@ final class ScalacConverter[G <: Global](val global: G) {
         case definitions.LongClass    ⇒ "J"
         case definitions.DoubleClass  ⇒ "D"
         case definitions.ArrayClass   ⇒ "["+sig(args.head)
-        case _                        ⇒ "L"+sym.fullName.replace('.', '/')+";"
+        case _                        ⇒ "L"+sym.javaBinaryNameString+";"
       }
     }
 

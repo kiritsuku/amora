@@ -839,7 +839,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "X", "X.f()Lscala/collection/mutable/Buffer;", "<ref>scala", "scala.<ref>collection",
+        "X", "X.f()Lscala/collection/mutable/Buffer$;", "<ref>scala", "scala.<ref>collection",
         "scala.collection.<ref>mutable", "scala.collection.mutable.<ref>B",
         "scala.collection.mutable.<ref>Buffer", "scala.<ref>AnyRef", "X.this()V")
   }
@@ -1534,5 +1534,18 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.f()Z", "X.f()Z.<do>", "X.f()Z.<do>.b",
         "X.f()Z.<do>.<ref>b", "scala.Predef.<ref>println(Ljava/lang/Object;)V",
         "scala.<ref>Boolean", "scala.<ref>AnyRef", "X.this()V")
+  }
+
+  @Test
+  def class_and_object() = {
+    convert("""
+      class X
+      object X
+      class Y {
+        def cls: X = null
+        def obj: X.type = null
+      }
+    """) === Set(
+        "X", "X.this()V", "Y", "Y.this()V", "Y.cls()LX;", "Y.obj()LX$;", "<ref>X", "scala.<ref>AnyRef")
   }
 }
