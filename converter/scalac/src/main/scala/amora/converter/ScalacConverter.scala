@@ -697,7 +697,8 @@ final class ScalacConverter[G <: Global](val global: G) {
     if (t == noSelfType)
       return
     val m = mkDecl(t.symbol, owner)
-    setPosition(m, t.pos)
+    // the end position for self references are wrong, we have to set the end manually
+    m.position = h.RangePosition(t.pos.start, t.pos.start+m.name.length)
     found += m
     typeRef(m, t.tpt, selfRefPos = Some(t.pos.start))
   }
