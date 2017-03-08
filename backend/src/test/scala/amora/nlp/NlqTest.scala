@@ -328,6 +328,4 @@ class NlqTest extends RestApiTest {
           - x
     """)
   }
-    )
-  }
 }
