@@ -567,6 +567,7 @@ object Schema {
 
             loop(owner)
           case _: Ref ⇒
+          case _: Scope ⇒
         }
 
       case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
@@ -598,7 +599,10 @@ object Schema {
 
             loop(owner)
           case _: Ref ⇒
+          case _: Scope ⇒
         }
+
+      case _: Scope ⇒
     }
 
     sb.append("INSERT DATA {\n")
