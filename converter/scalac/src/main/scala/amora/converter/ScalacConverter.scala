@@ -636,8 +636,10 @@ final class ScalacConverter[G <: Global](val global: G) {
     val decl = mkDecl(t.symbol, owner)
     setPosition(decl, t.pos)
     found += decl
-    t.tparams foreach (typeParamDef(decl, _))
-    template(decl, t.impl)
+    withNewScope {
+      t.tparams foreach (typeParamDef(decl, _))
+      template(decl, t.impl)
+    }
   }
 
   private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
@@ -645,7 +647,9 @@ final class ScalacConverter[G <: Global](val global: G) {
     val decl = mkDecl(t.symbol, owner)
     setPosition(decl, t.pos)
     found += decl
-    template(decl, t.impl)
+    withNewScope {
+      template(decl, t.impl)
+    }
   }
 
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {

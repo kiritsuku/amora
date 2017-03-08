@@ -13,15 +13,16 @@ sealed trait Hierarchy {
       val sig = attachments.collectFirst {
         case Attachment.JvmSignature(signature) ⇒ signature
       }.getOrElse("")
-      val paramAtt = attachments.collectFirst {
+      val att = attachments.collectFirst {
         case Attachment.Param ⇒ "<param>"
         case Attachment.TypeParam ⇒ "<tparam>"
+        case Attachment.Object ⇒ "<object>"
       }.getOrElse("")
       parent match {
         case Root ⇒
-          s"$paramAtt$name$sig"
+          s"$att$name$sig"
         case _ ⇒
-          s"${parent.asString}.$paramAtt$name$sig"
+          s"${parent.asString}.$att$name$sig"
       }
     case Ref(name, refToDecl, _, _) ⇒
       val sig = refToDecl match {

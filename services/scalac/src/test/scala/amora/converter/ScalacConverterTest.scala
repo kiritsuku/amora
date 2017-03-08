@@ -21,7 +21,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       package pkg
       object X
     """) === Set(
-        "pkg", "pkg.X", "scala.<ref>AnyRef", "pkg.X.this()V")
+        "pkg", "pkg.<object>X", "scala.<ref>AnyRef", "pkg.<object>X.this()V")
   }
 
   @Test
@@ -165,7 +165,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         class Z
       }
     """) === Set(
-        "pkg", "pkg.X", "pkg.X.Y", "pkg.X.Z", "scala.<ref>AnyRef", "pkg.X.Y.this()V", "pkg.X.Z.this()V")
+        "pkg", "pkg.X", "pkg.X.<object>Y", "pkg.X.Z", "scala.<ref>AnyRef", "pkg.X.<object>Y.this()V", "pkg.X.Z.this()V")
   }
 
   @Test
@@ -181,8 +181,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
         }
       }
     """) === Set(
-        "pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.Z", "pkg.X.Y.Z.a", "pkg.X.Y.Z.b()I",
-        "scala.<ref>Int", "scala.<ref>AnyRef", "pkg.X.this()V", "pkg.X.Y.Z.this()V")
+        "pkg", "pkg.X", "pkg.X.Y", "pkg.X.Y.<object>Z", "pkg.X.Y.<object>Z.a", "pkg.X.Y.<object>Z.b()I",
+        "scala.<ref>Int", "scala.<ref>AnyRef", "pkg.X.this()V", "pkg.X.Y.<object>Z.this()V")
   }
 
   @Test
@@ -1014,10 +1014,10 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.f()I.<match>.<case>", "X.f()I.<match>.<case>.i", "X.f()I.<match>.<case>.j",
         "X.f()I.<match>.<case>.<ref>i", "X.f()I.<match>.<case>.<ref>j",
         "scala.<ref>Int", "<ref>Extractor", "Extractor.<ref>unapply(I)Lscala/Option;",
-        "Extractor", "Extractor.unapply(I)Lscala/Option;", "Extractor.unapply(I)Lscala/Option;.<param>i",
-        "Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option",
+        "<object>Extractor", "<object>Extractor.unapply(I)Lscala/Option;", "<object>Extractor.unapply(I)Lscala/Option;.<param>i",
+        "<object>Extractor.unapply(I)Lscala/Option;.<ref>i", "scala.<ref>Option",
         "scala.Option.<ref>apply(Ljava/lang/Object;)Lscala/Option;", "scala.<ref>AnyRef",
-        "X.this()V", "Extractor.this()V")
+        "X.this()V", "<object>Extractor.this()V")
   }
 
   @Test
@@ -1116,10 +1116,10 @@ class ScalacConverterTest extends ScalaCompilerTest {
       }
       class Ann(v: Int) extends scala.annotation.StaticAnnotation
     """) === Set(
-        "X", "Ann", "Constants", "Constants.C", "Ann.this(I)V.<param>v", "<ref>Ann",
+        "X", "Ann", "<object>Constants", "<object>Constants.C", "Ann.this(I)V.<param>v", "<ref>Ann",
         "<ref>Constants", "Constants.<ref>C", "<ref>scala", "scala.<ref>annotation",
         "scala.annotation.<ref>StaticAnnotation", "scala.<ref>Int",
-        "scala.<ref>AnyRef", "X.this()V", "Constants.this()V", "Ann.this(I)V",
+        "scala.<ref>AnyRef", "X.this()V", "<object>Constants.this()V", "Ann.this(I)V",
         "Ann.<param>v")
   }
 
@@ -1130,9 +1130,9 @@ class ScalacConverterTest extends ScalaCompilerTest {
       object X
       class Ann extends scala.annotation.StaticAnnotation
     """) === Set(
-        "X", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
+        "<object>X", "Ann", "<ref>Ann", "<ref>scala", "scala.<ref>annotation",
         "scala.annotation.<ref>StaticAnnotation", "scala.<ref>AnyRef",
-        "X.this()V", "Ann.this()V")
+        "<object>X.this()V", "Ann.this()V")
   }
 
   @Test
@@ -1546,6 +1546,21 @@ class ScalacConverterTest extends ScalaCompilerTest {
         def obj: X.type = null
       }
     """) === Set(
-        "X", "X.this()V", "Y", "Y.this()V", "Y.cls()LX;", "Y.obj()LX$;", "<ref>X", "scala.<ref>AnyRef")
+        "X", "<object>X", "X.this()V", "<object>X.this()V", "Y", "Y.this()V",
+        "Y.cls()LX;", "Y.obj()LX$;", "<ref>X", "scala.<ref>AnyRef")
+  }
+
+  @Test
+  def class_and_object_with_same_member_name() = {
+    convert("""
+      class X {
+        val value = 0
+      }
+      object X {
+        val value = 0
+      }
+    """) === Set(
+        "X", "X.this()V", "X.value", "scala.<ref>AnyRef", "scala.<ref>Int",
+        "<object>X", "<object>X.this()V", "<object>X.value")
   }
 }

@@ -347,4 +347,25 @@ class ScalaDeclTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def class_and_object() = {
+    indexRegionData("""
+        prefix c:<http://amora.center/kb/amora/Schema/Decl/>
+        prefix o:<http://amora.center/kb/amora/Schema/Object/>
+        select ?name ?start ?end where {
+          [c:name "value"] c:owner ?owner .
+          ?owner a o: ; c:name ?name ; c:posStart ?start ; c:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          val value = 0
+        }
+        object [[X]] {
+          val value = 0
+        }
+      """)
+  }
 }
