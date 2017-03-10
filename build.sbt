@@ -328,10 +328,9 @@ lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings
   isSnapshot := true,
   test in assembly := {},
   assemblyJarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
-  assemblyOption in assembly ~= { _.copy(includeScala = false) },
+  assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
   packagedArtifact in Compile in packageBin := {
-    val temp = (packagedArtifact in Compile in packageBin).value
-    val (art, slimJar) = temp
+    val (art, slimJar) = (packagedArtifact in Compile in packageBin).value
     val fatJar = new File(crossTarget.value + "/" + (assemblyJarName in assembly).value)
     IO.copy(List(fatJar -> slimJar), overwrite = true)
     println("Using sbt-assembly to package library dependencies into a fat jar for publication")
