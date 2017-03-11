@@ -460,12 +460,12 @@ object Schema {
     }
 
     val sb = new StringBuilder
-    val prefixLen = prefixe.keys.map(_.length).max + 3
+    val prefixLen = (if (prefixe.isEmpty) 0 else prefixe.keys.map(_.length).max) + 3
     prefixe.toList.sortBy(_._1)(stringOrdering) foreach {
       case (name, url) ⇒
         sb append "@prefix " append name append ":" append " " * (prefixLen - name.length) append "<" append url append "> .\n"
     }
-    val len = data.values.map(_.keys.map(_.length).max).max + 3
+    val len = (if (data.isEmpty) 0 else data.values.map(_.keys.map(_.length).max).max) + 3
     data.toList.sortBy(_._1)(stringOrdering) foreach {
       case (url, kv) ⇒
         sb append "<" append url append ">\n"
