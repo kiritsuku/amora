@@ -11,7 +11,9 @@ import scala.tools.nsc.plugins.PluginComponent
 import scala.util.Failure
 import scala.util.Success
 
+import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
+import amora.converter.protocol._
 
 class GenInfoPlugin(override val global: Global) extends Plugin {
   override val name = "GenInfoPlugin"
@@ -41,13 +43,14 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
 
       val files = currentRun.units map { u ⇒
         val is = mkHierarchy(u.body)
-        val filePath = u.source.file.file.getAbsolutePath
-        val fileName = s"$outputDir/${filePath.replace('/', '%')}.amoradb"
-        val data = is.map(_.asString).sorted
+        val file = u.source.file.file
+        val fileName = file.getAbsolutePath.replace('/', '%')
+        val filePath = s"$outputDir/$fileName.amoradb"
 
+        val data = Schema.mkTurtleUpdate(File(Artifact(Project("p"), "o", "n", "v1"), file.getName), is)
         import scala.collection.JavaConverters._
-        Files.write(Paths.get(fileName), data.asJava, Charset.forName("UTF-8"))
-        fileName
+        Files.write(Paths.get(filePath), Seq(data).asJava, Charset.forName("UTF-8"))
+        filePath
       }
       println("Amora compiler plugin wrote files:\n" + files.mkString("- ", "\n- ", ""))
     }
