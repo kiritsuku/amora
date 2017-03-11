@@ -28,7 +28,10 @@ final class ScalacConverter[G <: Global](val global: G) {
       case Success(_) ⇒
         Success(found.toList)
       case Failure(f) ⇒
-        Failure(new RuntimeException(s"Conversion of file `${tree.pos.source.file.absolute}` failed. See underlying issue for more information.", f))
+        Failure(new RuntimeException(
+            s"Conversion of file `${tree.pos.source.file.absolute}` failed." +
+            " This is a bug, please report it at `https://github.com/sschaef/amora/issues`." +
+            " See underlying issue for more information.", f))
     }
   }
 
