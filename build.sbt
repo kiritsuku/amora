@@ -311,6 +311,8 @@ lazy val backend = project in file("backend") settings commonSettings ++ Revolve
 
 lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings ++ Seq(
   name := "scalac-plugin",
+  organization := "amora",
+  crossVersion := CrossVersion.full,
 
   scalacOptions in console in Compile += s"-Xplugin:${(packageBin in Compile).value}",
   //scalacOptions in Test += s"-Xplugin:${(packageBin in Compile).value}",
@@ -322,10 +324,10 @@ lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings
     Seq("-Xplugin:" + jar.getAbsolutePath, "-Jdummy=" + jar.lastModified)
   }).value,
 
+  isSnapshot := true,
   // adds project depedencies to JAR file of compiler plugin. If we don't do this,
   // the dependencies are not available when the compiler plugin is executed.
   // copied from https://github.com/matanster/extractor/blob/95d16d80d534cb9b5113b5e6824021a9382168a9/build.sbt#L55-L66
-  isSnapshot := true,
   test in assembly := {},
   assemblyJarName in assembly := name.value + "_" + scalaVersion.value + "-" + version.value + "-assembly.jar",
   assemblyOption in assembly := (assemblyOption in assembly).value.copy(includeScala = false),
@@ -342,15 +344,39 @@ lazy val scalacPlugin = project in file("scalac-plugin") settings commonSettings
   traceLevel in Test := 0
 ) dependsOn (scalacConverter)
 
+lazy val amoraSbtPlugin = project in file("sbt-plugin") settings ScriptedPlugin.scriptedSettings ++ Seq(
+  name := "sbt-amora",
+  organization := "amora",
+
+  sbtPlugin := true,
+  scalaVersion := "2.10.5",
+  scriptedLaunchOpts ++= Seq(
+    "-Dplugin.version=" + version.value,
+    "-Xmx2G",
+    "-Xss2M"
+  ),
+  // do not buffer the log, otherwise some parts may not be shown
+  scriptedBufferLog := false,
+  scalacOptions ++= Seq(
+    "-deprecation",
+    "-encoding", "UTF-8",
+    "-feature"
+  )
+)
+
 /**
  * Contains common definitions that are needed by all converters and by the indexer.
  */
 lazy val converterProtocol = project in file("converter/protocol") settings commonSettings ++ Seq(
-  name := "converter-protocol"
+  name := "converter-protocol",
+  organization := "amora",
+  crossVersion := CrossVersion.full
 )
 
 lazy val scalacConverter = project in file("converter/scalac") settings commonSettings ++ Seq(
   name := "scalac-converter",
+  organization := "amora",
+  crossVersion := CrossVersion.full,
 
   libraryDependencies ++= deps.scalacConverter.value
 ) dependsOn (converterProtocol)

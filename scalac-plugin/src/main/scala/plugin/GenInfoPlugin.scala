@@ -1,5 +1,9 @@
 package plugin
 
+import java.nio.charset.Charset
+import java.nio.file.Files
+import java.nio.file.Paths
+
 import scala.tools.nsc.Global
 import scala.tools.nsc.Phase
 import scala.tools.nsc.plugins.Plugin
@@ -22,9 +26,7 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
 
   override def newPhase(prev: Phase): Phase = new Phase(prev) {
     override def run() = {
-      val u = currentRun.units.toList
-
-      def idents(t: global.Tree) = {
+      def mkHierarchy(t: global.Tree) = {
         new ScalacConverter[global.type](global).convert(t) match {
           case Success(res) ⇒
             res
@@ -33,8 +35,21 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
             Nil
         }
       }
+      val outputDir = global.settings.outputDirs.getSingleOutput.getOrElse {
+        throw new IllegalStateException("scalac has no output directory configured, therefore Amora compiler plugin can't store its data.")
+      }.file.getAbsolutePath
 
-      println(u.map(_.body) map idents)
+      val files = currentRun.units map { u ⇒
+        val is = mkHierarchy(u.body)
+        val filePath = u.source.file.file.getAbsolutePath
+        val fileName = s"$outputDir/${filePath.replace('/', '%')}.amoradb"
+        val data = is.map(_.asString).sorted
+
+        import scala.collection.JavaConverters._
+        Files.write(Paths.get(fileName), data.asJava, Charset.forName("UTF-8"))
+        fileName
+      }
+      println("Amora compiler plugin wrote files:\n" + files.mkString("- ", "\n- ", ""))
     }
     override def name = "GenInfoPhase"
   }
