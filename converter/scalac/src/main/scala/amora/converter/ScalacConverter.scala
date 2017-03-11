@@ -9,6 +9,7 @@ import scala.tools.refactoring.util.SourceWithMarker.Movements
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
+
 import amora.converter.{ protocol ⇒ h }
 import amora.converter.protocol.{ Attachment ⇒ a }
 
@@ -28,7 +29,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       case Success(_) ⇒
         Success(found.toList)
       case Failure(f) ⇒
-        Failure(new RuntimeException(
+        Failure(new IllegalStateException(
             s"Conversion of file `${tree.pos.source.file.absolute}` failed." +
             " This is a bug, please report it at `https://github.com/sschaef/amora/issues`." +
             " See underlying issue for more information.", f))
@@ -275,6 +276,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       if (t.pos.isRange)
         found += ref
       ref
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   private def setPositionOfOwner(owner: h.Hierarchy, elem: h.Hierarchy): Unit = {
@@ -431,6 +434,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       mkRef(owner, t)
     case _: Ident ⇒
       mkRef(owner, t)
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   private def expr(owner: h.Hierarchy, t: Tree): Unit = t match {
@@ -470,6 +475,8 @@ final class ScalacConverter[G <: Global](val global: G) {
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
         mkRef(owner, t)
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   /** Handles `classOf[X]` constructs. */
@@ -577,6 +584,8 @@ final class ScalacConverter[G <: Global](val global: G) {
         stats foreach (body(sDo, _))
       }
     case EmptyTree ⇒
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   /**
@@ -788,6 +797,8 @@ final class ScalacConverter[G <: Global](val global: G) {
       decl.addAttachments(a.Package)
       setPosition(decl, t.pos)
       decl
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   private def traverse(t: Tree) = t match {
@@ -829,6 +840,8 @@ final class ScalacConverter[G <: Global](val global: G) {
     case ExistentialTypeTree(tpt, whereClauses)        ⇒
     case SelectFromArray(qualifier, selector, erasure) ⇒
     case EmptyTree                                     ⇒
+    case t ⇒
+      throwTreeMatchError(t)
   }
 
   private def setPosition(d: h.HierarchyWithName, pos: Position, skipping: Movement = Movements.none) = {
@@ -858,6 +871,19 @@ final class ScalacConverter[G <: Global](val global: G) {
     s.addAttachments(attachment)
     found += s
     withNewScope(f(s))
+  }
+
+  private def throwTreeMatchError[A](t: Tree) = {
+    val lineNumber = t.pos.source.offsetToLine(t.pos.start)
+    val line = t.pos.source.lineToString(lineNumber)
+    val line2 = if (lineNumber > 0) Seq(t.pos.source.lineToString(lineNumber - 1)) else Nil
+    val line3 = if (lineNumber > 1) Seq(t.pos.source.lineToString(lineNumber - 2)) else Nil
+    val lineStart = t.pos.source.lineToOffset(lineNumber)
+    val column = t.pos.start - lineStart
+    val marker = " " * column + "^"
+    val matchErr = new MatchError(t).getMessage().split("\n")
+    throw new IllegalStateException(s"Match error at tree conversion (line ${lineNumber + 1}, column ${column + 1}):\n" +
+        List(line3, line2, Seq(line), Seq(marker), matchErr.toSeq).flatten.map("  " + _).mkString("\n"))
   }
 }
 
