@@ -700,6 +700,12 @@ final class ScalacConverter[G <: Global](val global: G) {
     val decl = mkDecl(t.symbol, owner)
     if (isFunction)
       decl.addAttachments(a.Function)
+    // implicit flag is only added to the getter
+    if (t.symbol.hasGetter) {
+      val g = t.symbol.getterIn(t.symbol.owner)
+      if (g.isAccessor && g.isImplicit)
+        decl.addAttachments(a.Implicit)
+    }
     setPosition(decl, t.pos)
     found += decl
     scopes = scopes.add(decl)

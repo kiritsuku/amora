@@ -54,4 +54,23 @@ class FlagTest extends RestApiTest {
         Seq(Data("name", "b3")),
         Seq(Data("name", "b4")))
   }
+
+  @Test
+  def implicit_val() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          implicit val value = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix implicit:<http://amora.center/kb/amora/Flag/implicit>
+      select ?name where {
+        [Decl:flag implicit:] Decl:name ?name .
+      }
+      order by ?name
+    """) === Seq(
+        Seq(Data("name", "value")))
+  }
 }

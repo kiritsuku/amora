@@ -80,3 +80,7 @@ FlagData:tparam
   a Flag: ;
   Flag:name "tparam" ;
 .
+FlagData:implicit
+  a Flag: ;
+  Flag:name "implicit" ;
+.

@@ -1563,4 +1563,14 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X", "X.this()V", "X.value", "scala.<ref>AnyRef", "scala.<ref>Int",
         "<object>X", "<object>X.this()V", "<object>X.value")
   }
+
+  @Test
+  def implicit_val() = {
+    convert("""
+      class X {
+        implicit val value = 0
+      }
+    """) === Set(
+        "X", "X.this()V", "X.value", "scala.<ref>AnyRef", "scala.<ref>Int")
+  }
 }

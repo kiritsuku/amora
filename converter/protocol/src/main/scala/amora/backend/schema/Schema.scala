@@ -333,6 +333,9 @@ object Schema {
         if (h.attachments(Attachment.Constructor)) {
           addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/constructor>")
         }
+        if (h.attachments(Attachment.Implicit)) {
+          addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/implicit>")
+        }
 
         decl.attachments.collectFirst {
           case Attachment.JvmSignature(signature) ⇒
@@ -539,6 +542,9 @@ object Schema {
         }
         if (h.attachments(Attachment.Constructor)) {
           sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/constructor> .""" + "\n")
+        }
+        if (h.attachments(Attachment.Implicit)) {
+          sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/implicit> .""" + "\n")
         }
 
         decl.attachments.collectFirst {
