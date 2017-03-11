@@ -1,4 +1,4 @@
 <plugin>
-  <name>GenInfoPlugin</name>
-  <classname>plugin.GenInfoPlugin</classname>
+  <name>AmoraScalacPlugin</name>
+  <classname>amora.plugin.AmoraScalacPlugin</classname>
 </plugin>

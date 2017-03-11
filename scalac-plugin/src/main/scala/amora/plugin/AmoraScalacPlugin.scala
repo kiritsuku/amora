@@ -1,4 +1,4 @@
-package plugin
+package amora.plugin
 
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -17,15 +17,15 @@ import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
 import amora.converter.protocol._
 
-class GenInfoPlugin(override val global: Global) extends Plugin {
-  override val name = "GenInfoPlugin"
+class AmoraScalacPlugin(override val global: Global) extends Plugin {
+  override val name = "AmoraScalacPlugin"
 
   override val description = "Generates information from scalac trees"
 
-  override val components = List(new GenInfoComponent(global))
+  override val components = List(new AmoraScalacComponent(global))
 }
 
-class GenInfoComponent(override val global: Global) extends PluginComponent {
+class AmoraScalacComponent(override val global: Global) extends PluginComponent {
   import global._
 
   override def newPhase(prev: Phase): Phase = new Phase(prev) {
@@ -62,10 +62,11 @@ class GenInfoComponent(override val global: Global) extends PluginComponent {
           println(s"- with errors: $filePath")
       }
     }
-    override def name = "GenInfoPhase"
+
+    override def name = "AmoraPhase"
   }
 
-  override val phaseName = "GenInfoComponent"
+  override val phaseName = "AmoraComponent"
 
   override val runsAfter = List("typer")
 }
