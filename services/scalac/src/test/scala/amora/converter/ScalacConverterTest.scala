@@ -1103,7 +1103,8 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
         "scala.<ref>Array", "java.lang.<ref>Class", "scala.<ref>AnyRef", "<ref>X",
         "scala.Array.<ref>apply(Lscala/collection/Seq;Lscala/reflect/ClassTag;)Ljava/lang/Object;",
-        "X.this()V", "Ann.this([Ljava/lang/Class;)V", "Ann.<param>arr")
+        "X.this()V", "Ann.this([Ljava/lang/Class;)V", "Ann.<param>arr",
+        "scala.reflect.<ref>materializeClassTag()Lscala/reflect/ClassTag;")
   }
 
   @Test

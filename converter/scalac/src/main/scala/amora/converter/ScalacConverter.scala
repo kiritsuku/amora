@@ -181,7 +181,7 @@ final class ScalacConverter[G <: Global](val global: G) {
   private def mkRef(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
     case Apply(fun, args) ⇒
       val ref = mkRef(owner, fun)
-      args foreach (expr(ref, _))
+      args foreach (body(ref, _))
       ref
     case TypeApply(fun, args) ⇒
       args foreach (typeRef(owner, _))
@@ -438,47 +438,6 @@ final class ScalacConverter[G <: Global](val global: G) {
       throwTreeMatchError(t)
   }
 
-  private def expr(owner: h.Hierarchy, t: Tree): Unit = t match {
-    case Apply(fun, args) ⇒
-      // TODO remove this condition because we are also interested in offset positions
-      if (t.pos.isRange) {
-        expr(owner, fun)
-        args foreach (expr(owner, _))
-      }
-    case _: TypeApply ⇒
-      mkRef(owner, t)
-    case _: TypeTree ⇒
-      typeRef(owner, t)
-    case _: Select ⇒
-      mkRef(owner, t)
-    case Function(vparams, body) ⇒
-      withNewScope {
-        vparams foreach (valDef(owner, _, isFunction = true))
-        expr(owner, body)
-      }
-    case Bind(_, body) ⇒
-      val decl = mkDecl(t.symbol, owner)
-      setPosition(decl, t.pos)
-      found += decl
-      scopes = scopes.add(decl)
-      expr(owner, body)
-    case Typed(expr, tpt) ⇒
-      this.expr(owner, expr)
-      typeRef(owner, tpt)
-    case _: Block ⇒
-      body(owner, t)
-    case UnApply(fun, args) ⇒
-      expr(owner, fun)
-      args foreach (expr(owner, _))
-    case t: Literal ⇒
-      classOfConst(owner, t)
-    case t: Ident ⇒
-      if (t.name != nme.USCOREkw)
-        mkRef(owner, t)
-    case t ⇒
-      throwTreeMatchError(t)
-  }
-
   /** Handles `classOf[X]` constructs. */
   private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
@@ -515,8 +474,6 @@ final class ScalacConverter[G <: Global](val global: G) {
       body(owner, lhs)
       val decl = mkDecl(lhs.symbol, owner)
       body(decl, rhs)
-    case t: Apply ⇒
-      mkRef(owner, t)
     case t: Select ⇒
       if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
         mkRef(owner, t)
@@ -526,8 +483,6 @@ final class ScalacConverter[G <: Global](val global: G) {
       moduleDef(owner, t)
     case t: Import ⇒
       importDef(owner, t)
-    case _: Ident ⇒
-      mkRef(owner, t)
     case If(cond, thenp, elsep) ⇒
       withKeywordScope(owner, t, a.If) { sIf ⇒
         body(sIf, cond)
@@ -549,7 +504,7 @@ final class ScalacConverter[G <: Global](val global: G) {
       }
     case CaseDef(pat, guard, body) ⇒
       withKeywordScope(owner, t, a.Case) { sCase ⇒
-        expr(sCase, pat)
+        this.body(sCase, pat)
         this.body(sCase, guard)
         this.body(sCase, body)
       }
@@ -584,11 +539,32 @@ final class ScalacConverter[G <: Global](val global: G) {
         stats foreach (body(sDo, _))
       }
     case EmptyTree ⇒
-    case _: Typed ⇒
-      expr(owner, t)
+    case _: Apply ⇒
+      mkRef(owner, t)
+    case _: TypeApply ⇒
+      mkRef(owner, t)
+    case _: TypeTree ⇒
+      typeRef(owner, t)
     case Function(vparams, body) ⇒
-      vparams foreach (valDef(owner, _))
+      withNewScope {
+        vparams foreach (valDef(owner, _, isFunction = true))
+        this.body(owner, body)
+      }
+    case Bind(_, body) ⇒
+      val decl = mkDecl(t.symbol, owner)
+      setPosition(decl, t.pos)
+      found += decl
+      scopes = scopes.add(decl)
       this.body(owner, body)
+    case Typed(expr, tpt) ⇒
+      body(owner, expr)
+      typeRef(owner, tpt)
+    case UnApply(fun, args) ⇒
+      body(owner, fun)
+      args foreach (body(owner, _))
+    case t: Ident ⇒
+      if (t.name != nme.USCOREkw)
+        mkRef(owner, t)
     case t ⇒
       throwTreeMatchError(t)
   }
@@ -695,7 +671,7 @@ final class ScalacConverter[G <: Global](val global: G) {
     setPosition(decl, t.pos)
     found += decl
     t.tparams foreach (typeParamDef(decl, _))
-    expr(owner, t.rhs)
+    body(owner, t.rhs)
   }
 
   private def valDef(owner: h.Hierarchy, t: ValDef, isFunction: Boolean = false): Unit = {
