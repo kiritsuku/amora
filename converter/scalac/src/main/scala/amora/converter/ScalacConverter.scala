@@ -586,6 +586,9 @@ final class ScalacConverter[G <: Global](val global: G) {
     case EmptyTree ⇒
     case _: Typed ⇒
       expr(owner, t)
+    case Function(vparams, body) ⇒
+      vparams foreach (valDef(owner, _))
+      this.body(owner, body)
     case t ⇒
       throwTreeMatchError(t)
   }

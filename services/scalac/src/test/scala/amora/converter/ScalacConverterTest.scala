@@ -1622,4 +1622,17 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "X.this()V", "scala.<ref>AnyRef", "scala.<ref>Unit", "scala.Predef.<ref>println(Ljava/lang/Object;)V")
   }
+
+  @Test
+  def function_application() = {
+    convert("""
+      class X {
+        def f(i: Int) = 0
+        def g = f _
+      }
+    """) === Set(
+        "X", "X.this()V", "X.f(I)I", "X.f(I)I.<param>i", "X.<ref>f(I)I", "X.<ref>f(I)I.<ref>i",
+        "X.g()Lscala/Function1;",
+        "scala.<ref>AnyRef", "scala.<ref>Function1", "scala.<ref>Int")
+  }
 }
