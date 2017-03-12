@@ -749,12 +749,15 @@ final class ScalacConverter[G <: Global](val global: G) {
         val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
         if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
           typeRef(m, tpt)
-        // not sure if this condition is the right thing to do. It avoids to create
-        // refs to the default constructor `java.lang.Object.<ref>this()V`. The
-        // default constructor of the super class is always called implicitly but
-        // I'm not sure if we want to highlight this fact in our index.
-        if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
-          body(m, rhs)
+        // do not index bodies of generated code
+        if (!t.symbol.isSynthetic) {
+          // not sure if this condition is the right thing to do. It avoids to create
+          // refs to the default constructor `java.lang.Object.<ref>this()V`. The
+          // default constructor of the super class is always called implicitly but
+          // I'm not sure if we want to highlight this fact in our index.
+          if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
+            body(m, rhs)
+        }
       }
     }
 

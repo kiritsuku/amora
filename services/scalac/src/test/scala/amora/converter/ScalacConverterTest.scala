@@ -1573,4 +1573,43 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "X.this()V", "X.value", "scala.<ref>AnyRef", "scala.<ref>Int")
   }
+
+  @Test
+  def case_class() = {
+    convert("""
+      case class X(i: Int)
+    """) === Set(
+        "<object>X",
+        "<object>X.apply(I)LX;",
+        "<object>X.apply(I)LX;.<param>i",
+        "<object>X.readResolve()Ljava/lang/Object;",
+        "<object>X.this()V",
+        "<object>X.toString()Ljava/lang/String;",
+        "<object>X.unapply(LX;)Lscala/Option;",
+        "<ref>X",
+        "X",
+        "X.<param>i",
+        "X.canEqual(Ljava/lang/Object;)Z",
+        "X.copy$default$1()I",
+        "X.copy(I)LX;",
+        "X.copy(I)LX;.<param>i",
+        "X.equals(Ljava/lang/Object;)Z",
+        "X.hashCode()I",
+        "X.productArity()I",
+        "X.productElement(I)Ljava/lang/Object;",
+        "X.productIterator()Lscala/collection/Iterator;",
+        "X.productPrefix()Ljava/lang/String;",
+        "X.this(I)V",
+        "X.this(I)V.<param>i",
+        "X.toString()Ljava/lang/String;",
+        "java.lang.<ref>String",
+        "scala.<ref>Any",
+        "scala.<ref>Boolean",
+        "scala.<ref>Int",
+        "scala.<ref>Option",
+        "scala.<ref>Product",
+        "scala.<ref>Serializable",
+        "scala.collection.<ref>Iterator",
+        "scala.runtime.<ref>AbstractFunction1")
+  }
 }
