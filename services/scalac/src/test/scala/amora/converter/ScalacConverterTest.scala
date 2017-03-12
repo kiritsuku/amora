@@ -1661,4 +1661,19 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.<ref>Int",
         "scala.<ref>PartialFunction")
   }
+
+  @Test
+  def classOf_application() = {
+    convert("""
+      class X {
+        classOf[String].getClass
+      }
+    """) === Set(
+        "X",
+        "X.this()V",
+        "java.lang.<ref>String",
+        "java.lang.Object.<ref>getClass()Ljava/lang/Class;",
+        "scala.<ref>AnyRef",
+        "scala.Predef.<ref>classOf")
+  }
 }

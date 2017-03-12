@@ -276,6 +276,12 @@ final class ScalacConverter[G <: Global](val global: G) {
       if (t.pos.isRange)
         found += ref
       ref
+    case t: Literal ⇒
+      val ref = classOfConst(owner, t).getOrElse {
+        throwTreeMatchError(t)
+      }
+      found += ref
+      ref
     case t ⇒
       throwTreeMatchError(t)
   }
@@ -439,7 +445,7 @@ final class ScalacConverter[G <: Global](val global: G) {
   }
 
   /** Handles `classOf[X]` constructs. */
-  private def classOfConst(owner: h.Hierarchy, t: Literal) = t.tpe match {
+  private def classOfConst(owner: h.Hierarchy, t: Literal): Option[h.Ref] = t.tpe match {
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
       val o = mkDeepDecl(sym)
@@ -453,7 +459,9 @@ final class ScalacConverter[G <: Global](val global: G) {
       classOfRef.addAttachments(a.Ref)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
+      Some(classOfRef)
     case _ ⇒
+      None
   }
 
   private def body(owner: h.Hierarchy, t: Tree): Unit = t match {
