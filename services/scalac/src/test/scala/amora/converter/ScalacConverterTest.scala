@@ -1636,4 +1636,29 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.g()Lscala/Function1;",
         "scala.<ref>AnyRef", "scala.<ref>Function1", "scala.<ref>Int")
   }
+
+  @Test
+  def partial_function_application() = {
+    convert("""
+      class X {
+        def f(pf: PartialFunction[Int, Int]) = 0
+        f {
+          case 0 ⇒
+            val value = 0
+            value
+        }
+      }
+    """) === Set(
+        "X",
+        "X.<ref>f(Lscala/PartialFunction;)I",
+        "X.<ref>f(Lscala/PartialFunction;)I.<case>",
+        "X.<ref>f(Lscala/PartialFunction;)I.<case>.value",
+        "X.<ref>f(Lscala/PartialFunction;)I.<case>.<ref>value",
+        "X.f(Lscala/PartialFunction;)I",
+        "X.f(Lscala/PartialFunction;)I.<param>pf",
+        "X.this()V",
+        "scala.<ref>AnyRef",
+        "scala.<ref>Int",
+        "scala.<ref>PartialFunction")
+  }
 }

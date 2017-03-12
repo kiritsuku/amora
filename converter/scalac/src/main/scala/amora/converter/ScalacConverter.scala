@@ -624,14 +624,31 @@ final class ScalacConverter[G <: Global](val global: G) {
     }
   }
 
+  private def anonClassDef(owner: h.Hierarchy, t: ClassDef) = t match {
+    case ClassDef(_, _, _, Template(_, _, body)) ⇒
+      body foreach {
+        // partial function applications like `f { case x ⇒ }` are transformed
+        // in a way that the partial function is put into the body of the method
+        // `applyOrElse` of an anonymous class.
+        case DefDef(_, TermName("applyOrElse"), _, _, _, Match(_, cases)) ⇒
+          cases filter (!_.pos.isTransparent) foreach (this.body(owner, _))
+        case _ ⇒
+      }
+    case _ ⇒
+  }
+
   private def classDef(owner: h.Hierarchy, t: ClassDef): Unit = {
-    annotationRef(owner, t.symbol, t.pos)
-    val decl = mkDecl(t.symbol, owner)
-    setPosition(decl, t.pos)
-    found += decl
-    withNewScope {
-      t.tparams foreach (typeParamDef(decl, _))
-      template(decl, t.impl)
+    if (t.symbol.isAnonOrRefinementClass)
+      anonClassDef(owner, t)
+    else {
+      annotationRef(owner, t.symbol, t.pos)
+      val decl = mkDecl(t.symbol, owner)
+      setPosition(decl, t.pos)
+      found += decl
+      withNewScope {
+        t.tparams foreach (typeParamDef(decl, _))
+        template(decl, t.impl)
+      }
     }
   }
 
