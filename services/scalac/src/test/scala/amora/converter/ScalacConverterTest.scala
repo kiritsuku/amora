@@ -1612,4 +1612,14 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.collection.<ref>Iterator",
         "scala.runtime.<ref>AbstractFunction1")
   }
+
+  @Test
+  def type_ascription() = {
+    convert("""
+      class X {
+        println(1): Unit
+      }
+    """) === Set(
+        "X", "X.this()V", "scala.<ref>AnyRef", "scala.<ref>Unit", "scala.Predef.<ref>println(Ljava/lang/Object;)V")
+  }
 }
