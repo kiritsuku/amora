@@ -21,6 +21,7 @@ object deps {
   val codemirror      = "5.5-0.5"
   val jquery          = "0.8.0"
   val junitInterface  = "0.11"
+  val coursier        = "1.0.0-M15"
 
   lazy val protocol = Def.setting(Seq(
     "me.chrons"                      %%% "boopickle"                         % boopickle
@@ -35,8 +36,8 @@ object deps {
     "com.beachape"                   %%  "enumeratum"                        % enumeratum,
     "com.lihaoyi"                    %%% "scalatags"                         % scalatags,
     "org.apache.jena"                %   "apache-jena-libs"                  % "3.0.1",
-    "io.get-coursier"                %%  "coursier"                          % "1.0.0-M11",
-    "io.get-coursier"                %%  "coursier-cache"                    % "1.0.0-M11",
+    "io.get-coursier"                %%  "coursier"                          % coursier,
+    "io.get-coursier"                %%  "coursier-cache"                    % coursier,
     // https://github.com/scalaj/scalaj-http
     "org.scalaj"                     %%  "scalaj-http"                       % "2.3.0",
     "com.novocode"                   %   "junit-interface"                   % junitInterface   % "test",
@@ -100,5 +101,10 @@ object deps {
     "net.sf.extjwnl"                 %   "extjwnl"                           % "1.9.1",
     "net.sf.extjwnl"                 %   "extjwnl-data-wn31"                 % "1.2",
     "org.parboiled"                  %%  "parboiled"                         % "2.1.3"
+  ))
+
+  lazy val amoraSbtPlugin = Def.setting(Seq(
+    "io.get-coursier"                %%  "coursier"                          % coursier,
+    "io.get-coursier"                %%  "coursier-cache"                    % coursier
   ))
 }

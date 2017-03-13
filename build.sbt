@@ -348,6 +348,7 @@ lazy val amoraSbtPlugin = project in file("sbt-plugin") settings ScriptedPlugin.
   name := "sbt-amora",
   organization := "amora",
 
+  libraryDependencies ++= deps.amoraSbtPlugin.value,
   sbtPlugin := true,
   scalaVersion := "2.10.5",
   scriptedLaunchOpts ++= Seq(
