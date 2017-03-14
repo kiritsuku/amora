@@ -171,6 +171,13 @@ final class ScalacConverter[G <: Global](
     }
   }
 
+  private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy, calledOn: h.Hierarchy): h.Ref = {
+    val ref = h.Ref(name, refToDecl, owner, calledOn)
+    ref.addAttachments(a.Ref)
+    addRefAttachment(t.pos.source.file, ref)
+    ref
+  }
+
   /**
    * `isTopLevelRef` should be `true` when this method is called. It can be set
    * to `false` when this method calls itself recursively. We need to know if a
@@ -182,23 +189,23 @@ final class ScalacConverter[G <: Global](
    * Select would be `scala.Option.apply` (`apply` is kept but `scala.Option`
    * and `scala` are thrown away).
    */
-  private def mkRef(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
+  private def refTree(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
     case Apply(fun, args) ⇒
-      val ref = mkRef(owner, fun)
+      val ref = refTree(owner, fun)
       args foreach (body(ref, _))
       ref
     case TypeApply(fun, args) ⇒
       args foreach (typeRef(owner, _))
-      mkRef(owner, fun)
+      refTree(owner, fun)
     case Select(New(nt), _) ⇒
-      mkRef(owner, nt)
+      refTree(owner, nt)
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
         case Select(qualifier, nme.PACKAGE) ⇒
-          mkRef(owner, qualifier, isTopLevelRef = false)
+          refTree(owner, qualifier, isTopLevelRef = false)
         case _ ⇒
-          mkRef(owner, qualifier, isTopLevelRef = false)
+          refTree(owner, qualifier, isTopLevelRef = false)
       }
       val calledOn =
         if (t.symbol.owner.name.toTermName == nme.PACKAGE)
@@ -213,8 +220,7 @@ final class ScalacConverter[G <: Global](
           decodedName(name)
       // we can't use [[refToDecl.name]] here because for rename imports its name
       // is different from the name of the symbol
-      val ref = h.Ref(n, refToDecl, owner, calledOn)
-      ref.addAttachments(a.Ref)
+      val ref = mkRef(t, n, refToDecl, owner, calledOn)
 
       // implicitly called apply methods do have range positions but the position
       // of their qualifier is transparent. We need to ensure that we don't treat
@@ -267,8 +273,7 @@ final class ScalacConverter[G <: Global](
         case _ ⇒
           rawRefToDecl.name → rawRefToDecl
       }
-      val ref = h.Ref(n, refToDecl, owner, calledOn)
-      ref.addAttachments(a.Ref)
+      val ref = mkRef(t, n, refToDecl, owner, calledOn)
       t match {
         // we need to manually adjust positions for `this` references because
         // the implementation of `setPosition` for some reason can't handle them.
@@ -306,9 +311,7 @@ final class ScalacConverter[G <: Global](
   private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int]): Unit = {
     def refFromSymbol(sym: Symbol): h.Ref = {
       val o = mkDeepDecl(sym)
-      val ref = h.Ref(o.name, o, owner, o.owner)
-      ref.addAttachments(a.Ref)
-      ref
+      mkRef(t, o.name, o, owner, o.owner)
     }
 
     def selfRefTypes() = {
@@ -441,9 +444,9 @@ final class ScalacConverter[G <: Global](
         typeRef(owner, tpt)
       args.filter(_.symbol != NoSymbol) foreach (typeRef(owner, _))
     case _: Select ⇒
-      mkRef(owner, t)
+      refTree(owner, t)
     case _: Ident ⇒
-      mkRef(owner, t)
+      refTree(owner, t)
     case t ⇒
       throwTreeMatchError(t)
   }
@@ -453,14 +456,12 @@ final class ScalacConverter[G <: Global](
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
       val o = mkDeepDecl(sym)
-      val ref = h.Ref(o.name, o, owner, o.owner)
-      ref.addAttachments(a.Ref)
+      val ref = mkRef(t, o.name, o, owner, o.owner)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
       val refToDecl = h.Decl("classOf", h.Decl("Predef", h.Decl("scala", h.Root)))
-      val classOfRef = h.Ref("classOf", refToDecl, owner, h.Decl("Predef", h.Decl("scala", h.Root)))
-      classOfRef.addAttachments(a.Ref)
+      val classOfRef = mkRef(t ,"classOf", refToDecl, owner, refToDecl.owner)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
       Some(classOfRef)
@@ -488,7 +489,7 @@ final class ScalacConverter[G <: Global](
       body(decl, rhs)
     case t: Select ⇒
       if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
-        mkRef(owner, t)
+        refTree(owner, t)
     case t: ClassDef ⇒
       classDef(owner, t)
     case t: ModuleDef ⇒
@@ -539,7 +540,7 @@ final class ScalacConverter[G <: Global](
     case Return(expr) ⇒
       body(owner, expr)
     case _: This ⇒
-      mkRef(owner, t)
+      refTree(owner, t)
     case LabelDef(_, _, If(cond, Block(stats, _), _)) ⇒
       withKeywordScope(owner, t, a.While) { sWhile ⇒
         body(sWhile, cond)
@@ -552,9 +553,9 @@ final class ScalacConverter[G <: Global](
       }
     case EmptyTree ⇒
     case _: Apply ⇒
-      mkRef(owner, t)
+      refTree(owner, t)
     case _: TypeApply ⇒
-      mkRef(owner, t)
+      refTree(owner, t)
     case _: TypeTree ⇒
       typeRef(owner, t)
     case Function(vparams, body) ⇒
@@ -576,7 +577,7 @@ final class ScalacConverter[G <: Global](
       args foreach (body(owner, _))
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
-        mkRef(owner, t)
+        refTree(owner, t)
     case t ⇒
       throwTreeMatchError(t)
   }
@@ -677,14 +678,13 @@ final class ScalacConverter[G <: Global](
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
     def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
       val decl = h.Decl(decodedName(name), mkDeepDecl(qualifier))
-      val ref = h.Ref(decl.name, decl, decl.owner, decl.owner)
-      ref.addAttachments(a.Ref)
+      val ref = mkRef(t, decl.name, decl, decl.owner, decl.owner)
       ref.position = h.RangePosition(pos, pos+ref.name.length)
       ref
     }
 
     val Import(qualifier, selectors) = t
-    mkRef(owner, qualifier)
+    refTree(owner, qualifier)
     selectors foreach { sel ⇒
       if (sel.name != nme.WILDCARD) {
         found += ref(qualifier.symbol, sel.name, sel.namePos)
