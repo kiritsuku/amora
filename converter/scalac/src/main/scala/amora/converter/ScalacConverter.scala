@@ -460,7 +460,10 @@ final class ScalacConverter[G <: Global](
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
-      val refToDecl = h.Decl("classOf", h.Decl("Predef", h.Decl("scala", h.Root)))
+      // the symbol of the tree is `null`, we have to get it from elsewhere
+      val classOfSymbol = global.currentRun.runDefinitions.Predef_classOf
+      val refToDecl = mkDeepDecl(classOfSymbol)
+      classifyDecl(classOfSymbol, refToDecl)
       val classOfRef = mkRef(t ,"classOf", refToDecl, owner, refToDecl.owner)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef

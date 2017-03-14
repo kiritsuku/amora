@@ -632,7 +632,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         val c = classOf[Int]
       }
     """) === Set(
-        "X", "X.c", "scala.Predef.<ref>classOf", "scala.<ref>Int",
+        "X", "X.c", "scala.Predef.<ref>classOf()Ljava/lang/Class;", "scala.<ref>Int",
         "java.lang.<ref>Class", "scala.<ref>AnyRef", "X.this()V")
   }
 
@@ -1099,7 +1099,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
       class X
       class Ann(arr: Array[Class[_]]) extends scala.annotation.StaticAnnotation
     """) === Set(
-        "X", "Ann", "Ann.this([Ljava/lang/Class;)V.<param>arr", "<ref>Ann", "scala.Predef.<ref>classOf",
+        "X", "Ann", "Ann.this([Ljava/lang/Class;)V.<param>arr", "<ref>Ann", "scala.Predef.<ref>classOf()Ljava/lang/Class;",
         "<ref>scala", "scala.<ref>annotation", "scala.annotation.<ref>StaticAnnotation",
         "scala.<ref>Array", "java.lang.<ref>Class", "scala.<ref>AnyRef", "<ref>X",
         "scala.Array.<ref>apply(Lscala/collection/Seq;Lscala/reflect/ClassTag;)Ljava/lang/Object;",
@@ -1674,6 +1674,6 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "java.lang.<ref>String",
         "java.lang.Object.<ref>getClass()Ljava/lang/Class;",
         "scala.<ref>AnyRef",
-        "scala.Predef.<ref>classOf")
+        "scala.Predef.<ref>classOf()Ljava/lang/Class;")
   }
 }
