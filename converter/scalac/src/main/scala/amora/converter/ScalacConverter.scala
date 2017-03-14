@@ -2,6 +2,7 @@ package amora.converter
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.internal.Chars
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.Global
 import scala.tools.refactoring.util.SourceWithMarker
 import scala.tools.refactoring.util.SourceWithMarker.Movement
@@ -13,7 +14,10 @@ import scala.util.Try
 import amora.converter.{ protocol ⇒ h }
 import amora.converter.protocol.{ Attachment ⇒ a }
 
-final class ScalacConverter[G <: Global](val global: G) {
+final class ScalacConverter[G <: Global](
+    val global: G,
+    addDeclAttachment: (G#Symbol, h.Decl) ⇒ Unit = (_: G#Symbol, _: h.Decl) ⇒ (),
+    addRefAttachment: (AbstractFile, h.Ref) ⇒ Unit = (_, _) ⇒ ()) {
   import global.{ Try ⇒ TTry, _ }
 
   private val found = ListBuffer[h.Hierarchy]()
