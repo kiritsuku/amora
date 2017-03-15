@@ -74,7 +74,9 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
           }
         }
         else if (sym.toType == definitions.AnyRefTpe) {
-          val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse(???)
+          val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse {
+            throw new IllegalStateException("No entry for scala-library found in the dependency list.")
+          }
           decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
         }
       }
@@ -91,12 +93,14 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
       currentRun.units foreach { u ⇒
         val file = u.source.file.file
         val fileName = file.getAbsolutePath.replace('/', '%')
-        val filePath = s"$outputDir/$fileName.amoradb"
-        val hierarchy = new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment).convert(u.body)
+        val res =
+            new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment)
+            .convert(u.body)
+            .map(Schema.mkTurtleUpdate)
 
-        val data = hierarchy match {
+        val data = res match {
           case Success(res) ⇒
-            Schema.mkTurtleUpdate(res)
+            res
           case Failure(f) ⇒
             val sw = new StringWriter
             val pw = new PrintWriter(sw)
@@ -104,8 +108,14 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
             sw.toString()
         }
 
+        val filePath =
+          if (res.isSuccess)
+            s"$outputDir/$fileName.amoradb"
+          else
+            s"$outputDir/$fileName.error"
+
         Files.write(Paths.get(filePath), Seq(data).asJava, Charset.forName("UTF-8"))
-        if (hierarchy.isSuccess)
+        if (res.isSuccess)
           println(s"- success:     $filePath")
         else
           println(s"- with errors: $filePath")
