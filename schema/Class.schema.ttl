@@ -14,6 +14,7 @@ schema:
   amora:schemaId schema:flag ;
   amora:schemaId schema:posStart ;
   amora:schemaId schema:posEnd ;
+  amora:schemaId schema:jvmClass ;
   amora:format <http://amora.center/kb/amora/Format/amora/Class/schema.jsonld>
 .
 schema:name
@@ -36,6 +37,10 @@ schema:posEnd
   a rdfs:Property ;
   amora:schemaName "posEnd" ;
 .
+schema:jvmClass
+  a rdfs:Property ;
+  amora:schemaName "jvmClass" ;
+.
 
 # inference rules
 schema:name rdfs:subPropertyOf decl:name .
@@ -43,4 +48,5 @@ schema:owner rdfs:subPropertyOf decl:owner .
 schema:flag rdfs:subPropertyOf decl:flag .
 schema:posStart rdfs:subPropertyOf decl:posStart .
 schema:posEnd rdfs:subPropertyOf decl:posEnd .
+schema:jvmClass rdfs:subPropertyOf decl:jvmClass .
 schema: rdfs:subClassOf decl: .
