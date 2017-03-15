@@ -1,2 +1,2 @@
 > compile
-#$ exists target/scala-2.11/amoradb
+$ exists target/scala-2.11/classes/Test.scala.amoradb
