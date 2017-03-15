@@ -11,9 +11,10 @@ import org.objectweb.asm.FieldVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
-final class ClassfileConverter {
-  import amora.converter.{ protocol ⇒ h }
-  import amora.converter.protocol.{ Attachment ⇒ a }
+import amora.converter.{ protocol ⇒ h }
+import amora.converter.protocol.{ Attachment ⇒ a }
+
+final class ClassfileConverter(addAttachment: h.Hierarchy ⇒ Unit) {
 
   private val found = ListBuffer[h.Hierarchy]()
 
@@ -48,6 +49,7 @@ final class ClassfileConverter {
     override def visitField(access: Int, name: String, desc: String, signature: String, value: AnyRef): FieldVisitor = {
       val d = h.Decl(name, owner)
       d.addAttachments(a.Var)
+      addAttachment(d)
       found += d
       super.visitField(access, name, desc, signature, value)
     }
@@ -58,6 +60,7 @@ final class ClassfileConverter {
       else {
         val d = h.Decl(name, owner)
         d.addAttachments(a.Def, a.JvmSignature(desc))
+        addAttachment(d)
         found += d
         new MVisitor(d)
       }
@@ -68,6 +71,7 @@ final class ClassfileConverter {
     override def visitParameter(name: String, access: Int) = {
       val d = h.Decl(name, owner)
       d.addAttachments(a.Var, a.Param)
+      addAttachment(d)
       found += d
     }
   }
@@ -78,8 +82,13 @@ final class ClassfileConverter {
    */
   private def mkDecl(name: String) = {
     val parts = name.split('/')
-    parts.tail.foldLeft(h.Decl(parts.head, h.Root)) {
-      (a, b) ⇒ h.Decl(b, a)
+    val d = h.Decl(parts.head, h.Root)
+    addAttachment(d)
+    parts.tail.foldLeft(d) {
+      (a, b) ⇒
+        val d = h.Decl(b, a)
+        addAttachment(d)
+        d
     }
   }
 }

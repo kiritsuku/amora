@@ -10,6 +10,7 @@ import amora.backend.Logger
 import amora.backend.schema.Schema
 import amora.converter.ClassfileConverter
 import amora.converter.protocol._
+import amora.converter.protocol.Attachment.SourceFile
 import scalaz._
 import scalaz.concurrent.Task
 
@@ -86,7 +87,7 @@ trait ArtifactFetcher {
         files.zipWithIndex foreach {
           case ((file @ File(_, fileName), hierarchy), i) ⇒
             val fileQuery = Schema.mkTurtleString(Seq(file))
-            val dataQuery = ??? // TODO replace with new implementation: Schema.mkTurtleUpdate(file, hierarchy)
+            val dataQuery = Schema.mkTurtleUpdate(hierarchy)
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
             turtleUpdate(fileQuery, s"Error happened while indexing $fileName.")
             turtleUpdate(dataQuery, s"Error happened while indexing $fileName.")
@@ -128,8 +129,9 @@ trait ArtifactFetcher {
 
     def entryToHierarchy(zip: ZipFile, entry: ZipEntry) = {
       val bytes = using(zip.getInputStream(entry))(readInputStream)
-      val hierarchy = new ClassfileConverter().convert(bytes).get
-      File(artifact, entry.getName) → hierarchy
+      val src = File(artifact, entry.getName)
+      val hierarchy = new ClassfileConverter(_.addAttachments(SourceFile(src))).convert(bytes).get
+      src → hierarchy
     }
 
     def zipToHierarchy(zip: ZipFile) = {

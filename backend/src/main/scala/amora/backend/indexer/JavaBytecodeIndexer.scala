@@ -50,7 +50,7 @@ final class JavaBytecodeIndexer(logger: Logger) {
 
         vfm.buffers.map {
           case (_, bytecode) ⇒
-            new ClassfileConverter().convert(bytecode) match {
+            new ClassfileConverter(_ ⇒ ()).convert(bytecode) match {
               case Success(res) ⇒
                 filename → res
               case Failure(f) ⇒
