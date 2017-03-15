@@ -79,7 +79,7 @@ object deps {
 
   lazy val scalacConverter = Def.setting(Seq(
     "org.scala-lang"                 %   "scala-compiler"                    % scalaVersion.value,
-    "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.10.0"                  cross CrossVersion.full
+    "org.scala-refactoring"          %%  "org.scala-refactoring.library"     % "0.11.0"                  cross CrossVersion.full
   ))
 
   lazy val javacConverter = Def.setting(Seq(
