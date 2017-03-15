@@ -86,7 +86,7 @@ trait ArtifactFetcher {
         files.zipWithIndex foreach {
           case ((file @ File(_, fileName), hierarchy), i) ⇒
             val fileQuery = Schema.mkTurtleString(Seq(file))
-            val dataQuery = Schema.mkTurtleUpdate(file, hierarchy)
+            val dataQuery = ??? // TODO replace with new implementation: Schema.mkTurtleUpdate(file, hierarchy)
             logger.info(s"Indexing file $i ($fileName) with ${hierarchy.size} entries.")
             turtleUpdate(fileQuery, s"Error happened while indexing $fileName.")
             turtleUpdate(dataQuery, s"Error happened while indexing $fileName.")

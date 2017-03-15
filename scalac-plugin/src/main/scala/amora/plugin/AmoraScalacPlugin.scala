@@ -6,6 +6,8 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
 
+import scala.reflect.io.AbstractFile
+import scala.reflect.io.NoAbstractFile
 import scala.tools.nsc.Global
 import scala.tools.nsc.Phase
 import scala.tools.nsc.plugins.Plugin
@@ -16,6 +18,8 @@ import scala.util.Success
 import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
 import amora.converter.protocol._
+import amora.converter.protocol.Attachment.JvmClass
+import amora.converter.protocol.Attachment.SourceFile
 
 class AmoraScalacPlugin(override val global: Global) extends Plugin {
   override val name = "AmoraScalacPlugin"
@@ -30,24 +34,69 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
 
   override def newPhase(prev: Phase): Phase = new Phase(prev) {
     override def run(): Unit = {
+      import scala.collection.JavaConverters._
       if (currentRun.units.isEmpty)
         return
 
       val outputDir = global.settings.outputDirs.getSingleOutput.getOrElse {
         throw new IllegalStateException("scalac has no output directory configured, therefore Amora compiler plugin can't store its data.")
       }.file.getAbsolutePath
+      val depsFile = Paths.get(s"$outputDir/amora_dependencies")
+      if (!depsFile.toFile().exists())
+        throw new IllegalStateException(s"The automatically generated file `$depsFile` doesn't exist, make sure it wasn't accidentally removed.")
+      val lines = Files.readAllLines(depsFile).asScala
+      val srcDirs = lines.head.split(",")
+      val classData = lines.tail.map { line ⇒
+        val Array(organization, name, version, file) = line.split(",")
+        file → File(Artifact(Project(organization), organization, name, version), file)
+      }
+      val classDir = classData.head._2
+      val classDeps = classData.tail.toMap
+
+      val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
+        val file = sym.associatedFile
+        if (file != NoAbstractFile) {
+          val path = file.underlyingSource.get.path
+          if (path.endsWith(".scala")) {
+            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
+              decl.addAttachments(SourceFile(File(classDir.owner, filePath)), JvmClass(sym.javaClassName))
+            }
+          }
+          else {
+            classDeps.get(path) match {
+              case Some(file) ⇒
+                decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
+              case None ⇒
+                // TODO JVM classes are not added to dependency list and it is not
+                // an artifact. Let's find a better way to handle them
+                decl.addAttachments(SourceFile(Artifact(Project("java"), "openjdk", "java", "jdk8")), JvmClass(sym.javaClassName))
+            }
+          }
+        }
+        else if (sym.toType == definitions.AnyRefTpe) {
+          val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse(???)
+          decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
+        }
+      }
+      val addRefAttachment = (file: AbstractFile, ref: Ref) ⇒ {
+        val path = file.canonicalPath
+        if (path.endsWith(".scala")) {
+          srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
+            ref.addAttachments(SourceFile(File(classDir.owner, filePath)))
+          }
+        }
+      }
 
       println("Amora compiler plugin writes databases:")
       currentRun.units foreach { u ⇒
-        import scala.collection.JavaConverters._
         val file = u.source.file.file
         val fileName = file.getAbsolutePath.replace('/', '%')
         val filePath = s"$outputDir/$fileName.amoradb"
-        val hierarchy = new ScalacConverter[global.type](global).convert(u.body)
+        val hierarchy = new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment).convert(u.body)
 
         val data = hierarchy match {
           case Success(res) ⇒
-            Schema.mkTurtleUpdate(File(Artifact(Project("p"), "o", "n", "v1"), file.getName), res)
+            Schema.mkTurtleUpdate(res)
           case Failure(f) ⇒
             val sw = new StringWriter
             val pw = new PrintWriter(sw)

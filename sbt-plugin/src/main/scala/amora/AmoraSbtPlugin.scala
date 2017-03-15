@@ -12,6 +12,23 @@ object AmoraSbtPlugin extends AutoPlugin {
   lazy val scalacPluginSettings = Def.settings(
     scalacOptions ++= (scalaVersion.value match {
       case "2.11.8" =>
+        val modules = update.value.configurations.flatMap(_.modules).map { m =>
+          val jars = m.artifacts.map(_._2).filter(_.getName.endsWith(".jar"))
+          if (jars.size != 1)
+            throw new RuntimeException(s"Module `${m.module}` needs exactly one JAR file associated with it, but was: $jars")
+          Seq(m.module.organization, m.module.name, m.module.revision, jars.head).mkString(",")
+        }.toSet.toSeq
+        val srcDirs = (sourceDirectories in Compile).value.mkString(",")
+        val classDir = (classDirectory in Compile).value
+        val projectModule = Seq(organization.value, name.value, version.value, classDir).mkString(",")
+        val deps = (srcDirs +: projectModule +: modules).mkString("\n")
+        // line | content
+        // -----|-------------------
+        // 1    | src dirs
+        // 2    | project module
+        // N    | deps modules
+        IO.write(classDir / "amora_dependencies", deps)
+
         val amoraJar = resolveSingleJar(scalaVersion.value, "amora" %% "scalac-plugin" % "0.1-SNAPSHOT" cross CrossVersion.full)
         sLog.value.info(s"Loading Amora compiler plugin: $amoraJar")
 

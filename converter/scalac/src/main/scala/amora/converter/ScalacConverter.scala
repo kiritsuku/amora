@@ -139,6 +139,8 @@ final class ScalacConverter[G <: Global](
       decl.addAttachments(a.Val)
     else if (sym.isVar)
       decl.addAttachments(a.Var)
+
+    addDeclAttachment(sym, decl)
   }
 
   /**
@@ -268,6 +270,7 @@ final class ScalacConverter[G <: Global](
             // know how to get access to the symbol of the self ref.
             val refToDecl = h.Decl(thisRef, rawRefToDecl)
             refToDecl.addAttachments(a.Val)
+            addDeclAttachment(t.symbol, refToDecl)
             thisRef → refToDecl
           }
         case _ ⇒
@@ -456,6 +459,7 @@ final class ScalacConverter[G <: Global](
     case tpe: UniqueConstantType if tpe.value.tag == ClazzTag ⇒
       val sym = tpe.value.typeValue.typeSymbol
       val o = mkDeepDecl(sym)
+      classifyDecl(sym, o)
       val ref = mkRef(t, o.name, o, owner, o.owner)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
@@ -681,6 +685,7 @@ final class ScalacConverter[G <: Global](
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
     def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
       val decl = h.Decl(decodedName(name), mkDeepDecl(qualifier))
+      classifyDecl(qualifier, decl)
       val ref = mkRef(t, decl.name, decl, decl.owner, decl.owner)
       ref.position = h.RangePosition(pos, pos+ref.name.length)
       ref

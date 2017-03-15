@@ -522,4 +522,31 @@ class ScalaSchemaTest extends RestApiTest {
         Seq(Data("name", "b2")),
         Seq(Data("name", "b3")))
   }
+
+  @Test
+  def classes_objects_and_traits_are_annotated_by_jvm_class_property() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        package a.b.c
+        class X {
+          val value = 0
+        }
+        object Y {
+          val value = 0
+        }
+        trait Z {
+          val value = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      select ?name ?class where {
+        [Decl:jvmClass ?class] Decl:name ?name .
+      }
+      order by ?name
+    """) === Seq(
+        Seq(Data("name", "X"), Data("class", "a.b.c.X")),
+        Seq(Data("name", "Y"), Data("class", "a.b.c.Y$")),
+        Seq(Data("name", "Z"), Data("class", "a.b.c.Z")))
+  }
 }

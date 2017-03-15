@@ -3,6 +3,7 @@ package amora.backend.services
 import java.io.PrintWriter
 import java.io.StringWriter
 
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.Settings
 import scala.tools.nsc.interactive.Global
 import scala.tools.nsc.reporters.ConsoleReporter
@@ -13,6 +14,8 @@ import amora.backend.Logger
 import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
 import amora.converter.protocol._
+import amora.converter.protocol.Attachment.JvmClass
+import amora.converter.protocol.Attachment.SourceFile
 
 /**
  * Provides functionality to extract information out of Scala source code.
@@ -36,7 +39,6 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     import amora.api._
 
     val model = turtleModel(origin)
-    val res = convertToHierarchy(data)
     val artifact = sparqlQuery"""
       prefix Artifact:<http://amora.center/kb/amora/Schema/Artifact/>
       prefix Project:<http://amora.center/kb/amora/Schema/Project/>
@@ -61,16 +63,19 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     }
     val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
 
-    res foreach {
-      case (fileName, hierarchy) ⇒
-        logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
-
-        val src = data.find(_._1 == fileName).get._2
+    val files = data map {
+      case (fileName, src) ⇒
         val file = src match {
           case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), fileName)
           case _ ⇒ File(artifact, fileName)
         }
-        val s = Schema.mkTurtleUpdate(file, hierarchy)
+        (file, src)
+    }
+    convertToHierarchy(files) foreach {
+      case (fileName, hierarchy) ⇒
+        logger.info(s"Indexing ${hierarchy.size} entries of file $fileName")
+
+        val s = Schema.mkTurtleUpdate(hierarchy)
         turtleUpdate(origin, s"Error happened while indexing $fileName.")
         turtleUpdate(s, s"Error happened while indexing $fileName.")
     }
@@ -83,7 +88,7 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
    * File names that end with ".java" won't be converted to a hierarchy but they
    * can be used as dependencies for the Scala files.
    */
-  def convertToHierarchy(data: Seq[(String, String)]): Seq[(String, Seq[Hierarchy])] = {
+  def convertToHierarchy(data: Seq[(File, String)]): Seq[(File, Seq[Hierarchy])] = {
     def srcOf[A : reflect.ClassTag] = reflect.classTag[A].runtimeClass.getProtectionDomain.getCodeSource
     val stdlibSrc = srcOf[Predef.type]
 
@@ -109,22 +114,29 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
     }
 
     val sfs = data map {
-      case (filename, src) ⇒
-        val sf = g.newSourceFile(src, filename)
-        filename → sf
+      case (file, src) ⇒
+        val sf = g.newSourceFile(src, file.name)
+        (sf, file)
     }
-    withResponse[Unit] { g.askReload(sfs.map(_._2).toList, _) }.get
+    withResponse[Unit] { g.askReload(sfs.map(_._1).toList, _) }.get
 
-    val res = sfs.filter(!_._1.endsWith(".java")) map {
-      case (filename, sf) ⇒
+    val res = sfs.filter(!_._2.name.endsWith(".java")) map {
+      case (sf, file) ⇒
         val tree = withResponse[g.Tree](g.askLoadedTyped(sf, keepLoaded = true, _)).get.left.get
 
         if (reporter.hasErrors || reporter.hasWarnings)
-          throw new IllegalStateException(s"Errors occurred during compilation of file `$filename`:\n$writer")
+          throw new IllegalStateException(s"Errors occurred during compilation of file `${file.name}`:\n$writer")
 
-        g ask { () ⇒ new ScalacConverter[g.type](g).convert(tree) } match {
+        val addDeclAttachment = (sym: g.Symbol, decl: Decl) ⇒ {
+          decl.addAttachments(SourceFile(file), JvmClass(sym.javaClassName))
+        }
+        val addRefAttachment = (_: AbstractFile, ref: Ref) ⇒ {
+          ref.addAttachments(SourceFile(file))
+        }
+
+        g ask { () ⇒ new ScalacConverter[g.type](g, addDeclAttachment, addRefAttachment).convert(tree) } match {
           case Success(res) ⇒
-            filename → res
+            file → res
           case Failure(f) ⇒
             throw f
         }

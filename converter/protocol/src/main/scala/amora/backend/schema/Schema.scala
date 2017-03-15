@@ -270,7 +270,7 @@ object Schema {
     schemas foreach mk
   }
 
-  def mkTurtleUpdate(file: File, hierarchies: Seq[Hierarchy]): String = turtleBuilder {
+  def mkTurtleUpdate(hierarchies: Seq[Hierarchy]): String = turtleBuilder {
     (addPrefix, addData) ⇒
 
     def mkTpe(decl: Decl) = {
@@ -290,6 +290,11 @@ object Schema {
         }.getOrElse("Decl")
     }
 
+    def sourceFile(h: Hierarchy) =
+      h.attachments.collectFirst {
+        case Attachment.SourceFile(file) ⇒ file
+      }.getOrElse(throw new IllegalStateException(s"SourceFile attachment expected at `$h` but there were only: ${h.attachments}"))
+
     def mkFullPath(decl: Decl) = {
       def findArtifact(schema: Schema): Artifact = schema match {
         case a: Artifact ⇒ a
@@ -297,7 +302,8 @@ object Schema {
         case f: File ⇒ findArtifact(f.owner)
         case _ ⇒ ???
       }
-      val shortArtifactId = Schema.mkShortId(findArtifact(file))
+      val schema = sourceFile(decl)
+      val shortArtifactId = Schema.mkShortId(findArtifact(schema))
       val tpe = mkTpe(decl)
       s"http://amora.center/kb/amora/$tpe/$shortArtifactId/${mkShortPath(decl)}"
     }
@@ -308,9 +314,9 @@ object Schema {
         def isPkg = owner.attachments(Attachment.Package)
         isTopLevelDecl && isPkg
       }
-      if (isTopLevelDecl)
-        mkId(file)
-      else
+      if (isTopLevelDecl) {
+        mkId(sourceFile(h))
+      } else
         mkFullPath(owner)
     }
 
@@ -337,9 +343,11 @@ object Schema {
           addData(path, s"$tpe:flag", "<http://amora.center/kb/amora/Flag/implicit>")
         }
 
-        decl.attachments.collectFirst {
+        decl.attachments.collect {
           case Attachment.JvmSignature(signature) ⇒
             addData(path, s"$tpe:jvmSignature", s""""$signature"""")
+          case Attachment.JvmClass(signature) ⇒
+            addData(path, s"$tpe:jvmClass", s""""$signature"""")
         }
 
         decl.position match {
@@ -354,7 +362,7 @@ object Schema {
             // The owner of a package is an artifact but this can't be represented
             // in the Hierarchy structure. Thus, we index this information separately.
             if (!decl.attachments(Attachment.Package)) {
-              val ownerPath = mkId(file)
+              val ownerPath = mkId(sourceFile(decl))
               addData(path, s"$tpe:owner", s"""<$ownerPath>""")
             }
           case owner: Decl ⇒
@@ -373,6 +381,7 @@ object Schema {
           case _ ⇒
             ???
         }
+        val file = sourceFile(ref)
         val shortFileId = mkShortId(file)
         val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
         val schemaPath = s"http://amora.center/kb/amora/Schema/Ref"
@@ -547,9 +556,11 @@ object Schema {
           sb.append(s"""  <$path> <$schemaPath/flag> <http://amora.center/kb/amora/Flag/implicit> .""" + "\n")
         }
 
-        decl.attachments.collectFirst {
+        decl.attachments.collect {
           case Attachment.JvmSignature(signature) ⇒
             sb.append(s"""  <$path> <$schemaPath/jvmSignature> "$signature" .""" + "\n")
+          case Attachment.JvmClass(signature) ⇒
+            sb.append(s"""  <$path> <$schemaPath/jvmClass> "$signature" .""" + "\n")
         }
 
         decl.position match {

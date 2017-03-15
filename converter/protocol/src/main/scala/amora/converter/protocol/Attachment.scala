@@ -30,4 +30,6 @@ object Attachment {
   case object Implicit extends Attachment { override def asString = "implicit" }
 
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
+  case class JvmClass(jvmClass: String) extends Attachment { override def asString = jvmClass }
+  case class SourceFile(source: Schema) extends Attachment { override def asString = source.toString }
 }

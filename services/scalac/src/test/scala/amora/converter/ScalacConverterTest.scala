@@ -4,14 +4,28 @@ import org.junit.Test
 
 import amora.backend.IgnoreLogger
 import amora.backend.services.ScalaSourceIndexer
+import amora.converter.protocol._
 
 class ScalacConverterTest extends ScalaCompilerTest {
 
   import amora.TestUtils._
 
   def convert(data: (String, String)*): Set[String] = {
-    val indexer = new ScalaSourceIndexer(IgnoreLogger)
-    val res = indexer.convertToHierarchy(data).flatMap(_._2)
+    val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
+    val artifact = Artifact(Project("p"), "o", "n", "v1")
+    def mkPkg(pkgs: Seq[String]): Schema = pkgs match {
+      case Nil ⇒ artifact
+      case pkg +: pkgs ⇒ Package(pkg, mkPkg(pkgs))
+    }
+
+    val res = new ScalaSourceIndexer(IgnoreLogger).convertToHierarchy(data map {
+      case (fileName, src) ⇒
+        val file = src match {
+          case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), fileName)
+          case _ ⇒ File(artifact, fileName)
+        }
+        (file, src)
+    }).flatMap(_._2)
     res.map(_.asString).toSet
   }
 
