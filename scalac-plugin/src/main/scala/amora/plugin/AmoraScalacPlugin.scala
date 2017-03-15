@@ -92,7 +92,6 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
       println("Amora compiler plugin writes databases:")
       currentRun.units foreach { u ⇒
         val file = u.source.file.file
-        val fileName = file.getAbsolutePath.replace('/', '%')
         val res =
             new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment)
             .convert(u.body)
@@ -107,7 +106,10 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
             f.printStackTrace(pw)
             sw.toString()
         }
-
+        val fileName = srcDirs
+            .find(file.getAbsolutePath.startsWith)
+            .map(dir ⇒ file.getAbsolutePath.drop(dir.length + 1).replace('/', '%'))
+            .getOrElse(throw new IllegalStateException(s"Source file directories miss the entry that contains `$file`."))
         val filePath =
           if (res.isSuccess)
             s"$outputDir/$fileName.amoradb"
