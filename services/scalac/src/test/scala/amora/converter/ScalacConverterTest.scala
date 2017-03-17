@@ -1690,4 +1690,25 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.<ref>AnyRef",
         "scala.Predef.<ref>classOf()Ljava/lang/Class;")
   }
+
+  @Test
+  def string_interpolation() = {
+    convert("""
+      class X {
+        val x1 = 0
+        val x2 = 0
+        val y = s"$x1$x2"
+      }
+    """) === Set(
+        "X",
+        "X.<ref>x1",
+        "X.<ref>x2",
+        "X.this()V",
+        "X.x1",
+        "X.x2",
+        "X.y",
+        "scala.<ref>AnyRef",
+        "scala.<ref>Int",
+        "scala.StringContext.<ref>s(Lscala/collection/Seq;)Ljava/lang/String;")
+  }
 }

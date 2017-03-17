@@ -193,14 +193,14 @@ final class ScalacConverter[G <: Global](
    */
   private def refTree(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
     case Apply(fun, args) ⇒
-      val ref = refTree(owner, fun)
+      val ref = refTree(owner, fun, isTopLevelRef)
       args foreach (body(ref, _))
       ref
     case TypeApply(fun, args) ⇒
       args foreach (typeRef(owner, _))
-      refTree(owner, fun)
+      refTree(owner, fun, isTopLevelRef)
     case Select(New(nt), _) ⇒
-      refTree(owner, nt)
+      refTree(owner, nt, isTopLevelRef)
     case Select(qualifier, name) ⇒
       qualifier match {
         case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
