@@ -82,7 +82,7 @@ lazy val firefoxPlugin = project in file("firefox-plugin") enablePlugins(ScalaJS
       "engines": {
         "firefox": ">=38.0a1"
       },
-      "license": "MIT",
+      "license": "Apache 2.0",
       "repository": {
         "type": "git",
         "url": "https://github.com/sschaef/amora"
@@ -142,7 +142,7 @@ lazy val electron = project in file("electron") enablePlugins(ScalaJSPlugin) set
         "type": "git",
         "url": "https://github.com/sschaef/amora"
       },
-      "license": "MIT"
+      "license": "Apache 2.0"
     }
     """.stripMargin
 
