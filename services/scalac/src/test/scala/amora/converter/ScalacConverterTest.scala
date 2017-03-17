@@ -540,7 +540,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
     """) === Set(
         "X", "scala.<ref>collection", "scala.collection.<ref>SeqLike",
         "scala.collection.<ref>IterableLike", "scala.collection.<ref>GenSeqLike",
-        "scala.<ref>Int")
+        "scala.<ref>Int", "scala.<ref>AnyRef")
   }
 
   @Test
@@ -1619,6 +1619,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.toString()Ljava/lang/String;",
         "java.lang.<ref>String",
         "scala.<ref>Any",
+        "scala.<ref>AnyRef",
         "scala.<ref>Boolean",
         "scala.<ref>Int",
         "scala.<ref>Option",
@@ -1709,6 +1710,7 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "X.y",
         "scala.<ref>AnyRef",
         "scala.<ref>Int",
+        "scala.Predef.<ref>String",
         "scala.StringContext.<ref>s(Lscala/collection/Seq;)Ljava/lang/String;")
   }
 }

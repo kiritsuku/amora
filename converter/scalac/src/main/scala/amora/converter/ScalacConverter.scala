@@ -168,8 +168,9 @@ final class ScalacConverter[G <: Global](
           noRootSymbol.tail
         else
           noRootSymbol
+      val noPackageObjects = noEmptyPkgSymbol.filter(!_.isPackageObjectClass)
 
-      noEmptyPkgSymbol.foldLeft(h.Root: h.Decl) { (owner, s) ⇒ mkDecl(s, owner) }
+      noPackageObjects.foldLeft(h.Root: h.Decl) { (owner, s) ⇒ mkDecl(s, owner) }
     }
   }
 
@@ -380,7 +381,9 @@ final class ScalacConverter[G <: Global](
       selfRefTypes
     else t.tpe match {
       case tpe: AliasTypeRef ⇒
-        // ignore the underlying types of type aliases
+        val ref = refFromSymbol(tpe.sym)
+        setPosition(ref, t.pos)
+        found += ref
       case tpe if !t.pos.isRange && tpe =:= typeOf[scala.annotation.Annotation] ⇒
         // Annotation is implicitly added for annotations but we only want to keep
         // it if the Annotation type is directly extended
