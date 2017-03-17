@@ -351,32 +351,6 @@ final class ScalacConverter[G <: Global](
       }
     }
 
-    def otherTypes() = {
-      val ref = refFromSymbol(t.symbol)
-      t.original match {
-        case t: AppliedTypeTree if t.symbol.fullName.startsWith("scala.Function") && owner.position.isInstanceOf[h.RangePosition] ⇒
-          // `pos.point` doesn't make a lot of sense for function literals, therefore
-          // we set the position manually here
-          val offset = owner.position.asInstanceOf[h.RangePosition].start
-          ref.position = new h.RangePosition(offset, offset)
-        case _ if owner.attachments(a.Function) && owner.position.isInstanceOf[h.RangePosition] ⇒
-          // functions created through function literals don't have their positions at
-          // the beginning of the identifiers where we want to have it
-          val offset = owner.position.asInstanceOf[h.RangePosition].start
-          ref.position = new h.RangePosition(offset, offset)
-        case _ ⇒
-          // the position for self references are wrong, we had to pass it as a
-          // parameter to this function
-          selfRefPos match {
-            case Some(offset) ⇒
-              ref.position = h.RangePosition(offset, offset)
-            case None ⇒
-              setPosition(ref, t.pos)
-          }
-      }
-      found += ref
-    }
-
     if (t.symbol.isRefinementClass)
       selfRefTypes
     else t.tpe match {
@@ -390,7 +364,29 @@ final class ScalacConverter[G <: Global](
       case tpe if !t.pos.isRange && tpe =:= typeOf[AnyRef] ⇒
         // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
       case _ ⇒
-        otherTypes
+        val ref = refFromSymbol(t.symbol)
+        t.original match {
+          case t: AppliedTypeTree if t.symbol.fullName.startsWith("scala.Function") && owner.position.isInstanceOf[h.RangePosition] ⇒
+            // `pos.point` doesn't make a lot of sense for function literals, therefore
+            // we set the position manually here
+            val offset = owner.position.asInstanceOf[h.RangePosition].start
+            ref.position = new h.RangePosition(offset, offset)
+          case _ if owner.attachments(a.Function) && owner.position.isInstanceOf[h.RangePosition] ⇒
+            // functions created through function literals don't have their positions at
+            // the beginning of the identifiers where we want to have it
+            val offset = owner.position.asInstanceOf[h.RangePosition].start
+            ref.position = new h.RangePosition(offset, offset)
+          case _ ⇒
+            // the position for self references are wrong, we had to pass it as a
+            // parameter to this function
+            selfRefPos match {
+              case Some(offset) ⇒
+                ref.position = h.RangePosition(offset, offset)
+              case None ⇒
+                setPosition(ref, t.pos)
+            }
+        }
+        found += ref
     }
 
     t.original match {
