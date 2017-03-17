@@ -773,4 +773,22 @@ class ScalaRefTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def string_interpolation() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X {
+          val [[!Int]]x1 = 0
+          val [[!Int]]x2 = 0
+          val [[!String]]y = [[s]]"$[[x1]]$[[x2]]"
+        }
+      """)
+  }
 }
