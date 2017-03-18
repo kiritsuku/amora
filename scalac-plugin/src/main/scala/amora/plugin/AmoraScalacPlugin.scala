@@ -57,13 +57,16 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
       currentRun.units foreach { u ⇒
         val unitFile = u.source.file.file
 
+        def trimToPackagePath(path: String) =
+          srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1))
+
         val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
           val file = sym.associatedFile
           if (file != NoAbstractFile) {
             val path = file.underlyingSource.get.path
             if (path.endsWith(".scala")) {
-              srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
-                decl.addAttachments(SourceFile(File(classDir.owner, filePath)), JvmClass(sym.javaClassName))
+              trimToPackagePath(path) foreach { pkgPath ⇒
+                decl.addAttachments(SourceFile(File(classDir.owner, pkgPath)), JvmClass(sym.javaClassName))
               }
             }
             else {
@@ -87,8 +90,8 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
           // to add it manually by accessing `unitFile`
           else if (sym.hasPackageFlag && decl.position != AmoraNoPosition) {
             val path = unitFile.getCanonicalPath
-            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
-              decl.addAttachments(SourceFile(File(classDir.owner, filePath)))
+            trimToPackagePath(path) foreach { pkgPath ⇒
+              decl.addAttachments(SourceFile(File(classDir.owner, pkgPath)))
             }
           }
         }
@@ -96,8 +99,8 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
         val addRefAttachment = (file: AbstractFile, ref: Ref) ⇒ {
           val path = file.canonicalPath
           if (path.endsWith(".scala")) {
-            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
-              ref.addAttachments(SourceFile(File(classDir.owner, filePath)))
+            trimToPackagePath(path) foreach { pkgPath ⇒
+              ref.addAttachments(SourceFile(File(classDir.owner, pkgPath)))
             }
           }
         }
