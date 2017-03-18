@@ -60,6 +60,12 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
         def trimToPackagePath(path: String) =
           srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1))
 
+        // Some Scala types like `AnyRef` can not be represented as Scala code,
+        // therefore they have no associated file. This function has to do some
+        // extra checks to find out if we have such a type
+        def hasNoScalaSource(tpe: Type) =
+          tpe == definitions.AnyRefTpe || tpe == definitions.AnyTpe
+
         val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
           val file = sym.associatedFile
           if (file != NoAbstractFile) {
@@ -80,7 +86,7 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
               }
             }
           }
-          else if (sym.toType == definitions.AnyRefTpe) {
+          else if (hasNoScalaSource(sym.toType)) {
             val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse {
               throw new IllegalStateException("No entry for scala-library found in the dependency list.")
             }

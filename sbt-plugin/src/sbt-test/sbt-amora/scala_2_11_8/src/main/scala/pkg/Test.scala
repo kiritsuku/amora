@@ -2,6 +2,9 @@ package pkg
 
 object Test {
   def main(args: Array[String]): Unit = {
-    println("Hello World")
+    val world = Hello("World")
+    println(s"Hello $world")
   }
 }
+
+case class Hello(name: String)
