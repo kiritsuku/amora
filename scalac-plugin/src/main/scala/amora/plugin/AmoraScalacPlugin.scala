@@ -53,45 +53,47 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
       val classDir = classData.head._2
       val classDeps = classData.tail.toMap
 
-      val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
-        val file = sym.associatedFile
-        if (file != NoAbstractFile) {
-          val path = file.underlyingSource.get.path
-          if (path.endsWith(".scala")) {
-            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
-              decl.addAttachments(SourceFile(File(classDir.owner, filePath)), JvmClass(sym.javaClassName))
-            }
-          }
-          else {
-            classDeps.get(path) match {
-              case Some(file) ⇒
-                decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
-              case None ⇒
-                // TODO JVM classes are not added to dependency list and it is not
-                // an artifact. Let's find a better way to handle them
-                decl.addAttachments(SourceFile(Artifact(Project("java"), "openjdk", "java", "jdk8")), JvmClass(sym.javaClassName))
-            }
-          }
-        }
-        else if (sym.toType == definitions.AnyRefTpe) {
-          val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse {
-            throw new IllegalStateException("No entry for scala-library found in the dependency list.")
-          }
-          decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
-        }
-      }
-      val addRefAttachment = (file: AbstractFile, ref: Ref) ⇒ {
-        val path = file.canonicalPath
-        if (path.endsWith(".scala")) {
-          srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
-            ref.addAttachments(SourceFile(File(classDir.owner, filePath)))
-          }
-        }
-      }
-
       println("Amora compiler plugin writes databases:")
       currentRun.units foreach { u ⇒
-        val file = u.source.file.file
+        val unitFile = u.source.file.file
+
+        val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
+          val file = sym.associatedFile
+          if (file != NoAbstractFile) {
+            val path = file.underlyingSource.get.path
+            if (path.endsWith(".scala")) {
+              srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
+                decl.addAttachments(SourceFile(File(classDir.owner, filePath)), JvmClass(sym.javaClassName))
+              }
+            }
+            else {
+              classDeps.get(path) match {
+                case Some(file) ⇒
+                  decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
+                case None ⇒
+                  // TODO JVM classes are not added to dependency list and it is not
+                  // an artifact. Let's find a better way to handle them
+                  decl.addAttachments(SourceFile(Artifact(Project("java"), "openjdk", "java", "jdk8")), JvmClass(sym.javaClassName))
+              }
+            }
+          }
+          else if (sym.toType == definitions.AnyRefTpe) {
+            val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse {
+              throw new IllegalStateException("No entry for scala-library found in the dependency list.")
+            }
+            decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
+          }
+        }
+
+        val addRefAttachment = (file: AbstractFile, ref: Ref) ⇒ {
+          val path = file.canonicalPath
+          if (path.endsWith(".scala")) {
+            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
+              ref.addAttachments(SourceFile(File(classDir.owner, filePath)))
+            }
+          }
+        }
+
         val res =
             new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment)
             .convert(u.body)
@@ -107,9 +109,9 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
             sw.toString()
         }
         val fileName = srcDirs
-            .find(file.getAbsolutePath.startsWith)
-            .map(dir ⇒ file.getAbsolutePath.drop(dir.length + 1).replace('/', '%'))
-            .getOrElse(throw new IllegalStateException(s"Source file directories miss the entry that contains `$file`."))
+            .find(unitFile.getAbsolutePath.startsWith)
+            .map(dir ⇒ unitFile.getAbsolutePath.drop(dir.length + 1).replace('/', '%'))
+            .getOrElse(throw new IllegalStateException(s"Source file directories miss the entry that contains `$unitFile`."))
         val filePath =
           if (res.isSuccess)
             s"$outputDir/$fileName.amoradb"
