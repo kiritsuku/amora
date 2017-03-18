@@ -32,7 +32,10 @@ object AmoraSbtPlugin extends AutoPlugin {
         val amoraJar = resolveSingleJar(scalaVersion.value, "amora" %% "scalac-plugin" % "0.1-SNAPSHOT" cross CrossVersion.full)
         sLog.value.info(s"Loading Amora compiler plugin: $amoraJar")
 
-        List(s"-Xplugin:$amoraJar")
+        List(
+          // range positions are disabled by default
+          "-Yrangepos",
+          s"-Xplugin:$amoraJar")
       case _ =>
         Nil
     })
