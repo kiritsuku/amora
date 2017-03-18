@@ -17,7 +17,7 @@ import scala.util.Success
 
 import amora.backend.schema.Schema
 import amora.converter.ScalacConverter
-import amora.converter.protocol._
+import amora.converter.protocol.{NoPosition ⇒ AmoraNoPosition, _}
 import amora.converter.protocol.Attachment.JvmClass
 import amora.converter.protocol.Attachment.SourceFile
 
@@ -82,6 +82,14 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
               throw new IllegalStateException("No entry for scala-library found in the dependency list.")
             }
             decl.addAttachments(SourceFile(file.owner), JvmClass(sym.javaClassName))
+          }
+          // package declarations don't have an associated file, therefore we need
+          // to add it manually by accessing `unitFile`
+          else if (sym.hasPackageFlag && decl.position != AmoraNoPosition) {
+            val path = unitFile.getCanonicalPath
+            srcDirs.find(path.startsWith).map(dir ⇒ path.drop(dir.length + 1)) foreach { filePath ⇒
+              decl.addAttachments(SourceFile(File(classDir.owner, filePath)))
+            }
           }
         }
 

@@ -819,9 +819,12 @@ final class ScalacConverter[G <: Global](
     case Ident(nme.EMPTY_PACKAGE_NAME) ⇒
       h.Root
     case _: Ident ⇒
-      val decl = mkDecl(t.symbol, h.Root)
-      decl.addAttachments(a.Package)
+      // we can't call `mkDecl` here because we have to set the position
+      // before `classifyDecl` is called
+      val decl = h.Decl(mkName(t.symbol), h.Root)
       setPosition(decl, t.pos)
+      classifyDecl(t.symbol, decl)
+      decl.addAttachments(a.Package)
       decl
     case t ⇒
       throwTreeMatchError(t)
