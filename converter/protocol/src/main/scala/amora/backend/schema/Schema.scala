@@ -293,7 +293,7 @@ object Schema {
     def sourceFile(h: Hierarchy) =
       h.attachments.collectFirst {
         case Attachment.SourceFile(file) ⇒ file
-      }.getOrElse(throw new IllegalStateException(s"SourceFile attachment expected at `$h` but there were only: ${h.attachments}"))
+      }.getOrElse(throw new IllegalStateException(s"SourceFile attachment expected at `$h` at position `${h.position}` but there were only: ${h.attachments}"))
 
     def mkFullPath(decl: Decl) = {
       def findArtifact(schema: Schema): Artifact = schema match {
