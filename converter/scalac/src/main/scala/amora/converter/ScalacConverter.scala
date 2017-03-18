@@ -192,7 +192,7 @@ final class ScalacConverter[G <: Global](
    * Select would be `scala.Option.apply` (`apply` is kept but `scala.Option`
    * and `scala` are thrown away).
    */
-  private def refTree(owner: h.Hierarchy, t: Tree, isTopLevelRef: Boolean = true): h.Ref = t match {
+  private def refTree(owner: h.Hierarchy, tree: Tree, isTopLevelRef: Boolean = true): h.Ref = tree match {
     case Apply(fun, args) ⇒
       val ref = refTree(owner, fun, isTopLevelRef)
       args foreach (body(ref, _))
@@ -202,7 +202,7 @@ final class ScalacConverter[G <: Global](
       refTree(owner, fun, isTopLevelRef)
     case Select(New(nt), _) ⇒
       refTree(owner, nt, isTopLevelRef)
-    case Select(qualifier, name) ⇒
+    case t @ Select(qualifier, name) ⇒
       qualifier match {
         case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
         case Select(qualifier, nme.PACKAGE) ⇒
@@ -245,6 +245,11 @@ final class ScalacConverter[G <: Global](
         found += ref
       ref
     case _: Ident | _: TypeTree | _: This ⇒
+      val t = tree match {
+        case t: TypeTree if t.original != null ⇒ t.original
+        case t ⇒ t
+      }
+
       def mkIdent = {
         val d = h.Decl(mkName(t.symbol), h.Root)
         classifyDecl(t.symbol, d)

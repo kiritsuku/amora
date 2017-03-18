@@ -1713,4 +1713,28 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.Predef.<ref>String",
         "scala.StringContext.<ref>s(Lscala/collection/Seq;)Ljava/lang/String;")
   }
+
+  @Test
+  def case_class_unapply_method() = {
+    convert("""
+      class X {
+        def f(h: Option[Int]) = h match {
+          case Some(i) ⇒ i
+        }
+      }
+    """) === Set(
+        "X",
+        "X.f(Lscala/Option;)I",
+        "X.f(Lscala/Option;)I.<match>",
+        "X.f(Lscala/Option;)I.<match>.<case>",
+        "X.f(Lscala/Option;)I.<param>h",
+        "X.f(Lscala/Option;)I.<ref>h",
+        "X.this()V",
+        "scala.<ref>AnyRef",
+        "scala.<ref>Int",
+        "scala.<ref>Option",
+        "scala.<ref>Some",
+        "scala.<ref>Some.<ref>i",
+        "scala.<ref>Some.i")
+  }
 }
