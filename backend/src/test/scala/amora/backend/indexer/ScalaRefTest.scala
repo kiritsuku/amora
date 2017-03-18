@@ -791,4 +791,22 @@ class ScalaRefTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def scope_nested_within_scope() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X {
+          def [[!Int]]f(h: [[Option]] [ [[Int]] ]) = [[h]] match {
+            case [[Some]](i) ⇒ [[i]]
+          }
+        }
+      """)
+  }
 }

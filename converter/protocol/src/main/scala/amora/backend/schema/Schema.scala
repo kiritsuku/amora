@@ -320,6 +320,16 @@ object Schema {
         mkFullPath(owner)
     }
 
+    def findNonScopeOwner[A](scope: Scope)(pf: PartialFunction[Hierarchy, A]): A = scope.owner match {
+      case scope: Scope ⇒
+        findNonScopeOwner(scope)(pf)
+      case owner ⇒
+        if (pf.isDefinedAt(owner))
+          pf(owner)
+        else
+          throw new IllegalStateException(s"Can't convert the owner `$owner` of scope `$scope`.")
+    }
+
     def loop(h: Hierarchy): Unit = h match {
       case Root ⇒
       case decl @ Decl(name, owner) ⇒
@@ -407,22 +417,18 @@ object Schema {
 
             loop(owner)
           case owner: Scope ⇒
-            owner.owner match {
+            findNonScopeOwner(owner) {
               case decl: Decl ⇒
                 val ownerPath = mkOwnerPath(ref, decl) + "/" + encode(owner.attachmentAsString)
                 addData(path, "Ref:owner", s"""<$ownerPath>""")
-              case _ ⇒
-                ???
             }
             loop(owner.owner)
           case _: Ref ⇒
         }
       case scope: Scope ⇒
-        val path = scope.owner match {
+        val path = findNonScopeOwner(scope) {
           case decl: Decl ⇒
             mkFullPath(decl) + "/" + encode(scope.attachmentAsString)
-          case _ ⇒
-            ???
         }
         val schemaPath = s"http://amora.center/kb/amora/Schema/Scope"
         addPrefix("Scope", schemaPath+"/")
@@ -434,12 +440,10 @@ object Schema {
             addData(path, "Scope:posEnd", end.toString)
           case _ ⇒
         }
-        scope.owner match {
+        findNonScopeOwner(scope) {
           case decl: Decl ⇒
             val ownerPath = mkFullPath(decl)
             addData(path, "Scope:owner", s"""<$ownerPath>""")
-          case _ ⇒
-            ???
         }
 
         loop(scope.owner)
