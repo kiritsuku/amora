@@ -8,6 +8,9 @@ object Test {
     val world = Hello("World")
     println(s"Hello ${world.name}")
   }
+
+  // Nothing is a special case
+  val nothingCase = classOf[Nothing]
 }
 
 case class Hello(name: String)

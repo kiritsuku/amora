@@ -64,7 +64,7 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
         // therefore they have no associated file. This function has to do some
         // extra checks to find out if we have such a type
         def hasNoScalaSource(tpe: Type) =
-          tpe == definitions.AnyRefTpe || tpe == definitions.AnyTpe
+          tpe == definitions.AnyRefTpe || tpe == definitions.AnyTpe || tpe == definitions.NothingTpe
 
         val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
           // for some reason in some cases the symbol has no associated file,
