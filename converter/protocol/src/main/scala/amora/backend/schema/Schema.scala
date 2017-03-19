@@ -327,7 +327,7 @@ object Schema {
         if (pf.isDefinedAt(owner))
           pf(owner)
         else
-          throw new IllegalStateException(s"Can't convert the owner `$owner` of scope `$scope`.")
+          throw new IllegalStateException(s"Can't convert the owner `$owner` of scope `$scope` at position `${scope.position}`.")
     }
 
     def loop(h: Hierarchy): Unit = h match {
