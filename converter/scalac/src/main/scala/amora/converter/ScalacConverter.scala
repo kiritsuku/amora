@@ -154,6 +154,19 @@ final class ScalacConverter[G <: Global](
   }
 
   /**
+   * Similar to [[mkDecl]] but also assigns a position to the [[Decl]]. The
+   * position is set before [[classifyDecl]] is called in order to make it
+   * possible to correctly attach the source file to the [[Decl]].
+   */
+  private def mkDeclWithPos(sym: Symbol, owner: h.Hierarchy, pos: Position): h.Decl = {
+    requireSymbolDefined(sym)
+    val decl = h.Decl(mkName(sym), owner)
+    setPosition(decl, pos)
+    classifyDecl(sym, decl)
+    decl
+  }
+
+  /**
    * Creates a [[Decl]], whose owner is the owner of the symbol and so on until
    * the root node is reached.
    */
@@ -215,7 +228,7 @@ final class ScalacConverter[G <: Global](
           mkDeepDecl(t.symbol.owner.owner)
         else
           mkDeepDecl(t.symbol.owner)
-      val refToDecl = mkDecl(t.symbol, calledOn)
+      val refToDecl = mkDeclWithPos(t.symbol, calledOn, t.pos)
       val n =
         if (name == nme.CONSTRUCTOR)
           "this"
@@ -262,7 +275,7 @@ final class ScalacConverter[G <: Global](
           case Some(decl) ⇒ decl.owner
           case None ⇒ mkDeepDecl(t.symbol.owner)
         }
-      val rawRefToDecl = mkDecl(t.symbol, calledOn)
+      val rawRefToDecl = mkDeclWithPos(t.symbol, calledOn, t.pos)
       val (n, refToDecl) = t match {
         // the names of self refs are not part of the tree. They are in the same
         // way represented as a this reference. We have to check the source code
@@ -688,9 +701,11 @@ final class ScalacConverter[G <: Global](
 
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
     def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
-      val decl = h.Decl(decodedName(name), mkDeepDecl(qualifier))
-      classifyDecl(qualifier, decl)
-      val ref = mkRef(t, decl.name, decl, decl.owner, decl.owner)
+      val decl = mkDeepDecl(qualifier)
+      // we have to use `name` here instead of `decl.name` because the latter
+      // points to the declaration but `name` may be a renamed selector and
+      // therefore its name can differ.
+      val ref = mkRef(t, name.toString, decl, owner, decl.owner)
       ref.position = h.RangePosition(pos, pos+ref.name.length)
       ref
     }
@@ -699,10 +714,18 @@ final class ScalacConverter[G <: Global](
     refTree(owner, qualifier)
     selectors foreach { sel ⇒
       if (sel.name != nme.WILDCARD) {
-        found += ref(qualifier.symbol, sel.name, sel.namePos)
+        // The selector has no symbol attached, therefore we have to find the
+        // type or term by searching for it with the `member` method.
+        val typeSym = qualifier.tpe.member(sel.name.toTypeName)
+        val sym =
+          if (typeSym.exists)
+            typeSym
+          else
+            qualifier.tpe.member(sel.name.toTermName)
+        found += ref(sym, sel.name, sel.namePos)
 
         if (sel.name != sel.rename)
-          found += ref(qualifier.symbol, sel.rename, sel.renamePos)
+          found += ref(sym, sel.rename, sel.renamePos)
       }
     }
   }
