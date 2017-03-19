@@ -98,7 +98,7 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
               }
             }
           }
-          else if (hasNoScalaSource(sym.toType)) {
+          else if (hasNoScalaSource(sym.toType) || hasNoScalaSource(sym.enclosingTopLevelClass.toType)) {
             val file = classDeps.find(_._1.contains("scala-library")).map(_._2).getOrElse {
               throw new IllegalStateException("No entry for scala-library found in the dependency list.")
             }
