@@ -590,8 +590,7 @@ final class ScalacConverter[G <: Global](
         this.body(owner, body)
       }
     case Bind(_, body) ⇒
-      val decl = mkDecl(t.symbol, owner)
-      setPosition(decl, t.pos)
+      val decl = mkDeclWithPos(t.symbol, owner, t.pos)
       found += decl
       scopes = scopes.add(decl)
       this.body(owner, body)
@@ -681,8 +680,7 @@ final class ScalacConverter[G <: Global](
       anonClassDef(owner, t)
     else {
       annotationRef(owner, t.symbol, t.pos)
-      val decl = mkDecl(t.symbol, owner)
-      setPosition(decl, t.pos)
+      val decl = mkDeclWithPos(t.symbol, owner, t.pos)
       found += decl
       withNewScope {
         t.tparams foreach (typeParamDef(decl, _))
@@ -693,8 +691,7 @@ final class ScalacConverter[G <: Global](
 
   private def moduleDef(owner: h.Hierarchy, t: ModuleDef): Unit = {
     annotationRef(owner, t.symbol, t.pos)
-    val decl = mkDecl(t.symbol, owner)
-    setPosition(decl, t.pos)
+    val decl = mkDeclWithPos(t.symbol, owner, t.pos)
     found += decl
     withNewScope {
       template(decl, t.impl)
@@ -733,8 +730,7 @@ final class ScalacConverter[G <: Global](
   }
 
   private def typeDef(owner: h.Hierarchy, t: TypeDef): Unit = {
-    val decl = mkDecl(t.symbol, owner)
-    setPosition(decl, t.pos)
+    val decl = mkDeclWithPos(t.symbol, owner, t.pos)
     found += decl
     t.tparams foreach (typeParamDef(decl, _))
     body(owner, t.rhs)
@@ -744,7 +740,7 @@ final class ScalacConverter[G <: Global](
     annotationRef(owner, t.symbol, t.pos)
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
-    val decl = mkDecl(t.symbol, owner)
+    val decl = mkDeclWithPos(t.symbol, owner, t.pos)
     if (isFunction)
       decl.addAttachments(a.Function)
     // implicit flag is only added to the getter
@@ -753,7 +749,6 @@ final class ScalacConverter[G <: Global](
       if (g.isAccessor && g.isImplicit)
         decl.addAttachments(a.Implicit)
     }
-    setPosition(decl, t.pos)
     found += decl
     scopes = scopes.add(decl)
     withNewScope {
@@ -765,11 +760,11 @@ final class ScalacConverter[G <: Global](
   private def selfRef(owner: h.Hierarchy, t: ValDef): Unit = {
     if (t == noSelfType)
       return
-    val m = mkDecl(t.symbol, owner)
+    val decl = mkDecl(t.symbol, owner)
     // the end position for self references are wrong, we have to set the end manually
-    m.position = h.RangePosition(t.pos.start, t.pos.start+m.name.length)
-    found += m
-    typeRef(m, t.tpt, selfRefPos = Some(t.pos.start))
+    decl.position = h.RangePosition(t.pos.start, t.pos.start+decl.name.length)
+    found += decl
+    typeRef(decl, t.tpt, selfRefPos = Some(t.pos.start))
   }
 
   private def defDef(owner: h.Hierarchy, t: DefDef): Unit = {
@@ -777,25 +772,25 @@ final class ScalacConverter[G <: Global](
 
     def normalDefDef() = {
       annotationRef(owner, t.symbol, t.pos)
-      val m = mkDecl(t.symbol, owner)
+      val decl = mkDecl(t.symbol, owner)
       if (t.name == nme.CONSTRUCTOR) {
-        m.addAttachments(a.Constructor)
+        decl.addAttachments(a.Constructor)
         if (t.pos.isTransparent || t.pos.isOffset)
-          setPositionOfOwner(owner, m)
+          setPositionOfOwner(owner, decl)
         // we need to catch auxiliary constructors here (they have a range position)
         // because the implementation of `setPosition` for some reason can't handle them.
         else
-          m.position = h.RangePosition(t.pos.point, t.pos.point+"this".length)
+          decl.position = h.RangePosition(t.pos.point, t.pos.point+"this".length)
       }
       else
-        setPosition(m, t.pos)
-      found += m
+        setPosition(decl, t.pos)
+      found += decl
       withNewScope {
-        tparams foreach (typeParamDef(m, _))
-        vparamss foreach (_ foreach (valDef(m, _)))
+        tparams foreach (typeParamDef(decl, _))
+        vparamss foreach (_ foreach (valDef(decl, _)))
         val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
         if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
-          typeRef(m, tpt)
+          typeRef(decl, tpt)
         // do not index bodies of generated code
         if (!t.symbol.isSynthetic) {
           // not sure if this condition is the right thing to do. It avoids to create
@@ -803,15 +798,13 @@ final class ScalacConverter[G <: Global](
           // default constructor of the super class is always called implicitly but
           // I'm not sure if we want to highlight this fact in our index.
           if (!(t.name == nme.CONSTRUCTOR && (t.pos.isOffset || t.pos.isTransparent)))
-            body(m, rhs)
+            body(decl, rhs)
         }
       }
     }
 
     def lazyDefDef() = {
-      val m = mkDecl(t.symbol, owner)
-      setPosition(m, t.pos)
-      found += m
+      found += mkDeclWithPos(t.symbol, owner, t.pos)
       typeRef(owner, tpt)
       body(owner, rhs)
     }
@@ -834,10 +827,9 @@ final class ScalacConverter[G <: Global](
   }
 
   private def typeParamDef(owner: h.Hierarchy, t: TypeDef): Unit = {
-    val m = mkDecl(t.symbol, owner)
-    setPosition(m, t.pos)
-    found += m
-    t.tparams foreach (typeParamDef(m, _))
+    val decl = mkDeclWithPos(t.symbol, owner, t.pos)
+    found += decl
+    t.tparams foreach (typeParamDef(decl, _))
   }
 
   private def packageDef(t: Tree): h.Decl = t match {
