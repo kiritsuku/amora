@@ -1737,4 +1737,24 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.<ref>Some.<ref>i",
         "scala.<ref>Some.i")
   }
+
+  @Test
+  def alternative() = {
+    convert("""
+      class X {
+        def f(i: Int) = i match {
+          case 1 | 2 ⇒ i
+        }
+      }
+    """) === Set(
+        "X",
+        "X.f(I)I",
+        "X.f(I)I.<match>",
+        "X.f(I)I.<match>.<case>",
+        "X.f(I)I.<param>i",
+        "X.f(I)I.<ref>i",
+        "X.this()V",
+        "scala.<ref>AnyRef",
+        "scala.<ref>Int")
+  }
 }

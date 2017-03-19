@@ -605,6 +605,8 @@ final class ScalacConverter[G <: Global](
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
         refTree(owner, t)
+    case Alternative(trees) ⇒
+      trees foreach (body(owner, _))
     case t ⇒
       throwTreeMatchError(t)
   }
