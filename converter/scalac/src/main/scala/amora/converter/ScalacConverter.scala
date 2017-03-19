@@ -139,6 +139,8 @@ final class ScalacConverter[G <: Global](
       decl.addAttachments(a.Val)
     else if (sym.isVar)
       decl.addAttachments(a.Var)
+    else if (sym.hasPackageFlag)
+      decl.addAttachments(a.Package)
 
     addDeclAttachment(sym, decl)
   }
@@ -840,20 +842,11 @@ final class ScalacConverter[G <: Global](
 
   private def packageDef(t: Tree): h.Decl = t match {
     case Select(qualifier, name) ⇒
-      val decl = mkDecl(t.symbol, packageDef(qualifier))
-      decl.addAttachments(a.Package)
-      setPosition(decl, t.pos)
-      decl
+      mkDeclWithPos(t.symbol, packageDef(qualifier), t.pos)
     case Ident(nme.EMPTY_PACKAGE_NAME) ⇒
       h.Root
     case _: Ident ⇒
-      // we can't call `mkDecl` here because we have to set the position
-      // before `classifyDecl` is called
-      val decl = h.Decl(mkName(t.symbol), h.Root)
-      setPosition(decl, t.pos)
-      classifyDecl(t.symbol, decl)
-      decl.addAttachments(a.Package)
-      decl
+      mkDeclWithPos(t.symbol, h.Root, t.pos)
     case t ⇒
       throwTreeMatchError(t)
   }
