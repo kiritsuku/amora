@@ -809,4 +809,25 @@ class ScalaRefTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def ref_as_owner_of_scope() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X {
+          def [[!Int]]a([[!Function1]]f: [[Int]] ⇒ [[Int]]) = 0
+        }
+        class [[!AnyRef]]Y {
+          new [[X]]().[[a]] {
+            case i ⇒ [[i]]
+          }
+        }
+      """)
+  }
 }

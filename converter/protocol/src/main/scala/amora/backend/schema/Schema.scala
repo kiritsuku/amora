@@ -308,16 +308,29 @@ object Schema {
       s"http://amora.center/kb/amora/$tpe/$shortArtifactId/${mkShortPath(decl)}"
     }
 
-    def mkOwnerPath(h: Hierarchy, owner: Decl) = {
+    def mkRefPath(ref: Ref): String = {
+      val declPath = ref.refToDecl match {
+        case d: Decl ⇒ mkFullPath(d)
+        case _ ⇒
+          ???
+      }
+      val file = sourceFile(ref)
+      val shortFileId = mkShortId(file)
+      s"$declPath/$shortFileId${uniqueRef(ref.position)}"
+    }
+
+    def mkOwnerPath(h: Hierarchy, owner: HierarchyWithName) = {
       val isTopLevelDecl = {
         def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
         def isPkg = owner.attachments(Attachment.Package)
         isTopLevelDecl && isPkg
       }
-      if (isTopLevelDecl) {
+      if (isTopLevelDecl)
         mkId(sourceFile(h))
-      } else
-        mkFullPath(owner)
+      else owner match {
+        case owner: Decl ⇒ mkFullPath(owner)
+        case owner: Ref ⇒ mkRefPath(owner)
+      }
     }
 
     def findNonScopeOwner[A](scope: Scope)(pf: PartialFunction[Hierarchy, A]): A = scope.owner match {
@@ -391,9 +404,7 @@ object Schema {
           case _ ⇒
             ???
         }
-        val file = sourceFile(ref)
-        val shortFileId = mkShortId(file)
-        val path = s"$declPath/$shortFileId${uniqueRef(ref.position)}"
+        val path = mkRefPath(ref)
         val schemaPath = s"http://amora.center/kb/amora/Schema/Ref"
         addPrefix("Ref", schemaPath+"/")
         addData(path, "a", "Ref:")
@@ -409,6 +420,7 @@ object Schema {
 
         owner match {
           case Root ⇒
+            val file = sourceFile(ref)
             val ownerPath = mkDefn(file)
             addData(path, "Ref:owner", s"""<$ownerPath>""")
           case owner: Decl ⇒
@@ -418,8 +430,8 @@ object Schema {
             loop(owner)
           case owner: Scope ⇒
             findNonScopeOwner(owner) {
-              case decl: Decl ⇒
-                val ownerPath = mkOwnerPath(ref, decl) + "/" + encode(owner.attachmentAsString)
+              case h: HierarchyWithName ⇒
+                val ownerPath = mkOwnerPath(ref, h) + "/" + encode(owner.attachmentAsString)
                 addData(path, "Ref:owner", s"""<$ownerPath>""")
             }
             loop(owner.owner)
@@ -429,6 +441,8 @@ object Schema {
         val path = findNonScopeOwner(scope) {
           case decl: Decl ⇒
             mkFullPath(decl) + "/" + encode(scope.attachmentAsString)
+          case ref: Ref ⇒
+            mkRefPath(ref) + "/" + encode(scope.attachmentAsString)
         }
         val schemaPath = s"http://amora.center/kb/amora/Schema/Scope"
         addPrefix("Scope", schemaPath+"/")
@@ -443,6 +457,9 @@ object Schema {
         findNonScopeOwner(scope) {
           case decl: Decl ⇒
             val ownerPath = mkFullPath(decl)
+            addData(path, "Scope:owner", s"""<$ownerPath>""")
+          case ref: Ref ⇒
+            val ownerPath = mkRefPath(ref)
             addData(path, "Scope:owner", s"""<$ownerPath>""")
         }
 
