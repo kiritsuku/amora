@@ -190,6 +190,8 @@ final class ScalacConverter[G <: Global](
   }
 
   private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy, calledOn: h.Hierarchy): h.Ref = {
+    require(refToDecl.attachments.exists(_.isInstanceOf[a.SourceFile]),
+        s"No SourceFile attachment for `$refToDecl` in tree `$t` found.")
     val ref = h.Ref(name, refToDecl, owner, calledOn)
     ref.addAttachments(a.Ref)
     addRefAttachment(t.pos.source.file, ref)

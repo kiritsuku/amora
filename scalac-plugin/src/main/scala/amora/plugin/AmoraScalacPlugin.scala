@@ -67,7 +67,19 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
           tpe == definitions.AnyRefTpe || tpe == definitions.AnyTpe
 
         val addDeclAttachment = (sym: Symbol, decl: Decl) ⇒ {
-          val file = sym.associatedFile
+          // for some reason in some cases the symbol has no associated file,
+          // we therefore have to go to the companion and if that one doesn't exist
+          // (as it is the case for members), we have to go to the enclosing class
+          // companion to get the associated file
+          val file = sym.associatedFile match {
+            case NoAbstractFile if !sym.hasPackageFlag ⇒
+              sym.companion.associatedFile match {
+                case NoAbstractFile ⇒  sym.enclosingTopLevelClass.companion.associatedFile
+                case file ⇒ file
+              }
+            case file ⇒ file
+          }
+
           if (file != NoAbstractFile) {
             val path = file.underlyingSource.get.path
             if (path.endsWith(".scala")) {
