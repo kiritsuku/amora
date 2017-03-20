@@ -84,3 +84,7 @@ FlagData:implicit
   a Flag: ;
   Flag:name "implicit" ;
 .
+FlagData:repeated
+  a Flag: ;
+  Flag:name "repeated" ;
+.
