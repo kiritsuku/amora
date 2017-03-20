@@ -703,8 +703,15 @@ final class ScalacConverter[G <: Global](
   }
 
   private def importDef(owner: h.Hierarchy, t: Import): Unit = {
-    def ref(qualifier: Symbol, name: Name, pos: Int): h.Ref = {
-      val decl = mkDeepDecl(qualifier)
+    def ref(sym: Symbol, name: Name, pos: Int): h.Ref = {
+      val decl = mkDeepDecl(sym)
+      // symbols which point to package imports do not have a source file associated
+      // with them, therefore we have to set a position manually in order to ensure
+      // that a SourceFile attachment is correctly set
+      if (sym.hasPackageFlag) {
+        decl.position = h.RangePosition(pos, pos + name.length)
+        classifyDecl(sym, decl)
+      }
       // we have to use `name` here instead of `decl.name` because the latter
       // points to the declaration but `name` may be a renamed selector and
       // therefore its name can differ.

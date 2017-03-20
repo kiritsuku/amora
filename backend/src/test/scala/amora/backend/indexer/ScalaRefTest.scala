@@ -151,6 +151,23 @@ class ScalaRefTest extends RestApiTest {
   }
 
   @Test
+  def refs_of_package_import() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        import [[scala]].[[collection]].[[mutable]]
+        class [[!AnyRef]]X {
+          val lb: [[mutable]].[[ListBuffer]] [ [[Int]] ] = null
+        }
+      """)
+  }
+
+  @Test
   def self_ref_with_fully_qualified_name() = {
     indexRegionData("""
         prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
