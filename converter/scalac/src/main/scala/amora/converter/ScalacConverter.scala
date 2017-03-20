@@ -334,7 +334,7 @@ final class ScalacConverter[G <: Global](
    * self reference. The value in the `Option` is the start offset of the self
    * reference.
    */
-  private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int]): Unit = {
+  private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int], isRepeatedArg: Boolean): Unit = {
     def refFromSymbol(sym: Symbol): h.Ref = {
       val o = mkDeepDecl(sym)
       mkRef(t, o.name, o, owner, o.owner)
@@ -385,6 +385,8 @@ final class ScalacConverter[G <: Global](
         // it if the Annotation type is directly extended
       case tpe if !t.pos.isRange && tpe =:= typeOf[AnyRef] ⇒
         // AnyRef can leak in and we don't want to add it if it doesn't appear in source code
+      case _ if t.symbol.name == tpnme.REPEATED_PARAM_CLASS_NAME ⇒
+        // Ignore repeated arguments
       case _ ⇒
         val ref = refFromSymbol(t.symbol)
         t.original match {
@@ -408,6 +410,8 @@ final class ScalacConverter[G <: Global](
                 setPosition(ref, t.pos)
             }
         }
+        if (isRepeatedArg)
+          ref.addAttachments(a.Repeated)
         found += ref
     }
 
@@ -460,13 +464,18 @@ final class ScalacConverter[G <: Global](
   /**
    * See [[typeTree]] for information about what `selfRefPos` is doing.
    */
-  private def typeRef(owner: h.Hierarchy, t: Tree, selfRefPos: Option[Int] = None): Unit = t match {
+  private def typeRef(owner: h.Hierarchy, t: Tree, selfRefPos: Option[Int] = None, isRepeatedArg: Boolean = false): Unit = t match {
     case t: TypeTree ⇒
-      typeTree(owner, t, selfRefPos)
+      typeTree(owner, t, selfRefPos, isRepeatedArg)
     case AppliedTypeTree(tpt, args) ⇒
-      if (tpt.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME)
-        typeRef(owner, tpt)
-      args.filter(_.symbol != NoSymbol) foreach (typeRef(owner, _))
+      val n = tpt.symbol.name
+      if (n == tpnme.REPEATED_PARAM_CLASS_NAME)
+        typeRef(owner, args.head, selfRefPos, isRepeatedArg = true)
+      else {
+        if (n != tpnme.BYNAME_PARAM_CLASS_NAME)
+          typeRef(owner, tpt)
+        args.filter(_.symbol != NoSymbol) foreach (typeRef(owner, _))
+      }
     case _: Select ⇒
       refTree(owner, t)
     case _: Ident ⇒

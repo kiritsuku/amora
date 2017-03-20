@@ -1757,4 +1757,19 @@ class ScalacConverterTest extends ScalaCompilerTest {
         "scala.<ref>AnyRef",
         "scala.<ref>Int")
   }
+
+  @Test
+  def repeated_args() = {
+    convert("""
+      class X {
+        def f(i: Int*) = 0
+      }
+    """) === Set(
+        "X",
+        "X.f(Lscala/collection/Seq;)I",
+        "X.f(Lscala/collection/Seq;)I.<param>i",
+        "X.this()V",
+        "scala.<ref>AnyRef",
+        "scala.<ref>Int")
+  }
 }

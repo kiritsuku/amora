@@ -73,4 +73,23 @@ class FlagTest extends RestApiTest {
     """) === Seq(
         Seq(Data("name", "value")))
   }
+
+  @Test
+  def repeated_arg() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class A {
+          def f(i: Int*) = 0
+        }
+      """)
+    sparqlRequest("""
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      prefix repeated:<http://amora.center/kb/amora/Flag/repeated>
+      select ?name where {
+        [Ref:flag repeated:] Ref:name ?name .
+      }
+      order by ?name
+    """) === Seq(
+        Seq(Data("name", "Int")))
+  }
 }

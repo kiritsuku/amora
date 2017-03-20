@@ -28,6 +28,7 @@ object Attachment {
   case object Do extends Attachment { override def asString = "do" }
   case object Constructor extends Attachment { override def asString = "constructor" }
   case object Implicit extends Attachment { override def asString = "implicit" }
+  case object Repeated extends Attachment { override def asString = "repeated" }
 
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
   case class JvmClass(jvmClass: String) extends Attachment { override def asString = jvmClass }
