@@ -25,7 +25,5 @@ Setup notes:
 Important sbt commands:
 
 - `backend/reStart` - Launches server application. After that the `run_electron` executable can be run.
-- `;scalacPlugin/assembly;scalacPlugin/test` - Runs the scalac plugin.
-- `;scalacPlugin/assembly;scalacPlugin/publishLocal;amoraSbtPlugin/scripted` - Runs the tests for the sbt plugin.
 - `firefoxPlugin/genFirefoxPlugin` - Generates the firefox plugin. It can be tested with `run_firefox_plugin`.
 

@@ -2,6 +2,21 @@ val genElectronMain = TaskKey[Unit]("gen-electron-main", "Generates Electron app
 val genFirefoxPlugin = TaskKey[Unit]("gen-firefox-plugin", "Generates the Firefox plugin.")
 val genBundle = TaskKey[File]("gen-bundle", "Generates a bundle that contains all NPM dependencies to be used in the browser.")
 
+val publishScalacPlugin = TaskKey[Unit]("publish-scalac-plugin", "Publishes the scalac plugin.")
+val testSbtPlugin = TaskKey[Unit]("test-sbt-plugin", "Tests the sbt plugin.")
+
+publishScalacPlugin := Def.taskDyn {
+  Def.taskDyn {
+    Def.task{(assembly in scalacPlugin).value}
+  }.value
+  Def.task{(publishLocal in scalacPlugin).value}
+}.value
+
+testSbtPlugin := Def.taskDyn {
+  publishScalacPlugin.value
+  Def.task{(scripted in amoraSbtPlugin).toTask("").value}
+}.value
+
 lazy val commonSettings = Seq(
   scalaVersion := "2.11.8",
   scalacOptions ++= Seq(
