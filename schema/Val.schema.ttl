@@ -1,26 +1,50 @@
 # Schema file for class "Val"
 
-@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/>
-@prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
-@prefix schema:<http://amora.center/kb/amora/Schema/Val/>
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Decl:   <http://amora.center/kb/amora/Schema/Decl/>
+@prefix Val:    <http://amora.center/kb/amora/Schema/Val/>
+@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
 
-# schema data
-schema:
-  amora:schemaName "Val" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:schemaId schema:owner ;
-  amora:schemaId schema:flag ;
-  amora:schemaId schema:posStart ;
-  amora:schemaId schema:posEnd ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Val/schema.jsonld>
+Val:
+  rdfs:subClassOf     Decl: ;
+  Schema:schemaName   "Val" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Val:name ;
+  Schema:schemaId     Val:owner ;
+  Schema:schemaId     Val:flag ;
+  Schema:schemaId     Val:posStart ;
+  Schema:schemaId     Val:posEnd ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Val/schema.jsonld>
 .
-
-# inference rules
-schema:name rdfs:subPropertyOf decl:name .
-schema:owner rdfs:subPropertyOf decl:owner .
-schema:flag rdfs:subPropertyOf decl:flag .
-schema:posStart rdfs:subPropertyOf decl:posStart .
-schema:posEnd rdfs:subPropertyOf decl:posEnd .
-schema: rdfs:subClassOf decl: .
+Val:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
+.
+Val:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Decl: ;
+.
+Val:flag
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:flag ;
+  Schema:schemaName   "flag" ;
+  Schema:schemaType   Flag: ;
+.
+Val:posStart
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:posStart ;
+  Schema:schemaName   "posStart" ;
+  Schema:schemaType   xsd:int ;
+.
+Val:posEnd
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:posEnd ;
+  Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.

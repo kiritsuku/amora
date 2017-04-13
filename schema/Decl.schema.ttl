@@ -39,13 +39,13 @@ Decl:posStart
   a                   rdfs:Property ;
   rdfs:subPropertyOf  Schema:posStart ;
   Schema:schemaName   "posStart" ;
-  xsd:schemaType      xsd:int ;
+  Schema:schemaType   xsd:int ;
 .
 Decl:posEnd
   a                   rdfs:Property ;
   rdfs:subPropertyOf  Schema:posEnd ;
   Schema:schemaName   "posEnd" ;
-  xsd:schemaType      xsd:int ;
+  Schema:schemaType   xsd:int ;
 .
 Decl:jvmClass
   a                   rdfs:Property ;
