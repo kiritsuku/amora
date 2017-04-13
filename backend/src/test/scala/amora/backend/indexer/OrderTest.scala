@@ -91,4 +91,46 @@ class OrderTest extends RestApiTest {
         Seq(Data("name", "take"), Data("calledOn", "drop")),
         Seq(Data("name", "sum"), Data("calledOn", "take")))
   }
+
+  @Test
+  def implicit_this_access() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def g = 0
+          def f = g
+        }
+      """)
+    sparqlRequest("""
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      select ?name where {
+        [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
+        filter (?start != ?end)
+      }
+      order by ?order
+    """) === Seq(
+        Seq(Data("name", "g")))
+  }
+
+  @Test
+  def explicit_this_access() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def g = 0
+          def f = this.g
+        }
+      """)
+    sparqlRequest("""
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      select ?name where {
+        [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
+        filter (?start != ?end)
+      }
+      order by ?order
+    """) === Seq(
+        Seq(Data("name", "g")))
+  }
 }
