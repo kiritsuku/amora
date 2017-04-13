@@ -128,9 +128,10 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def resultSetAsData(r: ResultSet): Seq[Seq[Data]] = {
     transformResultSet(r) { (v, q) ⇒
       val res = q.get(v)
-      require(res != null, s"The variable `$v` does not exist in the result set.")
       val value =
-        if (res.isLiteral())
+        if (res == null)
+          null
+        else if (res.isLiteral())
           res.asLiteral().getString
         else
           res.toString()

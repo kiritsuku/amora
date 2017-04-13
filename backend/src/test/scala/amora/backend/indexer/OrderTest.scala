@@ -58,4 +58,37 @@ class OrderTest extends RestApiTest {
         Seq(Data("name", "take")),
         Seq(Data("name", "sum")))
   }
+
+  @Test
+  def expr_ordering_have_a_calledOn_property() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f = {
+            List.apply(1).drop(3).take(5).sum
+          }
+        }
+      """)
+    sparqlRequest("""
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      select ?name ?calledOn where {
+        ?r Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order .
+        filter (?start != ?end)
+        optional {
+          ?r Ref:calledOn ?q .
+          ?q Ref:posStart ?qstart .
+          ?q Ref:posEnd ?qend .
+          filter (?qstart != ?qend)
+          ?q Ref:name ?calledOn .
+        }
+      }
+      order by ?order
+    """) === Seq(
+        Seq(Data("name", "List"), Data("calledOn", null)),
+        Seq(Data("name", "apply"), Data("calledOn", "List")),
+        Seq(Data("name", "drop"), Data("calledOn", "apply")),
+        Seq(Data("name", "take"), Data("calledOn", "drop")),
+        Seq(Data("name", "sum"), Data("calledOn", "take")))
+  }
 }
