@@ -398,7 +398,7 @@ object Schema {
           case _: Ref ⇒
         }
 
-      case ref @ Ref(name, refToDecl, owner, qualifier) ⇒
+      case ref @ Ref(name, refToDecl, owner, calledOn) ⇒
         val declPath = refToDecl match {
           case d: Decl ⇒ mkFullPath(d)
           case _ ⇒
@@ -441,6 +441,23 @@ object Schema {
             loop(owner.owner)
           case _: Ref ⇒
         }
+
+        calledOn foreach {
+          case calledOn: Ref ⇒
+            val calledOnPath = mkRefPath(calledOn)
+            addData(path, "Ref:calledOn", s"""<$calledOnPath>""")
+          case calledOn: Decl ⇒
+            val calledOnPath = mkFullPath(calledOn)
+            addData(path, "Ref:calledOn", s"""<$calledOnPath>""")
+          case _ ⇒
+            ???
+        }
+
+        ref.attachments.collectFirst {
+          case Attachment.Order(nr) ⇒
+            addData(path, "Ref:order", nr.toString)
+        }
+
       case scope: Scope ⇒
         val path = findNonScopeOwner(scope) {
           case decl: Decl ⇒

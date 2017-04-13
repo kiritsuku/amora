@@ -189,10 +189,19 @@ final class ScalacConverter[G <: Global](
     }
   }
 
+  private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy): h.Ref = {
+    require(refToDecl.attachments.exists(_.isInstanceOf[a.SourceFile]),
+        s"No SourceFile attachment for `$refToDecl` in tree `$t` found.")
+    val ref = h.Ref(name, refToDecl, owner, None)
+    ref.addAttachments(a.Ref)
+    addRefAttachment(t.pos.source.file, ref)
+    ref
+  }
+
   private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy, calledOn: h.Hierarchy): h.Ref = {
     require(refToDecl.attachments.exists(_.isInstanceOf[a.SourceFile]),
         s"No SourceFile attachment for `$refToDecl` in tree `$t` found.")
-    val ref = h.Ref(name, refToDecl, owner, calledOn)
+    val ref = h.Ref(name, refToDecl, owner, Some(calledOn))
     ref.addAttachments(a.Ref)
     addRefAttachment(t.pos.source.file, ref)
     ref
@@ -220,27 +229,42 @@ final class ScalacConverter[G <: Global](
     case Select(New(nt), _) ⇒
       refTree(owner, nt, isTopLevelRef)
     case t @ Select(qualifier, name) ⇒
-      qualifier match {
+      val qualifierRef = qualifier match {
         case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
+          None
         case Select(qualifier, nme.PACKAGE) ⇒
-          refTree(owner, qualifier, isTopLevelRef = false)
+          Some(refTree(owner, qualifier, isTopLevelRef = false))
         case _ ⇒
-          refTree(owner, qualifier, isTopLevelRef = false)
+          Some(refTree(owner, qualifier, isTopLevelRef = false))
       }
-      val calledOn =
-        if (t.symbol.owner.name.toTermName == nme.PACKAGE)
-          mkDeepDecl(t.symbol.owner.owner)
-        else
-          mkDeepDecl(t.symbol.owner)
-      val refToDecl = mkDeclWithPos(t.symbol, calledOn, t.pos)
-      val n =
+      val refToDecl = {
+        val ownerDecl =
+          if (t.symbol.owner.name.toTermName == nme.PACKAGE)
+            mkDeepDecl(t.symbol.owner.owner)
+          else
+            mkDeepDecl(t.symbol.owner)
+        mkDeclWithPos(t.symbol, ownerDecl, t.pos)
+      }
+      val refName =
         if (name == nme.CONSTRUCTOR)
           "this"
         else
           decodedName(name)
-      // we can't use [[refToDecl.name]] here because for rename imports its name
-      // is different from the name of the symbol
-      val ref = mkRef(t, n, refToDecl, owner, calledOn)
+      // we have to use `refName` instead of `refToDecl.name` here because for
+      // rename imports its name is different from the name of the symbol
+      val ref = qualifierRef match {
+        case Some(qualifierRef) ⇒
+          val ref = mkRef(t, refName, refToDecl, owner, qualifierRef)
+          qualifierRef.attachments.collectFirst {
+            case a.Order(nr) ⇒
+              ref.addAttachments(a.Order(nr + 1))
+          }
+          ref
+        case None ⇒
+          val ref = mkRef(t, refName, refToDecl, owner)
+          ref.addAttachments(a.Order(1))
+          ref
+      }
 
       // implicitly called apply methods do have range positions but the position
       // of their qualifier is transparent. We need to ensure that we don't treat

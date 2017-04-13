@@ -102,9 +102,9 @@ case class Decl(override val name: String, private val _owner: Hierarchy) extend
  *
  * [[name]] is the name of the reference. [[refToDecl]] is the declaration to which
  * this reference points to. [[owner]] is the declaration, which contains [[name]].
- * [[qualifier]] specifies how [[name]] refers to [[refToDecl]].
+ * [[calledOn]] specifies how [[name]] refers to [[refToDecl]].
  */
-case class Ref(override val name: String, refToDecl: Hierarchy, override val owner: Hierarchy, qualifier: Hierarchy) extends HierarchyWithName
+case class Ref(override val name: String, refToDecl: Hierarchy, override val owner: Hierarchy, calledOn: Option[Hierarchy]) extends HierarchyWithName
 
 /**
  * The root or bottom of the hierarchy. The owner refers to itself.

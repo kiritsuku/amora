@@ -33,4 +33,9 @@ object Attachment {
   case class JvmSignature(signature: String) extends Attachment { override def asString = signature }
   case class JvmClass(jvmClass: String) extends Attachment { override def asString = jvmClass }
   case class SourceFile(source: Schema) extends Attachment { override def asString = source.toString }
+  /**
+   * The order of expression applications. In `List.apply(1).drop(1).take(1).sum`
+   * the order would be `List → apply → drop → take → sum`.
+   */
+  case class Order(nr: Int) extends Attachment { override def asString = nr.toString }
 }
