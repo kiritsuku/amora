@@ -412,7 +412,7 @@ object Schema {
         addData(path, "Ref:refToDecl", s"""<$declPath>""")
 
         if (ref.attachments(Attachment.Repeated)) {
-          addData(path, s"$Ref:flag", "<http://amora.center/kb/amora/Flag/repeated>")
+          addData(path, "Ref:flag", "<http://amora.center/kb/amora/Flag/repeated>")
         }
 
         ref.position match {
@@ -448,7 +448,7 @@ object Schema {
           case ref: Ref ⇒
             mkRefPath(ref) + "/" + encode(scope.attachmentAsString)
         }
-        val schemaPath = s"http://amora.center/kb/amora/Schema/Scope"
+        val schemaPath = "http://amora.center/kb/amora/Schema/Scope"
         addPrefix("Scope", schemaPath+"/")
         addData(path, "a", "Scope:")
 
