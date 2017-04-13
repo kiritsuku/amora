@@ -19,7 +19,6 @@ class OrderTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name where {
         [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
@@ -45,7 +44,6 @@ class OrderTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name where {
         [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
@@ -70,7 +68,6 @@ class OrderTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name ?calledOn where {
         ?r Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order .
@@ -102,7 +99,6 @@ class OrderTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name where {
         [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
@@ -123,7 +119,6 @@ class OrderTest extends RestApiTest {
         }
       """)
     sparqlRequest("""
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name where {
         [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order] .
