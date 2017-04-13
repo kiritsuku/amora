@@ -1,55 +1,54 @@
 # Schema file for class "Decl"
 
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora: <http://amora.center/kb/amora/Schema/>
-@prefix schema: <http://amora.center/kb/amora/Schema/Decl/>
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#>
-@prefix Flag: <http://amora.center/kb/amora/Schema/Flag/>
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Decl:   <http://amora.center/kb/amora/Schema/Decl/>
+@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
 
-schema:
-  amora:schemaName "Decl" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:schemaId schema:owner ;
-  amora:schemaId schema:flag ;
-  amora:schemaId schema:posStart ;
-  amora:schemaId schema:posEnd ;
-  amora:schemaId schema:jvmClass ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Decl/schema.jsonld> ;
+Decl:
+  Schema:schemaName   "Decl" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Decl:name ;
+  Schema:schemaId     Decl:owner ;
+  Schema:schemaId     Decl:flag ;
+  Schema:schemaId     Decl:posStart ;
+  Schema:schemaId     Decl:posEnd ;
+  Schema:schemaId     Decl:jvmClass ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Decl/schema.jsonld> ;
 .
-schema:name
-  a rdfs:Property ;
-  amora:schemaName "name" ;
-  amora:schemaType xsd:string ;
+Decl:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
 .
-schema:owner
-  a rdfs:Property ;
-  amora:schemaName "owner" ;
-  amora:schemaType schema: ;
+Decl:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Decl: ;
 .
-schema:flag
-  a rdfs:Property ;
-  amora:schemaName "flag" ;
-  amora:schemaType Flag: ;
+Decl:flag
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:flag ;
+  Schema:schemaName   "flag" ;
+  Schema:schemaType   Flag: ;
 .
-schema:posStart
-  a rdfs:Property ;
-  amora:schemaName "posStart" ;
-  xsd:schemaType xsd:int ;
+Decl:posStart
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:posStart ;
+  Schema:schemaName   "posStart" ;
+  xsd:schemaType      xsd:int ;
 .
-schema:posEnd
-  a rdfs:Property ;
-  amora:schemaName "posEnd" ;
-  xsd:schemaType xsd:int ;
+Decl:posEnd
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:posEnd ;
+  Schema:schemaName   "posEnd" ;
+  xsd:schemaType      xsd:int ;
 .
-schema:jvmClass
-  a rdfs:Property ;
-  amora:schemaName "jvmClass" ;
-  amora:schemaType xsd:string ;
+Decl:jvmClass
+  a                   rdfs:Property ;
+  Schema:schemaName   "jvmClass" ;
+  Schema:schemaType   xsd:string ;
 .
-
-schema:name rdfs:subPropertyOf amora:name .
-schema:owner rdfs:subPropertyOf amora:owner .
-schema:flag rdfs:subPropertyOf amora:flag .
-schema:posStart rdfs:subPropertyOf amora:posStart .
-schema:posEnd rdfs:subPropertyOf amora:posEnd .
