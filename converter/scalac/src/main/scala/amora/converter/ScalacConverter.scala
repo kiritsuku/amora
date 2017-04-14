@@ -334,8 +334,10 @@ final class ScalacConverter[G <: Global](
         case _ ⇒
           setPosition(ref, t.pos)
       }
-      if (t.pos.isRange)
+      if (t.pos.isRange) {
+        addCodeOrder(ref, codeOrder)
         found += ref
+      }
       ref
     case t: Literal ⇒
       val ref = classOfConst(owner, t).getOrElse {
@@ -547,7 +549,7 @@ final class ScalacConverter[G <: Global](
     case t: Literal ⇒
       classOfConst(owner, t)
     case Assign(lhs, rhs) ⇒
-      body(owner, lhs)
+      body(owner, lhs, codeOrder)
       val decl = mkDecl(lhs.symbol, owner)
       body(decl, rhs)
     case t: Select ⇒
