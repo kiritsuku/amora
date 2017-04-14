@@ -189,19 +189,10 @@ final class ScalacConverter[G <: Global](
     }
   }
 
-  private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy): h.Ref = {
+  private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy, calledOn: Option[h.Hierarchy] = None): h.Ref = {
     require(refToDecl.attachments.exists(_.isInstanceOf[a.SourceFile]),
         s"No SourceFile attachment for `$refToDecl` in tree `$t` found.")
-    val ref = h.Ref(name, refToDecl, owner, None)
-    ref.addAttachments(a.Ref)
-    addRefAttachment(t.pos.source.file, ref)
-    ref
-  }
-
-  private def mkRef(t: Tree, name: String, refToDecl: h.Hierarchy, owner: h.Hierarchy, calledOn: h.Hierarchy): h.Ref = {
-    require(refToDecl.attachments.exists(_.isInstanceOf[a.SourceFile]),
-        s"No SourceFile attachment for `$refToDecl` in tree `$t` found.")
-    val ref = h.Ref(name, refToDecl, owner, Some(calledOn))
+    val ref = h.Ref(name, refToDecl, owner, calledOn)
     ref.addAttachments(a.Ref)
     addRefAttachment(t.pos.source.file, ref)
     ref
@@ -253,9 +244,9 @@ final class ScalacConverter[G <: Global](
       // we have to use `refName` instead of `refToDecl.name` here because for
       // rename imports its name is different from the name of the symbol
       val ref = qualifierRef match {
-        case Some(qualifierRef) ⇒
+        case Some(qRef) ⇒
           val ref = mkRef(t, refName, refToDecl, owner, qualifierRef)
-          qualifierRef.attachments.collectFirst {
+          qRef.attachments.collectFirst {
             case a.Order(nr) ⇒
               ref.addAttachments(a.Order(nr + 1))
           }
@@ -325,7 +316,7 @@ final class ScalacConverter[G <: Global](
         case _ ⇒
           rawRefToDecl.name → rawRefToDecl
       }
-      val ref = mkRef(t, n, refToDecl, owner, calledOn)
+      val ref = mkRef(t, n, refToDecl, owner)
       t match {
         // we need to manually adjust positions for `this` references because
         // the implementation of `setPosition` for some reason can't handle them.
@@ -365,7 +356,7 @@ final class ScalacConverter[G <: Global](
   private def typeTree(owner: h.Hierarchy, t: TypeTree, selfRefPos: Option[Int], isRepeatedArg: Boolean): Unit = {
     def refFromSymbol(sym: Symbol): h.Ref = {
       val o = mkDeepDecl(sym)
-      mkRef(t, o.name, o, owner, o.owner)
+      mkRef(t, o.name, o, owner)
     }
 
     def selfRefTypes() = {
@@ -518,7 +509,7 @@ final class ScalacConverter[G <: Global](
       val sym = tpe.value.typeValue.typeSymbol
       val o = mkDeepDecl(sym)
       classifyDecl(sym, o)
-      val ref = mkRef(t, o.name, o, owner, o.owner)
+      val ref = mkRef(t, o.name, o, owner)
       setPosition(ref, t.pos, skipping = Movements.commentsAndSpaces)
       found += ref
 
@@ -526,7 +517,7 @@ final class ScalacConverter[G <: Global](
       val classOfSymbol = global.currentRun.runDefinitions.Predef_classOf
       val refToDecl = mkDeepDecl(classOfSymbol)
       classifyDecl(classOfSymbol, refToDecl)
-      val classOfRef = mkRef(t ,"classOf", refToDecl, owner, refToDecl.owner)
+      val classOfRef = mkRef(t ,"classOf", refToDecl, owner)
       classOfRef.position = h.RangePosition(t.pos.start, t.pos.start+classOfRef.name.length)
       found += classOfRef
       Some(classOfRef)
@@ -752,7 +743,7 @@ final class ScalacConverter[G <: Global](
       // we have to use `name` here instead of `decl.name` because the latter
       // points to the declaration but `name` may be a renamed selector and
       // therefore its name can differ.
-      val ref = mkRef(t, name.toString, decl, owner, decl.owner)
+      val ref = mkRef(t, name.toString, decl, owner)
       ref.position = h.RangePosition(pos, pos+ref.name.length)
       ref
     }
