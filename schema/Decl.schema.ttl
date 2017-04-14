@@ -15,6 +15,7 @@ Decl:
   Schema:schemaId     Decl:posStart ;
   Schema:schemaId     Decl:posEnd ;
   Schema:schemaId     Decl:jvmClass ;
+  Schema:schemaId     Decl:codeOrder ;
   Schema:format       <http://amora.center/kb/amora/Format/amora/Decl/schema.jsonld> ;
 .
 Decl:name
@@ -51,4 +52,10 @@ Decl:jvmClass
   a                   rdfs:Property ;
   Schema:schemaName   "jvmClass" ;
   Schema:schemaType   xsd:string ;
+.
+Decl:codeOrder
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:codeOrder ;
+  Schema:schemaName   "codeOrder" ;
+  Schema:schemaType   xsd:int ;
 .

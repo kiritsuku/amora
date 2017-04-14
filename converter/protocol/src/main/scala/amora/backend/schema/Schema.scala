@@ -398,6 +398,11 @@ object Schema {
           case _: Ref ⇒
         }
 
+        decl.attachments.collectFirst {
+          case Attachment.CodeOrder(nr) ⇒
+            addData(path, s"$tpe:codeOrder", nr.toString)
+        }
+
       case ref @ Ref(name, refToDecl, owner, calledOn) ⇒
         val declPath = refToDecl match {
           case d: Decl ⇒ mkFullPath(d)

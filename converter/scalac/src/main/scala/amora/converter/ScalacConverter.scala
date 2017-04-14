@@ -530,7 +530,7 @@ final class ScalacConverter[G <: Global](
       None
   }
 
-  private def body(owner: h.Hierarchy, t: Tree): Unit = t match {
+  private def body(owner: h.Hierarchy, t: Tree, codeOrder: Int = 0): Unit = t match {
     case t: DefDef ⇒
       defDef(owner, t)
     case t: ValDef ⇒
@@ -539,8 +539,8 @@ final class ScalacConverter[G <: Global](
       typeDef(owner, t)
     case Block(stats, expr) ⇒
       withNewScope {
-        stats foreach (body(owner, _))
-        body(owner, expr)
+        stats.zipWithIndex foreach { case (s, i) ⇒ body(owner, s, i + 1) }
+        body(owner, expr, stats.length + 1)
       }
     case t: Literal ⇒
       classOfConst(owner, t)

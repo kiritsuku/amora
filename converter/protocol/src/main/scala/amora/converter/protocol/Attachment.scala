@@ -38,4 +38,9 @@ object Attachment {
    * the order would be `List → apply → drop → take → sum`.
    */
   case class Order(nr: Int) extends Attachment { override def asString = nr.toString }
+  /**
+   * The order of code elements. Statements are ordered for example. In `val a =
+   * 0; val b = 0; val c = 0` the order would be `a → b → c`.
+   */
+  case class CodeOrder(nr: Int) extends Attachment { override def asString = nr.toString }
 }
