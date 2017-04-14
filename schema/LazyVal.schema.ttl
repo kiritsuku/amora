@@ -1,26 +1,50 @@
 # Schema file for class "LazyVal"
 
-@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/>
-@prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
-@prefix schema:<http://amora.center/kb/amora/Schema/LazyVal/>
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Decl:   <http://amora.center/kb/amora/Schema/Decl/>
+@prefix LazyVal:<http://amora.center/kb/amora/Schema/LazyVal/>
+@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
 
-# schema data
-schema:
-  amora:schemaName "LazyVal" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:schemaId schema:owner ;
-  amora:schemaId schema:flag ;
-  amora:schemaId schema:posStart ;
-  amora:schemaId schema:posEnd ;
-  amora:format <http://amora.center/kb/amora/Format/amora/LazyVal/schema.jsonld>
+LazyVal:
+  rdfs:subClassOf     Decl: ;
+  Schema:schemaName   "LazyVal" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     LazyVal:name ;
+  Schema:schemaId     LazyVal:owner ;
+  Schema:schemaId     LazyVal:flag ;
+  Schema:schemaId     LazyVal:posStart ;
+  Schema:schemaId     LazyVal:posEnd ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/LazyVal/schema.jsonld>
 .
-
-# inference rules
-schema:name rdfs:subPropertyOf decl:name .
-schema:owner rdfs:subPropertyOf decl:owner .
-schema:flag rdfs:subPropertyOf decl:flag .
-schema:posStart rdfs:subPropertyOf decl:posStart .
-schema:posEnd rdfs:subPropertyOf decl:posEnd .
-schema: rdfs:subClassOf decl: .
+LazyVal:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
+.
+LazyVal:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Decl: ;
+.
+LazyVal:flag
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:flag ;
+  Schema:schemaName   "flag" ;
+  Schema:schemaType   Flag: ;
+.
+LazyVal:posStart
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:posStart ;
+  Schema:schemaName   "posStart" ;
+  Schema:schemaType   xsd:int ;
+.
+LazyVal:posEnd
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:posEnd ;
+  Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.
