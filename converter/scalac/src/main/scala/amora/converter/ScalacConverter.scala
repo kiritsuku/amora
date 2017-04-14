@@ -282,8 +282,10 @@ final class ScalacConverter[G <: Global](
         ref.position = h.RangePosition(offset, offset)
       }
 
-      if (isTopLevelRef || t.pos.isRange)
+      if (isTopLevelRef || t.pos.isRange) {
+        addCodeOrder(ref, codeOrder)
         found += ref
+      }
       ref
     case _: Ident | _: TypeTree | _: This ⇒
       val t = tree match {
@@ -976,9 +978,9 @@ final class ScalacConverter[G <: Global](
         List(line3, line2, Seq(line), Seq(marker), matchErr.toSeq).flatten.map("  " + _).mkString("\n"))
   }
 
-  private def addCodeOrder(decl: h.Decl, codeOrder: Int) = {
+  private def addCodeOrder(hwn: h.HierarchyWithName, codeOrder: Int) = {
     if (codeOrder > 0) {
-      decl.addAttachments(a.CodeOrder(codeOrder))
+      hwn.addAttachments(a.CodeOrder(codeOrder))
     }
   }
 }
