@@ -17,6 +17,7 @@ Ref:
   Schema:schemaId     Ref:flag ;
   Schema:schemaId     Ref:posStart ;
   Schema:schemaId     Ref:posEnd ;
+  Schema:schemaId     Ref:codeOrder ;
   Schema:format       <http://amora.center/kb/amora/Format/amora/Ref/schema.jsonld>
 .
 Ref:name
@@ -57,5 +58,11 @@ Ref:posEnd
   a                   rdfs:Property ;
   rdfs:subPropertyOf  Schema:posEnd ;
   Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.
+Ref:codeOrder
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:codeOrder ;
+  Schema:schemaName   "codeOrder" ;
   Schema:schemaType   xsd:int ;
 .

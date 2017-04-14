@@ -218,24 +218,24 @@ final class ScalacConverter[G <: Global](
    * Select would be `scala.Option.apply` (`apply` is kept but `scala.Option`
    * and `scala` are thrown away).
    */
-  private def refTree(owner: h.Hierarchy, tree: Tree, isTopLevelRef: Boolean = true): h.Ref = tree match {
+  private def refTree(owner: h.Hierarchy, tree: Tree, codeOrder: Int, isTopLevelRef: Boolean = true): h.Ref = tree match {
     case Apply(fun, args) ⇒
-      val ref = refTree(owner, fun, isTopLevelRef)
+      val ref = refTree(owner, fun, codeOrder, isTopLevelRef)
       args foreach (body(ref, _))
       ref
     case TypeApply(fun, args) ⇒
       args foreach (typeRef(owner, _))
-      refTree(owner, fun, isTopLevelRef)
+      refTree(owner, fun, codeOrder, isTopLevelRef)
     case Select(New(nt), _) ⇒
-      refTree(owner, nt, isTopLevelRef)
+      refTree(owner, nt, codeOrder, isTopLevelRef)
     case t @ Select(qualifier, name) ⇒
       val qualifierRef = qualifier match {
         case _: This | Ident(nme.ROOTPKG) | _: Super ⇒
           None
         case Select(qualifier, nme.PACKAGE) ⇒
-          Some(refTree(owner, qualifier, isTopLevelRef = false))
+          Some(refTree(owner, qualifier, codeOrder, isTopLevelRef = false))
         case _ ⇒
-          Some(refTree(owner, qualifier, isTopLevelRef = false))
+          Some(refTree(owner, qualifier, codeOrder, isTopLevelRef = false))
       }
       val refToDecl = {
         val ownerDecl =
@@ -501,9 +501,9 @@ final class ScalacConverter[G <: Global](
         args.filter(_.symbol != NoSymbol) foreach (typeRef(owner, _))
       }
     case _: Select ⇒
-      refTree(owner, t)
+      refTree(owner, t, 0)
     case _: Ident ⇒
-      refTree(owner, t)
+      refTree(owner, t, 0)
     case t ⇒
       throwTreeMatchError(t)
   }
@@ -550,7 +550,7 @@ final class ScalacConverter[G <: Global](
       body(decl, rhs)
     case t: Select ⇒
       if (!(t.symbol.isLazy && t.symbol.isLazyAccessor))
-        refTree(owner, t)
+        refTree(owner, t, codeOrder)
     case t: ClassDef ⇒
       classDef(owner, t)
     case t: ModuleDef ⇒
@@ -601,7 +601,7 @@ final class ScalacConverter[G <: Global](
     case Return(expr) ⇒
       body(owner, expr)
     case _: This ⇒
-      refTree(owner, t)
+      refTree(owner, t, codeOrder)
     case LabelDef(_, _, If(cond, Block(stats, _), _)) ⇒
       withKeywordScope(owner, t, a.While) { sWhile ⇒
         body(sWhile, cond)
@@ -614,9 +614,9 @@ final class ScalacConverter[G <: Global](
       }
     case EmptyTree ⇒
     case _: Apply ⇒
-      refTree(owner, t)
+      refTree(owner, t, codeOrder)
     case _: TypeApply ⇒
-      refTree(owner, t)
+      refTree(owner, t, codeOrder)
     case _: TypeTree ⇒
       typeRef(owner, t)
     case Function(vparams, body) ⇒
@@ -637,7 +637,7 @@ final class ScalacConverter[G <: Global](
       args foreach (body(owner, _))
     case t: Ident ⇒
       if (t.name != nme.USCOREkw)
-        refTree(owner, t)
+        refTree(owner, t, codeOrder)
     case Alternative(trees) ⇒
       trees foreach (body(owner, _))
     case t ⇒
@@ -754,7 +754,7 @@ final class ScalacConverter[G <: Global](
     }
 
     val Import(qualifier, selectors) = t
-    refTree(owner, qualifier)
+    refTree(owner, qualifier, 0)
     selectors foreach { sel ⇒
       if (sel.name != nme.WILDCARD) {
         // The selector has no symbol attached, therefore we have to find the

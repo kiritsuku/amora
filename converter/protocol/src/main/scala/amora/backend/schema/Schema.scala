@@ -458,9 +458,11 @@ object Schema {
             ???
         }
 
-        ref.attachments.collectFirst {
+        ref.attachments.collect {
           case Attachment.Order(nr) ⇒
             addData(path, "Ref:order", nr.toString)
+          case Attachment.CodeOrder(nr) ⇒
+            addData(path, "Ref:codeOrder", nr.toString)
         }
 
       case scope: Scope ⇒
