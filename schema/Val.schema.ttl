@@ -16,6 +16,7 @@ Val:
   Schema:schemaId     Val:flag ;
   Schema:schemaId     Val:posStart ;
   Schema:schemaId     Val:posEnd ;
+  Schema:schemaId     Val:codeOrder ;
   Schema:format       <http://amora.center/kb/amora/Format/amora/Val/schema.jsonld>
 .
 Val:name
@@ -46,5 +47,11 @@ Val:posEnd
   a                   rdfs:Property ;
   rdfs:subPropertyOf  Decl:posEnd ;
   Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.
+Val:codeOrder
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:codeOrder ;
+  Schema:schemaName   "codeOrder" ;
   Schema:schemaType   xsd:int ;
 .

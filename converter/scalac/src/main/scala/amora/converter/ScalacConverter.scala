@@ -534,7 +534,7 @@ final class ScalacConverter[G <: Global](
     case t: DefDef ⇒
       defDef(owner, t)
     case t: ValDef ⇒
-      valDef(owner, t)
+      valDef(owner, t, codeOrder)
     case t: TypeDef ⇒
       typeDef(owner, t)
     case Block(stats, expr) ⇒
@@ -621,7 +621,7 @@ final class ScalacConverter[G <: Global](
       typeRef(owner, t)
     case Function(vparams, body) ⇒
       withNewScope {
-        vparams foreach (valDef(owner, _, isFunction = true))
+        vparams foreach (valDef(owner, _, codeOrder, isFunction = true))
         this.body(owner, body)
       }
     case Bind(_, body) ⇒
@@ -780,7 +780,7 @@ final class ScalacConverter[G <: Global](
     body(owner, t.rhs)
   }
 
-  private def valDef(owner: h.Hierarchy, t: ValDef, isFunction: Boolean = false): Unit = {
+  private def valDef(owner: h.Hierarchy, t: ValDef, codeOrder: Int, isFunction: Boolean = false): Unit = {
     annotationRef(owner, t.symbol, t.pos)
     if (t.symbol.isSynthetic || t.symbol.isLazy)
       return
@@ -793,6 +793,7 @@ final class ScalacConverter[G <: Global](
       if (g.isAccessor && g.isImplicit)
         decl.addAttachments(a.Implicit)
     }
+    decl.addAttachments(a.CodeOrder(codeOrder))
     found += decl
     scopes = scopes.add(decl)
     withNewScope {

@@ -128,4 +128,29 @@ class OrderTest extends RestApiTest {
     """) === Seq(
         Seq(Data("name", "g")))
   }
+
+  @Test
+  def multiple_exprs_in_body() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f = {
+            val x1 = 0
+            val x2 = 0
+          }
+        }
+      """)
+    sparqlRequest("""
+      prefix Schema:<http://amora.center/kb/amora/Schema/>
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      select ?name where {
+        ?x Schema:codeOrder ?order .
+        ?x Schema:name ?name .
+      }
+      order by ?order
+    """) === Seq(
+        Seq(Data("name", "x1")),
+        Seq(Data("name", "x2")))
+  }
 }
