@@ -1,24 +1,61 @@
 # Schema file for class "Ref"
 
-@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/>
-@prefix schema:<http://amora.center/kb/amora/Schema/Ref/>
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Decl:   <http://amora.center/kb/amora/Schema/Decl/>
+@prefix Ref:    <http://amora.center/kb/amora/Schema/Ref/>
+@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
 
-schema:
-  amora:schemaName "Ref" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:schemaId schema:owner ;
-  amora:schemaId schema:refToDecl ;
-  amora:schemaId schema:qualifier ;
-  amora:schemaId schema:flag ;
-  amora:schemaId schema:posStart ;
-  amora:schemaId schema:posEnd ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Ref/schema.jsonld>
+Ref:
+  Schema:schemaName   "Ref" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Ref:name ;
+  Schema:schemaId     Ref:owner ;
+  Schema:schemaId     Ref:refToDecl ;
+  Schema:schemaId     Ref:calledOn ;
+  Schema:schemaId     Ref:flag ;
+  Schema:schemaId     Ref:posStart ;
+  Schema:schemaId     Ref:posEnd ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Ref/schema.jsonld>
 .
-
-schema:name rdfs:subPropertyOf amora:name .
-schema:owner rdfs:subPropertyOf amora:owner .
-schema:flag rdfs:subPropertyOf amora:flag .
-schema:posStart rdfs:subPropertyOf amora:posStart .
-schema:posEnd rdfs:subPropertyOf amora:posEnd .
+Ref:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
+.
+Ref:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Decl: ;
+.
+Ref:refToDecl
+  a                   rdfs:Property ;
+  Schema:schemaName   "refToDecl" ;
+  Schema:schemaType   Decl: ;
+.
+Ref:calledOn
+  a                   rdfs:Property ;
+  Schema:schemaName   "calledOn" ;
+  Schema:schemaType   Decl: ;
+.
+Ref:flag
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:flag ;
+  Schema:schemaName   "flag" ;
+  Schema:schemaType   Flag: ;
+.
+Ref:posStart
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:posStart ;
+  Schema:schemaName   "posStart" ;
+  Schema:schemaType   xsd:int ;
+.
+Ref:posEnd
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:posEnd ;
+  Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.
