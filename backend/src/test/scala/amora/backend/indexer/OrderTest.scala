@@ -137,6 +137,8 @@ class OrderTest extends RestApiTest {
           def f = {
             val x1 = 0
             val x2 = 0
+            var x3 = 0
+            var x4 = 0
           }
         }
       """)
@@ -151,6 +153,8 @@ class OrderTest extends RestApiTest {
       order by ?order
     """) === Seq(
         Seq(Data("name", "x1")),
-        Seq(Data("name", "x2")))
+        Seq(Data("name", "x2")),
+        Seq(Data("name", "x3")),
+        Seq(Data("name", "x4")))
   }
 }
