@@ -16,6 +16,7 @@ LazyVal:
   Schema:schemaId     LazyVal:flag ;
   Schema:schemaId     LazyVal:posStart ;
   Schema:schemaId     LazyVal:posEnd ;
+  Schema:schemaId     LazyVal:codeOrder ;
   Schema:format       <http://amora.center/kb/amora/Format/amora/LazyVal/schema.jsonld>
 .
 LazyVal:name
@@ -46,5 +47,11 @@ LazyVal:posEnd
   a                   rdfs:Property ;
   rdfs:subPropertyOf  Decl:posEnd ;
   Schema:schemaName   "posEnd" ;
+  Schema:schemaType   xsd:int ;
+.
+LazyVal:codeOrder
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:codeOrder ;
+  Schema:schemaName   "codeOrder" ;
   Schema:schemaType   xsd:int ;
 .

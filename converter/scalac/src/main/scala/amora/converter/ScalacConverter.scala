@@ -850,7 +850,9 @@ final class ScalacConverter[G <: Global](
     }
 
     def lazyDefDef() = {
-      found += mkDeclWithPos(t.symbol, owner, t.pos)
+      val decl = mkDeclWithPos(t.symbol, owner, t.pos)
+      addCodeOrder(decl, codeOrder)
+      found += decl
       typeRef(owner, tpt)
       body(owner, rhs)
     }
