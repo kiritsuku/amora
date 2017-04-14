@@ -936,18 +936,18 @@ final class ScalacConverter[G <: Global](
       throwTreeMatchError(t)
   }
 
-  private def setPosition(d: h.HierarchyWithName, pos: Position, skipping: Movement = Movements.none) = {
+  private def setPosition(hwn: h.HierarchyWithName, pos: Position, skipping: Movement = Movements.none) = {
     if (pos.isRange) {
       import scala.tools.refactoring.util.SourceWithMarker.Movements._
       val mvnt = until(id, skipping)
       mvnt(SourceWithMarker(pos.source.content, pos.point)) match {
         case Some(start) ⇒
-          d.position = h.RangePosition(start, start+d.name.length)
+          hwn.position = h.RangePosition(start, start+hwn.name.length)
         case _ ⇒
       }
     } else {
       val offset = pos.start
-      d.position = h.RangePosition(offset, offset)
+      hwn.position = h.RangePosition(offset, offset)
     }
   }
 

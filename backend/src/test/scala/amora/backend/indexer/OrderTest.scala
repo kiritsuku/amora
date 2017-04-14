@@ -148,8 +148,6 @@ class OrderTest extends RestApiTest {
       """)
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
-      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
-      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
       select ?name where {
         ?x Schema:codeOrder ?order .
         ?x Schema:name ?name .
