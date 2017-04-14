@@ -11,13 +11,14 @@ Def:
   rdfs:subClassOf     Decl: ;
   Schema:schemaName   "Def" ;
   Schema:schemaAuthor "amora" ;
-  Schema:schemaId      Def:name ;
-  Schema:schemaId      Def:owner ;
-  Schema:schemaId      Def:flag ;
-  Schema:schemaId      Def:posStart ;
-  Schema:schemaId      Def:posEnd ;
-  Schema:schemaId      Def:jvmSignature ;
-  Schema:format        <http://amora.center/kb/amora/Format/amora/Def/schema.jsonld>
+  Schema:schemaId     Def:name ;
+  Schema:schemaId     Def:owner ;
+  Schema:schemaId     Def:flag ;
+  Schema:schemaId     Def:posStart ;
+  Schema:schemaId     Def:posEnd ;
+  Schema:schemaId     Def:jvmSignature ;
+  Schema:schemaId     Def:codeOrder ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Def/schema.jsonld>
 .
 Def:name
   a                   rdfs:Property ;
@@ -53,4 +54,10 @@ Def:jvmSignature
   a                   rdfs:Property ;
   Schema:schemaName   "jvmSignature" ;
   Schema:schemaType   xsd:string ;
+.
+Def:codeOrder
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Decl:codeOrder ;
+  Schema:schemaName   "codeOrder" ;
+  Schema:schemaType   xsd:int ;
 .

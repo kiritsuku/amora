@@ -139,6 +139,8 @@ class OrderTest extends RestApiTest {
             val x2 = 0
             var x3 = 0
             var x4 = 0
+            def x5 = 0
+            def x6 = 0
           }
         }
       """)
@@ -155,6 +157,8 @@ class OrderTest extends RestApiTest {
         Seq(Data("name", "x1")),
         Seq(Data("name", "x2")),
         Seq(Data("name", "x3")),
-        Seq(Data("name", "x4")))
+        Seq(Data("name", "x4")),
+        Seq(Data("name", "x5")),
+        Seq(Data("name", "x6")))
   }
 }

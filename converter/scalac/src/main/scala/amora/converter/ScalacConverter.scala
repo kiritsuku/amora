@@ -532,7 +532,7 @@ final class ScalacConverter[G <: Global](
 
   private def body(owner: h.Hierarchy, t: Tree, codeOrder: Int = 0): Unit = t match {
     case t: DefDef ⇒
-      defDef(owner, t)
+      defDef(owner, t, codeOrder)
     case t: ValDef ⇒
       valDef(owner, t, codeOrder)
     case t: TypeDef ⇒
@@ -793,7 +793,7 @@ final class ScalacConverter[G <: Global](
       if (g.isAccessor && g.isImplicit)
         decl.addAttachments(a.Implicit)
     }
-    decl.addAttachments(a.CodeOrder(codeOrder))
+    addCodeOrder(decl, codeOrder)
     found += decl
     scopes = scopes.add(decl)
     withNewScope {
@@ -812,7 +812,7 @@ final class ScalacConverter[G <: Global](
     typeRef(decl, t.tpt, selfRefPos = Some(t.pos.start))
   }
 
-  private def defDef(owner: h.Hierarchy, t: DefDef): Unit = {
+  private def defDef(owner: h.Hierarchy, t: DefDef, codeOrder: Int): Unit = {
     val DefDef(_, _, tparams, vparamss, tpt, rhs) = t
 
     def normalDefDef() = {
@@ -829,6 +829,7 @@ final class ScalacConverter[G <: Global](
       }
       else
         setPosition(decl, t.pos)
+      addCodeOrder(decl, codeOrder)
       found += decl
       withNewScope {
         tparams foreach (typeParamDef(decl, _))
@@ -971,6 +972,12 @@ final class ScalacConverter[G <: Global](
     val matchErr = new MatchError(t).getMessage().split("\n")
     throw new IllegalStateException(s"Match error at tree conversion (line ${lineNumber + 1}, column ${column + 1}):\n" +
         List(line3, line2, Seq(line), Seq(marker), matchErr.toSeq).flatten.map("  " + _).mkString("\n"))
+  }
+
+  private def addCodeOrder(decl: h.Decl, codeOrder: Int) = {
+    if (codeOrder > 0) {
+      decl.addAttachments(a.CodeOrder(codeOrder))
+    }
   }
 }
 
