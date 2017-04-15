@@ -894,4 +894,20 @@ class ScalaRefTest extends RestApiTest {
         class [[!AnyRef]]X([[!Int]]i: [[Int]], [[!Int]]j: [[Int]])
       """)
   }
+
+  @Test
+  def by_name_parameter() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X {
+          def [[!Int]]meth([[!Function0]]f: ⇒ [[Int]]) = 0
+        }
+      """)
+  }
 }

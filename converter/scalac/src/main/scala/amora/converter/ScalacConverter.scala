@@ -837,7 +837,10 @@ final class ScalacConverter[G <: Global](
       found += decl
       withNewScope {
         tparams foreach (typeParamDef(decl, _))
-        vparamss foreach (_ foreach (valDef(decl, _)))
+        vparamss.flatten.zipWithIndex foreach {
+          case (v, i) ⇒
+            valDef(decl, v, codeOrder = i + 1, isFunction = v.tpt.symbol.name == tpnme.BYNAME_PARAM_CLASS_NAME)
+        }
         val isGeneratedSetter = vparamss.headOption.flatMap(_.headOption).exists(_.symbol.isSetterParameter)
         if (!isGeneratedSetter && t.name != nme.CONSTRUCTOR)
           typeRef(decl, tpt)
