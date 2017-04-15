@@ -658,7 +658,7 @@ class ScalaRefTest extends RestApiTest {
       Artifact(Project("p"), "o", "n", "v1"),
       "x.scala" → """
         class [[!AnyRef]]X {
-          def [[!Function1]]f([[!Function1]]i: [[Function1]][ [[Int]], [[Int]] ]) = [[i]]
+          def [[!Function1]]f(i: [[Function1]][ [[Int]], [[Int]] ]) = [[i]]
         }
       """)
   }
@@ -861,6 +861,37 @@ class ScalaRefTest extends RestApiTest {
         class [[!AnyRef]]X {
           def [[!Int]]f(i: [[Int]]*) = 0
         }
+      """)
+  }
+
+  @Test
+  def explicit_type_ascription() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X {
+          val x: [[Int]] = 0
+          val [[!Int]]y = 0
+        }
+      """)
+  }
+
+  @Test
+  def ctor_with_parameter() = {
+    indexRegionData("""
+        prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a ref:] ref:name ?name ; ref:posStart ?start ; ref:posEnd ?end .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class [[!AnyRef]]X([[!Int]]i: [[Int]], [[!Int]]j: [[Int]])
       """)
   }
 }

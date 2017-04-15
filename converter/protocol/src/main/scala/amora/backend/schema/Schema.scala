@@ -316,7 +316,8 @@ object Schema {
       }
       val file = sourceFile(ref)
       val shortFileId = mkShortId(file)
-      s"$declPath/$shortFileId${uniqueRef(ref.position)}"
+      val ctorAppendix = if (ref.owner.owner.attachments(Attachment.Constructor)) "/ctor" else ""
+      s"$declPath/$shortFileId${uniqueRef(ref.position)}$ctorAppendix"
     }
 
     def mkOwnerPath(h: Hierarchy, owner: HierarchyWithName) = {

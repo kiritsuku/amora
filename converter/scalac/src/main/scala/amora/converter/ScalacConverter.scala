@@ -409,11 +409,14 @@ final class ScalacConverter[G <: Global](
       case _ ⇒
         val ref = refFromSymbol(t.symbol)
         t.original match {
-          case t: AppliedTypeTree if t.symbol.fullName.startsWith("scala.Function") && owner.position.isInstanceOf[h.RangePosition] ⇒
-            // `pos.point` doesn't make a lot of sense for function literals, therefore
-            // we set the position manually here
-            val offset = owner.position.asInstanceOf[h.RangePosition].start
-            ref.position = new h.RangePosition(offset, offset)
+          case _: AppliedTypeTree | _: Select if !isRepeatedArg && t.symbol.name != tpnme.BYNAME_PARAM_CLASS_NAME ⇒
+            // We want a slightly different behavior for inferred types and explicit type annotations.
+            // For the former, as in `val x = 0`, we want to assign the type `Int` to the offset
+            // position of `x`. In case of the later, as in `val x: Int = 0`, we want to have
+            // a range position for the `Int` but no offset position that points to `x`.
+            // Explicit type annotations come in the shape of an `AppliedTypeTree` or
+            // as a `Select`. We ignore them here because `t.original` is handled later.
+            // Repeated arguments and by-name parameters can't be handled later, though.
           case _ if owner.attachments(a.Function) && owner.position.isInstanceOf[h.RangePosition] ⇒
             // functions created through function literals don't have their positions at
             // the beginning of the identifiers where we want to have it
@@ -431,7 +434,8 @@ final class ScalacConverter[G <: Global](
         }
         if (isRepeatedArg)
           ref.addAttachments(a.Repeated)
-        found += ref
+        if (ref.position != h.NoPosition)
+          found += ref
     }
 
     t.original match {
