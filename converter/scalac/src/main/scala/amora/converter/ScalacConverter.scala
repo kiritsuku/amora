@@ -359,7 +359,7 @@ final class ScalacConverter[G <: Global](
       mkRef(t, o.name, o, owner)
     }
 
-    def selfRefTypes() = {
+    def handleSelfRefTypes() = {
       def findTypes(t: Type): Seq[Type] =
         if (t.typeSymbol.isRefinementClass)
           t.typeSymbol.info.parents.flatMap(findTypes)
@@ -392,9 +392,7 @@ final class ScalacConverter[G <: Global](
       }
     }
 
-    if (t.symbol.isRefinementClass)
-      selfRefTypes
-    else t.tpe match {
+    def handleExplicitTypeAscriptions() = t.tpe match {
       case tpe: AliasTypeRef ⇒
         val ref = refFromSymbol(tpe.sym)
         setPosition(ref, t.pos)
@@ -438,7 +436,7 @@ final class ScalacConverter[G <: Global](
           found += ref
     }
 
-    t.original match {
+    def handleInferredTypes() = t.original match {
       case t: AppliedTypeTree ⇒
         typeRef(owner, t)
       case t: Select ⇒
@@ -482,6 +480,13 @@ final class ScalacConverter[G <: Global](
         handleQualifiers()
       case _ ⇒
     }
+
+    if (t.symbol.isRefinementClass)
+      handleSelfRefTypes()
+    else
+      handleExplicitTypeAscriptions()
+
+    handleInferredTypes()
   }
 
   /**
