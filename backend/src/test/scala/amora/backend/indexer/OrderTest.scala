@@ -73,10 +73,8 @@ class OrderTest extends RestApiTest {
         ?r Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end ; Ref:order ?order .
         filter (?start != ?end)
         optional {
-          ?r Ref:calledOn ?q .
-          ?q Ref:posStart ?qstart .
-          ?q Ref:posEnd ?qend .
-          filter (?qstart != ?qend)
+          ?r Ref:calledOn ?q ; Ref:posStart ?qStart ; Ref:posEnd ?qEnd .
+          filter (?qStart != ?qEnd)
           ?q Ref:name ?calledOn .
         }
       }
@@ -149,8 +147,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
+        [Schema:codeOrder ?order ; Schema:name ?name] .
       }
       order by ?order
     """) === Seq(
@@ -180,8 +177,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
+        [Schema:codeOrder ?order ; Schema:name ?name] .
       }
       order by ?order
     """) === Seq(
@@ -207,8 +203,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
+        [Schema:codeOrder ?order ; Schema:name ?name] .
       }
       order by ?order
     """) === Seq(
@@ -229,8 +224,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
+        [Schema:codeOrder ?order ; Schema:name ?name] .
       }
       order by ?order
     """) === Seq(
@@ -250,8 +244,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
+        [Schema:codeOrder ?order ; Schema:name ?name] .
       }
       order by ?order
     """) === Seq(
@@ -279,9 +272,7 @@ class OrderTest extends RestApiTest {
     sparqlRequest("""
       prefix Schema:<http://amora.center/kb/amora/Schema/>
       select ?name where {
-        ?x Schema:codeOrder ?order .
-        ?x Schema:name ?name .
-        ?x Schema:owner [Schema:name "f"] .
+        [Schema:codeOrder ?order ; Schema:name ?name ; Schema:owner [Schema:name "f"]] .
       }
       order by ?order
     """) === Seq(
