@@ -477,8 +477,11 @@ class Indexer(modelName: String) extends Log4jLogging {
   def mkInMemoryDataset: RawDataset =
     RawDataset(TDBFactory.createDataset())
 
-  def mkDataset(location: String): RawDataset =
+  def mkDataset(location: String): RawDataset = {
+    // we need to create the location if necessary because the library doesn't do it
+    new java.io.File(location).mkdirs()
     RawDataset(TDBFactory.createDataset(location))
+  }
 
   def writeDataset[A](dataset: RawDataset)(f: Dataset ⇒ A): A = {
     internalWithDataset(dataset.dataset, ReadWrite.WRITE)(f)
