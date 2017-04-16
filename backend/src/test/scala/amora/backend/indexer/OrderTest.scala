@@ -261,4 +261,33 @@ class OrderTest extends RestApiTest {
         Seq(Data("name", "l")),
         Seq(Data("name", "m")))
   }
+
+  @Test
+  def assignment_applications_have_code_order() = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class Y(var i: Int)
+        class X {
+          def f = {
+            var x = new Y(0)
+            println(0)
+            x.i = 0
+            println(0)
+          }
+        }
+      """)
+    sparqlRequest("""
+      prefix Schema:<http://amora.center/kb/amora/Schema/>
+      select ?name where {
+        ?x Schema:codeOrder ?order .
+        ?x Schema:name ?name .
+        ?x Schema:owner [Schema:name "f"] .
+      }
+      order by ?order
+    """) === Seq(
+        Seq(Data("name", "x")),
+        Seq(Data("name", "println")),
+        Seq(Data("name", "x")),
+        Seq(Data("name", "println")))
+  }
 }

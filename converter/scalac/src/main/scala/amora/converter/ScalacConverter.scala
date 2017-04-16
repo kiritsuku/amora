@@ -243,19 +243,7 @@ final class ScalacConverter[G <: Global](
           decodedName(name)
       // we have to use `refName` instead of `refToDecl.name` here because for
       // rename imports its name is different from the name of the symbol
-      val ref = qualifierRef match {
-        case Some(qRef) ⇒
-          val ref = mkRef(t, refName, refToDecl, owner, qualifierRef)
-          qRef.attachments.collectFirst {
-            case a.Order(nr) ⇒
-              ref.addAttachments(a.Order(nr + 1))
-          }
-          ref
-        case None ⇒
-          val ref = mkRef(t, refName, refToDecl, owner)
-          ref.addAttachments(a.Order(1))
-          ref
-      }
+      val ref = mkRef(t, refName, refToDecl, owner, qualifierRef)
 
       // implicitly called apply methods do have range positions but the position
       // of their qualifier is transparent. We need to ensure that we don't treat
@@ -274,7 +262,10 @@ final class ScalacConverter[G <: Global](
       }
 
       if (isTopLevelRef || t.pos.isRange) {
-        addCodeOrder(ref, codeOrder)
+        val order = qualifierRef.flatMap(_.attachments.collectFirst{ case a.Order(nr) ⇒ nr + 1}).getOrElse(1)
+        ref.addAttachments(a.Order(order))
+        if (order == 1)
+          addCodeOrder(ref, codeOrder)
         found += ref
       }
       ref
@@ -326,6 +317,7 @@ final class ScalacConverter[G <: Global](
           setPosition(ref, t.pos)
       }
       if (t.pos.isRange) {
+        ref.addAttachments(a.Order(1))
         addCodeOrder(ref, codeOrder)
         found += ref
       }
