@@ -720,8 +720,7 @@ object Schema {
         encode(owner.asString).replace('.', '/')
       case _: Ref ⇒
         val path = encode(owner.asString).replace('.', '/')
-        val h = uniqueRef(owner.position)
-        s"$path/$h"
+        s"$path${uniqueRef(owner.position)}"
     }
     val sig = decl.attachments.collectFirst {
       case Attachment.JvmSignature(signature) ⇒ encode(signature)
