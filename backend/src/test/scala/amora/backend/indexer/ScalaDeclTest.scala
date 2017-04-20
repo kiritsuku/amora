@@ -389,4 +389,25 @@ class ScalaDeclTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def decl_in_extractor_scope_has_an_owner() = {
+    indexRegionData("""
+        prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          ?d a Decl: ; Decl:name ?name ; Decl:posStart ?start ; Decl:posEnd ?end .
+          filter not exists {
+            ?d Decl:owner ?o .
+          }
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f(o: Option[Int]) = o match {
+            case Some(i) ⇒ i
+          }
+        }
+      """)
+  }
 }

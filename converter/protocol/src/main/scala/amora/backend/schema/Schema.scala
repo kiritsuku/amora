@@ -414,7 +414,11 @@ object Schema {
             addData(path, s"$tpe:owner", s"""<$ownerPath>""")
 
             loop(owner.owner)
-          case _: Ref ⇒
+          case owner: Ref ⇒
+            val ownerPath = mkOwnerPath(decl, owner)
+            addData(path, s"$tpe:owner", s"""<$ownerPath>""")
+
+            loop(owner.owner)
         }
 
         decl.attachments.collectFirst {
