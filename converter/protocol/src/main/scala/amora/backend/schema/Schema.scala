@@ -320,7 +320,21 @@ object Schema {
       s"$declPath/$shortFileId${uniqueRef(ref.position)}$ctorAppendix"
     }
 
-    def mkOwnerPath(h: Hierarchy, owner: HierarchyWithName) = {
+    def mkScopePath(decl: Scope): String = {
+      def findArtifact(schema: Schema): Artifact = schema match {
+        case a: Artifact ⇒ a
+        case p: Package ⇒ findArtifact(p.owner)
+        case f: File ⇒ findArtifact(f.owner)
+        case _ ⇒ ???
+      }
+      val schema = sourceFile(decl)
+      val shortArtifactId = Schema.mkShortId(findArtifact(schema))
+      val tpe = "Scope"
+      val path = encode(decl.asString).replace('.', '/')
+      s"http://amora.center/kb/amora/$tpe/$shortArtifactId/$path"
+    }
+
+    def mkOwnerPath(h: Hierarchy, owner: Hierarchy) = {
       val isTopLevelDecl = {
         def isTopLevelDecl = h.attachments.exists(Set(Attachment.Class, Attachment.Trait, Attachment.Object))
         def isPkg = owner.attachments(Attachment.Package)
@@ -331,6 +345,7 @@ object Schema {
       else owner match {
         case owner: Decl ⇒ mkFullPath(owner)
         case owner: Ref ⇒ mkRefPath(owner)
+        case owner: Scope ⇒ mkScopePath(owner)
       }
     }
 
@@ -395,6 +410,9 @@ object Schema {
 
             loop(owner)
           case owner: Scope ⇒
+            val ownerPath = mkOwnerPath(decl, owner)
+            addData(path, s"$tpe:owner", s"""<$ownerPath>""")
+
             loop(owner.owner)
           case _: Ref ⇒
         }

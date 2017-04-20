@@ -30,7 +30,7 @@ class AmoraScalacPlugin(override val global: Global) extends Plugin {
 }
 
 class AmoraScalacComponent(override val global: Global) extends PluginComponent {
-  import global._
+  import global.{Scope ⇒ _, _}
 
   override def newPhase(prev: Phase): Phase = new Phase(prev) {
     override def run(): Unit = {
@@ -123,8 +123,17 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
           }
         }
 
+        val addScopeAttachment = (file: AbstractFile, scope: Scope) ⇒ {
+          val path = file.canonicalPath
+          if (path.endsWith(".scala")) {
+            trimToPackagePath(path) foreach { pkgPath ⇒
+              scope.addAttachments(SourceFile(File(classDir.owner, pkgPath)))
+            }
+          }
+        }
+
         val res =
-            new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment)
+            new ScalacConverter[global.type](global, addDeclAttachment, addRefAttachment, addScopeAttachment)
             .convert(u.body)
             .map(Schema.mkTurtleUpdate)
 

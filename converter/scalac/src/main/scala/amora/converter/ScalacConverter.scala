@@ -17,7 +17,8 @@ import amora.converter.protocol.{ Attachment ⇒ a }
 final class ScalacConverter[G <: Global](
     val global: G,
     addDeclAttachment: (G#Symbol, h.Decl) ⇒ Unit = (_: G#Symbol, _: h.Decl) ⇒ (),
-    addRefAttachment: (AbstractFile, h.Ref) ⇒ Unit = (_, _) ⇒ ()) {
+    addRefAttachment: (AbstractFile, h.Ref) ⇒ Unit = (_, _) ⇒ (),
+    addScopeAttachment: (AbstractFile, h.Scope) ⇒ Unit = (_, _) ⇒ ()) {
   import global.{ Try ⇒ TTry, _ }
 
   private val found = ListBuffer[h.Hierarchy]()
@@ -958,6 +959,7 @@ final class ScalacConverter[G <: Global](
     val s = h.Scope(owner)
     s.position = h.RangePosition(t.pos.start, t.pos.start+attachment.asString.length)
     s.addAttachments(attachment)
+    addScopeAttachment(t.pos.source.file, s)
     found += s
     withNewScope(f(s))
   }

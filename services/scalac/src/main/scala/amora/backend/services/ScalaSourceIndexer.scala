@@ -133,8 +133,11 @@ final class ScalaSourceIndexer(logger: Logger) extends ScalaService {
         val addRefAttachment = (_: AbstractFile, ref: Ref) ⇒ {
           ref.addAttachments(SourceFile(file))
         }
+        val addScopeAttachment = (_: AbstractFile, scope: Scope) ⇒ {
+          scope.addAttachments(SourceFile(file))
+        }
 
-        g ask { () ⇒ new ScalacConverter[g.type](g, addDeclAttachment, addRefAttachment).convert(tree) } match {
+        g ask { () ⇒ new ScalacConverter[g.type](g, addDeclAttachment, addRefAttachment, addScopeAttachment).convert(tree) } match {
           case Success(res) ⇒
             file → res
           case Failure(f) ⇒
