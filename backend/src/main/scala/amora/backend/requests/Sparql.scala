@@ -12,12 +12,10 @@ import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.sparql.resultset.ResultsFormat
 
 import akka.http.scaladsl.marshalling.ToResponseMarshallable
-import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaType
-import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.Directives
@@ -26,7 +24,6 @@ import amora.api.SparqlModel
 import amora.backend.AkkaLogging
 import amora.backend.BackendSystem
 import amora.backend.Content
-import amora.backend.CustomContentTypes
 
 trait Sparql extends Directives with AkkaLogging {
   import akka.http.scaladsl.model.ContentTypes._
@@ -110,18 +107,18 @@ trait Sparql extends Directives with AkkaLogging {
     val ct = req.header[Accept].flatMap(_.mediaRanges.headOption).collect {
       case m if m matches `application/sparql-results+xml`  ⇒ `application/sparql-results+xml(UTF-8)` → ResultsFormat.FMT_RS_XML
       case m if m matches `application/sparql-results+json` ⇒ `application/sparql-results+json(UTF-8)` → ResultsFormat.FMT_RS_JSON
-      case m if m matches `text/csv` ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
-      case m if m matches `text/tab-separated-values` ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
+      case m if m matches `text/csv`                        ⇒ `text/csv(UTF-8)` → ResultsFormat.FMT_RS_CSV
+      case m if m matches `text/tab-separated-values`       ⇒ `text/tab-separated-values(UTF-8)` → ResultsFormat.FMT_RS_TSV
     }
     val resp = ct.map {
       case (ct, fmt) ⇒
         req.entity.contentType.mediaType match {
-          case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+          case m if m matches `application/sparql-query` ⇒
             runQuery(query) { r ⇒
               HttpEntity(ct, resultSetAsString(r, fmt))
             }
 
-          case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
+          case m if m matches `application/x-www-form-urlencoded` ⇒
             if (!query.startsWith("query="))
               rejectMissingParam("query")
             else
@@ -130,7 +127,7 @@ trait Sparql extends Directives with AkkaLogging {
               }
 
           case m ⇒
-            rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
+            rejectContentType(m, `application/x-www-form-urlencoded`, `application/sparql-query`)
         }
     }
     resp.getOrElse {
@@ -142,41 +139,39 @@ trait Sparql extends Directives with AkkaLogging {
 
   def handleSparqlUpdatePostRequest(req: HttpRequest, query: String): Route = {
     req.entity.contentType.mediaType match {
-      case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+      case m if m matches `application/sparql-query` ⇒
         bs.runUpdate(query, "Error happened while handling SPARQL update request.") {
-          case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+          case Success(()) ⇒ HttpEntity(`text/plain(UTF-8)`, "Update successful.")
           case Failure(t) ⇒ throw t
         }
 
-      case m if m matches MediaTypes.`application/x-www-form-urlencoded` ⇒
+      case m if m matches `application/x-www-form-urlencoded` ⇒
         if (!query.startsWith("query="))
           rejectMissingParam("query")
         else
           bs.runUpdate(URLDecoder.decode(query.drop("query=".length), "UTF-8"), "Error happened while handling SPARQL update request.") {
-            case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+            case Success(()) ⇒ HttpEntity(`text/plain(UTF-8)`, "Update successful.")
             case Failure(t) ⇒ throw t
           }
 
       case m ⇒
-        rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
+        rejectContentType(m, `application/x-www-form-urlencoded`, `application/sparql-query`)
     }
   }
 
   def handleSparqlConstructPostRequest(req: HttpRequest, query: String): Route = {
     req.entity.contentType.mediaType match {
-      case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+      case m if m matches `application/sparql-query` ⇒
         bs.runConstruct(query, "Error happened while handling SPARQL construct request.") {
           case Success(m: SparqlModel) ⇒
             val s = new ByteArrayOutputStream
             m.model.write(s, "TURTLE")
-            val turtle = new String(s.toByteArray(), "UTF-8")
-
-            HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, turtle)
+            HttpEntity(`text/turtle(UTF-8)`, new String(s.toByteArray(), "UTF-8"))
           case Failure(t) ⇒ throw t
         }
 
       case m ⇒
-        rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
+        rejectContentType(m, `application/sparql-query`)
     }
 
   }
