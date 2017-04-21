@@ -22,6 +22,7 @@ import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
+import amora.api.SparqlModel
 import amora.backend.AkkaLogging
 import amora.backend.BackendSystem
 import amora.backend.Content
@@ -155,6 +156,24 @@ trait Sparql extends Directives with AkkaLogging {
             case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
             case Failure(t) ⇒ throw t
           }
+
+      case m ⇒
+        rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)
+    }
+  }
+
+  def handleSparqlConstructPostRequest(req: HttpRequest, query: String): Route = {
+    req.entity.contentType.mediaType match {
+      case m if m matches CustomContentTypes.`application/sparql-query` ⇒
+        bs.runConstruct(query, "Error happened while handling SPARQL construct request.") {
+          case Success(m: SparqlModel) ⇒
+            val s = new ByteArrayOutputStream
+            m.model.write(s, "TURTLE")
+            val turtle = new String(s.toByteArray(), "UTF-8")
+
+            HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, turtle)
+          case Failure(t) ⇒ throw t
+        }
 
       case m ⇒
         rejectContentType(m, MediaTypes.`application/x-www-form-urlencoded`, CustomContentTypes.`application/sparql-query`)

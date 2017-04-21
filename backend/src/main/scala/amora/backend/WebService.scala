@@ -215,6 +215,13 @@ final class WebService(override implicit val system: ActorSystem)
         }
       }
     } ~
+    path("sparql-construct") {
+      entity(as[String]) { encodedPostReq ⇒
+        extractRequest { req ⇒
+          handleSparqlConstructPostRequest(req, encodedPostReq)
+        }
+      }
+    } ~
     path("service") {
       entity(as[String]) { req ⇒
         mkServiceRequest(req)

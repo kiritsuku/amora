@@ -582,4 +582,40 @@ class IndexerTest extends RestApiTest {
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")))
     }
   }
+
+  @Test
+  def sparql_construct_post_requests_are_possible(): Unit = {
+    testReq(post("http://amora.center/sparql-construct", "construct where { ?s ?p ?o } limit 1")) {
+      status === StatusCodes.OK
+    }
+  }
+
+  @Test
+  def sparql_construct_post_request_encods_in_turtle(): Unit = {
+    indexData(Artifact(Project("p"), "o", "n", "v1"),
+      "A.scala" → """
+        trait A
+        trait B
+      """)
+    testReq(post("http://amora.center/sparql-construct", """
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      construct where {
+        ?s a Decl: ; Decl:name ?name .
+      }
+    """)) {
+      status === StatusCodes.OK
+      import amora.api._
+      val srs = sparqlQuery"""
+        prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+        select * where {
+          [a Decl:] Decl:name ?name .
+        }
+        order by ?name
+      """.runOnModel(respAsModel())
+      resultSetAsData(srs.resultSet) === Seq(
+          Seq(Data("name", "A")),
+          Seq(Data("name", "B")))
+    }
+  }
+
 }

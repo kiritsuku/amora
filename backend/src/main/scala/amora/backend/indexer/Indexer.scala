@@ -464,6 +464,11 @@ class Indexer(modelName: String) extends Log4jLogging {
     qexec.execAsk()
   }
 
+  def withConstructService(model: Model, query: String): SparqlModel = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+    new SparqlModel(qexec.execConstruct())
+  }
+
   def withQueryService(model: Model, query: String): ResultSetRewindable = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     ResultSetFactory.makeRewindable(qexec.execSelect())

@@ -45,6 +45,9 @@ final class BackendSystem(implicit system: ActorSystem) {
   def runUpdate(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunUpdate(query), errorMessage, onSuccess)
 
+  def runConstruct(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.RunConstruct(query), errorMessage, onSuccess)
+
   def runTurtleUpdate(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunTurtleUpdate(query), errorMessage, onSuccess)
 

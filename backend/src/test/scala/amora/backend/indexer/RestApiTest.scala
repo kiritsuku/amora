@@ -210,6 +210,11 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
   }
 
+  def respAsModel(): SparqlModel = {
+    val in = new ByteArrayInputStream(respAsString.getBytes(StandardCharsets.UTF_8))
+    new SparqlModel(ModelFactory.createDefaultModel().read(in, /* base = */ null, "TURTLE"))
+  }
+
   def post(uri: String, request: String, header: HttpHeader*): HttpRequest = {
     val u = Uri(uri)
     val e = HttpEntity(CustomContentTypes.`application/sparql-query(UTF-8)`, request)
