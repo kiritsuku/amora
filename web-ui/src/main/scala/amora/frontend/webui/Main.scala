@@ -117,6 +117,66 @@ object Main extends JSApp with Requests {
         $("#editor").html(sb.toString())
       }
     }
+
+    mkExplorer()
+  }
+
+  def mkExplorer() = {
+    import scalatags.JsDom.all._
+
+    $("body").append(div(
+        h3("Explorer"),
+        div(id := "explorer-content", div()),
+        button(id := "explorer-button", `type` := "button", "Get Root")
+    ).render)
+
+    def mkId(entry: HierarchyEntry) =
+      "entry" + entry.hashCode().toString()
+
+    var openedEntries = Set[String]()
+    var allEntries = Map[String, HierarchyEntry]()
+
+    def add(entryId: String, entry: Hierarchy): Unit = {
+      val content = $(s"#$entryId > div")
+      onSuccess(findChildren(entry)) { entries ⇒
+        content.empty()
+        content.append(ul(
+            if (entries.isEmpty)
+              li("<none>")
+            else
+              for (e ← entries) yield li(id := mkId(e), a(href := e.url, e.name), div())
+        ).render)
+
+        for (e ← entries) {
+          val entryId = mkId(e)
+          allEntries += entryId → e
+        }
+      }
+    }
+
+    handleClickEvent("explorer-content") { event ⇒
+      val elem = dom.document.elementFromPoint(event.clientX, event.clientY)
+      val entryId = elem.id
+
+      if (entryId != null && entryId.nonEmpty) {
+        val e = allEntries(entryId)
+        val isOpen = openedEntries(entryId)
+        if (isOpen) {
+          openedEntries -= entryId
+          $(s"#$entryId > div").empty()
+        }
+        else {
+          openedEntries += entryId
+          add(entryId, e)
+        }
+      }
+    }
+
+    handleClickEvent("explorer-button") { _ ⇒
+      openedEntries = Set()
+      allEntries = Map()
+      add("explorer-content", Root)
+    }
   }
 
   def htmlElem(id: String): HTMLElement =

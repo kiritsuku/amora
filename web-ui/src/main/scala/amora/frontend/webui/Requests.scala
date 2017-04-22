@@ -15,6 +15,80 @@ trait Requests {
 
   case class Range(start: Int, end: Int)
 
+  sealed trait Hierarchy
+  case class HierarchyEntry(url: String, name: String, ownerUrl: String) extends Hierarchy
+  case object Root extends Hierarchy
+
+  def findChildren(h: Hierarchy): Future[Seq[HierarchyEntry]] = {
+    h match {
+      case Root ⇒
+        val resp = sparqlConstructRequest("""
+          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |construct {
+          |  ?s a Decl: ; Decl:name ?name .
+          |}
+          |where {
+          |  ?s a Decl: .
+          |  ?s Decl:name ?name .
+          |  ?s Decl:posStart ?start ; Decl:posEnd ?end .
+          |  filter (?start != ?end)
+          |  #filter not exists {
+          |  #  ?s Decl:owner ?o .
+          |  #}
+          |}
+          |""".stripMargin)
+        val model = resp flatMap { modelAsData(_, """
+          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |select * where {
+          |  ?url a Decl: ; Decl:name ?name .
+          |}
+          |order by ?name
+          |""".stripMargin)
+        }
+
+        for (m ← model) yield {
+          val res = for (elem ← m.asInstanceOf[js.Array[js.Any]]) yield {
+            val url = elem.jsg.url.value.toString
+            val name = elem.jsg.name.value.toString
+            HierarchyEntry(url, name, null)
+          }
+          res.toList
+        }
+
+      case HierarchyEntry(url, _, ownerUrl) ⇒
+        val resp = sparqlConstructRequest(s"""
+          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |construct {
+          |  ?s a Decl: ; Decl:name ?name ; Decl:owner <$ownerUrl> .
+          |}
+          |where {
+          |  ?s Decl:owner <$url> .
+          |  ?s Decl:name ?name .
+          |  ?s Decl:posStart ?start ; Decl:posEnd ?end .
+          |  filter (?start != ?end)
+          |}
+          |""".stripMargin)
+        val model = resp flatMap { modelAsData(_, """
+          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |select * where {
+          |  ?url a Decl: ; Decl:name ?name ; Decl:owner ?ownerUrl .
+          |}
+          |order by ?name
+          |""".stripMargin)
+        }
+
+        for (m ← model) yield {
+          val res = for (elem ← m.asInstanceOf[js.Array[js.Any]]) yield {
+            val url = elem.jsg.url.value.toString
+            val name = elem.jsg.name.value.toString
+            val ownerUrl = elem.jsg.ownerUrl.value.toString
+            HierarchyEntry(url, name, ownerUrl)
+          }
+          res.toList
+        }
+    }
+  }
+
   def indexScalaSrc(src: String): Future[Unit] = {
     val ttlResp = serviceRequest(s"""
       @prefix service:<http://amora.center/kb/Schema/Service/> .
@@ -165,6 +239,28 @@ trait Requests {
           p.success(r.responseText)
         else
           p.failure(new IllegalStateException(s"Server responded with an error to SPARQL request.\nRequest: $query\nResponse (error code: ${r.status}): ${r.responseText}"))
+      }
+    }
+    r.send(query)
+    p.future
+  }
+
+  /**
+   * Sends a SPARQL construct request. The response is encoded in Turtle format.
+   */
+  def sparqlConstructRequest(query: String): Future[String] = {
+    val p = Promise[String]
+    val r = new XMLHttpRequest
+    r.open("POST", "http://amora.center/sparql-construct", async = true)
+    r.setRequestHeader("Content-type", "application/sparql-query")
+    r.setRequestHeader("Accept", "text/turtle")
+    r.setRequestHeader("Charset", "UTF-8")
+    r.onreadystatechange = (e: Event) ⇒ {
+      if (r.readyState == XMLHttpRequest.DONE) {
+        if (r.status == 200)
+          p.success(r.responseText)
+        else
+          p.failure(new IllegalStateException(s"Server responded with an error to SPARQL construct request.\nRequest: $query\nResponse (error code: ${r.status}): ${r.responseText}"))
       }
     }
     r.send(query)
