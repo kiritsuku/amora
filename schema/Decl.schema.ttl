@@ -1,12 +1,14 @@
 # Schema file for class "Decl"
 
-@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
-@prefix Schema: <http://amora.center/kb/amora/Schema/>
-@prefix Decl:   <http://amora.center/kb/amora/Schema/Decl/>
-@prefix Flag:   <http://amora.center/kb/amora/Schema/Flag/>
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema:   <http://amora.center/kb/amora/Schema/>
+@prefix Decl:     <http://amora.center/kb/amora/Schema/Decl/>
+@prefix Flag:     <http://amora.center/kb/amora/Schema/Flag/>
+@prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
 
 Decl:
+  rdfs:subClassOf     Hierarchy: ;
   Schema:schemaName   "Decl" ;
   Schema:schemaAuthor "amora" ;
   Schema:schemaId     Decl:name ;
@@ -20,13 +22,13 @@ Decl:
 .
 Decl:name
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:name ;
+  rdfs:subPropertyOf  Hierarchy:name ;
   Schema:schemaName   "name" ;
   Schema:schemaType   xsd:string ;
 .
 Decl:owner
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:owner ;
+  rdfs:subPropertyOf  Hierarchy:owner ;
   Schema:schemaName   "owner" ;
   Schema:schemaType   Decl: ;
 .

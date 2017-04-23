@@ -1,12 +1,14 @@
 # Schema file for class "File"
 
-@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
-@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
-@prefix Schema: <http://amora.center/kb/amora/Schema/>
-@prefix File:   <http://amora.center/kb/amora/Schema/File/>
-@prefix Package:<http://amora.center/kb/amora/Schema/Package/>
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema:   <http://amora.center/kb/amora/Schema/>
+@prefix File:     <http://amora.center/kb/amora/Schema/File/>
+@prefix Package:  <http://amora.center/kb/amora/Schema/Package/>
+@prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
 
 File:
+  rdfs:subClassOf     Hierarchy: ;
   Schema:schemaName   "File" ;
   Schema:schemaAuthor "amora" ;
   Schema:schemaId     File:name ;
@@ -15,13 +17,13 @@ File:
 .
 File:name
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:name ;
+  rdfs:subPropertyOf  Hierarchy:name ;
   Schema:schemaName   "name" ;
   Schema:schemaType   xsd:string ;
 .
 File:owner
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:owner ;
+  rdfs:subPropertyOf  Hierarchy:owner ;
   Schema:schemaName   "owner" ;
   Schema:schemaType   Package: ;
 .

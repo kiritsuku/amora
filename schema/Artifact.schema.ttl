@@ -5,8 +5,10 @@
 @prefix Schema:   <http://amora.center/kb/amora/Schema/>
 @prefix Artifact: <http://amora.center/kb/amora/Schema/Artifact/>
 @prefix Project:  <http://amora.center/kb/amora/Schema/Project/>
+@prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
 
 Artifact:
+  rdfs:subClassOf     Hierarchy: ;
   Schema:schemaName   "Artifact" ;
   Schema:schemaAuthor "amora" ;
   Schema:schemaId     Artifact:name ;
@@ -17,13 +19,13 @@ Artifact:
 .
 Artifact:name
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:name ;
+  rdfs:subPropertyOf  Hierarchy:name ;
   Schema:schemaName   "name" ;
   Schema:schemaType   xsd:string ;
 .
 Artifact:owner
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:owner ;
+  rdfs:subPropertyOf  Hierarchy:owner ;
   Schema:schemaName   "owner" ;
   Schema:schemaType   Project: ;
 .

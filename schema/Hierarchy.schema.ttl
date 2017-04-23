@@ -1,21 +1,23 @@
-# Schema file for class "Project"
-
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
 @prefix xsd:      <http://www.w3.org/2001/XMLSchema#>
 @prefix Schema:   <http://amora.center/kb/amora/Schema/>
-@prefix Project:  <http://amora.center/kb/amora/Schema/Project/>
 @prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
 
-Project:
-  rdfs:subClassOf     Hierarchy: ;
-  Schema:schemaName   "Project" ;
+Hierarchy:
+  Schema:schemaName   "Hierarchy" ;
   Schema:schemaAuthor "amora" ;
-  Schema:schemaId     Project:name ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Project/schema.jsonld>
+  Schema:schemaId     Hierarchy:name ;
+  Schema:schemaId     Hierarchy:owner ;
 .
-Project:name
+Hierarchy:name
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Hierarchy:name ;
+  rdfs:subPropertyOf  Schema:name ;
   Schema:schemaName   "name" ;
   Schema:schemaType   xsd:string ;
+.
+Hierarchy:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Hierarchy: ;
 .
