@@ -139,7 +139,18 @@ class AmoraScalacComponent(override val global: Global) extends PluginComponent 
 
         val data = res match {
           case Success(res) ⇒
-            res
+            val artifact = classDir.owner
+            def mkPkg(pkgs: Seq[String]): Schema = pkgs match {
+              case Nil ⇒ artifact
+              case pkg +: pkgs ⇒ Package(pkg, mkPkg(pkgs))
+            }
+            val PkgFinder = """(?s).*?package ([\w\.]+).*?""".r
+            val file = u.source.content.mkString match {
+              case PkgFinder(name) ⇒ File(mkPkg(name.split('.').reverse), u.source.file.name)
+              case _ ⇒ File(artifact, u.source.file.name)
+            }
+            val fileData = Schema.mkTurtleString(Seq(file))
+            fileData + res
           case Failure(f) ⇒
             val sw = new StringWriter
             val pw = new PrintWriter(sw)
