@@ -15,7 +15,6 @@ Artifact:
   Schema:schemaId     Artifact:owner ;
   Schema:schemaId     Artifact:organization ;
   Schema:schemaId     Artifact:version ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Artifact/schema.jsonld>
 .
 Artifact:name
   a                   rdfs:Property ;

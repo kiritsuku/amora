@@ -14,7 +14,6 @@ schema:
   amora:schemaId schema:flag ;
   amora:schemaId schema:posStart ;
   amora:schemaId schema:posEnd ;
-  amora:format <http://amora.center/kb/amora/Format/amora/AbstractClass/schema.jsonld>
 .
 
 # inference rules

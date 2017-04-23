@@ -20,7 +20,6 @@ Ref:
   Schema:schemaId     Ref:posStart ;
   Schema:schemaId     Ref:posEnd ;
   Schema:schemaId     Ref:codeOrder ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Ref/schema.jsonld>
 .
 Ref:name
   a                   rdfs:Property ;

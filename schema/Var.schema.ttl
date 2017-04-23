@@ -17,7 +17,6 @@ Var:
   Schema:schemaId     Var:posStart ;
   Schema:schemaId     Var:posEnd ;
   Schema:schemaId     Var:codeOrder ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Var/schema.jsonld>
 .
 Var:name
   a                   rdfs:Property ;

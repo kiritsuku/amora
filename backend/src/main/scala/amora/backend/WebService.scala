@@ -99,15 +99,8 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractRequest { req ⇒
-        rawRequestUri(req) { (path, query) ⇒
-          query.get("format") match {
-            case Some("jsonld") ⇒
-              retrieveJsonLdContext(path)
-            case Some(format) ⇒
-              complete(HttpResponse(StatusCodes.BadRequest, entity = s"Parameter `format` has invalid value `$format`."))
-            case _ ⇒
-              handleKbPathGetRequest(path)
-          }
+        rawRequestUri(req) { (path, _) ⇒
+          handleKbPathGetRequest(path)
         }
       }
     } ~
@@ -185,7 +178,7 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     pathPrefix("kb" ~ Slash) {
       extractRequest { req ⇒
-        rawRequestUri(req) { (path, query) ⇒
+        rawRequestUri(req) { (path, _) ⇒
           handleKbPathPostRequest(path)
         }
       }

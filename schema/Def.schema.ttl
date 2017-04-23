@@ -18,7 +18,6 @@ Def:
   Schema:schemaId     Def:posEnd ;
   Schema:schemaId     Def:jvmSignature ;
   Schema:schemaId     Def:codeOrder ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Def/schema.jsonld>
 .
 Def:name
   a                   rdfs:Property ;

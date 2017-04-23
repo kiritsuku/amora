@@ -15,7 +15,6 @@ schema:
   amora:schemaId schema:posStart ;
   amora:schemaId schema:posEnd ;
   amora:schemaId schema:jvmClass ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Class/schema.jsonld>
 .
 schema:name
   a rdfs:Property ;

@@ -17,7 +17,6 @@ LazyVal:
   Schema:schemaId     LazyVal:posStart ;
   Schema:schemaId     LazyVal:posEnd ;
   Schema:schemaId     LazyVal:codeOrder ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/LazyVal/schema.jsonld>
 .
 LazyVal:name
   a                   rdfs:Property ;

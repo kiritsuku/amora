@@ -16,7 +16,6 @@ Package:
   Schema:schemaId     Package:flag ;
   Schema:schemaId     Package:posStart ;
   Schema:schemaId     Package:posEnd ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Package/schema.jsonld>
 .
 Package:name
   a                   rdfs:Property ;

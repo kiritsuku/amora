@@ -32,23 +32,6 @@ trait Sparql extends Directives with AkkaLogging {
 
   def bs: BackendSystem
 
-  def retrieveJsonLdContext(path: String): Route = {
-    val query = s"""
-      |SELECT * WHERE {
-      |  <$path> <http://amora.center/kb/amora/Schema/Format/content> ?str .
-      |}
-    """.stripMargin.trim
-    runQuery(query) { r ⇒
-      if (r.size == 0)
-        HttpResponse(StatusCodes.NotFound, entity = s"No JSONLD context found for URI `$path`.")
-      else {
-        val str = r.next().get("str")
-        require(str != null, "No field with name `str` found.")
-        HttpEntity(`text/plain(UTF-8)`, str.asLiteral().getString)
-      }
-    }
-  }
-
   def handleKbPathGetRequest(path: String): Route = {
     val query = s"""
       |PREFIX kb:<${Content.ModelName}>

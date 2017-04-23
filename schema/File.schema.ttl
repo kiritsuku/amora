@@ -13,7 +13,6 @@ File:
   Schema:schemaAuthor "amora" ;
   Schema:schemaId     File:name ;
   Schema:schemaId     File:owner ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/File/schema.jsonld>
 .
 File:name
   a                   rdfs:Property ;

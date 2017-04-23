@@ -18,7 +18,6 @@ Decl:
   Schema:schemaId     Decl:posEnd ;
   Schema:schemaId     Decl:jvmClass ;
   Schema:schemaId     Decl:codeOrder ;
-  Schema:format       <http://amora.center/kb/amora/Format/amora/Decl/schema.jsonld> ;
 .
 Decl:name
   a                   rdfs:Property ;

@@ -15,27 +15,6 @@ class IndexerTest extends RestApiTest {
   import amora.TestUtils._
 
   @Test
-  def jsonld_context_can_be_retrieved(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/amora/Format/schema.jsonld?format=jsonld")) {
-      status === StatusCodes.OK
-    }
-  }
-
-  @Test
-  def error_for_invalid_format(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/amora/Format/schema.jsonld?format=invalid")) {
-      status === StatusCodes.BadRequest
-    }
-  }
-
-  @Test
-  def error_for_invalid_format_uri(): Unit = {
-    testReq(get("http://amora.center/kb/amora/Format/amora/Format/invalid.jsonld?format=jsonld")) {
-      status === StatusCodes.NotFound
-    }
-  }
-
-  @Test
   def sparql_get_requests_are_possible(): Unit = {
     val query = "query="+URLEncoder.encode("select * where {?s ?p ?o} limit 3", "UTF-8")
     testReq(get(s"http://amora.center/sparql?$query")) {

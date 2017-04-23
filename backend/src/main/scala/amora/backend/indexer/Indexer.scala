@@ -5,7 +5,6 @@ import java.io.ByteArrayOutputStream
 
 import scala.util.control.NonFatal
 
-import org.apache.jena.datatypes.BaseDatatype
 import org.apache.jena.query.Dataset
 import org.apache.jena.query.ParameterizedSparqlString
 import org.apache.jena.query.QueryExecutionFactory
@@ -23,7 +22,6 @@ import org.apache.jena.update.UpdateAction
 import amora.api._
 import amora.backend.Log4jLogging
 import amora.nlp._
-import spray.json._
 
 class Indexer(modelName: String) extends Log4jLogging {
 
@@ -99,34 +97,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
     }
 
-    def indexJsonLdFormat(model: Model) = {
-      val cl = getClass.getClassLoader
-      val resourceDir = new File(cl.getResource(".").getPath)
-      val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.jsonld"))
-      val gen = new SchemaGenerator
-
-      def indexFile(file: File) = {
-        val src = io.Source.fromFile(file, "UTF-8")
-        val rawJson = src.mkString
-        val schemaName = file.getName.dropRight(".schema.jsonld".length)
-        src.close()
-
-        val alreadyIndexed = doesIdExist(model, gen.mkAmoraSchemaId(schemaName)+"/")
-        if (!alreadyIndexed) {
-          val json = gen.resolveVariables(schemaName, rawJson)
-          val contentVar = "content"
-          withUpdateService(model, gen.mkInsertFormatQuery(schemaName, contentVar)) { pss ⇒
-            pss.setLiteral(contentVar, gen.mkJsonLdContext(schemaName, json).prettyPrint, new BaseDatatype("http://schema.org/Text"))
-          }
-          log.info(s"Schema file `$file` successfully indexed.")
-        }
-      }
-
-      indexableFiles foreach indexFile
-    }
-
     try withModel(dataset) { model ⇒
-      indexJsonLdFormat(model)
       indexSchemas(model)
       indexServices(model)
 
@@ -161,12 +132,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     for (q ← r.asScala.toSeq) yield
       for (v ← vars) yield
         f(v, q)
-  }
-
-  def addJsonLd(model: Model, data: JsValue): Unit = {
-    val str = data.prettyPrint
-    val in = new ByteArrayInputStream(str.getBytes)
-    model.read(in, /* base = */ null, "JSON-LD")
   }
 
   def addTurtle(model: Model, str: String): Unit = {
