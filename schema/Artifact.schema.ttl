@@ -1,20 +1,39 @@
 # Schema file for class "Artifact"
 
-@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/>
-@prefix schema:<http://amora.center/kb/amora/Schema/Artifact/>
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema:   <http://amora.center/kb/amora/Schema/>
+@prefix Artifact: <http://amora.center/kb/amora/Schema/Artifact/>
+@prefix Project:  <http://amora.center/kb/amora/Schema/Project/>
 
-  # schema data
-schema:
-  amora:schemaName "Artifact" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:schemaId schema:owner ;
-  amora:schemaId schema:organization ;
-  amora:schemaId schema:version ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Artifact/schema.jsonld>
+Artifact:
+  Schema:schemaName   "Artifact" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Artifact:name ;
+  Schema:schemaId     Artifact:owner ;
+  Schema:schemaId     Artifact:organization ;
+  Schema:schemaId     Artifact:version ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Artifact/schema.jsonld>
 .
-
-# inference rules
-schema:name rdfs:subPropertyOf amora:name .
-schema:owner rdfs:subPropertyOf amora:owner .
+Artifact:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
+.
+Artifact:owner
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:owner ;
+  Schema:schemaName   "owner" ;
+  Schema:schemaType   Project: ;
+.
+Artifact:organization
+  a                   rdfs:Property ;
+  Schema:schemaName   "organization" ;
+  Schema:schemaType   xsd:string ;
+.
+Artifact:version
+  a                   rdfs:Property ;
+  Schema:schemaName   "version" ;
+  Schema:schemaType   xsd:string ;
+.
