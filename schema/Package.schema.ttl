@@ -20,7 +20,7 @@ Package:
 .
 Package:name
   a                   rdfs:Property ;
-  rdfs:subPropertyOf  Schema:name ;
+  rdfs:subPropertyOf  Decl:name ;
   Schema:schemaName   "name" ;
   Schema:schemaType   xsd:string ;
 .
