@@ -23,40 +23,34 @@ trait Requests {
     val resp = h match {
       case Root ⇒
         sparqlConstructRequest("""
-          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
           |construct {
-          |  ?s a Decl: ; Decl:name ?name .
+          |  ?s a Hierarchy: ; Hierarchy:name ?name .
           |}
           |where {
-          |  ?s a Decl: .
-          |  ?s Decl:name ?name .
-          |  ?s Decl:posStart ?start ; Decl:posEnd ?end .
-          |  filter (?start != ?end)
-          |  #filter not exists {
-          |  #  ?s Decl:owner ?o .
-          |  #}
+          |  ?s a Hierarchy: ; Hierarchy:name ?name .
+          |  filter not exists {
+          |    ?s Hierarchy:owner ?o .
+          |  }
           |}
           |""".stripMargin)
 
       case HierarchyEntry(url, _) ⇒
         sparqlConstructRequest(s"""
-          |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+          |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
           |construct {
-          |  ?s a Decl: ; Decl:name ?name .
+          |  ?s a Hierarchy: ; Hierarchy:name ?name .
           |}
           |where {
-          |  ?s Decl:owner <$url> .
-          |  ?s Decl:name ?name .
-          |  ?s Decl:posStart ?start ; Decl:posEnd ?end .
-          |  filter (?start != ?end)
+          |  ?s Hierarchy:owner <$url> ; Hierarchy:name ?name .
           |}
           |""".stripMargin)
     }
 
     val model = resp flatMap { modelAsData(_, """
-      |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
       |select * where {
-      |  ?url a Decl: ; Decl:name ?name .
+      |  ?url a Hierarchy: ; Hierarchy:name ?name .
       |}
       |order by ?name
       |""".stripMargin)
