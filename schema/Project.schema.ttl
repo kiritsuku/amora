@@ -1,16 +1,19 @@
 # Schema file for class "Project"
 
-@prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
-@prefix amora:<http://amora.center/kb/amora/Schema/>
-@prefix schema:<http://amora.center/kb/amora/Schema/Project/>
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Project:<http://amora.center/kb/amora/Schema/Project/>
 
-# schema data
-schema:
-  amora:schemaName "Project" ;
-  amora:schemaAuthor "amora" ;
-  amora:schemaId schema:name ;
-  amora:format <http://amora.center/kb/amora/Format/amora/Project/schema.jsonld>
+Project:
+  Schema:schemaName   "Project" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Project:name ;
+  Schema:format       <http://amora.center/kb/amora/Format/amora/Project/schema.jsonld>
 .
-
-# inference rules
-schema:name rdfs:subPropertyOf amora:name .
+Project:name
+  a                   rdfs:Property ;
+  rdfs:subPropertyOf  Schema:name ;
+  Schema:schemaName   "name" ;
+  Schema:schemaType   xsd:string ;
+.
