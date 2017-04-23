@@ -445,7 +445,7 @@ object Schema {
             val file = sourceFile(ref)
             val ownerPath = mkDefn(file)
             addData(path, "Ref:owner", s"""<$ownerPath>""")
-          case owner: Decl ⇒
+          case owner: HierarchyWithName ⇒
             val ownerPath = mkOwnerPath(ref, owner)
             addData(path, "Ref:owner", s"""<$ownerPath>""")
 
@@ -457,12 +457,6 @@ object Schema {
                 addData(path, "Ref:owner", s"""<$ownerPath>""")
             }
             loop(owner.owner)
-          case owner: Ref ⇒
-            val ownerPath = mkOwnerPath(ref, owner)
-            addData(path, "Ref:owner", s"""<$ownerPath>""")
-
-            loop(owner)
-
         }
 
         calledOn foreach {
