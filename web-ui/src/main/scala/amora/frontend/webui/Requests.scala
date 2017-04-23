@@ -23,26 +23,46 @@ trait Requests {
     val resp = h match {
       case Root ⇒
         sparqlConstructRequest("""
+          |prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
           |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
+          |prefix Schema:<http://amora.center/kb/amora/Schema/>
           |construct {
           |  ?s a Hierarchy: ; Hierarchy:name ?name .
+          |  ?s Hierarchy:desc ?desc .
           |}
           |where {
           |  ?s a Hierarchy: ; Hierarchy:name ?name .
           |  filter not exists {
           |    ?s Hierarchy:owner ?o .
           |  }
+          |
+          |  ?s a ?tpe .
+          |  filter not exists {
+          |    ?sub rdfs:subClassOf ?tpe .
+          |    filter (?sub != ?tpe)
+          |  }
+          |  ?tpe Schema:schemaName ?desc .
           |}
           |""".stripMargin)
 
       case HierarchyEntry(url, _) ⇒
         sparqlConstructRequest(s"""
+          |prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
           |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
+          |prefix Schema:<http://amora.center/kb/amora/Schema/>
           |construct {
           |  ?s a Hierarchy: ; Hierarchy:name ?name .
+          |  ?s Hierarchy:desc ?desc .
           |}
           |where {
           |  ?s Hierarchy:owner <$url> ; Hierarchy:name ?name .
+          |
+          |  ?s a ?tpe .
+          |  filter not exists {
+          |    ?sub rdfs:subClassOf ?tpe .
+          |    filter (?sub != ?tpe)
+          |  }
+          |  ?tpe Schema:schemaName ?desc .
           |}
           |""".stripMargin)
     }
@@ -51,8 +71,9 @@ trait Requests {
       |prefix Hierarchy:<http://amora.center/kb/amora/Schema/Hierarchy/>
       |select * where {
       |  ?url a Hierarchy: ; Hierarchy:name ?name .
+      |  ?url Hierarchy:desc ?desc .
       |}
-      |order by ?name
+      |order by ?desc ?name
       |""".stripMargin)
     }
 
@@ -60,7 +81,8 @@ trait Requests {
       val res = for (elem ← m.asInstanceOf[js.Array[js.Any]]) yield {
         val url = elem.jsg.url.value.toString
         val name = elem.jsg.name.value.toString
-        HierarchyEntry(url, name)
+        val desc = elem.jsg.desc.value.toString
+        HierarchyEntry(url, desc + " " + name)
       }
       res.toList
     }
