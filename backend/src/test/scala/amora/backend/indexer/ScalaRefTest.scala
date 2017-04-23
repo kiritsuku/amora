@@ -910,4 +910,20 @@ class ScalaRefTest extends RestApiTest {
         }
       """)
   }
+
+  @Test
+  def the_owner_of_a_ref_can_be_a_ref() = {
+    indexRegionData("""
+        prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+        select * where {
+          [a Ref:] Ref:name "i" ; Ref:owner [Ref:name ?name ; Ref:posStart ?start ; Ref:posEnd ?end] .
+        }
+      """,
+      Artifact(Project("p"), "o", "n", "v1"),
+      "x.scala" → """
+        class X {
+          def f(i: Int) = [[println]](i)
+        }
+      """)
+  }
 }

@@ -457,7 +457,12 @@ object Schema {
                 addData(path, "Ref:owner", s"""<$ownerPath>""")
             }
             loop(owner.owner)
-          case _: Ref ⇒
+          case owner: Ref ⇒
+            val ownerPath = mkOwnerPath(ref, owner)
+            addData(path, "Ref:owner", s"""<$ownerPath>""")
+
+            loop(owner)
+
         }
 
         calledOn foreach {
