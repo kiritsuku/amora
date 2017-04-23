@@ -130,11 +130,20 @@ object Main extends JSApp with Requests {
         button(id := "explorer-button", `type` := "button", "Get Root")
     ).render)
 
-    def mkId(entry: HierarchyEntry) =
-      "entry" + entry.hashCode().toString()
-
-    var openedEntries = Set[String]()
     var allEntries = Map[String, HierarchyEntry]()
+    var treeStructure = Map[String, Set[String]]()
+
+    def mkId(parentId: String, entry: HierarchyEntry) = {
+      var children = treeStructure.getOrElse(parentId, Set())
+      val childId = parentId + "-" + children.size
+      children += childId
+      treeStructure += parentId → children
+      treeStructure += childId → Set()
+
+      allEntries += childId → entry
+
+      childId
+    }
 
     def add(entryId: String, entry: Hierarchy): Unit = {
       val content = $(s"#$entryId > div")
@@ -144,13 +153,8 @@ object Main extends JSApp with Requests {
             if (entries.isEmpty)
               li("<none>")
             else
-              for (e ← entries) yield li(id := mkId(e), a(href := e.url, e.name), div())
+              for (e ← entries) yield li(id := mkId(entryId, e), a(href := e.url, e.name), div())
         ).render)
-
-        for (e ← entries) {
-          val entryId = mkId(e)
-          allEntries += entryId → e
-        }
       }
     }
 
@@ -159,22 +163,27 @@ object Main extends JSApp with Requests {
       val entryId = elem.id
 
       if (entryId != null && entryId.nonEmpty) {
+        def removeEntries(childId: String): Unit = {
+          allEntries -= childId
+          treeStructure(childId) foreach removeEntries
+          treeStructure -= childId
+        }
         val e = allEntries(entryId)
-        val isOpen = openedEntries(entryId)
+        val isOpen = treeStructure(entryId).nonEmpty
         if (isOpen) {
-          openedEntries -= entryId
+          treeStructure(entryId) foreach removeEntries
+          treeStructure += entryId → Set()
           $(s"#$entryId > div").empty()
         }
         else {
-          openedEntries += entryId
           add(entryId, e)
         }
       }
     }
 
     handleClickEvent("explorer-button") { _ ⇒
-      openedEntries = Set()
       allEntries = Map()
+      treeStructure = Map()
       add("explorer-content", Root)
     }
   }
