@@ -282,8 +282,13 @@ class IndexerTest extends RestApiTest {
     }
     testReq((post("http://amora.center/sparql", """
       prefix a:<http://amora.center/kb/amora/Schema/Artifact/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a a:] a:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
@@ -412,8 +417,13 @@ class IndexerTest extends RestApiTest {
       """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/Package/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a p:] p:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
@@ -430,14 +440,18 @@ class IndexerTest extends RestApiTest {
       """)
     testReq((post("http://amora.center/sparql", """
       prefix p:<http://amora.center/kb/amora/Schema/Package/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?name ?tpe where {
         [p:owner [a p:]] p:name ?name ; a ?tpe .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
       order by ?name ?tpe
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")),
           Seq(Data("name", "inner"), Data("tpe", "http://amora.center/kb/amora/Schema/Package/")))
     }
   }
@@ -470,8 +484,13 @@ class IndexerTest extends RestApiTest {
       """)
     testReq((post("http://amora.center/sparql", """
       prefix c:<http://amora.center/kb/amora/Schema/Class/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a c:] c:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`)))) {
       status === StatusCodes.OK
@@ -488,8 +507,13 @@ class IndexerTest extends RestApiTest {
       """)
     testReq(post("http://amora.center/sparql", """
       prefix c:<http://amora.center/kb/amora/Schema/Class/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a c:] c:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
@@ -506,14 +530,18 @@ class IndexerTest extends RestApiTest {
       """)
     testReq(post("http://amora.center/sparql", """
       prefix f:<http://amora.center/kb/amora/Schema/File/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a f:] f:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
       order by ?tpe
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")),
           Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Package/")))
     }
   }
@@ -529,15 +557,19 @@ class IndexerTest extends RestApiTest {
       """)
     testReq(post("http://amora.center/sparql", """
       prefix d:<http://amora.center/kb/amora/Schema/Def/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a d:] d:name "method" ; d:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
       order by ?tpe
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")),
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")))
     }
   }
 
@@ -550,15 +582,19 @@ class IndexerTest extends RestApiTest {
       """)
     testReq(post("http://amora.center/sparql", """
       prefix d:<http://amora.center/kb/amora/Schema/Def/>
+      prefix rdfs:<http://www.w3.org/2000/01/rdf-schema#>
       select ?tpe where {
         [a d:] d:owner [a ?tpe] .
+        filter not exists {
+          ?sub rdfs:subClassOf ?tpe .
+          filter (?sub != ?tpe)
+        }
       }
       order by ?tpe
     """, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       status === StatusCodes.OK
       resultSetAsData(respAsResultSet()) === Seq(
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")),
-          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Decl/")))
+          Seq(Data("tpe", "http://amora.center/kb/amora/Schema/Class/")))
     }
   }
 
