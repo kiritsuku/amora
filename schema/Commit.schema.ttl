@@ -1,0 +1,21 @@
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#>
+@prefix xsd:    <http://www.w3.org/2001/XMLSchema#>
+@prefix Schema: <http://amora.center/kb/amora/Schema/>
+@prefix Commit: <http://amora.center/kb/amora/Schema/Commit/>
+
+Commit:
+  Schema:schemaName   "Commit" ;
+  Schema:schemaAuthor "amora" ;
+  Schema:schemaId     Commit:hash ;
+  Schema:schemaId     Commit:previous ;
+.
+Commit:hash
+  a                   rdfs:Property ;
+  Schema:schemaName   "hash" ;
+  Schema:schemaType   xsd:string ;
+.
+Commit:previous
+  a                   rdfs:Property ;
+  Schema:schemaName   "previous" ;
+  Schema:schemaType   Commit: ;
+.

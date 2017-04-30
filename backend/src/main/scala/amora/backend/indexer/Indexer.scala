@@ -413,6 +413,10 @@ class Indexer(modelName: String) extends Log4jLogging {
     mkTurtle
   }
 
+  def headCommit(model: Model): String = {
+    ""
+  }
+
   def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString
     pss.setCommandText(query)

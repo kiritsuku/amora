@@ -41,6 +41,9 @@ class IndexerActor extends Actor with ActorLogging {
 
     case RunNlq(query) ⇒
       sender ! Try(handleNlq(query))
+
+    case GetHeadCommit ⇒
+      sender ! Try(headCommit())
   }
 
   override def postStop() = {
@@ -91,6 +94,14 @@ class IndexerActor extends Actor with ActorLogging {
       }
     }
   }
+
+  def headCommit(): String = {
+    indexer.readDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset) { model ⇒
+        indexer.headCommit(model)
+      }
+    }
+  }
 }
 
 sealed trait IndexerMessage
@@ -100,4 +111,5 @@ object IndexerMessage {
   case class RunConstruct(query: String) extends IndexerMessage
   case class RunTurtleUpdate(query: String) extends IndexerMessage
   case class RunNlq(query: String) extends IndexerMessage
+  case object GetHeadCommit extends IndexerMessage
 }

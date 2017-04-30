@@ -28,6 +28,7 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
+import amora.backend.requests.Commit
 import amora.backend.requests.Nlp
 import amora.backend.requests.Service
 import amora.backend.requests.Sparql
@@ -41,6 +42,7 @@ final class WebService(override implicit val system: ActorSystem)
     with Service
     with Turtle
     with Nlp
+    with Commit
     with AkkaLogging {
 
   override val bs = new BackendSystem()
@@ -149,6 +151,9 @@ final class WebService(override implicit val system: ActorSystem)
         case scala.util.Failure(f) ⇒
           complete(HttpResponse(StatusCodes.InternalServerError, entity = s"Internal server error: ${f.getMessage}"))
       }
+    } ~
+    path("commit" ~ Slash ~ "head") {
+      getHeadCommit()
     }
   } ~
   post {

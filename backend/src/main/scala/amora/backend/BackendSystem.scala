@@ -39,6 +39,9 @@ final class BackendSystem(implicit system: ActorSystem) {
   private val indexer = system.actorOf(Props(new IndexerActor), "indexer")
   private val requestHandler = system.actorOf(Props(new WebSocketRequestActor(queue, indexer)), "request-handler")
 
+  def headCommit(errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.GetHeadCommit, errorMessage, onSuccess)
+
   def runQuery(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunQuery(query), errorMessage, onSuccess)
 

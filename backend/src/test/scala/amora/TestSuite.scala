@@ -17,6 +17,7 @@ import amora.backend.indexer.ScalaRefTest
 import amora.nlp.NlqTest
 import amora.backend.indexer.FlagTest
 import amora.backend.indexer.OrderTest
+import amora.backend.indexer.CommitTest
 
 @RunWith(classOf[Suite])
 @SuiteClasses(Array(
@@ -32,6 +33,7 @@ import amora.backend.indexer.OrderTest
   classOf[ScalaRefTest],
   classOf[NlqTest],
   classOf[FlagTest],
-  classOf[OrderTest]
+  classOf[OrderTest],
+  classOf[CommitTest]
 ))
 class TestSuite

@@ -426,6 +426,13 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  def headCommit(): String = {
+    testReq(get("http://amora.center/commit/head")) {
+      checkStatus()
+      respAsString
+    }
+  }
+
   def modelAsData(model: Model, query: String): Seq[Seq[Data]] = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     val rs = ResultSetFactory.makeRewindable(qexec.execSelect())
