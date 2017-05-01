@@ -146,10 +146,7 @@ trait Sparql extends Directives with AkkaLogging {
     req.entity.contentType.mediaType match {
       case m if m matches `application/sparql-query` ⇒
         bs.runConstruct(query, "Error happened while handling SPARQL construct request.") {
-          case Success(m: SparqlModel) ⇒
-            val s = new ByteArrayOutputStream
-            m.model.write(s, "TURTLE")
-            HttpEntity(`text/turtle(UTF-8)`, new String(s.toByteArray(), "UTF-8"))
+          case Success(m: SparqlModel) ⇒ HttpEntity(`text/turtle(UTF-8)`, m.formatAs(amora.api.Turtle))
           case Failure(t) ⇒ throw t
         }
 

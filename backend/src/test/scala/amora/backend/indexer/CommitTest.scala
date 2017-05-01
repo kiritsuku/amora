@@ -3,6 +3,7 @@ package amora.backend.indexer
 import org.junit.Test
 
 import amora.backend.schema.Schema
+import amora.api._
 
 class CommitTest extends RestApiTest {
   import amora.TestUtils._
@@ -73,7 +74,7 @@ class CommitTest extends RestApiTest {
     update1()
     update2()
     update3()
-    modelAsData(showCommit(headCommit()).model, """
+    modelAsData(showCommit(headCommit()), sparqlQuery"""
       prefix Person:<http://amora.center/kb/amora/Schema/Person/>
       select * where {
         [Person:name ?name; Person:age ?age] .

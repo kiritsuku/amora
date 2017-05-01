@@ -1,7 +1,6 @@
 package amora.backend.indexer
 
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
 import scala.concurrent.Await
@@ -10,14 +9,8 @@ import scala.concurrent.duration.Duration
 import scala.util.Failure
 import scala.util.Success
 
-import org.apache.jena.query.QueryExecutionFactory
-import org.apache.jena.query.QueryFactory
 import org.apache.jena.query.QuerySolution
-import org.apache.jena.query.ResultSet
 import org.apache.jena.query.ResultSetFactory
-import org.apache.jena.query.ResultSetFormatter
-import org.apache.jena.rdf.model.Model
-import org.apache.jena.rdf.model.ModelFactory
 import org.junit.After
 import org.junit.ComparisonFailure
 
@@ -125,8 +118,8 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
   case class Data(varName: String, value: String)
 
-  def resultSetAsData(r: ResultSet): Seq[Seq[Data]] = {
-    transformResultSet(r) { (v, q) ⇒
+  def resultSetAsData(rs: SparqlResultSet): Seq[Seq[Data]] = {
+    transformResultSet(rs) { (v, q) ⇒
       val res = q.get(v)
       val value =
         if (res == null)
@@ -139,8 +132,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
-  def resultSetAsList(r: ResultSet): Seq[String] = {
+  def resultSetAsList(rs: SparqlResultSet): Seq[String] = {
     import scala.collection.JavaConverters._
+    val r = rs.resultSet
     require(r.getResultVars.size == 1, "Result set can only be shown as a list if it contains only one variable.")
 
     val variable = r.getResultVars.get(0)
@@ -154,8 +148,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }.toList
   }
 
-  def transformResultSet[A](r: ResultSet)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
+  def transformResultSet[A](rs: SparqlResultSet)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
     import scala.collection.JavaConverters._
+    val r = rs.resultSet
     val vars = r.getResultVars.asScala.toSeq
 
     for (q ← r.asScala.toSeq) yield
@@ -189,31 +184,22 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
         case _ ⇒ false
       }
       if (debugTests && status == StatusCodes.OK && isJsonResponse) {
-        val r = respAsResultSet()
-        log.info("response as query result:\n" + resultSetAsString(r))
+        log.info("response as query result:\n" + respAsResultSet.asStringTable)
       }
       f
     }
   }
 
-  def resultSetAsString(r: ResultSet): String = {
-    val s = new ByteArrayOutputStream
-    ResultSetFormatter.out(s, r)
-    new String(s.toByteArray(), StandardCharsets.UTF_8)
-  }
-
   def respAsString: String =
     Await.result(response.entity.dataBytes.runFold("")(_ + _.utf8String), timeout.duration)
 
-  def respAsResultSet(): ResultSet = {
+  def respAsResultSet: SparqlResultSet = {
     val in = new ByteArrayInputStream(respAsString.getBytes(StandardCharsets.UTF_8))
-    ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in))
+    new SparqlResultSet(ResultSetFactory.makeRewindable(ResultSetFactory.fromJSON(in)))
   }
 
-  def respAsModel(): SparqlModel = {
-    val in = new ByteArrayInputStream(respAsString.getBytes(StandardCharsets.UTF_8))
-    new SparqlModel(ModelFactory.createDefaultModel().read(in, /* base = */ null, "TURTLE"))
-  }
+  def respAsModel: SparqlModel =
+    turtleModel(respAsString)
 
   def post(uri: String, request: String, header: HttpHeader*): HttpRequest = {
     val u = Uri(uri)
@@ -378,21 +364,15 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       checkStatus()
-      val r = respAsResultSet()
 
-      import scala.collection.JavaConverters._
-      val foundRegions = r.asScala.toSeq.map { row ⇒
-        val start = row.get("start")
-        require(start != null, "No field with name `start` found.")
-        val end = row.get("end")
-        require(end != null, "No field with name `end` found.")
-        val name = row.get("name")
-        require(name != null, "No field with name `name` found.")
-
-        if (start.asLiteral().getInt == end.asLiteral().getInt)
-          Offset(start.asLiteral().getInt, name.toString())
+      val foundRegions = respAsResultSet.map { r ⇒
+        val start = r.int("start")
+        val end = r.int("end")
+        val name = r.string("name")
+        if (start == end)
+          Offset(start, name)
         else
-          Range(start.asLiteral().getInt, end.asLiteral().getInt, name.toString)
+          Range(start, end, name)
       }.sortBy(regionOrdering)
 
       foundRegions === expectedRegions
@@ -402,21 +382,21 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def nlqRequest(query: String): NlqResponse = {
     testReq(post("http://amora.center/nlq", HttpEntity(ContentTypes.`text/plain(UTF-8)`, query), header = Accept(CustomContentTypes.`text/turtle`))) {
       checkStatus()
-      NlqResponse(new SparqlModel(fillModel(ModelFactory.createDefaultModel(), respAsString)))
+      NlqResponse(respAsModel)
     }
   }
 
   def sparqlRequest(query: String): Seq[Seq[Data]] = {
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       checkStatus()
-      resultSetAsData(respAsResultSet())
+      resultSetAsData(respAsResultSet)
     }
   }
 
-  def serviceRequest(query: String): Model = {
+  def serviceRequest(query: String): SparqlModel = {
     testReq(post("http://amora.center/service", HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, query), header = Accept(CustomContentTypes.`text/turtle`))) {
       checkStatus()
-      fillModel(ModelFactory.createDefaultModel(), respAsString)
+      respAsModel
     }
   }
 
@@ -443,24 +423,15 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
   def showCommit(commit: String): SparqlModel = {
     testReq(get(s"http://amora.center/commit/show?commit=$commit")) {
       checkStatus()
-      respAsModel()
+      respAsModel
     }
   }
 
-  def modelAsData(model: Model, query: String): Seq[Seq[Data]] = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
-    val rs = ResultSetFactory.makeRewindable(qexec.execSelect())
-    if (debugTests) {
-      log.info("response as query result:\n" + resultSetAsString(rs))
-      rs.reset()
-    }
+  def modelAsData(model: SparqlModel, query: SparqlQuery): Seq[Seq[Data]] = {
+    val rs = query.runOnModel(model)
+    if (debugTests)
+      log.info("response as query result:\n" + rs.asStringTable)
     resultSetAsData(rs)
-  }
-
-  def fillModel(m: Model, ttlData: String): Model = {
-    val in = new ByteArrayInputStream(ttlData.getBytes)
-    m.read(in, null, "TURTLE")
-    m
   }
 
   case class CursorData(cursorPos: Int, src: String)
@@ -488,8 +459,6 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
 }
 
 case class NlqResponse(model: SparqlModel) {
-  import amora.api._
-
   def nodes: Seq[Node] = {
     sparqlQuery"""
       prefix VResponse:<http://amora.center/kb/amora/Schema/VisualizationResponse/>

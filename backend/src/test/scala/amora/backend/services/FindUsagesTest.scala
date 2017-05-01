@@ -2,6 +2,7 @@ package amora.backend.services
 
 import org.junit.Test
 
+import amora.api._
 import amora.backend.indexer.RestApiTest
 import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
@@ -27,7 +28,7 @@ class FindUsagesTest extends RestApiTest {
       .
     """)
 
-    modelAsData(m, """
+    modelAsData(m, sparqlQuery"""
       prefix rdf:<http://www.w3.org/1999/02/22-rdf-syntax-ns#>
       prefix service:<http://amora.center/kb/Schema/Service/>
       prefix decl:<http://amora.center/kb/amora/Schema/Decl/>

@@ -1,7 +1,9 @@
 package amora.backend.services
 
-import amora.backend.indexer.RestApiTest
 import org.junit.Test
+
+import amora.api._
+import amora.backend.indexer.RestApiTest
 import amora.converter.protocol.Artifact
 import amora.converter.protocol.Project
 
@@ -27,7 +29,7 @@ class FindDeclarationTest extends RestApiTest {
       .
     """)
 
-    modelAsData(m, """
+    modelAsData(m, sparqlQuery"""
       prefix service:<http://amora.center/kb/Schema/Service/>
       prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
 

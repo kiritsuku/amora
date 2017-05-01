@@ -19,6 +19,7 @@ class MultiProjectTest extends RestApiTest {
       select * where {
         [a p:] p:name ?name .
       }
+      order by ?name
     """) === Seq(
         Seq(Data("name", "p1")),
         Seq(Data("name", "p2")))
