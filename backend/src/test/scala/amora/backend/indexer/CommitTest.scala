@@ -74,12 +74,26 @@ class CommitTest extends RestApiTest {
     update1()
     update2()
     update3()
-    modelAsData(showCommit(headCommit()), sparqlQuery"""
+
+    val Array(hash1, hash2, hash3) = listCommits().split(",")
+    val q = sparqlQuery"""
       prefix Person:<http://amora.center/kb/amora/Schema/Person/>
       select * where {
         [Person:name ?name; Person:age ?age] .
       }
-    """) === Seq(
+      order by ?name
+    """
+
+    modelAsData(showCommit(hash1), q) === Seq(
+        Seq(Data("name", "sarah"), Data("age", "27")))
+    modelAsData(showCommit(hash2), q) === Seq(
+        Seq(Data("name", "hugo"), Data("age", "25")))
+    modelAsData(showCommit(hash3), q) === Seq(
+        Seq(Data("name", "franz"), Data("age", "49")))
+
+    sparqlRequest(q.query) === Seq(
+        Seq(Data("name", "franz"), Data("age", "49")),
+        Seq(Data("name", "hugo"), Data("age", "25")),
         Seq(Data("name", "sarah"), Data("age", "27")))
   }
 }
