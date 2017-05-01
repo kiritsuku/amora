@@ -3,33 +3,31 @@ package amora.backend.requests
 import scala.util.Failure
 import scala.util.Success
 
+import akka.http.scaladsl.model.ContentTypes
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.model.HttpRequest
 import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.model.MediaType
-import akka.http.scaladsl.model.MediaTypes
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
 import amora.backend.BackendSystem
 import amora.backend.CustomContentTypes
 
-trait Nlp extends Directives {
+trait TurtleRequests extends Directives {
 
   def bs: BackendSystem
 
-  def handleNlqPostRequest(req: HttpRequest, query: String): Route = {
+  def handleTurtleUpdatePostRequest(req: HttpRequest, query: String): Route = {
     req.entity.contentType.mediaType match {
-      case m if m matches MediaTypes.`text/plain` ⇒
-        bs.runNlq(query, "Error happened while handling natural language query request.") {
-          case Success(turtleResp: String) ⇒
-            HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, turtleResp)
-          case Failure(t) ⇒
-            throw t
+      case m if m matches CustomContentTypes.`text/turtle` ⇒
+        bs.runTurtleUpdate(query, "Error happened while handling Turtle update request.") {
+          case Success(()) ⇒ HttpEntity(ContentTypes.`text/plain(UTF-8)`, "Update successful.")
+          case Failure(t) ⇒ throw t
         }
 
       case m ⇒
-        rejectContentType(m, MediaTypes.`text/plain`)
+        rejectContentType(m, CustomContentTypes.`text/turtle`)
     }
   }
 

@@ -28,21 +28,21 @@ import akka.stream.stage.GraphStageLogic
 import akka.stream.stage.InHandler
 import akka.stream.stage.OutHandler
 import akka.util.CompactByteString
-import amora.backend.requests.Commit
-import amora.backend.requests.Nlp
-import amora.backend.requests.Service
-import amora.backend.requests.Sparql
-import amora.backend.requests.Turtle
+import amora.backend.requests.CommitRequests
+import amora.backend.requests.NlpRequests
+import amora.backend.requests.ServiceRequests
+import amora.backend.requests.SparqlRequests
+import amora.backend.requests.TurtleRequests
 import amora.frontend.webui.protocol.RequestFailed
 import amora.frontend.webui.protocol.RequestSucceeded
 
 final class WebService(override implicit val system: ActorSystem)
     extends Directives
-    with Sparql
-    with Service
-    with Turtle
-    with Nlp
-    with Commit
+    with SparqlRequests
+    with ServiceRequests
+    with TurtleRequests
+    with NlpRequests
+    with CommitRequests
     with AkkaLogging {
 
   override val bs = new BackendSystem()

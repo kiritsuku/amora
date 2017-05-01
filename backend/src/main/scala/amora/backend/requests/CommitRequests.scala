@@ -6,10 +6,11 @@ import scala.util.Success
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Directives
 import amora.api.SparqlModel
+import amora.api.Turtle
 import amora.backend.AkkaLogging
 import amora.backend.BackendSystem
 
-trait Commit extends Directives with AkkaLogging {
+trait CommitRequests extends Directives with AkkaLogging {
   import akka.http.scaladsl.model.ContentTypes._
   import amora.backend.CustomContentTypes._
 
@@ -31,7 +32,7 @@ trait Commit extends Directives with AkkaLogging {
 
   def handleShowCommitGetRequest(commit: String) = {
     bs.showCommit(commit, "Error while showing commit.") {
-      case Success(m: SparqlModel) ⇒ HttpEntity(`text/turtle(UTF-8)`, m.formatAs(amora.api.Turtle))
+      case Success(m: SparqlModel) ⇒ HttpEntity(`text/turtle(UTF-8)`, m.formatAs(Turtle))
       case Failure(t) ⇒ throw t
     }
   }

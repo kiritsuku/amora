@@ -21,11 +21,12 @@ import akka.http.scaladsl.model.headers.Accept
 import akka.http.scaladsl.server.Directives
 import akka.http.scaladsl.server.Route
 import amora.api.SparqlModel
+import amora.api.Turtle
 import amora.backend.AkkaLogging
 import amora.backend.BackendSystem
 import amora.backend.Content
 
-trait Sparql extends Directives with AkkaLogging {
+trait SparqlRequests extends Directives with AkkaLogging {
   import akka.http.scaladsl.model.ContentTypes._
   import akka.http.scaladsl.model.MediaTypes._
   import amora.backend.CustomContentTypes._
@@ -146,7 +147,7 @@ trait Sparql extends Directives with AkkaLogging {
     req.entity.contentType.mediaType match {
       case m if m matches `application/sparql-query` ⇒
         bs.runConstruct(query, "Error happened while handling SPARQL construct request.") {
-          case Success(m: SparqlModel) ⇒ HttpEntity(`text/turtle(UTF-8)`, m.formatAs(amora.api.Turtle))
+          case Success(m: SparqlModel) ⇒ HttpEntity(`text/turtle(UTF-8)`, m.formatAs(Turtle))
           case Failure(t) ⇒ throw t
         }
 

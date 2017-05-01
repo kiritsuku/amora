@@ -13,7 +13,7 @@ import amora.backend.AkkaLogging
 import amora.backend.CustomContentTypes
 import amora.backend.services.CallService
 
-trait Service extends Directives with AkkaLogging {
+trait ServiceRequests extends Directives with AkkaLogging {
   private implicit val d = system.dispatcher
   private val config = system.settings.config
   private val testMode = config.getBoolean("app.test-mode")
