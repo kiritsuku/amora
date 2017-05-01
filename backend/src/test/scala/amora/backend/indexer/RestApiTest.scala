@@ -386,6 +386,9 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  def sparqlRequest(query: SparqlQuery): Seq[Seq[Data]] =
+    sparqlRequest(query.query)
+
   def sparqlRequest(query: String): Seq[Seq[Data]] = {
     testReq(post("http://amora.center/sparql", query, header = Accept(CustomContentTypes.`application/sparql-results+json`))) {
       checkStatus()

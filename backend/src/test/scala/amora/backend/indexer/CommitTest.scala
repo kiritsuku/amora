@@ -91,7 +91,7 @@ class CommitTest extends RestApiTest {
     modelAsData(showCommit(hash3), q) === Seq(
         Seq(Data("name", "franz"), Data("age", "49")))
 
-    sparqlRequest(q.query) === Seq(
+    sparqlRequest(q) === Seq(
         Seq(Data("name", "franz"), Data("age", "49")),
         Seq(Data("name", "hugo"), Data("age", "25")),
         Seq(Data("name", "sarah"), Data("age", "27")))
