@@ -509,7 +509,7 @@ object Schema {
     hierarchies foreach loop
   }
 
-  private def turtleBuilder(f: ((String, String) ⇒ Unit, (String, String, String) ⇒ Unit) ⇒ Unit) = {
+  def turtleBuilder(f: ((String, String) ⇒ Unit, (String, String, String) ⇒ Unit) ⇒ Unit) = {
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, String]]()
 
@@ -518,11 +518,21 @@ object Schema {
         prefixe += name → url
     }
     def addData(url: String, k: String, v: String) = {
-      data.get(url) match {
+      val turtleUrl =
+        if (url.contains(":") && !url.contains("://")) {
+          val prefix = url.takeWhile(_ != ':')
+          if (!prefixe.contains(prefix))
+            throw new IllegalArgumentException(s"Prefix `$prefix` not found.")
+          else
+            url
+        }
+        else
+          s"<$url>"
+      data.get(turtleUrl) match {
         case Some(map) ⇒
-          data += url → (map + k → v)
+          data += turtleUrl → (map + k → v)
         case None ⇒
-          data += url → Map(k → v)
+          data += turtleUrl → Map(k → v)
       }
     }
 
@@ -541,7 +551,7 @@ object Schema {
     val len = (if (data.isEmpty) 0 else data.values.map(_.keys.map(_.length).max).max) + 3
     data.toList.sortBy(_._1)(stringOrdering) foreach {
       case (url, kv) ⇒
-        sb append "<" append url append ">\n"
+        sb append url append "\n"
         kv.toList.sortBy(_._1)(stringOrdering) foreach {
           case (k, v) ⇒
             sb append "  " append k append " " * (len - k.length) append v append " ;\n"
