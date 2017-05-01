@@ -45,6 +45,9 @@ final class BackendSystem(implicit system: ActorSystem) {
   def listCommits(errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.ListCommits, errorMessage, onSuccess)
 
+  def showCommit(commit: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
+    mkRequestRoute(indexer, IndexerMessage.ShowCommit(commit), errorMessage, onSuccess)
+
   def runQuery(query: String, errorMessage: String)(onSuccess: Any ⇒ ToResponseMarshallable): Route =
     mkRequestRoute(indexer, IndexerMessage.RunQuery(query), errorMessage, onSuccess)
 

@@ -132,18 +132,23 @@ class Indexer(modelName: String) extends Log4jLogging {
         f(v, q)
   }
 
-  private def mkHash(model: SparqlModel, turtleUpdate: String): String = {
-    val diff = turtleModel(turtleUpdate).difference(model)
+  private def mkHash(model: SparqlModel, diff: SparqlModel): String = {
     val diffStr = diff.formatAs(NTriple).split("\n").sorted.mkString("\n")
     val blockchain = for (head ← headCommit(model)) yield head + "\n" + diffStr
     val strToHash = blockchain.getOrElse(diffStr)
-    println(strToHash)
     Utils.mkSha256(strToHash)
   }
 
-  def writeAs(model: SparqlModel, format: RdfFormat, data: String): Unit = {
+  private def commitModelName(commit: String) =
+    s"http://amora.center/kb/amora/Commit/$commit"
+
+  def writeAs(dataset: Dataset, model: SparqlModel, format: RdfFormat, data: String): Unit = {
+    val diff = turtleModel(data).difference(model)
     val prevHash = headCommitUri(model)
-    val hash = mkHash(model, data)
+    val hash = mkHash(model, diff)
+    val storedModel = dataset.getNamedModel(commitModelName(hash))
+    storedModel.add(diff.model)
+
     model.writeAs(Turtle, data)
     prevHash match {
       case Some(prevHash) ⇒
@@ -503,6 +508,9 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
     commits.getOrElse(Nil)
   }
+
+  def showCommit(dataset: Dataset, commit: String): SparqlModel =
+    new SparqlModel(dataset.getNamedModel(commitModelName(commit)))
 
   def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString

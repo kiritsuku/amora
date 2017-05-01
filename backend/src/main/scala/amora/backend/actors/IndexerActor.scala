@@ -48,6 +48,9 @@ class IndexerActor extends Actor with ActorLogging {
 
     case ListCommits ⇒
       sender ! Try(listCommits())
+
+    case ShowCommit(commit) ⇒
+      sender ! Try(showCommit(commit))
   }
 
   override def postStop() = {
@@ -85,7 +88,7 @@ class IndexerActor extends Actor with ActorLogging {
     log.info(s"Handle Turtle update:\n$query")
     indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
-        indexer.writeAs(model, Turtle, query)
+        indexer.writeAs(dataset, model, Turtle, query)
       }
     }
   }
@@ -114,6 +117,12 @@ class IndexerActor extends Actor with ActorLogging {
       }
     }
   }
+
+  def showCommit(commit: String): SparqlModel = {
+    indexer.readDataset(dataset) { dataset ⇒
+      indexer.showCommit(dataset, commit)
+    }
+  }
 }
 
 sealed trait IndexerMessage
@@ -125,4 +134,5 @@ object IndexerMessage {
   case class RunNlq(query: String) extends IndexerMessage
   case object GetHeadCommit extends IndexerMessage
   case object ListCommits extends IndexerMessage
+  case class ShowCommit(commit: String) extends IndexerMessage
 }

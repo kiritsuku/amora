@@ -440,6 +440,13 @@ trait RestApiTest extends TestFrameworkInterface with RouteTest with AkkaLogging
     }
   }
 
+  def showCommit(commit: String): SparqlModel = {
+    testReq(get(s"http://amora.center/commit/show?commit=$commit")) {
+      checkStatus()
+      respAsModel()
+    }
+  }
+
   def modelAsData(model: Model, query: String): Seq[Seq[Data]] = {
     val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
     val rs = ResultSetFactory.makeRewindable(qexec.execSelect())

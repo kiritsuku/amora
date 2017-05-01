@@ -157,6 +157,11 @@ final class WebService(override implicit val system: ActorSystem)
     } ~
     path("commit" ~ Slash ~ "list") {
       handleListCommitsGetRequest()
+    } ~
+    path("commit" ~ Slash ~ "show") {
+      parameter('commit) { commit ⇒
+        handleShowCommitGetRequest(commit)
+      }
     }
   } ~
   post {

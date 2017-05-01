@@ -67,4 +67,18 @@ class CommitTest extends RestApiTest {
         "265fb068",
         "e002e422")
   }
+
+  @Test
+  def get_data_of_commit() = {
+    update1()
+    update2()
+    update3()
+    modelAsData(showCommit(headCommit()).model, """
+      prefix Person:<http://amora.center/kb/amora/Schema/Person/>
+      select * where {
+        [Person:name ?name; Person:age ?age] .
+      }
+    """) === Seq(
+        Seq(Data("name", "sarah"), Data("age", "27")))
+  }
 }
