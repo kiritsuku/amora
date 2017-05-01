@@ -2,17 +2,14 @@ package amora.backend.indexer
 
 import org.junit.Test
 
-import akka.http.scaladsl.model.HttpEntity
-import akka.http.scaladsl.model.StatusCodes
-import amora.backend.CustomContentTypes
 import amora.backend.schema.Schema
 
 class CommitTest extends RestApiTest {
   import amora.TestUtils._
 
-  case class Person(name: String, age: Int)
+  private case class Person(name: String, age: Int)
 
-  def buildTurtleUpdate(ps: Seq[Person]) = Schema.turtleBuilder {
+  private def buildTurtleUpdate(ps: Seq[Person]) = Schema.turtleBuilder {
     (addPrefix, addData) ⇒
 
     addPrefix("Person", "http://amora.center/kb/amora/Schema/Person/")
@@ -33,18 +30,18 @@ class CommitTest extends RestApiTest {
 
   @Test
   def head_commit_exists_for_single_update() = {
-    val e = HttpEntity(CustomContentTypes.`text/turtle(UTF-8)`, buildTurtleUpdate(Seq(Person("franz", 49))))
-    testReq(post("http://amora.center/turtle-update", e)) {
-      status === StatusCodes.OK
-    }
+    turtleRequest(buildTurtleUpdate(Seq(Person("franz", 49))))
     headCommit().take(8) === "e002e422"
   }
 
   @Test
   def list_no_commits_when_there_are_no_commits_yet() = {
-    testReq(get("http://amora.center/commit/list")) {
-      checkStatus()
-      respAsString === ""
-    }
+    listCommits() === ""
+  }
+
+  @Test
+  def list_single_commit() = {
+    turtleRequest(buildTurtleUpdate(Seq(Person("franz", 49))))
+    listCommits().take(8) === "e002e422"
   }
 }
