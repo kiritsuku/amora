@@ -134,7 +134,7 @@ class Indexer(modelName: String) extends Log4jLogging {
 
   private def mkHash(model: SparqlModel, turtleUpdate: String): String = {
     val diff = turtleModel(turtleUpdate).difference(model)
-    val diffStr = diff.formatAs(NTriple)
+    val diffStr = diff.formatAs(NTriple).split("\n").sorted.mkString("\n")
     Utils.mkSha256(diffStr)
   }
 

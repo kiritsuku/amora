@@ -29,7 +29,7 @@ class CommitTest extends RestApiTest {
     testReq(post("http://amora.center/turtle-update", e)) {
       status === StatusCodes.OK
     }
-    headCommit().take(8) === "f734d1fb"
+    headCommit().take(8) === "e002e422"
   }
 
   @Test
