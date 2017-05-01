@@ -1,27 +1,18 @@
 package amora.api
 
-import java.io.ByteArrayInputStream
-
 import org.apache.jena.rdf.model.ModelFactory
 
 class ApiImpl {
 
-  def turtleModelFromString(model: String): SparqlModel = {
-    val m = ModelFactory.createDefaultModel()
-    val in = new ByteArrayInputStream(model.getBytes)
-    m.read(in, null, "TURTLE")
-    new SparqlModel(m)
-  }
+  def turtleModelFromString(model: String): SparqlModel =
+    new SparqlModel(ModelFactory.createDefaultModel()).writeAs(Turtle, model)
 
   def turtleModel(strings: Iterator[String], expressions: Iterator[Any]): SparqlModel = {
     val res = op(strings, expressions) {
       case str: String ⇒ escapeString(str)
       case obj ⇒ obj.toString
     }
-    val m = ModelFactory.createDefaultModel()
-    val in = new ByteArrayInputStream(res.getBytes)
-    m.read(in, null, "TURTLE")
-    new SparqlModel(m)
+    turtleModelFromString(res)
   }
 
   def sparqlQuery(strings: Iterator[String], expressions: Iterator[Any]): SparqlQuery = {

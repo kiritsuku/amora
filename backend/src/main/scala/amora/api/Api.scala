@@ -1,5 +1,6 @@
 package amora.api
 
+import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.nio.charset.StandardCharsets
 
@@ -49,7 +50,23 @@ final class SparqlResultSet(val resultSet: ResultSetRewindable) {
   }
 }
 
-final class SparqlModel(val model: Model)
+final class SparqlModel(val model: Model) {
+  def difference(model: SparqlModel): SparqlModel = {
+    new SparqlModel(this.model.difference(model.model))
+  }
+
+  def formatAs(format: RdfFormat): String = {
+    val out = new ByteArrayOutputStream
+    model.write(out, format.lang)
+    new String(out.toByteArray(), "UTF-8")
+  }
+
+  def writeAs(format: RdfFormat, data: String): SparqlModel = {
+    val in = new ByteArrayInputStream(data.getBytes)
+    model.read(in, /* base = */ null, format.lang)
+    this
+  }
+}
 
 final class ResultSetRow(val row: QuerySolution) {
   def string(varName: String): String =
@@ -118,4 +135,14 @@ final case class Literal(literal: JLiteral) {
     else
       None
 
+}
+
+sealed trait RdfFormat {
+  def lang: String
+}
+case object Turtle extends RdfFormat {
+  override def lang = "TURTLE"
+}
+case object NTriple extends RdfFormat {
+  override def lang = "N-TRIPLE"
 }
