@@ -132,6 +132,25 @@ class Indexer(modelName: String) extends Log4jLogging {
         f(v, q)
   }
 
+  private def mkHash(model: SparqlModel, turtleUpdate: String): String = {
+    val diff = turtleModel(turtleUpdate).difference(model)
+    val diffStr = diff.formatAs(NTriple)
+    Utils.mkSha256(diffStr)
+  }
+
+  def writeAs(model: SparqlModel, format: RdfFormat, data: String): Unit = {
+    val hash = mkHash(model, data)
+    model.writeAs(Turtle, data)
+    model.writeAs(Turtle, s"""
+      @prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+      @prefix CommitData:<http://amora.center/kb/amora/Commit/>
+      CommitData:$hash
+        a Commit: ;
+        Commit:hash "$hash" ;
+      .
+      """)
+  }
+
   def addTurtle(model: SparqlModel, str: String): Unit = {
     model.writeAs(Turtle, str)
   }
@@ -409,7 +428,20 @@ class Indexer(modelName: String) extends Log4jLogging {
   }
 
   def headCommit(model: SparqlModel): String = {
-    ""
+    val rs = withQueryService(model, """
+      prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+      select ?hash where {
+        ?commit a Commit: .
+        ?commit Commit:hash ?hash .
+        filter not exists {
+          ?p Commit:previous ?commit .
+        }
+      }
+    """)
+    if (rs.hasNext())
+      rs.next().get("hash").asLiteral().getString
+    else
+      ""
   }
 
   def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {

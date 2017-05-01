@@ -7,6 +7,7 @@ import org.apache.jena.query.ResultSetRewindable
 import akka.actor.Actor
 import akka.actor.ActorLogging
 import amora.api.SparqlModel
+import amora.api.Turtle
 import amora.backend.Content
 import amora.backend.indexer.Indexer
 
@@ -81,7 +82,7 @@ class IndexerActor extends Actor with ActorLogging {
     log.info(s"Handle Turtle update:\n$query")
     indexer.writeDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
-        indexer.addTurtle(model, query)
+        indexer.writeAs(model, Turtle, query)
       }
     }
   }
