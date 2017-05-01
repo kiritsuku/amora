@@ -45,6 +45,9 @@ class IndexerActor extends Actor with ActorLogging {
 
     case GetHeadCommit ⇒
       sender ! Try(headCommit())
+
+    case ListCommits ⇒
+      sender ! Try(listCommits())
   }
 
   override def postStop() = {
@@ -99,7 +102,15 @@ class IndexerActor extends Actor with ActorLogging {
   def headCommit(): String = {
     indexer.readDataset(dataset) { dataset ⇒
       indexer.withModel(dataset) { model ⇒
-        indexer.headCommit(model)
+        indexer.headCommit(model).getOrElse("")
+      }
+    }
+  }
+
+  def listCommits(): List[String] = {
+    indexer.readDataset(dataset) { dataset ⇒
+      indexer.withModel(dataset) { model ⇒
+        indexer.listCommits(model)
       }
     }
   }
@@ -113,4 +124,5 @@ object IndexerMessage {
   case class RunTurtleUpdate(query: String) extends IndexerMessage
   case class RunNlq(query: String) extends IndexerMessage
   case object GetHeadCommit extends IndexerMessage
+  case object ListCommits extends IndexerMessage
 }

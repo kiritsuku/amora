@@ -31,4 +31,12 @@ class CommitTest extends RestApiTest {
     }
     headCommit().take(8) === "f734d1fb"
   }
+
+  @Test
+  def list_no_commits_when_there_are_no_commits_yet() = {
+    testReq(get("http://amora.center/commit/list")) {
+      checkStatus()
+      respAsString === ""
+    }
+  }
 }

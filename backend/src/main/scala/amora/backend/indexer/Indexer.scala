@@ -427,7 +427,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     mkTurtle
   }
 
-  def headCommit(model: SparqlModel): String = {
+  def headCommit(model: SparqlModel): Option[String] = {
     val rs = withQueryService(model, """
       prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
       select ?hash where {
@@ -439,9 +439,36 @@ class Indexer(modelName: String) extends Log4jLogging {
       }
     """)
     if (rs.hasNext())
-      rs.next().get("hash").asLiteral().getString
+      Some(rs.next().get("hash").asLiteral().getString)
     else
-      ""
+      None
+  }
+
+  def listCommits(model: SparqlModel): List[String] = {
+    def loop(nextHash: String, hashes: List[String]): List[String] = {
+      val prevHash = sparqlQuery"""
+        prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+        select ?hash where {
+          ?next Commit:hash "$nextHash" .
+          ?next Commit:previous ?commit .
+          ?commit Commit:hash ?hash .
+        }
+      """.runOnModel(model).map { r ⇒
+        r.string("hash")
+      }
+
+      if (prevHash.isEmpty)
+        hashes
+      else {
+        val h = prevHash.head
+        loop(h, h :: hashes)
+      }
+    }
+
+    val commits = headCommit(model) map { head ⇒
+      loop(head, List(head)).reverse
+    }
+    commits.getOrElse(Nil)
   }
 
   def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {

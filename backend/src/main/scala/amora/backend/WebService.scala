@@ -153,7 +153,10 @@ final class WebService(override implicit val system: ActorSystem)
       }
     } ~
     path("commit" ~ Slash ~ "head") {
-      getHeadCommit()
+      handleHeadCommitGetRequest()
+    } ~
+    path("commit" ~ Slash ~ "list") {
+      handleListCommitsGetRequest()
     }
   } ~
   post {
