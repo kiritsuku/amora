@@ -135,20 +135,37 @@ class Indexer(modelName: String) extends Log4jLogging {
   private def mkHash(model: SparqlModel, turtleUpdate: String): String = {
     val diff = turtleModel(turtleUpdate).difference(model)
     val diffStr = diff.formatAs(NTriple).split("\n").sorted.mkString("\n")
-    Utils.mkSha256(diffStr)
+    val blockchain = for (head ← headCommit(model)) yield head + "\n" + diffStr
+    val strToHash = blockchain.getOrElse(diffStr)
+    println(strToHash)
+    Utils.mkSha256(strToHash)
   }
 
   def writeAs(model: SparqlModel, format: RdfFormat, data: String): Unit = {
+    val prevHash = headCommitUri(model)
     val hash = mkHash(model, data)
     model.writeAs(Turtle, data)
-    model.writeAs(Turtle, s"""
-      @prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
-      @prefix CommitData:<http://amora.center/kb/amora/Commit/>
-      CommitData:$hash
-        a Commit: ;
-        Commit:hash "$hash" ;
-      .
-      """)
+    prevHash match {
+      case Some(prevHash) ⇒
+        model.writeAs(Turtle, s"""
+          @prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+          @prefix CommitData:<http://amora.center/kb/amora/Commit/>
+          CommitData:$hash
+            a Commit: ;
+            Commit:hash "$hash" ;
+            Commit:previous <$prevHash> ;
+          .
+        """)
+      case None ⇒
+        model.writeAs(Turtle, s"""
+          @prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+          @prefix CommitData:<http://amora.center/kb/amora/Commit/>
+          CommitData:$hash
+            a Commit: ;
+            Commit:hash "$hash" ;
+          .
+        """)
+    }
   }
 
   def addTurtle(model: SparqlModel, str: String): Unit = {
@@ -440,6 +457,22 @@ class Indexer(modelName: String) extends Log4jLogging {
     """)
     if (rs.hasNext())
       Some(rs.next().get("hash").asLiteral().getString)
+    else
+      None
+  }
+
+  def headCommitUri(model: SparqlModel): Option[String] = {
+    val rs = withQueryService(model, """
+      prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
+      select ?commit where {
+        ?commit a Commit: .
+        filter not exists {
+          ?p Commit:previous ?commit .
+        }
+      }
+    """)
+    if (rs.hasNext())
+      Some(rs.next().get("commit").toString)
     else
       None
   }
