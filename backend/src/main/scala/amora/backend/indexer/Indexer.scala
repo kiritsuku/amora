@@ -1,6 +1,5 @@
 package amora.backend.indexer
 
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 
 import scala.util.control.NonFatal
@@ -14,7 +13,6 @@ import org.apache.jena.query.ReadWrite
 import org.apache.jena.query.ResultSetFactory
 import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
-import org.apache.jena.rdf.model.Model
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
@@ -32,7 +30,7 @@ class Indexer(modelName: String) extends Log4jLogging {
   def startupIndexer(dataset: Dataset): Unit = {
     import java.io.File
 
-    def indexServices(model: Model) = {
+    def indexServices(model: SparqlModel) = {
       def findRoot(dir: File): File =
         if (dir.listFiles().exists(_.getName == ".git"))
           dir
@@ -72,7 +70,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       """)
     }
 
-    def indexSchemas(model: Model) = {
+    def indexSchemas(model: SparqlModel) = {
       val cl = getClass.getClassLoader
       val resourceDir = new File(cl.getResource(".").getPath)
       val indexableFiles = resourceDir.listFiles().filter(_.getName.endsWith(".schema.ttl"))
@@ -108,7 +106,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     }
   }
 
-  def queryResultAsString(query: String, model: Model): String = {
+  def queryResultAsString(query: String, model: SparqlModel): String = {
     val r = withQueryService(model, query)
     val s = new ByteArrayOutputStream
 
@@ -116,7 +114,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     new String(s.toByteArray(), "UTF-8")
   }
 
-  def flattenedQueryResult[A](query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
+  def flattenedQueryResult[A](query: String, model: SparqlModel)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
     import scala.collection.JavaConverters._
     val r = withQueryService(model, query)
     val vars = r.getResultVars.asScala.toSeq
@@ -124,7 +122,7 @@ class Indexer(modelName: String) extends Log4jLogging {
     for { q ← r.asScala.toSeq; v ← vars } yield f(v, q)
   }
 
-  def queryResult[A](query: String, model: Model)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
+  def queryResult[A](query: String, model: SparqlModel)(f: (String, QuerySolution) ⇒ A): Seq[Seq[A]] = {
     import scala.collection.JavaConverters._
     val r = withQueryService(model, query)
     val vars = r.getResultVars.asScala.toSeq
@@ -134,18 +132,15 @@ class Indexer(modelName: String) extends Log4jLogging {
         f(v, q)
   }
 
-  def addTurtle(model: Model, str: String): Unit = {
-    val in = new ByteArrayInputStream(str.getBytes)
-    model.read(in, /* base = */ null, "TURTLE")
+  def addTurtle(model: SparqlModel, str: String): Unit = {
+    model.writeAs(Turtle, str)
   }
 
-  def askNlq(model: Model, query: String): String = {
+  def askNlq(smodel: SparqlModel, query: String): String = {
     trait SelectType
     case object Id extends SelectType
     case object Value extends SelectType
     case object Rel extends SelectType
-
-    val smodel = new SparqlModel(model)
 
     var prefixe = Map[String, String]()
     var data = Map[String, Map[String, Set[String]]]()
@@ -413,33 +408,33 @@ class Indexer(modelName: String) extends Log4jLogging {
     mkTurtle
   }
 
-  def headCommit(model: Model): String = {
+  def headCommit(model: SparqlModel): String = {
     ""
   }
 
-  def withUpdateService(model: Model, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
+  def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString
     pss.setCommandText(query)
     f(pss)
     val update = pss.asUpdate()
-    UpdateAction.execute(update, model)
+    UpdateAction.execute(update, model.model)
   }
 
-  def doesIdExist(model: Model, id: String): Boolean =
+  def doesIdExist(model: SparqlModel, id: String): Boolean =
     runAskQuery(model, s"ASK { <$id> ?p ?o }")
 
-  def runAskQuery(model: Model, query: String): Boolean = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+  def runAskQuery(model: SparqlModel, query: String): Boolean = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
     qexec.execAsk()
   }
 
-  def withConstructService(model: Model, query: String): SparqlModel = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+  def withConstructService(model: SparqlModel, query: String): SparqlModel = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
     new SparqlModel(qexec.execConstruct())
   }
 
-  def withQueryService(model: Model, query: String): ResultSetRewindable = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model)
+  def withQueryService(model: SparqlModel, query: String): ResultSetRewindable = {
+    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
     ResultSetFactory.makeRewindable(qexec.execSelect())
   }
 
@@ -465,16 +460,16 @@ class Indexer(modelName: String) extends Log4jLogging {
     internalWithDataset(dataset.dataset, ReadWrite.READ)(f)
   }
 
-  def withModel[A](dataset: Dataset)(f: Model ⇒ A): A = {
-    val model = ModelFactory.createRDFSModel(dataset.getNamedModel(modelName))
-    model.begin()
+  def withModel[A](dataset: Dataset)(f: SparqlModel ⇒ A): A = {
+    val model = new SparqlModel(ModelFactory.createRDFSModel(dataset.getNamedModel(modelName)))
+    model.model.begin()
     try {
       val res = f(model)
-      model.commit()
+      model.model.commit()
       res
     // no catch here because 'abort' on models is not supported
     } finally {
-      model.close()
+      model.model.close()
     }
   }
 
