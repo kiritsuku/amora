@@ -1,7 +1,5 @@
 package amora.backend.indexer
 
-import java.io.ByteArrayOutputStream
-
 import scala.util.control.NonFatal
 
 import org.apache.jena.query.Dataset
@@ -11,7 +9,6 @@ import org.apache.jena.query.QueryFactory
 import org.apache.jena.query.QuerySolution
 import org.apache.jena.query.ReadWrite
 import org.apache.jena.query.ResultSetFactory
-import org.apache.jena.query.ResultSetFormatter
 import org.apache.jena.query.ResultSetRewindable
 import org.apache.jena.rdf.model.ModelFactory
 import org.apache.jena.tdb.TDBFactory
@@ -50,8 +47,7 @@ class Indexer(modelName: String) extends Log4jLogging {
       val serviceFiles = serviceDirectories flatMap { serviceDirectory ⇒
         serviceDirectory.listFiles().filter(_.getName.endsWith(".service.ttl"))
       }
-
-      addTurtle(model, s"""
+      model.writeAs(Turtle, s"""
         @prefix service:<http://amora.center/kb/Schema/Service/> .
         @prefix registry:<http://amora.center/kb/Service/> .
         ${
@@ -79,13 +75,11 @@ class Indexer(modelName: String) extends Log4jLogging {
         val content = src.mkString
         val schemaName = file.getName.dropRight(".schema.ttl".length)
         src.close()
-        val alreadyIndexed = runAskQuery(model, s"""
-          ASK {
-            <http://amora.center/kb/amora/Schema/$schemaName/> <http://amora.center/kb/amora/Schema/schemaVersion> ?o
-          }
-        """)
+        val alreadyIndexed = sparqlQuery"""
+          ask { <http://amora.center/kb/amora/Schema/$schemaName/> <http://amora.center/kb/amora/Schema/schemaVersion> ?o }
+        """.askOnModel(model)
         if (!alreadyIndexed) {
-          try addTurtle(model, content)
+          try model.writeAs(Turtle, content)
           catch {
             case NonFatal(t) ⇒
               throw new RuntimeException(s"An error happened during indexing of file `$file`", t)
@@ -104,14 +98,6 @@ class Indexer(modelName: String) extends Log4jLogging {
       case NonFatal(t) ⇒
         throw new RuntimeException("An error happened during initialization of the indexer.", t)
     }
-  }
-
-  def queryResultAsString(query: String, model: SparqlModel): String = {
-    val r = withQueryService(model, query)
-    val s = new ByteArrayOutputStream
-
-    ResultSetFormatter.out(s, r)
-    new String(s.toByteArray(), "UTF-8")
   }
 
   def flattenedQueryResult[A](query: String, model: SparqlModel)(f: (String, QuerySolution) ⇒ A): Seq[A] = {
@@ -158,7 +144,7 @@ class Indexer(modelName: String) extends Log4jLogging {
           CommitData:$hash
             a Commit: ;
             Commit:hash "$hash" ;
-            Commit:previous <$prevHash> ;
+            Commit:previous $prevHash ;
           .
         """)
       case None ⇒
@@ -171,10 +157,6 @@ class Indexer(modelName: String) extends Log4jLogging {
           .
         """)
     }
-  }
-
-  def addTurtle(model: SparqlModel, str: String): Unit = {
-    model.writeAs(Turtle, str)
   }
 
   def askNlq(smodel: SparqlModel, query: String): String = {
@@ -450,36 +432,29 @@ class Indexer(modelName: String) extends Log4jLogging {
   }
 
   def headCommit(model: SparqlModel): Option[String] = {
-    val rs = withQueryService(model, """
+    sparqlQuery"""
       prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
       select ?hash where {
-        ?commit a Commit: .
-        ?commit Commit:hash ?hash .
+        ?commit a Commit: ; Commit:hash ?hash .
         filter not exists {
-          ?p Commit:previous ?commit .
+          [Commit:previous ?commit] .
         }
       }
-    """)
-    if (rs.hasNext())
-      Some(rs.next().get("hash").asLiteral().getString)
-    else
-      None
+      limit 1
+    """.runOnModel(model).map(_.string("hash")).headOption
   }
 
   def headCommitUri(model: SparqlModel): Option[String] = {
-    val rs = withQueryService(model, """
+    sparqlQuery"""
       prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
       select ?commit where {
         ?commit a Commit: .
         filter not exists {
-          ?p Commit:previous ?commit .
+          [Commit:previous ?commit] .
         }
       }
-    """)
-    if (rs.hasNext())
-      Some(rs.next().get("commit").toString)
-    else
-      None
+      limit 1
+    """.runOnModel(model).map(_.uri("commit")).headOption
   }
 
   def listCommits(model: SparqlModel): List[String] = {
@@ -487,13 +462,10 @@ class Indexer(modelName: String) extends Log4jLogging {
       val prevHash = sparqlQuery"""
         prefix Commit:<http://amora.center/kb/amora/Schema/Commit/>
         select ?hash where {
-          ?next Commit:hash "$nextHash" .
-          ?next Commit:previous ?commit .
-          ?commit Commit:hash ?hash .
+          ?next Commit:hash "$nextHash" ; Commit:previous [Commit:hash ?hash] .
         }
-      """.runOnModel(model).map { r ⇒
-        r.string("hash")
-      }
+        limit 1
+      """.runOnModel(model).map(_.string("hash"))
 
       if (prevHash.isEmpty)
         hashes
@@ -518,14 +490,6 @@ class Indexer(modelName: String) extends Log4jLogging {
     f(pss)
     val update = pss.asUpdate()
     UpdateAction.execute(update, model.model)
-  }
-
-  def doesIdExist(model: SparqlModel, id: String): Boolean =
-    runAskQuery(model, s"ASK { <$id> ?p ?o }")
-
-  def runAskQuery(model: SparqlModel, query: String): Boolean = {
-    val qexec = QueryExecutionFactory.create(QueryFactory.create(query), model.model)
-    qexec.execAsk()
   }
 
   def withConstructService(model: SparqlModel, query: String): SparqlModel = {

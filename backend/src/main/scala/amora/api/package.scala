@@ -21,4 +21,8 @@ package object api {
       impl.sparql(sc.parts.iterator, args.iterator)
     }
   }
+
+  final implicit class StringToSparqlQuery(private val query: String) extends AnyVal {
+    def asSparqlQuery: SparqlQuery = new SparqlQuery(query)
+  }
 }

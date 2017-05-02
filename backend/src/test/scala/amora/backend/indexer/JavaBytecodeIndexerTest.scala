@@ -7,6 +7,7 @@ import org.junit.Test
 
 import amora.backend.schema._
 import amora.converter.protocol._
+import amora.api._
 
 class JavaBytecodeIndexerTest {
 
@@ -46,8 +47,8 @@ class JavaBytecodeIndexerTest {
         }
 
         if (debugTests) {
-          println(indexer.queryResultAsString("select * { ?s ?p ?o }", model))
-          println(indexer.queryResultAsString(query, model))
+          println(sparqlQuery"select * { ?s ?p ?o }".runOnModel(model).asStringTable)
+          println(query.asSparqlQuery.runOnModel(model).asStringTable)
         }
         indexer.flattenedQueryResult(query, model) { (v, q) ⇒
           val res = q.get(v)
