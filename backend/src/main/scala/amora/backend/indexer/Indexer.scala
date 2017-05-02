@@ -76,7 +76,7 @@ class Indexer(modelName: String) extends Log4jLogging {
         val schemaName = file.getName.dropRight(".schema.ttl".length)
         src.close()
         val alreadyIndexed = sparqlQuery"""
-          ask { <http://amora.center/kb/amora/Schema/$schemaName/> <http://amora.center/kb/amora/Schema/schemaVersion> ?o }
+          ask { <http://amora.center/kb/amora/Schema/$schemaName/> ?p ?o }
         """.askOnModel(model)
         if (!alreadyIndexed) {
           try model.writeAs(Turtle, content)
