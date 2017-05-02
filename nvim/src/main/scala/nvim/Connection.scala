@@ -47,8 +47,8 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
   }
   private val thread = new Thread(new Runnable {
     override def run() = {
-      val unp = MessagePack.DEFAULT.newUnpacker(socket.getInputStream)
-      val unpacker = new Msgpack07Unpacker(unp)
+      val unp = MessagePack.newDefaultUnpacker(socket.getInputStream)
+      val unpacker = new MsgpackJavaUnpacker(unp)
       readResp(unp, unpacker)
 
       logger.warn(s"Connection to $host:$port lost")
@@ -56,7 +56,7 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
   })
   thread.start()
 
-  private def readResp(unp: MessageUnpacker, unpacker: Msgpack07Unpacker): Unit = {
+  private def readResp(unp: MessageUnpacker, unpacker: MsgpackJavaUnpacker): Unit = {
     /*
      * The stupid API doesn't allow to do a look ahead, therefore we have to
      * use reflection to correct the internal position in the buffer.
@@ -129,7 +129,7 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
     val ps = MsgpackUnion.array(params.toList)
     val req = Notification(2, method, ps)
 
-    val bytes = MsgpackCodec[Notification].toBytes(req, new Msgpack07Packer)
+    val bytes = MsgpackCodec[Notification].toBytes(req, new MsgpackJavaPacker)
     logger.debug(s"sending: $req")
     val out = socket.getOutputStream
     out.write(bytes)
@@ -157,7 +157,7 @@ final case class Connection(host: String, port: Int) extends LazyLogging {
       }
     }
 
-    val bytes = MsgpackCodec[Request].toBytes(req, new Msgpack07Packer)
+    val bytes = MsgpackCodec[Request].toBytes(req, new MsgpackJavaPacker)
     requests += req.id → f
     logger.debug(s"sending: $req")
     val out = socket.getOutputStream

@@ -17,9 +17,9 @@ object deps {
   // https://github.com/ochrons/boopickle
   val boopickle       = "1.1.0"
   // https://github.com/msgpack4z/msgpack4z-core
-  val msgpack4zCore   = "0.2.0"
+  val msgpack4zCore   = "0.3.7"
   // https://github.com/msgpack4z/msgpack4z-java07
-  val msgpack4zJava07 = "0.2.0"
+  val msgpack4zJava   = "0.3.5"
   // https://github.com/antonkulaga/codemirror-facade
   val codemirror      = "5.5-0.5"
   val jquery          = "0.8.0"
@@ -47,7 +47,7 @@ object deps {
 
   lazy val nvim = Def.setting(Seq(
     "com.github.xuwei-k"             %%  "msgpack4z-core"                    % msgpack4zCore,
-    "com.github.xuwei-k"             %   "msgpack4z-java07"                  % msgpack4zJava07,
+    "com.github.xuwei-k"             %   "msgpack4z-java"                    % msgpack4zJava,
     "com.beachape"                   %%  "enumeratum"                        % enumeratum,
     "org.scala-lang"                 %   "scala-reflect"                     % scalaVersion.value,
     "com.typesafe.scala-logging"     %%  "scala-logging"                     % scalaLogging
