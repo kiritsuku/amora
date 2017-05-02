@@ -62,13 +62,13 @@ trait SparqlRequests extends Directives with AkkaLogging {
 
   def handleSparqlGetRequest(params: Map[String, String]): Route = {
     val query = s"""
-      |PREFIX kb:<${Content.ModelName}>
-      |PREFIX s:<http://schema.org/>
+      |prefix Schema:<http://amora.center/kb/amora/Schema/>
+      |prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
       |
-      |SELECT * WHERE {
+      |select * where {
       |  ?s ?p ?o .
       |}
-      |LIMIT 100
+      |limit 100
     """.stripMargin.trim
     if (params.isEmpty)
       complete(showSparqlEditor(query, "{}"))
