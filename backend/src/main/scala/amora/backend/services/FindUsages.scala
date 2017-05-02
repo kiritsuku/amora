@@ -4,23 +4,23 @@ class FindUsages extends ScalaService {
 
   def run(offset: Int): String = {
     val r = sparqlRequest(s"""
-      prefix file:<http://amora.center/kb/amora/Schema/File/>
-      prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
-      prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
-      prefix amora:<http://amora.center/kb/amora/Schema/>
+      prefix File:<http://amora.center/kb/amora/Schema/File/>
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      prefix Schema:<http://amora.center/kb/amora/Schema/>
 
       select ?usageStart ?usageEnd where {
         # Find the identifier at an offset but exclude inferred references
-        ?ident amora:posStart ?start; amora:posEnd ?end .
+        ?ident Schema:posStart ?start; Schema:posEnd ?end .
         filter ($offset >= ?start && $offset <= ?end && ?start != ?end)
 
         # ?ident can either be a Ref or a Decl
         {
-          ?ident ref:refToDecl ?decl .
+          ?ident Ref:refToDecl ?decl .
         }
         union
         {
-          ?ident a decl: .
+          ?ident a Decl: .
           bind(?ident as ?decl)
         }
 
@@ -30,19 +30,19 @@ class FindUsages extends ScalaService {
         }
         union
         {
-          ?usages ref:refToDecl ?decl .
+          ?usages Ref:refToDecl ?decl .
         }
 
         # Find the regions of all usages but exclude inferred references
-        ?usages amora:posStart ?usageStart; amora:posEnd ?usageEnd .
+        ?usages Schema:posStart ?usageStart; Schema:posEnd ?usageEnd .
         filter (?usageStart != ?usageEnd)
 
         # Find only the usages that are in the same file where ?ident is
-        ?ident amora:owner+ ?identOwner .
-        ?identOwner a file: .
+        ?ident Schema:owner+ ?identOwner .
+        ?identOwner a File: .
 
-        ?usages amora:owner+ ?usagesOwner .
-        ?usagesOwner a file: .
+        ?usages Schema:owner+ ?usagesOwner .
+        ?usagesOwner a File: .
 
         filter (?identOwner = ?usagesOwner)
       }
@@ -52,17 +52,17 @@ class FindUsages extends ScalaService {
     }
 
     response(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/> .
-      @prefix response:<http://amora.center/kb/ServiceResponse/> .
-      @prefix decl:<http://amora.center/kb/amora/Schema/Decl/> .
+      @prefix Service:<http://amora.center/kb/Schema/Service/> .
+      @prefix Response:<http://amora.center/kb/ServiceResponse/> .
+      @prefix Decl:<http://amora.center/kb/amora/Schema/Decl/> .
       <#this>
-        a response: ;
-        service:requestId <$requestId> ;
-        service:result [${
+        a Response: ;
+        Service:requestId <$requestId> ;
+        Service:result [${
           positions.map {
             case (start, end) ⇒ s"""
-          decl:posStart $start ;
-          decl:posEnd $end ;
+          Decl:posStart $start ;
+          Decl:posEnd $end ;
         ], ["""
           }.mkString
         }] ;

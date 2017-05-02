@@ -254,7 +254,7 @@ final class WebService(override implicit val system: ActorSystem)
       case Some(rawUri) ⇒
         val queryLen = req.uri.rawQueryString.map(_.length + "?".length).getOrElse(0)
         val uri = req.uri
-        val path = s"${uri.scheme}:${uri.authority}${rawUri.uri.dropRight(queryLen)}"
+        val path = s"${uri.scheme}://${uri.authority}${rawUri.uri.dropRight(queryLen)}"
         f(path, uri.query())
       case _ ⇒
         throw new InternalError("Header Raw-Request-URI not found. Enable them in the configuration file.")

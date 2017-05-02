@@ -15,10 +15,10 @@ import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
 import amora.api._
-import amora.backend.Log4jLogging
 import amora.nlp._
+import amora.backend.Logger
 
-class Indexer(modelName: String) extends Log4jLogging {
+class Indexer(modelName: String, log: Logger) {
 
   /**
    * On startup of the indexer, we want to index some predefined data like
@@ -76,7 +76,7 @@ class Indexer(modelName: String) extends Log4jLogging {
         val schemaName = file.getName.dropRight(".schema.ttl".length)
         src.close()
         val alreadyIndexed = sparqlQuery"""
-          ask { <http://amora.center/kb/amora/Schema/$schemaName/> ?p ?o }
+          ask { <http://amora.center/kb/amora/Schema/$schemaName/> <http://amora.center/kb/amora/Schema/schemaName> ?o }
         """.askOnModel(model)
         if (!alreadyIndexed) {
           try model.writeAs(Turtle, content)
@@ -481,8 +481,10 @@ class Indexer(modelName: String) extends Log4jLogging {
     commits.getOrElse(Nil)
   }
 
-  def showCommit(dataset: Dataset, commit: String): SparqlModel =
-    new SparqlModel(dataset.getNamedModel(commitModelName(commit)))
+  def showCommit(dataset: Dataset, commit: String): SparqlModel = {
+    val m = dataset.getNamedModel(commitModelName(commit))
+    new SparqlModel(ModelFactory.createDefaultModel().add(m))
+  }
 
   def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString

@@ -4,25 +4,25 @@ class FindDeclaration extends ScalaService {
 
   def run(offset: Int): String = {
     val r = sparqlRequest(s"""
-      prefix decl:<http://amora.center/kb/amora/Schema/Decl/>
-      prefix ref:<http://amora.center/kb/amora/Schema/Ref/>
-      prefix amora:<http://amora.center/kb/amora/Schema/>
+      prefix Decl:<http://amora.center/kb/amora/Schema/Decl/>
+      prefix Ref:<http://amora.center/kb/amora/Schema/Ref/>
+      prefix Schema:<http://amora.center/kb/amora/Schema/>
 
       select ?declStart ?declEnd where {
-        ?ident amora:posStart ?start; amora:posEnd ?end .
+        ?ident Schema:posStart ?start; Schema:posEnd ?end .
         filter ($offset >= ?start && $offset <= ?end)
 
         # ?ident can either be a Ref or a Decl
         {
-          ?ident ref:refToDecl ?decl .
+          ?ident Ref:refToDecl ?decl .
         }
         union
         {
-          ?ident a decl: .
+          ?ident a Decl: .
           bind(?ident as ?decl)
         }
 
-        ?decl decl:posStart ?declStart; decl:posEnd ?declEnd .
+        ?decl Decl:posStart ?declStart; Decl:posEnd ?declEnd .
       }
       limit 1
     """)
@@ -31,17 +31,17 @@ class FindDeclaration extends ScalaService {
     }
 
     response(s"""
-      @prefix service:<http://amora.center/kb/Schema/Service/> .
-      @prefix response:<http://amora.center/kb/ServiceResponse/> .
-      @prefix decl:<http://amora.center/kb/amora/Schema/Decl/> .
+      @prefix Service:<http://amora.center/kb/Schema/Service/> .
+      @prefix Response:<http://amora.center/kb/ServiceResponse/> .
+      @prefix Decl:<http://amora.center/kb/amora/Schema/Decl/> .
       <#this>
-        a response: ;
-        service:requestId <$requestId> ;
-        service:result ${
+        a Response: ;
+        Service:requestId <$requestId> ;
+        Service:result ${
           position.map {
             case (start, end) ⇒ s"""[
-          decl:posStart $start ;
-          decl:posEnd $end ;
+          Decl:posStart $start ;
+          Decl:posEnd $end ;
         ] ;"""
           }.headOption.getOrElse("[]")
         }

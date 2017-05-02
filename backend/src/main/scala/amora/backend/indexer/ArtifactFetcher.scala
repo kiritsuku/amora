@@ -101,18 +101,18 @@ trait ArtifactFetcher {
     val start = Resolution(Set(Dependency(Module(artifact.organization, artifact.name), artifact.version)))
     val repos = Seq(MavenRepository("https://repo1.maven.org/maven2"))
     val fetch = Fetch.from(repos, Cache.fetch(cache = cacheLocation, logger = Some(coursierLogger)))
-    val resolution = start.process.run(fetch).run
+    val resolution = start.process.run(fetch).unsafePerformSync
 
-    if (resolution.errors.nonEmpty)
-      resolution.errors.flatMap(_._2).map(DownloadError(_, None))
+    if (resolution.metadataErrors.nonEmpty)
+      resolution.metadataErrors.flatMap(_._2).map(DownloadError(_, None))
     else {
       val localArtifacts = Task.gatherUnordered(
-        resolution.dependencyArtifacts.map {
-          case (dependency, coursierArtifact) ⇒
+        resolution.dependencyArtifacts.collect {
+          case (dependency, coursierArtifact) if coursierArtifact.url.endsWith(".jar") ⇒
             val a = Artifact(Project(dependency.module.organization), dependency.module.organization, dependency.module.name, dependency.version)
             Cache.file(coursierArtifact, cache = cacheLocation, logger = Some(coursierLogger)).map(f ⇒ a → f).run
         }
-      ).run
+      ).unsafePerformSync
 
       localArtifacts.map {
         case -\/(f) ⇒

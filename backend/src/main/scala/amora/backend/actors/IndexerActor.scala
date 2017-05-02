@@ -9,13 +9,28 @@ import akka.actor.ActorLogging
 import amora.api.SparqlModel
 import amora.api.Turtle
 import amora.backend.Content
+import amora.backend.Logger
 import amora.backend.indexer.Indexer
 
 class IndexerActor extends Actor with ActorLogging {
 
   import IndexerMessage._
 
-  private val indexer = new Indexer(Content.ModelName)
+  private def akkaLog = log
+
+  private val logger = new Logger {
+    override def debug(msg: String): Unit = akkaLog.debug(msg)
+    override def warning(msg: String): Unit = akkaLog.warning(msg)
+    override def info(msg: String): Unit = akkaLog.info(msg)
+    override def error(msg: String, t: Throwable): Unit = akkaLog.error(t, msg)
+    override def log = throw new UnsupportedOperationException
+    override def logLevel = throw new UnsupportedOperationException
+    override def logLevel_=(level: Logger.LogLevel) = throw new UnsupportedOperationException
+
+    override def close() = throw new UnsupportedOperationException
+    override def isClosed = false
+  }
+  private val indexer = new Indexer(Content.ModelName, logger)
   private val config = context.system.settings.config
   private val testMode = config.getBoolean("app.test-mode")
   private val dataset =
