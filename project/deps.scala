@@ -9,7 +9,7 @@ object deps {
   val enumeratum      = "1.3.7"
   val akka            = "2.5.1"
   val akkaHttp        = "10.0.5"
-  val jena            = "3.2.0"
+  val jena            = "3.0.1"
   // https://github.com/scalaj/scalaj-http
   val scalaj          = "2.3.0"
   // https://github.com/typesafehub/scala-logging
