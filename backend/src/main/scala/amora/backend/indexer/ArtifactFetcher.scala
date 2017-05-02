@@ -107,8 +107,8 @@ trait ArtifactFetcher {
       resolution.metadataErrors.flatMap(_._2).map(DownloadError(_, None))
     else {
       val localArtifacts = Task.gatherUnordered(
-        resolution.dependencyArtifacts.map {
-          case (dependency, coursierArtifact) ⇒
+        resolution.dependencyArtifacts.collect {
+          case (dependency, coursierArtifact) if coursierArtifact.url.endsWith(".jar") ⇒
             val a = Artifact(Project(dependency.module.organization), dependency.module.organization, dependency.module.name, dependency.version)
             Cache.file(coursierArtifact, cache = cacheLocation, logger = Some(coursierLogger)).map(f ⇒ a → f).run
         }
