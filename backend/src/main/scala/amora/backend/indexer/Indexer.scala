@@ -481,8 +481,10 @@ class Indexer(modelName: String, log: Logger) {
     commits.getOrElse(Nil)
   }
 
-  def showCommit(dataset: Dataset, commit: String): SparqlModel =
-    new SparqlModel(dataset.getNamedModel(commitModelName(commit)))
+  def showCommit(dataset: Dataset, commit: String): SparqlModel = {
+    val m = dataset.getNamedModel(commitModelName(commit))
+    new SparqlModel(ModelFactory.createDefaultModel().add(m))
+  }
 
   def withUpdateService(model: SparqlModel, query: String)(f: ParameterizedSparqlString ⇒ Unit): Unit = {
     val pss = new ParameterizedSparqlString
