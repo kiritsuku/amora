@@ -15,10 +15,10 @@ import org.apache.jena.tdb.TDBFactory
 import org.apache.jena.update.UpdateAction
 
 import amora.api._
-import amora.backend.Log4jLogging
 import amora.nlp._
+import amora.backend.Logger
 
-class Indexer(modelName: String) extends Log4jLogging {
+class Indexer(modelName: String, log: Logger) {
 
   /**
    * On startup of the indexer, we want to index some predefined data like

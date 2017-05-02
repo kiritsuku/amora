@@ -18,7 +18,7 @@ class JavaBytecodeIndexerTest {
   case class Data(varName: String, value: String)
 
   def ask(modelName: String, rawQuery: String, data: (String, String)*): Seq[Data] = {
-    val indexer = new Indexer(modelName)
+    val indexer = new Indexer(modelName, IgnoreLogger)
     val dataset = indexer.mkInMemoryDataset
     val query = rawQuery.replaceFirst("""\?MODEL\?""", modelName)
     val res = indexer.writeDataset(dataset) { dataset ⇒
